@@ -351,7 +351,34 @@ int main() {
             return 1;
         }
 
-        std::cout << "PASS: Velocity modulation (volume, decay, depth polarity, curves) verified." << std::endl;
+        // 5. Test Exponential Warp accuracy:
+        // A. Mathematical warp helper checks
+        assert(std::abs(TbdAudio::warpUnipolarExp(0.50f) - 0.10f) < 0.001f);
+        assert(std::abs(TbdAudio::unwarpUnipolarExp(0.10f) - 0.50f) < 0.001f);
+        assert(std::abs(TbdAudio::warpUnipolarExp(0.0f) - 0.0f) < 0.0001f);
+        assert(std::abs(TbdAudio::warpUnipolarExp(1.0f) - 1.0f) < 0.0001f);
+
+        assert(std::abs(TbdAudio::warpBipolarExp(0.75f) - 0.05f) < 0.001f);
+        assert(std::abs(TbdAudio::warpBipolarExp(0.25f) - (-0.05f)) < 0.001f);
+        assert(std::abs(TbdAudio::unwarpBipolarExp(0.05f) - 0.75f) < 0.001f);
+        assert(std::abs(TbdAudio::unwarpBipolarExp(-0.05f) - 0.25f) < 0.001f);
+        assert(std::abs(TbdAudio::warpBipolarExp(0.50f) - 0.0f) < 0.0001f);
+        assert(std::abs(TbdAudio::warpBipolarExp(1.0f) - 1.0f) < 0.0001f);
+        assert(std::abs(TbdAudio::warpBipolarExp(0.0f) - (-1.0f)) < 0.0001f);
+
+        // B. Bipolar ±25% knob displacement -> ±5% effective modulation at max velocity (velModFactor = 1.0)
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, 0.75f); // +25% knob
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, 0.25f); // -25% knob
+        velEngine.trigger(1.0f);
+        assert(std::abs(velEngine.getContext().velDecayMod - 0.05f) < 0.001f);
+        assert(std::abs(velEngine.getContext().velDepthMod - (-0.05f)) < 0.001f);
+
+        // C. Unipolar 50% knob travel -> 10% effective volume attenuation at min velocity
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 3, 0.50f); // 50% knob
+        velEngine.trigger(0.0f);
+        assert(std::abs(velEngine.getContext().velVolumeGain - 0.90f) < 0.001f); // 1.0 - 0.10 = 0.90
+
+        std::cout << "PASS: Velocity modulation (volume, decay, depth polarity, exponential curves) verified." << std::endl;
     }
 
     // 9. Test Slop Modulation (Block 17)
@@ -400,15 +427,21 @@ int main() {
             slopEngine.trigger(1.0f);
             const auto& ctx = slopEngine.getContext();
 
-            // Check range bounds
-            assert(std::abs(ctx.slopCarrierPitch) <= 0.501f);
-            assert(std::abs(ctx.slopModFreq) <= 0.501f);
-            assert(std::abs(ctx.slopFilterCutoff) <= 0.501f);
-            assert(std::abs(ctx.slopPitchEnvDepth) <= 0.401f);
-            assert(std::abs(ctx.slopFilterEnvDepth) <= 0.401f);
-            assert(std::abs(ctx.slopPitchEnvDecay) <= 0.301f);
-            assert(std::abs(ctx.slopAmpEnvDecay) <= 0.301f);
-            assert(std::abs(ctx.slopAmpPan) <= 0.601f);
+            // Check range bounds under exponential warp:
+            // 50% knob -> 10% max offset
+            float boundFreq  = TbdAudio::warpUnipolarExp(0.50f);
+            float boundDepth = TbdAudio::warpUnipolarExp(0.40f);
+            float boundDecay = TbdAudio::warpUnipolarExp(0.30f);
+            float boundPan   = TbdAudio::warpUnipolarExp(0.60f);
+
+            assert(std::abs(ctx.slopCarrierPitch) <= boundFreq + 0.001f);
+            assert(std::abs(ctx.slopModFreq) <= boundFreq + 0.001f);
+            assert(std::abs(ctx.slopFilterCutoff) <= boundFreq + 0.001f);
+            assert(std::abs(ctx.slopPitchEnvDepth) <= boundDepth + 0.001f);
+            assert(std::abs(ctx.slopFilterEnvDepth) <= boundDepth + 0.001f);
+            assert(std::abs(ctx.slopPitchEnvDecay) <= boundDecay + 0.001f);
+            assert(std::abs(ctx.slopAmpEnvDecay) <= boundDecay + 0.001f);
+            assert(std::abs(ctx.slopAmpPan) <= boundPan + 0.001f);
 
             // Verify independent random values across different destinations in the same trigger hit
             if (ctx.slopCarrierPitch != ctx.slopFilterCutoff &&

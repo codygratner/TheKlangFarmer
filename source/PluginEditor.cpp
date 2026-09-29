@@ -1487,24 +1487,37 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         if (val < 0.67) return "Lin (" + juce::String(static_cast<int>((val - 0.33) * 300.0)) + "%)";
         return "Log (" + juce::String(static_cast<int>((val - 0.67) * 300.0)) + "%)";
     };
-    velDecaySlider.customFormatText = [](double val) {
-        int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
-        return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
+    auto formatBipolarVel = [](double val) {
+        float eff = TbdAudio::warpBipolarExp(static_cast<float>(val));
+        if (std::abs(eff) <= 0.0001f) return juce::String("0%");
+        float pct = eff * 100.0f;
+        juce::String sign = (pct >= 0.0f) ? "+" : "";
+        if (std::abs(eff) < 0.0999f) {
+            return sign + juce::String(pct, 1) + "%";
+        }
+        return sign + juce::String(static_cast<int>(std::round(pct))) + "%";
     };
-    velDecaySlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
+    auto parseBipolarVel = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0) / 100.0;
+        return static_cast<double>(TbdAudio::unwarpBipolarExp(static_cast<float>(p)));
     };
-    velDepthSlider.customFormatText = velDecaySlider.customFormatText;
-    velDepthSlider.customParseText  = velDecaySlider.customParseText;
+
+    velDecaySlider.customFormatText = formatBipolarVel;
+    velDecaySlider.customParseText  = parseBipolarVel;
+    velDepthSlider.customFormatText = formatBipolarVel;
+    velDepthSlider.customParseText  = parseBipolarVel;
 
     velVolumeSlider.customFormatText = [](double val) {
-        int pct = static_cast<int>(std::round(val * 100.0));
-        return (pct == 0) ? "0%" : "-" + juce::String(pct) + "%";
+        float eff = TbdAudio::warpUnipolarExp(static_cast<float>(val));
+        if (eff <= 0.0001f) return juce::String("0%");
+        if (eff < 0.0999f) {
+            return "-" + juce::String(eff * 100.0f, 1) + "%";
+        }
+        return "-" + juce::String(static_cast<int>(std::round(eff * 100.0f))) + "%";
     };
     velVolumeSlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(std::abs(p) / 100.0, 0.0, 1.0);
+        double p = std::clamp(std::abs(parseNumberSafe(text, 0.0)) / 100.0, 0.0, 1.0);
+        return static_cast<double>(TbdAudio::unwarpUnipolarExp(static_cast<float>(p)));
     };
 
     cardVel->setKnob(0, "Slope", &velSlopeSlider);
@@ -1521,12 +1534,16 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     setupKnob(slopPanSlider, juce::Colour(0xffffa726), false, 0.0);   // 0% default (unipolar)
 
     auto formatSlop = [](double val) {
-        int pct = static_cast<int>(std::round(val * 100.0));
-        return (pct == 0) ? "0%" : "+/-" + juce::String(pct) + "%";
+        float eff = TbdAudio::warpUnipolarExp(static_cast<float>(val));
+        if (eff <= 0.0001f) return juce::String("0%");
+        if (eff < 0.0999f) {
+            return "+/-" + juce::String(eff * 100.0f, 1) + "%";
+        }
+        return "+/-" + juce::String(static_cast<int>(std::round(eff * 100.0f))) + "%";
     };
     auto parseSlop = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(p / 100.0, 0.0, 1.0);
+        double p = std::clamp(std::abs(parseNumberSafe(text, 0.0)) / 100.0, 0.0, 1.0);
+        return static_cast<double>(TbdAudio::unwarpUnipolarExp(static_cast<float>(p)));
     };
 
     slopFreqSlider.customFormatText = formatSlop;

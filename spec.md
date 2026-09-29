@@ -586,19 +586,19 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;       - default: linear
 
-&#x20;   1. decay, continuously variable (adds to all decay times)
-
-&#x20;       - -100% 0% to 100%
-
-&#x20;       - default: 0%
-
-&#x20;   1. depth, continuously variable (adds to all envelope depths)
+&#x20;   1. decay, continuously variable (adds to all decay times; bipolar exponential taper where +/-25% knob displacement gives +/-5% value)
 
 &#x20;       - -100% to 0% to +100%
 
 &#x20;       - default: 0%
 
-&#x20;   1. volume, continuously variable (sets the minimum output volume for lowest velocity)
+&#x20;   1. depth, continuously variable (adds to all envelope depths; bipolar exponential taper where +/-25% knob displacement gives +/-5% value)
+
+&#x20;       - -100% to 0% to +100%
+
+&#x20;       - default: 0%
+
+&#x20;   1. volume, continuously variable (sets the minimum output volume for lowest velocity; unipolar exponential taper where 50% knob travel gives -10% volume attenuation)
 
 &#x20;       - 0% (no change to volume) to -100% (lowest velocity is quietest)
 
@@ -606,7 +606,7 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 1\. Slop Controls
 
-&#x20;   this should randomly change values (all random, not the same random per altered control) on each new trigger
+&#x20;   this should randomly change values (all random, not the same random per altered control) on each new trigger; all slop controls use a unipolar exponential taper where 50% knob travel gives 10% value (+/-10%)
 
 &#x20;   1. frequency (both pitch and filters), continuously variable
 

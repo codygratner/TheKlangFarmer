@@ -57,6 +57,51 @@ inline float applyEnvelopeSlope(float linearVal, float shape) {
     return linearVal;
 }
 
+// Slop & Velocity Exponential Warp Functions:
+// Unipolar: 50% controller travel (0.5) gives 10% value (0.10)
+// Power: p = log2(10) ≈ 3.321928f. Inverse: 1/p = log10(2) ≈ 0.301030f.
+constexpr float UNIPOLAR_EXP_POWER = 3.321928094887362f; // log2(10)
+constexpr float UNIPOLAR_EXP_INV   = 0.301029995663981f; // log10(2)
+
+// Bipolar: ±25% controller displacement from center (c = 0.75 or 0.25) gives ±5% value (±0.05)
+// Power: q = log2(20) ≈ 4.321928f. Inverse: 1/q = log20(2) ≈ 0.231378f.
+constexpr float BIPOLAR_EXP_POWER  = 4.321928094887362f; // log2(20)
+constexpr float BIPOLAR_EXP_INV    = 0.231378213159759f; // log20(2)
+
+inline float warpUnipolarExp(float c) {
+    c = std::clamp(c, 0.0f, 1.0f);
+    if (c <= 0.0f) return 0.0f;
+    if (c >= 1.0f) return 1.0f;
+    return std::pow(c, UNIPOLAR_EXP_POWER);
+}
+
+inline float unwarpUnipolarExp(float y) {
+    y = std::clamp(y, 0.0f, 1.0f);
+    if (y <= 0.0f) return 0.0f;
+    if (y >= 1.0f) return 1.0f;
+    return std::pow(y, UNIPOLAR_EXP_INV);
+}
+
+inline float warpBipolarExp(float c) {
+    c = std::clamp(c, 0.0f, 1.0f);
+    float delta = c - 0.5f;
+    if (std::abs(delta) < 1e-6f) return 0.0f;
+    float sign = (delta >= 0.0f) ? 1.0f : -1.0f;
+    float u = std::abs(delta) * 2.0f;
+    if (u >= 1.0f) return sign * 1.0f;
+    return sign * std::pow(u, BIPOLAR_EXP_POWER);
+}
+
+inline float unwarpBipolarExp(float y) {
+    y = std::clamp(y, -1.0f, 1.0f);
+    if (std::abs(y) < 1e-6f) return 0.5f;
+    float sign = (y >= 0.0f) ? 1.0f : -1.0f;
+    float mag = std::abs(y);
+    if (mag >= 1.0f) return 0.5f + sign * 0.5f;
+    float u = std::pow(mag, BIPOLAR_EXP_INV);
+    return std::clamp(0.5f + sign * u * 0.5f, 0.0f, 1.0f);
+}
+
 // Drive mapping: -6dB to 0dB (at 50% knob) to +24dB
 inline float normToDriveDb(float norm) {
     norm = std::clamp(norm, 0.0f, 1.0f);
@@ -1500,10 +1545,10 @@ public:
             ctx.slopAmpPan
         };
         float maxBounds[4] = {
-            params[0],
-            params[1],
-            params[2],
-            params[3]
+            warpUnipolarExp(params[0]),
+            warpUnipolarExp(params[1]),
+            warpUnipolarExp(params[2]),
+            warpUnipolarExp(params[3])
         };
 
         for (int i = 0; i < 128; ++i) {
@@ -1701,9 +1746,9 @@ public:
         ctx.isTriggered = true;
 
         float velSlope  = allBlocks[BLK_VELOCITY] ? allBlocks[BLK_VELOCITY]->getParam(0) : 0.5f;
-        float velDecay  = allBlocks[BLK_VELOCITY] ? (allBlocks[BLK_VELOCITY]->getParam(1) - 0.5f) * 2.0f : 0.0f; // -1 to +1
-        float velDepth  = allBlocks[BLK_VELOCITY] ? (allBlocks[BLK_VELOCITY]->getParam(2) - 0.5f) * 2.0f : 0.0f; // -1 to +1
-        float velVolume = allBlocks[BLK_VELOCITY] ? allBlocks[BLK_VELOCITY]->getParam(3) : 0.0f; // 0 to 1
+        float velDecay  = allBlocks[BLK_VELOCITY] ? warpBipolarExp(allBlocks[BLK_VELOCITY]->getParam(1)) : 0.0f; // -1 to +1
+        float velDepth  = allBlocks[BLK_VELOCITY] ? warpBipolarExp(allBlocks[BLK_VELOCITY]->getParam(2)) : 0.0f; // -1 to +1
+        float velVolume = allBlocks[BLK_VELOCITY] ? warpUnipolarExp(allBlocks[BLK_VELOCITY]->getParam(3)) : 0.0f; // 0 to 1
 
         float curvedVel = applyEnvelopeSlope(velocity, velSlope);
         ctx.curvedVelocity = curvedVel;
@@ -1718,10 +1763,10 @@ public:
         ctx.velDepthMod   = velModFactor * velDepth;
 
         // Sample independent stepped random offsets for Slop
-        float slopFreq  = allBlocks[BLK_SLOP] ? allBlocks[BLK_SLOP]->getParam(0) : 0.0f;
-        float slopDepth = allBlocks[BLK_SLOP] ? allBlocks[BLK_SLOP]->getParam(1) : 0.0f;
-        float slopDecay = allBlocks[BLK_SLOP] ? allBlocks[BLK_SLOP]->getParam(2) : 0.0f;
-        float slopPan   = allBlocks[BLK_SLOP] ? allBlocks[BLK_SLOP]->getParam(3) : 0.0f;
+        float slopFreq  = allBlocks[BLK_SLOP] ? warpUnipolarExp(allBlocks[BLK_SLOP]->getParam(0)) : 0.0f;
+        float slopDepth = allBlocks[BLK_SLOP] ? warpUnipolarExp(allBlocks[BLK_SLOP]->getParam(1)) : 0.0f;
+        float slopDecay = allBlocks[BLK_SLOP] ? warpUnipolarExp(allBlocks[BLK_SLOP]->getParam(2)) : 0.0f;
+        float slopPan   = allBlocks[BLK_SLOP] ? warpUnipolarExp(allBlocks[BLK_SLOP]->getParam(3)) : 0.0f;
 
         ctx.slopCarrierPitch    = slopFreq  * fastRng(slopRngState);
         ctx.slopModFreq         = slopFreq  * fastRng(slopRngState);
