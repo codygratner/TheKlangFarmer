@@ -1,5 +1,70 @@
 #include "PluginEditor.h"
 
+// --- SAFE PARSING & FORMATTING HELPERS ---
+
+static double parseNumberSafe(const juce::String& text, double fallback) {
+    auto trimmed = text.trim();
+    if (trimmed.isEmpty()) return fallback;
+
+    // Check for note names like C4, A1, F#2, Bb3
+    const char* noteNames[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+    for (int oct = -2; oct <= 8; ++oct) {
+        for (int semi = 0; semi < 12; ++semi) {
+            juce::String noteStr = noteNames[semi] + juce::String(oct);
+            if (trimmed.startsWithIgnoreCase(noteStr)) {
+                int noteNum = (oct + 1) * 12 + semi;
+                return static_cast<double>(std::clamp(noteNum, 0, 127));
+            }
+        }
+    }
+
+    // Bracketed note number like [33]
+    int bStart = trimmed.indexOfChar('[');
+    int bEnd = trimmed.indexOfChar(']');
+    if (bStart >= 0 && bEnd > bStart) {
+        auto inside = trimmed.substring(bStart + 1, bEnd).trim();
+        if (inside.isNotEmpty()) {
+            double v = inside.getDoubleValue();
+            if (std::isfinite(v)) return v;
+        }
+    }
+
+    bool isKhz = trimmed.containsIgnoreCase("k");
+
+    juce::String numStr;
+    bool hasDot = false;
+    for (int i = 0; i < trimmed.length(); ++i) {
+        juce::juce_wchar ch = trimmed[i];
+        if (std::isdigit(ch)) {
+            numStr += ch;
+        } else if (ch == '-' || ch == '+') {
+            if (numStr.isEmpty()) numStr += ch;
+        } else if (ch == '.' && !hasDot) {
+            numStr += ch;
+            hasDot = true;
+        } else if (!numStr.isEmpty() && !std::isspace(ch)) {
+            break;
+        }
+    }
+
+    if (numStr.isEmpty()) return fallback;
+    double val = numStr.getDoubleValue();
+    if (!std::isfinite(val)) return fallback;
+
+    if (isKhz && std::abs(val) < 1000.0) {
+        val *= 1000.0;
+    }
+
+    return val;
+}
+
+static juce::String getMidiNoteName(int noteNumber) {
+    noteNumber = std::clamp(noteNumber, 0, 127);
+    const char* names[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+    int octave = (noteNumber / 12) - 1;
+    return juce::String(names[noteNumber % 12]) + juce::String(octave) + " [" + juce::String(noteNumber) + "]";
+}
+
 // --- ROTARY KNOB LOOK AND FEEL ---
 
 RotaryKnobLookAndFeel::RotaryKnobLookAndFeel() {
@@ -37,13 +102,35 @@ void RotaryKnobLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
     g.setColour(slider.findColour(juce::Slider::rotarySliderOutlineColourId));
     g.strokePath(backgroundArc, juce::PathStrokeType(lineW, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-    // Value Arc
-    if (slider.isEnabled() && sliderPosProportional > 0.001f) {
+    // Value Arc: Bipolar draws from center (12 o'clock); Unipolar draws from minimum (7 o'clock)
+    bool isBipolar = false;
+    if (auto* rks = dynamic_cast<RotaryKnobSlider*>(&slider)) {
+        isBipolar = rks->isBipolar;
+    }
+
+    if (slider.isEnabled()) {
         juce::Path valueArc;
-        valueArc.addCentredArc(centre.x, centre.y, arcRadius, arcRadius,
-                               0.0f, rotaryStartAngle, toAngle, true);
-        g.setColour(slider.findColour(juce::Slider::rotarySliderFillColourId));
-        g.strokePath(valueArc, juce::PathStrokeType(lineW, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        if (isBipolar) {
+            float midAngle = (rotaryStartAngle + rotaryEndAngle) * 0.5f;
+            if (std::abs(toAngle - midAngle) > 0.005f) {
+                if (toAngle >= midAngle) {
+                    valueArc.addCentredArc(centre.x, centre.y, arcRadius, arcRadius,
+                                           0.0f, midAngle, toAngle, true);
+                } else {
+                    valueArc.addCentredArc(centre.x, centre.y, arcRadius, arcRadius,
+                                           0.0f, toAngle, midAngle, true);
+                }
+                g.setColour(slider.findColour(juce::Slider::rotarySliderFillColourId));
+                g.strokePath(valueArc, juce::PathStrokeType(lineW, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+            }
+        } else {
+            if (sliderPosProportional > 0.001f) {
+                valueArc.addCentredArc(centre.x, centre.y, arcRadius, arcRadius,
+                                       0.0f, rotaryStartAngle, toAngle, true);
+                g.setColour(slider.findColour(juce::Slider::rotarySliderFillColourId));
+                g.strokePath(valueArc, juce::PathStrokeType(lineW, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+            }
+        }
     }
 
     // Inner dial disc
@@ -249,48 +336,38 @@ void LedSelectorComponent::paint(juce::Graphics& g) {
         if (isSel) {
             g.setColour(accent.withAlpha(0.14f));
             g.fillRoundedRectangle(r, 3.0f);
-            g.setColour(accent.withAlpha(0.40f));
+            g.setColour(accent.withAlpha(0.35f));
             g.drawRoundedRectangle(r, 3.0f, 1.0f);
         } else if (isHov) {
-            g.setColour(juce::Colour(0x14ffffff));
+            g.setColour(juce::Colour(0x15ffffff));
             g.fillRoundedRectangle(r, 3.0f);
         }
 
-        float ledX = r.getX() + 8.0f;
-        float ledY = r.getCentreY();
-        float ledR = 3.2f;
+        // Draw LED dot
+        float ledSize = 5.5f;
+        float ledX = r.getX() + 5.0f;
+        float ledY = r.getCentreY() - ledSize * 0.5f;
+        auto ledBounds = juce::Rectangle<float>(ledX, ledY, ledSize, ledSize);
 
         if (isSel) {
-            // Radiant halo
-            g.setColour(accent.withAlpha(0.35f));
-            g.fillEllipse(ledX - 6.0f, ledY - 6.0f, 12.0f, 12.0f);
-
-            // Lit Core
-            g.setColour(accent.brighter(0.35f));
-            g.fillEllipse(ledX - ledR, ledY - ledR, ledR * 2.0f, ledR * 2.0f);
-
-            // Specular glass shine
-            g.setColour(juce::Colours::white.withAlpha(0.9f));
-            g.fillEllipse(ledX - 1.2f, ledY - 1.8f, 1.8f, 1.8f);
-
-            // Text
+            g.setColour(accent.withAlpha(0.40f));
+            g.fillEllipse(ledBounds.expanded(2.0f));
+            g.setColour(accent);
+            g.fillEllipse(ledBounds);
             g.setColour(juce::Colours::white);
-            g.setFont(juce::FontOptions(9.5f, juce::Font::bold));
+            g.fillEllipse(ledBounds.reduced(1.5f));
         } else {
-            // Unlit socket
-            g.setColour(juce::Colour(0xff2a3040));
-            g.drawEllipse(ledX - ledR, ledY - ledR, ledR * 2.0f, ledR * 2.0f, 1.0f);
-
-            g.setColour(juce::Colour(0xff12151c));
-            g.fillEllipse(ledX - (ledR - 0.5f), ledY - (ledR - 0.5f), (ledR - 0.5f) * 2.0f, (ledR - 0.5f) * 2.0f);
-
-            // Text
-            g.setColour(isHov ? juce::Colour(0xffb0bac9) : juce::Colour(0xff758195));
-            g.setFont(juce::FontOptions(9.0f, juce::Font::plain));
+            g.setColour(juce::Colour(0xff232733));
+            g.fillEllipse(ledBounds);
+            g.setColour(juce::Colour(0xff394152));
+            g.drawEllipse(ledBounds, 0.8f);
         }
 
-        auto textRect = juce::Rectangle<float>(ledX + 8.0f, r.getY(), r.getWidth() - 17.0f, r.getHeight());
-        g.drawText(items[i], textRect, juce::Justification::centredLeft, true);
+        // Draw Item Text
+        auto textBounds = r.withTrimmedLeft(14.0f).withTrimmedRight(2.0f);
+        g.setFont(juce::FontOptions(isSel ? 10.5f : 10.0f, isSel ? juce::Font::bold : juce::Font::plain));
+        g.setColour(isSel ? juce::Colours::white : (isHov ? juce::Colour(0xffd0d6e2) : juce::Colour(0xff8c96a8)));
+        g.drawFittedText(items[i], textBounds.toNearestInt(), juce::Justification::centredLeft, 1);
     }
 }
 
@@ -298,7 +375,6 @@ void LedSelectorComponent::mouseMove(const juce::MouseEvent& e) {
     int idx = getItemIndexAt(e.getPosition());
     if (idx != hoveredIndex) {
         hoveredIndex = idx;
-        setMouseCursor(hoveredIndex >= 0 ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
         repaint();
     }
 }
@@ -306,7 +382,6 @@ void LedSelectorComponent::mouseMove(const juce::MouseEvent& e) {
 void LedSelectorComponent::mouseExit(const juce::MouseEvent&) {
     if (hoveredIndex != -1) {
         hoveredIndex = -1;
-        setMouseCursor(juce::MouseCursor::NormalCursor);
         repaint();
     }
 }
@@ -314,7 +389,7 @@ void LedSelectorComponent::mouseExit(const juce::MouseEvent&) {
 void LedSelectorComponent::mouseDown(const juce::MouseEvent& e) {
     int idx = getItemIndexAt(e.getPosition());
     if (idx >= 0 && idx < items.size()) {
-        setSelectedIndex(idx, juce::sendNotificationSync);
+        setSelectedIndex(idx, juce::sendNotification);
     }
 }
 
@@ -327,58 +402,28 @@ ModuleCardComponent::ModuleCardComponent(const juce::String& title, juce::Colour
 
     for (int i = 0; i < 4; ++i) {
         labels[i].setFont(juce::FontOptions(10.0f, juce::Font::bold));
+        labels[i].setColour(juce::Label::textColourId, juce::Colour(0xff94a0b8));
         labels[i].setJustificationType(juce::Justification::centred);
-        labels[i].setColour(juce::Label::textColourId, juce::Colour(0xff8a96ab));
-        addChildComponent(labels[i]);
+        addAndMakeVisible(labels[i]);
     }
-}
-
-void ModuleCardComponent::paint(juce::Graphics& g) {
-    auto bounds = getLocalBounds().toFloat();
-
-    // Module background
-    g.setColour(juce::Colour(0xff161820));
-    g.fillRoundedRectangle(bounds, 6.0f);
-
-    // Subtle outline
-    g.setColour(juce::Colour(0xff242936));
-    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
-
-    // Top Accent line
-    g.setColour(accent);
-    g.fillRoundedRectangle(bounds.getX() + 6.0f, bounds.getY() + 2.0f, bounds.getWidth() - 12.0f, 2.5f, 1.0f);
-
-    // Title pill
-    g.setColour(juce::Colour(0xff1e222d));
-    g.fillRoundedRectangle(bounds.getX() + 6.0f, bounds.getY() + 6.0f, bounds.getWidth() - 12.0f, 20.0f, 3.0f);
-
-    // Title text
-    g.setColour(juce::Colours::white);
-    g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
-    g.drawText(moduleTitle, juce::Rectangle<float>(bounds.getX() + 10.0f, bounds.getY() + 6.0f, bounds.getWidth() - 20.0f, 20.0f),
-               juce::Justification::centredLeft, true);
-}
-
-void ModuleCardComponent::updateScope(const float* data, int numSamples) {
-    oscilloscope.updateData(data, numSamples);
 }
 
 void ModuleCardComponent::setLedSelector(LedSelectorComponent* selector) {
     ledSelector = selector;
-    if (selector) addAndMakeVisible(selector);
+    if (ledSelector) addAndMakeVisible(ledSelector);
 }
 
 void ModuleCardComponent::setSelector(juce::ComboBox* box) {
     selectorBox = box;
-    if (box) addAndMakeVisible(box);
+    if (selectorBox) addAndMakeVisible(selectorBox);
 }
 
 void ModuleCardComponent::setKnob(int slotIndex, const juce::String& label, RotaryKnobSlider* slider) {
-    if (slotIndex < 0 || slotIndex >= 4) return;
-    labels[slotIndex].setText(label, juce::dontSendNotification);
-    labels[slotIndex].setVisible(true);
-    knobs[slotIndex] = slider;
-    if (slider) addAndMakeVisible(slider);
+    if (slotIndex >= 0 && slotIndex < 4) {
+        knobs[slotIndex] = slider;
+        labels[slotIndex].setText(label, juce::dontSendNotification);
+        if (slider) addAndMakeVisible(slider);
+    }
 }
 
 void ModuleCardComponent::setKnobLabel(int slotIndex, const juce::String& label) {
@@ -387,444 +432,646 @@ void ModuleCardComponent::setKnobLabel(int slotIndex, const juce::String& label)
     }
 }
 
+void ModuleCardComponent::updateScope(const float* data, int numSamples) {
+    oscilloscope.updateData(data, numSamples);
+}
+
+void ModuleCardComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+
+    // Dark sleek card backdrop
+    g.setColour(juce::Colour(0xff151821));
+    g.fillRoundedRectangle(bounds, 6.0f);
+
+    // Subtle outline
+    g.setColour(juce::Colour(0xff222736));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
+
+    // Header color strip
+    auto headerStrip = bounds.removeFromTop(3.0f);
+    g.setColour(accent);
+    g.fillRoundedRectangle(headerStrip, 2.0f);
+
+    // Title label
+    g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+    g.setColour(accent);
+    g.drawText(moduleTitle.toUpperCase(), 8, 5, getWidth() - 16, 16, juce::Justification::left, true);
+}
+
 void ModuleCardComponent::resized() {
-    auto area = getLocalBounds();
-    area.removeFromTop(27); // header
+    auto area = getLocalBounds().reduced(6);
+    area.removeFromTop(18); // Header title
 
-    // Oscilloscope area
-    auto scopeArea = area.removeFromTop(44).reduced(6, 2);
-    oscilloscope.setBounds(scopeArea);
-
-    area.reduce(6, 4);
+    oscilloscope.setBounds(area.removeFromTop(36).reduced(2, 0));
+    area.removeFromTop(4);
 
     if (ledSelector != nullptr) {
-        int selectorH = 38;
-        if (ledSelector->getNumItems() > 8) {
-            selectorH = 80;
-        } else if (ledSelector->getNumItems() > 4) {
-            selectorH = 66;
-        } else if (ledSelector->getNumItems() <= 2) {
-            selectorH = 22;
-        }
-        ledSelector->setBounds(area.removeFromTop(selectorH).reduced(2, 0));
+        int selH = (ledSelector->getNumItems() > 4) ? 42 : 24;
+        ledSelector->setBounds(area.removeFromTop(selH));
         area.removeFromTop(4);
 
-        // 3 knobs side-by-side
-        int knobW = area.getWidth() / 3;
-        for (int i = 0; i < 3; ++i) {
-            auto slot = juce::Rectangle<int>(area.getX() + i * knobW, area.getY(), knobW, area.getHeight()).reduced(2);
-            labels[i].setBounds(slot.removeFromTop(15));
-            if (knobs[i]) knobs[i]->setBounds(slot);
-        }
-    } else if (selectorBox != nullptr) {
-        // Selector row
-        selectorBox->setBounds(area.removeFromTop(24).reduced(2, 0));
-        area.removeFromTop(4);
-
-        // 3 knobs side-by-side
-        int knobW = area.getWidth() / 3;
-        for (int i = 0; i < 3; ++i) {
-            auto slot = juce::Rectangle<int>(area.getX() + i * knobW, area.getY(), knobW, area.getHeight()).reduced(2);
-            labels[i].setBounds(slot.removeFromTop(15));
-            if (knobs[i]) knobs[i]->setBounds(slot);
-        }
-    } else if (numActiveKnobs == 2) {
-        // Grit FX: 2 knobs side-by-side, centered
-        int knobW = area.getWidth() / 2;
-        int topPad = (area.getHeight() - 140) / 2;
-        if (topPad > 0) area.removeFromTop(topPad);
-
-        for (int i = 0; i < 2; ++i) {
-            auto slot = juce::Rectangle<int>(area.getX() + i * knobW, area.getY(), knobW, 140).reduced(4);
-            labels[i].setBounds(slot.removeFromTop(16));
-            if (knobs[i]) knobs[i]->setBounds(slot);
+        int knobCount = 3;
+        int knobW = area.getWidth() / knobCount;
+        for (int i = 0; i < knobCount; ++i) {
+            auto kArea = area.removeFromLeft(knobW);
+            labels[i].setBounds(kArea.removeFromTop(14));
+            if (knobs[i]) knobs[i]->setBounds(kArea);
         }
     } else {
-        // 4 knobs: 2x2 grid
-        int colW = area.getWidth() / 2;
+        // 4 knobs in 2x2 grid
         int rowH = area.getHeight() / 2;
-        for (int i = 0; i < 4; ++i) {
-            int row = i / 2;
-            int col = i % 2;
-            auto slot = juce::Rectangle<int>(area.getX() + col * colW,
-                                             area.getY() + row * rowH,
-                                             colW, rowH).reduced(2);
-            labels[i].setBounds(slot.removeFromTop(15));
-            if (knobs[i]) knobs[i]->setBounds(slot);
-        }
+        auto topRow = area.removeFromTop(rowH);
+        auto botRow = area;
+
+        int wTop = topRow.getWidth() / 2;
+        int wBot = botRow.getWidth() / 2;
+
+        auto k0Area = topRow.removeFromLeft(wTop);
+        labels[0].setBounds(k0Area.removeFromTop(14));
+        if (knobs[0]) knobs[0]->setBounds(k0Area);
+
+        auto k1Area = topRow;
+        labels[1].setBounds(k1Area.removeFromTop(14));
+        if (knobs[1]) knobs[1]->setBounds(k1Area);
+
+        auto k2Area = botRow.removeFromLeft(wBot);
+        labels[2].setBounds(k2Area.removeFromTop(14));
+        if (knobs[2]) knobs[2]->setBounds(k2Area);
+
+        auto k3Area = botRow;
+        labels[3].setBounds(k3Area.removeFromTop(14));
+        if (knobs[3]) knobs[3]->setBounds(k3Area);
     }
 }
 
-// --- VALUE FORMATTING & PARSING HELPERS ---
-
-static juce::String formatHz(float hz) {
-    if (!std::isfinite(hz)) return "0 Hz";
-    if (hz >= 1000.0f)
-        return juce::String(hz * 0.001f, 2) + " kHz";
-    return juce::String(hz, (hz < 10.0f ? 2 : 1)) + " Hz";
-}
-
-static double parseHz(const juce::String& str, float minHz, float maxHz) {
-    auto text = str.trim().toLowerCase();
-    if (text.isEmpty()) return 0.5;
-
-    double multiplier = 1.0;
-    if (text.endsWith("khz") || text.endsWith("k")) {
-        multiplier = 1000.0;
-        text = text.upToFirstOccurrenceOf("k", false, false).trim();
-    } else if (text.endsWith("hz")) {
-        text = text.upToFirstOccurrenceOf("h", false, false).trim();
-    }
-    double hz = text.getDoubleValue() * multiplier;
-
-    if (minHz <= 0.0f) {
-        // Linear frequency range (e.g. 0 Hz to 5000 Hz)
-        if (maxHz <= minHz) return 0.0;
-        double norm = (hz - minHz) / (maxHz - minHz);
-        if (!std::isfinite(norm)) return 0.0;
-        return std::clamp(norm, 0.0, 1.0);
-    } else {
-        // Logarithmic frequency range (e.g. 20 Hz to 20 kHz)
-        hz = std::clamp(hz, static_cast<double>(minHz), static_cast<double>(maxHz));
-        double denom = std::log(maxHz / minHz);
-        if (denom <= 0.0) return 0.0;
-        double norm = std::log(hz / minHz) / denom;
-        if (!std::isfinite(norm)) return 0.0;
-        return std::clamp(norm, 0.0, 1.0);
-    }
-}
-
-static juce::String formatMsOrS(float sec) {
-    if (!std::isfinite(sec)) return "0 ms";
-    if (sec >= 1.0f)
-        return juce::String(sec, 2) + " s";
-    return juce::String(static_cast<int>(std::round(sec * 1000.0f))) + " ms";
-}
-
-static double parseMsOrS(const juce::String& str, float minSec, float midSec, float maxSec) {
-    auto text = str.trim().toLowerCase();
-    if (text.isEmpty()) return 0.5;
-
-    double sec = 0.0;
-    if (text.endsWith("ms")) {
-        sec = text.upToFirstOccurrenceOf("ms", false, false).trim().getDoubleValue() * 0.001;
-    } else if (text.endsWith("s")) {
-        sec = text.upToFirstOccurrenceOf("s", false, false).trim().getDoubleValue();
-    } else {
-        double val = text.getDoubleValue();
-        sec = (val >= 10.0 && maxSec <= 10.0) ? (val * 0.001) : val;
-    }
-    sec = std::clamp(sec, static_cast<double>(minSec), static_cast<double>(maxSec));
-    double norm = 0.0;
-    if (sec <= midSec) {
-        double denom = std::log(midSec / minSec);
-        norm = (denom > 0.0) ? (std::log(sec / minSec) / denom * 0.5) : 0.0;
-    } else {
-        double denom = std::log(maxSec / midSec);
-        norm = (denom > 0.0) ? (0.5 + std::log(sec / midSec) / denom * 0.5) : 0.5;
-    }
-    if (!std::isfinite(norm)) return 0.5;
-    return std::clamp(norm, 0.0, 1.0);
-}
-
-static juce::String formatPercent(float norm, bool signedPrefix = false) {
-    if (!std::isfinite(norm)) norm = 0.0f;
-    float pct = std::round((signedPrefix ? ((norm - 0.5f) * 200.0f) : (norm * 100.0f)));
-    if (signedPrefix && pct > 0.0f)
-        return "+" + juce::String(static_cast<int>(pct)) + " %";
-    return juce::String(static_cast<int>(pct)) + " %";
-}
-
-static double parsePercent(const juce::String& str, bool isSigned) {
-    auto text = str.trim().toLowerCase();
-    if (text.isEmpty()) return (isSigned ? 0.5 : 0.0);
-    if (text.endsWith("%")) text = text.dropLastCharacters(1).trim();
-    double val = text.getDoubleValue();
-    double norm = 0.0;
-    if (isSigned) {
-        norm = (val + 100.0) / 200.0;
-    } else {
-        if (val > 1.0 && val <= 100.0) val *= 0.01;
-        norm = val;
-    }
-    if (!std::isfinite(norm)) return (isSigned ? 0.5 : 0.0);
-    return std::clamp(norm, 0.0, 1.0);
-}
-
-static juce::String formatLevel(float norm) {
-    if (!std::isfinite(norm)) norm = 0.5f;
-    float pct = (norm <= 0.5f) ? (norm * 200.0f) : (100.0f + (norm - 0.5f) * 600.0f);
-    return juce::String(static_cast<int>(std::round(pct))) + " %";
-}
-
-static double parseLevel(const juce::String& str) {
-    auto text = str.trim().toLowerCase();
-    if (text.isEmpty()) return 0.5;
-    if (text.endsWith("%")) text = text.dropLastCharacters(1).trim();
-    double pct = text.getDoubleValue();
-    if (pct > 0.0 && pct <= 4.0 && !str.contains("%")) {
-        pct *= 100.0;
-    }
-    double norm = 0.0;
-    if (pct <= 100.0) {
-        norm = pct / 200.0;
-    } else {
-        norm = 0.5 + ((pct - 100.0) / 600.0) * 0.5;
-    }
-    if (!std::isfinite(norm)) return 0.5;
-    return std::clamp(norm, 0.0, 1.0);
-}
-
-static juce::String formatDb(float db) {
-    if (!std::isfinite(db)) return "0 dB";
-    if (db > 0.0f)
-        return "+" + juce::String(db, 1) + " dB";
-    return juce::String(db, 1) + " dB";
-}
-
-static double parseDb(const juce::String& str, float minDb, float midDb, float maxDb) {
-    auto text = str.trim().toLowerCase();
-    if (text.isEmpty()) return 0.5;
-    if (text.endsWith("db")) text = text.upToFirstOccurrenceOf("db", false, false).trim();
-    double db = text.getDoubleValue();
-    db = std::clamp(db, static_cast<double>(minDb), static_cast<double>(maxDb));
-    double norm = 0.0;
-    if (db <= midDb) {
-        norm = ((db - minDb) / (midDb - minDb)) * 0.5;
-    } else {
-        norm = 0.5 + ((db - midDb) / (maxDb - midDb)) * 0.5;
-    }
-    if (!std::isfinite(norm)) return 0.5;
-    return std::clamp(norm, 0.0, 1.0);
-}
-
-static juce::String midiNoteName(int note) {
-    static const char* const names[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-    int octave = (note / 12) - 1;
-    int n = note % 12;
-    if (n < 0) n += 12;
-    return juce::String(names[n]) + juce::String(octave) + " [" + juce::String(note) + "]";
-}
-
-static double parseMidiNote(const juce::String& str) {
-    auto text = str.trim().toUpperCase();
-    if (text.isEmpty()) return 0.5;
-
-    // Support entering raw frequency e.g. "440Hz", "440 Hz"
-    if (text.endsWith("HZ")) {
-        double hz = text.upToFirstOccurrenceOf("H", false, false).trim().getDoubleValue();
-        if (hz > 0.0) {
-            double note = 69.0 + 12.0 * std::log2(hz / 440.0);
-            return std::clamp(note / 127.0, 0.0, 1.0);
-        }
-    }
-
-    if (text.containsOnly("-0123456789")) {
-        int note = text.getIntValue();
-        return std::clamp(static_cast<double>(note) / 127.0, 0.0, 1.0);
-    }
-
-    static const char* const noteNames[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-    int semi = -1;
-    int charIdx = 0;
-
-    if (text.length() >= 2) {
-        juce::String two = text.substring(0, 2);
-        for (int i = 0; i < 12; ++i) {
-            if (two == noteNames[i]) { semi = i; charIdx = 2; break; }
-        }
-        if (semi == -1) {
-            if (two == "DB") { semi = 1; charIdx = 2; }
-            else if (two == "EB") { semi = 3; charIdx = 2; }
-            else if (two == "GB") { semi = 6; charIdx = 2; }
-            else if (two == "AB") { semi = 8; charIdx = 2; }
-            else if (two == "BB") { semi = 10; charIdx = 2; }
-        }
-    }
-    if (semi == -1 && text.length() >= 1) {
-        juce::String one = text.substring(0, 1);
-        for (int i = 0; i < 12; ++i) {
-            if (one == noteNames[i]) { semi = i; charIdx = 1; break; }
-        }
-    }
-
-    if (semi >= 0) {
-        int octave = text.substring(charIdx).trim().getIntValue();
-        int note = (octave + 1) * 12 + semi;
-        return std::clamp(static_cast<double>(note) / 127.0, 0.0, 1.0);
-    }
-
-    return std::clamp(text.getDoubleValue() / 127.0, 0.0, 1.0);
-}
-
-static juce::String formatSemitones(float st) {
-    if (!std::isfinite(st)) return "0 st";
-    int s = static_cast<int>(std::round(st));
-    if (s > 0) return "+" + juce::String(s) + " st";
-    return juce::String(s) + " st";
-}
-
-static double parseSemitones(const juce::String& str, float minSt, float maxSt) {
-    auto text = str.trim().toLowerCase();
-    if (text.isEmpty()) return 0.5;
-    if (text.endsWith("st") || text.endsWith("semitones"))
-        text = text.upToFirstOccurrenceOf("s", false, false).trim();
-    double st = text.getDoubleValue();
-    st = std::clamp(st, static_cast<double>(minSt), static_cast<double>(maxSt));
-    double norm = (st - minSt) / (maxSt - minSt);
-    if (!std::isfinite(norm)) return 0.5;
-    return std::clamp(norm, 0.0, 1.0);
-}
-
-static juce::String formatWaveform(float norm) {
-    if (norm <= 0.15f) return "Sine";
-    if (norm <= 0.32f) return "Tri";
-    if (norm <= 0.45f) return "Saw";
-    if (norm <= 0.55f) return "Square";
-    return "PWM " + juce::String(static_cast<int>(std::round(100.0f - (norm - 0.5f) * 200.0f))) + "%";
-}
-
-static juce::String formatSlope(float norm) {
-    if (norm < 0.48f)
-        return "Exp (" + juce::String(1.0f + (0.49f - norm) * 6.0f, 1) + ")";
-    if (norm <= 0.52f)
-        return "Linear";
-    return "Log (" + juce::String(1.0f + (norm - 0.51f) * 6.0f, 1) + ")";
-}
-
-static juce::String formatFmRatio(float norm) {
-    if (norm <= 0.5f) {
-        float r = 32.0f - (norm * 2.0f) * 31.0f;
-        return "1:" + juce::String(r, 1);
-    } else {
-        float r = 1.0f + ((norm - 0.5f) * 2.0f) * 31.0f;
-        return juce::String(r, 1) + ":1";
-    }
-}
-
-// --- MAIN PROCESSOR EDITOR ---
+// --- BIA ER-1 EDITOR ---
 
 BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
-    : AudioProcessorEditor(&p),
-      audioProcessor(p),
+    : AudioProcessorEditor(&p), audioProcessor(p),
       carrierTrackingSelector(juce::Colour(0xff00d2ff)),
-      modTypeSelector(juce::Colour(0xffff7b00)),
-      driveTypeSelector(juce::Colour(0xffff3366)),
-      filterTypeSelector(juce::Colour(0xff00e676)),
-      ampEnvTypeSelector(juce::Colour(0xffab47bc))
+      modTypeSelector(juce::Colour(0xffff7043)),
+      pitchEnvTargetSelector(juce::Colour(0xffffab00)),
+      driveTypeSelector(juce::Colour(0xffff4081)),
+      mixerLimiterSelector(juce::Colour(0xff40c4ff)),
+      filterTypeSelector(juce::Colour(0xff7c4dff)),
+      ampLimiterSelector(juce::Colour(0xff00e5ff))
 {
     setLookAndFeel(&knobLookAndFeel);
 
-    // 1. Accent Colours for all 10 Blocks
-    const juce::Colour colCarrier   (0xff00d2ff); // Cyan
-    const juce::Colour colModulator (0xffff7b00); // Orange
-    const juce::Colour colDrive     (0xffff3366); // Crimson
-    const juce::Colour colNoise     (0xffb388ff); // Lavender
-    const juce::Colour colFilter    (0xff00e676); // Green
-    const juce::Colour colRingMod   (0xffffd600); // Yellow
-    const juce::Colour colGrit      (0xffff4081); // Pink
-    const juce::Colour colFreqShift (0xff00e5ff); // Teal
-    const juce::Colour colAmp       (0xffffab00); // Amber
-    const juce::Colour colAmpEnv    (0xffab47bc); // Purple
+    // Setup Header Audition Trigger Button
+    triggerButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff00d2ff));
+    triggerButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff0f1115));
+    triggerButton.onClick = [this]() {
+        audioProcessor.getEngine().trigger(1.0f);
+    };
+    addAndMakeVisible(triggerButton);
 
-    // 2. Setup All 10 Cards
-    cards.push_back(std::make_unique<ModuleCardComponent>("01  CARRIER", colCarrier));
-    cards.push_back(std::make_unique<ModuleCardComponent>("02  MODULATOR", colModulator));
-    cards.push_back(std::make_unique<ModuleCardComponent>("03  DRIVE", colDrive));
-    cards.push_back(std::make_unique<ModuleCardComponent>("04  NOISE TRANSIENT", colNoise));
-    cards.push_back(std::make_unique<ModuleCardComponent>("05  FILTER", colFilter));
-    cards.push_back(std::make_unique<ModuleCardComponent>("06  RING MOD", colRingMod));
-    cards.push_back(std::make_unique<ModuleCardComponent>("07  GRIT FX", colGrit));
-    cards.push_back(std::make_unique<ModuleCardComponent>("08  FREQ SHIFTER", colFreqShift));
-    cards.push_back(std::make_unique<ModuleCardComponent>("09  AMP", colAmp));
-    cards.push_back(std::make_unique<ModuleCardComponent>("10  AMP ENVELOPE", colAmpEnv));
-
-    for (auto& card : cards) addAndMakeVisible(card.get());
-
-    // 3. Setup Selectors and Items
-    carrierTrackingBox.addItemList({ "Fixed Freq", "Fixed Pitch", "MIDI Pitch", "Fixed Noise" }, 1);
-    modTypeBox.addItemList({ "Fixed Osc", "Follow Osc", "FM Ratio", "Sine x Noise",
-                             "Follow x Noise", "S&H Noise", "Fast Decay", "Slow Decay" }, 1);
-    driveTypeBox.addItemList({ "Off", "Saturation", "Clipper", "Wave Folder" }, 1);
-    filterTypeBox.addItemList({ "NoRez LPF", "NoRez BPF", "NoRez HPF", "NoRez Notch",
-                                "Rezzy LPF", "Rezzy BPF", "Rezzy HPF", "Rezzy Notch", "Comb", "APF Disperser" }, 1);
-    ampEnvTypeBox.addItemList({ "Fast Decay", "Slow Decay" }, 1);
-
-    setupBox(carrierTrackingBox);
-    setupBox(modTypeBox);
-    setupBox(driveTypeBox);
-    setupBox(filterTypeBox);
-    setupBox(ampEnvTypeBox);
-
-    carrierTrackingSelector.setItems({ "Fixed Freq", "Fixed Pitch", "MIDI Pitch", "Fixed Noise" }, 2);
-    modTypeSelector.setItems({ "Fixed Osc", "Follow Osc", "FM Ratio", "Sine x Noise",
-                               "Follow x Noise", "S&H Noise", "Fast Decay", "Slow Decay" }, 2);
-    driveTypeSelector.setItems({ "Off", "Saturation", "Clipper", "Wave Folder" }, 2);
-    filterTypeSelector.setItems({ "NoRez LPF", "NoRez BPF", "NoRez HPF", "NoRez Notch",
-                                  "Rezzy LPF", "Rezzy BPF", "Rezzy HPF", "Rezzy Notch", "Comb", "APF Disperser" }, 2);
-    ampEnvTypeSelector.setItems({ "Fast Decay", "Slow Decay" }, 2);
-
+    // 1. CARRIER CARD
+    auto cardCarrier = std::make_unique<ModuleCardComponent>("Carrier", juce::Colour(0xff00d2ff));
+    carrierTrackingSelector.setItems({ "Fixed Freq", "Fixed Pitch", "MIDI Pitch" }, 3);
     carrierTrackingSelector.onChange = [this](int idx) {
-        carrierTrackingBox.setSelectedItemIndex(idx, juce::sendNotificationSync);
+        carrierTrackingBox.setSelectedId(idx + 1, juce::sendNotification);
     };
+    setupBox(carrierTrackingBox);
+    setupKnob(carrierPitchSlider, juce::Colour(0xff00d2ff));
+    setupKnob(carrierShapeSlider, juce::Colour(0xff00d2ff));
+    setupKnob(carrierLevelSlider, juce::Colour(0xff00d2ff));
+
+    carrierPitchSlider.customFormatText = [this](double val) -> juce::String {
+        int track = carrierTrackingSelector.getSelectedIndex();
+        if (track == 0) {
+            float hz = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>(val));
+            return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
+        } else if (track == 1) {
+            int note = static_cast<int>(std::round(val * 127.0));
+            return getMidiNoteName(note);
+        } else {
+            int offset = static_cast<int>(std::round((val - 0.5) * 120.0));
+            return (offset >= 0 ? "+" : "") + juce::String(offset) + " st";
+        }
+    };
+    carrierPitchSlider.customParseText = [this](const juce::String& text) -> double {
+        int track = carrierTrackingSelector.getSelectedIndex();
+        double parsed = parseNumberSafe(text, carrierPitchSlider.getValue());
+        if (track == 0) {
+            double hz = std::clamp(parsed, 20.0, 20000.0);
+            return std::log(hz / 20.0) / std::log(20000.0 / 20.0);
+        } else if (track == 1) {
+            return std::clamp(parsed / 127.0, 0.0, 1.0);
+        } else {
+            return std::clamp(0.5 + parsed / 120.0, 0.0, 1.0);
+        }
+    };
+
+    carrierShapeSlider.customFormatText = [](double val) {
+        float f = static_cast<float>(val);
+        if (f <= 0.20f) return "Sine (" + juce::String(static_cast<int>(f * 500.0f)) + "%)";
+        if (f <= 0.40f) return "Tri (" + juce::String(static_cast<int>((f - 0.20f) * 500.0f)) + "%)";
+        if (f <= 0.60f) return "Saw (" + juce::String(static_cast<int>((f - 0.40f) * 500.0f)) + "%)";
+        return "PWM (" + juce::String(static_cast<int>((f - 0.60f) * 250.0f)) + "%)";
+    };
+    carrierShapeSlider.customParseText = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0);
+        return std::clamp(p / 100.0, 0.0, 1.0);
+    };
+
+    carrierLevelSlider.customFormatText = [](double val) {
+        float pct = (val <= 0.5) ? static_cast<float>(val * 200.0) : static_cast<float>(100.0 + (val - 0.5) * 600.0);
+        return juce::String(static_cast<int>(std::round(pct))) + "%";
+    };
+    carrierLevelSlider.customParseText = [](const juce::String& text) {
+        double pct = parseNumberSafe(text, 100.0);
+        return (pct <= 100.0) ? std::clamp(pct / 200.0, 0.0, 0.5) : std::clamp(0.5 + (pct - 100.0) / 600.0, 0.5, 1.0);
+    };
+
+    cardCarrier->setLedSelector(&carrierTrackingSelector);
+    cardCarrier->setKnob(0, "Pitch", &carrierPitchSlider);
+    cardCarrier->setKnob(1, "Shape", &carrierShapeSlider);
+    cardCarrier->setKnob(2, "Level", &carrierLevelSlider);
+    cards.push_back(std::move(cardCarrier));
+
+    // 2. MODULATOR CARD
+    auto cardMod = std::make_unique<ModuleCardComponent>("Modulator", juce::Colour(0xffff7043));
+    modTypeSelector.setItems({ "Fixed", "Follow", "FM Op", "Fix Sin*Nz", "Fol Sin*Nz", "FM Sin*Nz", "S&H Nz" }, 4);
     modTypeSelector.onChange = [this](int idx) {
-        modTypeBox.setSelectedItemIndex(idx, juce::sendNotificationSync);
+        modTypeBox.setSelectedId(idx + 1, juce::sendNotification);
     };
+    setupBox(modTypeBox);
+    setupKnob(modShapeSlider, juce::Colour(0xffff7043));
+    setupKnob(modDepthSlider, juce::Colour(0xffff7043), true); // Bipolar
+    setupKnob(modSpeedSlider, juce::Colour(0xffff7043));
+
+    modDepthSlider.customFormatText = [](double val) {
+        int pct = static_cast<int>(std::round((val - 0.5) * 400.0));
+        return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
+    };
+    modDepthSlider.customParseText = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0);
+        return std::clamp(0.5 + p / 400.0, 0.0, 1.0);
+    };
+
+    modSpeedSlider.customFormatText = [this](double val) -> juce::String {
+        int t = modTypeSelector.getSelectedIndex();
+        if (t == 0 || t == 3) {
+            float hz = 0.1f * std::pow(15000.0f / 0.1f, static_cast<float>(val));
+            return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
+        } else if (t == 1 || t == 4) {
+            int st = static_cast<int>(std::round((val - 0.5) * 128.0));
+            return (st >= 0 ? "+" : "") + juce::String(st) + " st";
+        } else if (t == 2 || t == 5) {
+            if (val <= 0.5) {
+                float denom = 32.0f - static_cast<float>(val * 2.0 * 31.0);
+                return "1:" + juce::String(denom, 1);
+            } else {
+                float num = 1.0f + static_cast<float>((val - 0.5) * 2.0 * 31.0);
+                return juce::String(num, 1) + ":1";
+            }
+        } else {
+            float hz = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(val));
+            return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
+        }
+    };
+    modSpeedSlider.customParseText = [this](const juce::String& text) -> double {
+        int t = modTypeSelector.getSelectedIndex();
+        double p = parseNumberSafe(text, 55.0);
+        if (t == 0 || t == 3) {
+            double hz = std::clamp(p, 0.1, 15000.0);
+            return std::log(hz / 0.1) / std::log(15000.0 / 0.1);
+        } else if (t == 1 || t == 4) {
+            return std::clamp(0.5 + p / 128.0, 0.0, 1.0);
+        } else {
+            double hz = std::clamp(p, 0.1, 20000.0);
+            return std::log(hz / 0.1) / std::log(20000.0 / 0.1);
+        }
+    };
+
+    cardMod->setLedSelector(&modTypeSelector);
+    cardMod->setKnob(0, "Shape", &modShapeSlider);
+    cardMod->setKnob(1, "Depth", &modDepthSlider);
+    cardMod->setKnob(2, "Speed", &modSpeedSlider);
+    cards.push_back(std::move(cardMod));
+
+    // 3. PITCH ENVELOPE CARD
+    auto cardPitchEnv = std::make_unique<ModuleCardComponent>("Pitch Env", juce::Colour(0xffffab00));
+    pitchEnvTargetSelector.setItems({ "Off", "Carrier", "Mod", "Both" }, 4);
+    pitchEnvTargetSelector.onChange = [this](int idx) {
+        pitchEnvTargetBox.setSelectedId(idx + 1, juce::sendNotification);
+    };
+    setupBox(pitchEnvTargetBox);
+    setupKnob(pitchEnvSlopeSlider, juce::Colour(0xffffab00));
+    setupKnob(pitchEnvDepthSlider, juce::Colour(0xffffab00), true); // Bipolar
+    setupKnob(pitchEnvDecaySlider, juce::Colour(0xffffab00));
+
+    pitchEnvSlopeSlider.customFormatText = [](double val) {
+        if (val < 0.33) return "Exp (" + juce::String(static_cast<int>(val * 300.0)) + "%)";
+        if (val < 0.67) return "Lin (" + juce::String(static_cast<int>((val - 0.33) * 300.0)) + "%)";
+        return "Log (" + juce::String(static_cast<int>((val - 0.67) * 300.0)) + "%)";
+    };
+    pitchEnvDepthSlider.customFormatText = [](double val) {
+        int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
+        return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
+    };
+    pitchEnvDepthSlider.customParseText = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0);
+        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
+    };
+    pitchEnvDecaySlider.customFormatText = [](double val) {
+        float sec = TbdAudio::warp5PointTime(static_cast<float>(val));
+        return (sec < 1.0f) ? juce::String(static_cast<int>(std::round(sec * 1000.0f))) + " ms" : juce::String(sec, 2) + " s";
+    };
+    pitchEnvDecaySlider.customParseText = [](const juce::String& text) {
+        double v = parseNumberSafe(text, 333.0);
+        double sec = (text.containsIgnoreCase("ms")) ? (v / 1000.0) : ((v > 60.0) ? (v / 1000.0) : v);
+        return TbdAudio::unwarp5PointTime(static_cast<float>(sec));
+    };
+
+    cardPitchEnv->setLedSelector(&pitchEnvTargetSelector);
+    cardPitchEnv->setKnob(0, "Slope", &pitchEnvSlopeSlider);
+    cardPitchEnv->setKnob(1, "Depth", &pitchEnvDepthSlider);
+    cardPitchEnv->setKnob(2, "Decay", &pitchEnvDecaySlider);
+    cards.push_back(std::move(cardPitchEnv));
+
+    // 4. DRIVE CARD
+    auto cardDrive = std::make_unique<ModuleCardComponent>("Drive", juce::Colour(0xffff4081));
+    driveTypeSelector.setItems({ "Off", "Saturation", "Wave Folder" }, 3);
     driveTypeSelector.onChange = [this](int idx) {
-        driveTypeBox.setSelectedItemIndex(idx, juce::sendNotificationSync);
+        driveTypeBox.setSelectedId(idx + 1, juce::sendNotification);
     };
+    setupBox(driveTypeBox);
+    setupKnob(driveAmountSlider, juce::Colour(0xffff4081));
+    setupKnob(driveBiasSlider, juce::Colour(0xffff4081), true); // Bipolar
+    setupKnob(driveFilterSlider, juce::Colour(0xffff4081), true); // Bipolar
+
+    driveAmountSlider.customFormatText = [this](double val) -> juce::String {
+        int t = driveTypeSelector.getSelectedIndex();
+        if (t == 2) {
+            return juce::String(val * 8.0, 1) + " folds";
+        }
+        float db = (val <= 0.5) ? static_cast<float>(-6.0 + val * 12.0) : static_cast<float>((val - 0.5) * 48.0);
+        return (db >= 0 ? "+" : "") + juce::String(db, 1) + " dB";
+    };
+    driveAmountSlider.customParseText = [this](const juce::String& text) -> double {
+        int t = driveTypeSelector.getSelectedIndex();
+        double p = parseNumberSafe(text, 0.0);
+        if (t == 2) return std::clamp(p / 8.0, 0.0, 1.0);
+        return (p <= 0.0) ? std::clamp((p + 6.0) / 12.0, 0.0, 0.5) : std::clamp(0.5 + p / 48.0, 0.5, 1.0);
+    };
+    driveBiasSlider.customFormatText = [](double val) {
+        float b = static_cast<float>((val - 0.5) * 2.0);
+        return (b >= 0 ? "+" : "") + juce::String(b, 2);
+    };
+    driveBiasSlider.customParseText = [](const juce::String& text) {
+        double b = parseNumberSafe(text, 0.0);
+        return std::clamp(0.5 + b * 0.5, 0.0, 1.0);
+    };
+    driveFilterSlider.customFormatText = [](double val) {
+        if (val >= 0.49 && val <= 0.51) return juce::String("Flat (50%)");
+        if (val < 0.49) {
+            float hz = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>(val / 0.49));
+            return "LP " + ((hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k" : juce::String(hz, 0));
+        }
+        float hz = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>((val - 0.51) / 0.49));
+        return "HP " + ((hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k" : juce::String(hz, 0));
+    };
+
+    cardDrive->setLedSelector(&driveTypeSelector);
+    cardDrive->setKnob(0, "Drive", &driveAmountSlider);
+    cardDrive->setKnob(1, "Bias", &driveBiasSlider);
+    cardDrive->setKnob(2, "Post-Filter", &driveFilterSlider);
+    cards.push_back(std::move(cardDrive));
+
+    // 5. NOISE TRANSIENT CARD (4 Knobs)
+    auto cardNoise = std::make_unique<ModuleCardComponent>("Noise Transient", juce::Colour(0xff00e676));
+    setupKnob(noiseShRateSlider, juce::Colour(0xff00e676));
+    setupKnob(noiseFilterSlider, juce::Colour(0xff00e676), true); // Bipolar
+    setupKnob(noiseLevelSlider, juce::Colour(0xff00e676));
+    setupKnob(noiseDecaySlider, juce::Colour(0xff00e676));
+
+    noiseShRateSlider.customFormatText = [](double val) {
+        float hz = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(val));
+        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
+    };
+    noiseShRateSlider.customParseText = [](const juce::String& text) {
+        double hz = std::clamp(parseNumberSafe(text, 20000.0), 0.1, 20000.0);
+        return std::log(hz / 0.1) / std::log(20000.0 / 0.1);
+    };
+    noiseFilterSlider.customFormatText = driveFilterSlider.customFormatText;
+    noiseLevelSlider.customFormatText = [](double val) {
+        return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
+    };
+    noiseLevelSlider.customParseText = [](const juce::String& text) {
+        return std::clamp(parseNumberSafe(text, 0.0) / 100.0, 0.0, 1.0);
+    };
+    noiseDecaySlider.customFormatText = [](double val) {
+        float sec = TbdAudio::warpNoiseDecayTime(static_cast<float>(val));
+        return (sec < 1.0f) ? juce::String(static_cast<int>(std::round(sec * 1000.0f))) + " ms" : juce::String(sec, 2) + " s";
+    };
+    noiseDecaySlider.customParseText = [](const juce::String& text) {
+        double v = parseNumberSafe(text, 100.0);
+        double sec = (text.containsIgnoreCase("ms")) ? (v / 1000.0) : ((v > 60.0) ? (v / 1000.0) : v);
+        return TbdAudio::unwarpNoiseDecayTime(static_cast<float>(sec));
+    };
+
+    cardNoise->setKnob(0, "S&H Rate", &noiseShRateSlider);
+    cardNoise->setKnob(1, "Filter", &noiseFilterSlider);
+    cardNoise->setKnob(2, "Level", &noiseLevelSlider);
+    cardNoise->setKnob(3, "Decay", &noiseDecaySlider);
+    cards.push_back(std::move(cardNoise));
+
+    // 6. MIXER CARD
+    auto cardMixer = std::make_unique<ModuleCardComponent>("Mixer", juce::Colour(0xff40c4ff));
+    mixerLimiterSelector.setItems({ "Off", "Limiter On" }, 2);
+    mixerLimiterSelector.onChange = [this](int idx) {
+        mixerLimiterBox.setSelectedId(idx + 1, juce::sendNotification);
+    };
+    setupBox(mixerLimiterBox);
+    setupKnob(mixerCarrierLevelSlider, juce::Colour(0xff40c4ff));
+    setupKnob(mixerNoiseLevelSlider, juce::Colour(0xff40c4ff));
+    setupKnob(mixerDriveSlider, juce::Colour(0xff40c4ff));
+
+    mixerCarrierLevelSlider.customFormatText = carrierLevelSlider.customFormatText;
+    mixerCarrierLevelSlider.customParseText = carrierLevelSlider.customParseText;
+    mixerNoiseLevelSlider.customFormatText = carrierLevelSlider.customFormatText;
+    mixerNoiseLevelSlider.customParseText = carrierLevelSlider.customParseText;
+    mixerDriveSlider.customFormatText = [](double val) {
+        float db = (val <= 0.5) ? static_cast<float>(-6.0 + val * 12.0) : static_cast<float>((val - 0.5) * 48.0);
+        return (db >= 0 ? "+" : "") + juce::String(db, 1) + " dB";
+    };
+    mixerDriveSlider.customParseText = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0);
+        return (p <= 0.0) ? std::clamp((p + 6.0) / 12.0, 0.0, 0.5) : std::clamp(0.5 + p / 48.0, 0.5, 1.0);
+    };
+
+    cardMixer->setLedSelector(&mixerLimiterSelector);
+    cardMixer->setKnob(0, "Carrier Lvl", &mixerCarrierLevelSlider);
+    cardMixer->setKnob(1, "Noise Lvl", &mixerNoiseLevelSlider);
+    cardMixer->setKnob(2, "Drive", &mixerDriveSlider);
+    cards.push_back(std::move(cardMixer));
+
+    // 7. FILTER CARD
+    auto cardFilter = std::make_unique<ModuleCardComponent>("Filter", juce::Colour(0xff7c4dff));
+    filterTypeSelector.setItems({ "Off", "LPF", "BPF", "HPF", "Notch", "Comb", "Disperser" }, 4);
     filterTypeSelector.onChange = [this](int idx) {
-        filterTypeBox.setSelectedItemIndex(idx, juce::sendNotificationSync);
+        filterTypeBox.setSelectedId(idx + 1, juce::sendNotification);
     };
-    ampEnvTypeSelector.onChange = [this](int idx) {
-        ampEnvTypeBox.setSelectedItemIndex(idx, juce::sendNotificationSync);
+    setupBox(filterTypeBox);
+    setupKnob(filterStyleSlider, juce::Colour(0xff7c4dff));
+    setupKnob(filterCutoffSlider, juce::Colour(0xff7c4dff));
+    setupKnob(filterResonanceSlider, juce::Colour(0xff7c4dff));
+
+    filterStyleSlider.customFormatText = [this](double val) -> juce::String {
+        int t = filterTypeSelector.getSelectedIndex();
+        if (t <= 4) {
+            float db = (val <= 0.5) ? static_cast<float>(-6.0 - val * 36.0) : static_cast<float>(-24.0 - (val - 0.5) * 144.0);
+            return juce::String(static_cast<int>(std::round(db))) + " dB/oct";
+        } else if (t == 5) {
+            float hz = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(val));
+            return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k Damp" : juce::String(hz, 0) + " Hz";
+        } else {
+            int stages = static_cast<int>(std::round(val * 32.0));
+            return juce::String(stages) + " APFs";
+        }
+    };
+    filterCutoffSlider.customFormatText = [](double val) {
+        float hz = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(val));
+        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
+    };
+    filterCutoffSlider.customParseText = [](const juce::String& text) {
+        double hz = std::clamp(parseNumberSafe(text, 20000.0), 0.1, 20000.0);
+        return std::log(hz / 0.1) / std::log(20000.0 / 0.1);
+    };
+    filterResonanceSlider.customFormatText = [this](double val) -> juce::String {
+        int t = filterTypeSelector.getSelectedIndex();
+        if (t == 5 || t == 6) {
+            int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
+            return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
+        }
+        return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
+    };
+    filterResonanceSlider.customParseText = [this](const juce::String& text) -> double {
+        int t = filterTypeSelector.getSelectedIndex();
+        double p = parseNumberSafe(text, 0.0);
+        if (t == 5 || t == 6) return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
+        return std::clamp(p / 100.0, 0.0, 1.0);
     };
 
-    // 4. Setup Sliders
-    setupKnob(carrierPitchSlider, colCarrier);
-    setupKnob(carrierShapeSlider, colCarrier);
-    setupKnob(carrierLevelSlider, colCarrier);
+    cardFilter->setLedSelector(&filterTypeSelector);
+    cardFilter->setKnob(0, "Style", &filterStyleSlider);
+    cardFilter->setKnob(1, "Cutoff", &filterCutoffSlider);
+    cardFilter->setKnob(2, "Resonance", &filterResonanceSlider);
+    cards.push_back(std::move(cardFilter));
 
-    setupKnob(modShapeSlider, colModulator);
-    setupKnob(modDepthSlider, colModulator);
-    setupKnob(modSpeedSlider, colModulator);
+    // 8. FILTER ENVELOPE CARD (4 Knobs)
+    auto cardFilterEnv = std::make_unique<ModuleCardComponent>("Filter Env", juce::Colour(0xffb388ff));
+    setupKnob(filterEnvSlopeSlider, juce::Colour(0xffb388ff));
+    setupKnob(filterEnvDepthSlider, juce::Colour(0xffb388ff), true); // Bipolar
+    setupKnob(filterEnvDecaySlider, juce::Colour(0xffb388ff));
+    setupKnob(filterEnvPreDriveSlider, juce::Colour(0xffb388ff));
 
-    setupKnob(driveAmountSlider, colDrive);
-    setupKnob(driveBiasSlider, colDrive);
-    setupKnob(driveFilterSlider, colDrive);
+    filterEnvSlopeSlider.customFormatText = pitchEnvSlopeSlider.customFormatText;
+    filterEnvDepthSlider.customFormatText = pitchEnvDepthSlider.customFormatText;
+    filterEnvDepthSlider.customParseText = pitchEnvDepthSlider.customParseText;
+    filterEnvDecaySlider.customFormatText = pitchEnvDecaySlider.customFormatText;
+    filterEnvDecaySlider.customParseText = pitchEnvDecaySlider.customParseText;
+    filterEnvPreDriveSlider.customFormatText = mixerDriveSlider.customFormatText;
+    filterEnvPreDriveSlider.customParseText = mixerDriveSlider.customParseText;
 
-    setupKnob(noiseShRateSlider, colNoise);
-    setupKnob(noiseFilterSlider, colNoise);
-    setupKnob(noiseLevelSlider, colNoise);
-    setupKnob(noiseDecaySlider, colNoise);
+    cardFilterEnv->setKnob(0, "Slope", &filterEnvSlopeSlider);
+    cardFilterEnv->setKnob(1, "Depth", &filterEnvDepthSlider);
+    cardFilterEnv->setKnob(2, "Decay", &filterEnvDecaySlider);
+    cardFilterEnv->setKnob(3, "Pre-Drive", &filterEnvPreDriveSlider);
+    cards.push_back(std::move(cardFilterEnv));
 
-    setupKnob(filterCutoffSlider, colFilter);
-    setupKnob(filterDepthSlider, colFilter);
-    setupKnob(filterDecaySlider, colFilter);
+    // 9. RINGMOD CARD (4 Knobs)
+    auto cardRingMod = std::make_unique<ModuleCardComponent>("RingMod", juce::Colour(0xffff5252));
+    setupKnob(ringModShapeSlider, juce::Colour(0xffff5252));
+    setupKnob(ringModRateSlider, juce::Colour(0xffff5252));
+    setupKnob(ringModAmountSlider, juce::Colour(0xffff5252));
+    setupKnob(ringModWidthSlider, juce::Colour(0xffff5252), true); // Bipolar
 
-    setupKnob(ringModShapeSlider, colRingMod);
-    setupKnob(ringModRateSlider, colRingMod);
-    setupKnob(ringModAmountSlider, colRingMod);
-    setupKnob(ringModWidthSlider, colRingMod);
+    ringModShapeSlider.customFormatText = carrierShapeSlider.customFormatText;
+    ringModRateSlider.customFormatText = [](double val) {
+        float hz = 0.1f * std::pow(15000.0f / 0.1f, static_cast<float>(val));
+        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
+    };
+    ringModRateSlider.customParseText = [](const juce::String& text) {
+        double hz = std::clamp(parseNumberSafe(text, 55.0), 0.1, 15000.0);
+        return std::log(hz / 0.1) / std::log(15000.0 / 0.1);
+    };
+    ringModAmountSlider.customFormatText = [](double val) {
+        return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
+    };
+    ringModAmountSlider.customParseText = [](const juce::String& text) {
+        return std::clamp(parseNumberSafe(text, 0.0) / 100.0, 0.0, 1.0);
+    };
+    ringModWidthSlider.customFormatText = [](double val) {
+        int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
+        return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
+    };
+    ringModWidthSlider.customParseText = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0);
+        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
+    };
 
-    setupKnob(gritBitsSlider, colGrit);
-    setupKnob(gritRateSlider, colGrit);
+    cardRingMod->setKnob(0, "Shape", &ringModShapeSlider);
+    cardRingMod->setKnob(1, "Rate", &ringModRateSlider);
+    cardRingMod->setKnob(2, "Amount", &ringModAmountSlider);
+    cardRingMod->setKnob(3, "Width", &ringModWidthSlider);
+    cards.push_back(std::move(cardRingMod));
 
-    setupKnob(freqShiftShiftSlider, colFreqShift);
-    setupKnob(freqShiftRangeSlider, colFreqShift);
-    setupKnob(freqShiftBlendSlider, colFreqShift);
-    setupKnob(freqShiftWidthSlider, colFreqShift);
+    // 10. FREQUENCY SHIFTER CARD (4 Knobs)
+    auto cardFreqShift = std::make_unique<ModuleCardComponent>("Freq Shifter", juce::Colour(0xff69f0ae));
+    setupKnob(freqShiftShiftSlider, juce::Colour(0xff69f0ae), true); // Bipolar
+    setupKnob(freqShiftRangeSlider, juce::Colour(0xff69f0ae));
+    setupKnob(freqShiftBlendSlider, juce::Colour(0xff69f0ae), true); // Bipolar
+    setupKnob(freqShiftWidthSlider, juce::Colour(0xff69f0ae), true); // Bipolar
 
-    setupKnob(ampPanSlider, colAmp);
-    setupKnob(ampLevelSlider, colAmp);
-    setupKnob(ampDriveSlider, colAmp);
-    setupKnob(ampLowBoostSlider, colAmp);
+    freqShiftRangeSlider.customFormatText = [](double val) {
+        float hz = static_cast<float>(val * 5000.0);
+        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
+    };
+    freqShiftRangeSlider.customParseText = [](const juce::String& text) {
+        double hz = std::clamp(parseNumberSafe(text, 3.0), 0.0, 5000.0);
+        return hz / 5000.0;
+    };
+    freqShiftShiftSlider.customFormatText = [this](double val) {
+        float r = static_cast<float>(freqShiftRangeSlider.getValue() * 5000.0);
+        float shiftHz = static_cast<float>((val - 0.5) * 2.0) * r;
+        return (shiftHz >= 0 ? "+" : "") + juce::String(shiftHz, 1) + " Hz";
+    };
+    freqShiftShiftSlider.customParseText = [this](const juce::String& text) {
+        double r = freqShiftRangeSlider.getValue() * 5000.0;
+        if (r < 0.001) return 0.5;
+        double s = parseNumberSafe(text, 0.0);
+        return std::clamp(0.5 + (s / r) * 0.5, 0.0, 1.0);
+    };
+    freqShiftBlendSlider.customFormatText = [](double val) {
+        int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
+        if (pct == 0) return juce::String("Dry (0%)");
+        if (pct < 0) return juce::String(pct) + "% (LSB)";
+        return "+" + juce::String(pct) + "% (USB)";
+    };
+    freqShiftBlendSlider.customParseText = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0);
+        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
+    };
+    freqShiftWidthSlider.customFormatText = ringModWidthSlider.customFormatText;
+    freqShiftWidthSlider.customParseText = ringModWidthSlider.customParseText;
 
-    setupKnob(ampEnvClapsSlider, colAmpEnv);
-    setupKnob(ampEnvShapeSlider, colAmpEnv);
-    setupKnob(ampEnvDecaySlider, colAmpEnv);
+    cardFreqShift->setKnob(0, "Shift", &freqShiftShiftSlider);
+    cardFreqShift->setKnob(1, "Range", &freqShiftRangeSlider);
+    cardFreqShift->setKnob(2, "Blend", &freqShiftBlendSlider);
+    cardFreqShift->setKnob(3, "Width", &freqShiftWidthSlider);
+    cards.push_back(std::move(cardFreqShift));
 
-    // 5. APVTS Attachments
+    // 11. GRIT FX CARD (4 Knobs)
+    auto cardGrit = std::make_unique<ModuleCardComponent>("Grit FX", juce::Colour(0xffffd740));
+    setupKnob(gritBitsSlider, juce::Colour(0xffffd740));
+    setupKnob(gritRateSlider, juce::Colour(0xffffd740));
+    setupKnob(gritLowBoostSlider, juce::Colour(0xffffd740));
+    setupKnob(gritHighBoostSlider, juce::Colour(0xffffd740));
+
+    gritBitsSlider.customFormatText = [](double val) {
+        return juce::String(1.0 + val * 15.0, 1) + " Bits";
+    };
+    gritBitsSlider.customParseText = [](const juce::String& text) {
+        double b = std::clamp(parseNumberSafe(text, 16.0), 1.0, 16.0);
+        return (b - 1.0) / 15.0;
+    };
+    gritRateSlider.customFormatText = [](double val) {
+        float hz = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>(val));
+        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 0) + " Hz";
+    };
+    gritRateSlider.customParseText = [](const juce::String& text) {
+        double hz = std::clamp(parseNumberSafe(text, 20000.0), 20.0, 20000.0);
+        return std::log(hz / 20.0) / std::log(20000.0 / 20.0);
+    };
+    gritLowBoostSlider.customFormatText = [](double val) {
+        return "+" + juce::String(val * 24.0, 1) + " dB";
+    };
+    gritLowBoostSlider.customParseText = [](const juce::String& text) {
+        return std::clamp(parseNumberSafe(text, 0.0) / 24.0, 0.0, 1.0);
+    };
+    gritHighBoostSlider.customFormatText = gritLowBoostSlider.customFormatText;
+    gritHighBoostSlider.customParseText = gritLowBoostSlider.customParseText;
+
+    cardGrit->setKnob(0, "Bit Crush", &gritBitsSlider);
+    cardGrit->setKnob(1, "Downsample", &gritRateSlider);
+    cardGrit->setKnob(2, "Low Boost", &gritLowBoostSlider);
+    cardGrit->setKnob(3, "High Boost", &gritHighBoostSlider);
+    cards.push_back(std::move(cardGrit));
+
+    // 12. AMP CARD
+    auto cardAmp = std::make_unique<ModuleCardComponent>("Amp", juce::Colour(0xff00e5ff));
+    ampLimiterSelector.setItems({ "Off", "Limiter On" }, 2);
+    ampLimiterSelector.onChange = [this](int idx) {
+        ampLimiterBox.setSelectedId(idx + 1, juce::sendNotification);
+    };
+    setupBox(ampLimiterBox);
+    setupKnob(ampPanSlider, juce::Colour(0xff00e5ff), true); // Bipolar
+    setupKnob(ampLevelSlider, juce::Colour(0xff00e5ff));
+    setupKnob(ampDriveSlider, juce::Colour(0xff00e5ff));
+
+    ampPanSlider.customFormatText = [](double val) {
+        int p = static_cast<int>(std::round((val - 0.5) * 200.0));
+        if (p == 0) return juce::String("Center");
+        if (p < 0) return juce::String(-p) + "% L";
+        return juce::String(p) + "% R";
+    };
+    ampPanSlider.customParseText = [](const juce::String& text) {
+        if (text.containsIgnoreCase("c")) return 0.5;
+        double p = parseNumberSafe(text, 0.0);
+        if (text.containsIgnoreCase("l")) p = -std::abs(p);
+        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
+    };
+    ampLevelSlider.customFormatText = carrierLevelSlider.customFormatText;
+    ampLevelSlider.customParseText = carrierLevelSlider.customParseText;
+    ampDriveSlider.customFormatText = mixerDriveSlider.customFormatText;
+    ampDriveSlider.customParseText = mixerDriveSlider.customParseText;
+
+    cardAmp->setLedSelector(&ampLimiterSelector);
+    cardAmp->setKnob(0, "Pan", &ampPanSlider);
+    cardAmp->setKnob(1, "Master Lvl", &ampLevelSlider);
+    cardAmp->setKnob(2, "Drive", &ampDriveSlider);
+    cards.push_back(std::move(cardAmp));
+
+    // 13. AMP ENVELOPE CARD (4 Knobs)
+    auto cardAmpEnv = std::make_unique<ModuleCardComponent>("Amp Env", juce::Colour(0xff64ffda));
+    setupKnob(ampEnvClapsSlider, juce::Colour(0xff64ffda));
+    setupKnob(ampEnvClapSpeedSlider, juce::Colour(0xff64ffda));
+    setupKnob(ampEnvSlopeSlider, juce::Colour(0xff64ffda));
+    setupKnob(ampEnvDecaySlider, juce::Colour(0xff64ffda));
+
+    ampEnvClapsSlider.customFormatText = [](double val) {
+        int c = static_cast<int>(std::round(val * 32.0));
+        return juce::String(c) + " claps";
+    };
+    ampEnvClapsSlider.customParseText = [](const juce::String& text) {
+        return std::clamp(parseNumberSafe(text, 0.0) / 32.0, 0.0, 1.0);
+    };
+    ampEnvClapSpeedSlider.customFormatText = [](double val) {
+        return juce::String(1.0 + val * 14.0, 1) + " ms";
+    };
+    ampEnvClapSpeedSlider.customParseText = [](const juce::String& text) {
+        double v = std::clamp(parseNumberSafe(text, 3.0), 1.0, 15.0);
+        return (v - 1.0) / 14.0;
+    };
+    ampEnvSlopeSlider.customFormatText = pitchEnvSlopeSlider.customFormatText;
+    ampEnvDecaySlider.customFormatText = pitchEnvDecaySlider.customFormatText;
+    ampEnvDecaySlider.customParseText = pitchEnvDecaySlider.customParseText;
+
+    cardAmpEnv->setKnob(0, "Claps", &ampEnvClapsSlider);
+    cardAmpEnv->setKnob(1, "Clap Speed", &ampEnvClapSpeedSlider);
+    cardAmpEnv->setKnob(2, "Slope", &ampEnvSlopeSlider);
+    cardAmpEnv->setKnob(3, "Decay", &ampEnvDecaySlider);
+    cards.push_back(std::move(cardAmpEnv));
+
+    // Add all 13 cards to editor
+    for (auto& c : cards) {
+        addAndMakeVisible(c.get());
+    }
+
+    // Attach all APVTS parameters
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "carrier_tracking", carrierTrackingBox));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier_pitch", carrierPitchSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier_shape", carrierShapeSlider));
@@ -834,6 +1081,11 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mod_shape", modShapeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mod_depth", modDepthSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mod_speed", modSpeedSlider));
+
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "pitchenv_target", pitchEnvTargetBox));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv_slope", pitchEnvSlopeSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv_depth", pitchEnvDepthSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv_decay", pitchEnvDecaySlider));
 
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "drive_type", driveTypeBox));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "drive_amount", driveAmountSlider));
@@ -845,119 +1097,48 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "noise_level", noiseLevelSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "noise_decay", noiseDecaySlider));
 
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_carrier_level", mixerCarrierLevelSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_noise_level", mixerNoiseLevelSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_drive", mixerDriveSlider));
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "mixer_limiter", mixerLimiterBox));
+
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter_type", filterTypeBox));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_style", filterStyleSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_cutoff", filterCutoffSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_depth", filterDepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_decay", filterDecaySlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_resonance", filterResonanceSlider));
+
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv_slope", filterEnvSlopeSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv_depth", filterEnvDepthSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv_decay", filterEnvDecaySlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv_predrive", filterEnvPreDriveSlider));
 
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ringmod_shape", ringModShapeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ringmod_rate", ringModRateSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ringmod_amount", ringModAmountSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ringmod_width", ringModWidthSlider));
 
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_bits", gritBitsSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_rate", gritRateSlider));
-
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "freqshift_shift", freqShiftShiftSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "freqshift_range", freqShiftRangeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "freqshift_blend", freqShiftBlendSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "freqshift_width", freqShiftWidthSlider));
 
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_bits", gritBitsSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_rate", gritRateSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_low_boost", gritLowBoostSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_high_boost", gritHighBoostSlider));
+
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_pan", ampPanSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_level", ampLevelSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_drive", ampDriveSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_low_boost", ampLowBoostSlider));
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "amp_limiter", ampLimiterBox));
 
-    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "amp_env_type", ampEnvTypeBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_env_claps", ampEnvClapsSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_env_shape", ampEnvShapeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_env_decay", ampEnvDecaySlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_claps", ampEnvClapsSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_clapspeed", ampEnvClapSpeedSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_slope", ampEnvSlopeSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_decay", ampEnvDecaySlider));
 
-    // 6. Assign Controls to Cards
-    // Card 0: Carrier
-    cards[0]->setLedSelector(&carrierTrackingSelector);
-    cards[0]->setKnob(0, "FREQUENCY", &carrierPitchSlider);
-    cards[0]->setKnob(1, "WAVEFORM", &carrierShapeSlider);
-    cards[0]->setKnob(2, "LEVEL", &carrierLevelSlider);
-
-    // Card 1: Modulator
-    cards[1]->setLedSelector(&modTypeSelector);
-    cards[1]->setKnob(0, "WAVEFORM", &modShapeSlider);
-    cards[1]->setKnob(1, "DEPTH", &modDepthSlider);
-    cards[1]->setKnob(2, "SPEED", &modSpeedSlider);
-
-    // Card 2: Drive
-    cards[2]->setLedSelector(&driveTypeSelector);
-    cards[2]->setKnob(0, "DRIVE", &driveAmountSlider);
-    cards[2]->setKnob(1, "BIAS", &driveBiasSlider);
-    cards[2]->setKnob(2, "DJ FILTER", &driveFilterSlider);
-
-    // Card 3: Noise Transient
-    cards[3]->setKnob(0, "S&H RATE", &noiseShRateSlider);
-    cards[3]->setKnob(1, "DJ FILTER", &noiseFilterSlider);
-    cards[3]->setKnob(2, "LEVEL", &noiseLevelSlider);
-    cards[3]->setKnob(3, "DECAY", &noiseDecaySlider);
-
-    // Card 4: Filter
-    cards[4]->setLedSelector(&filterTypeSelector);
-    cards[4]->setKnob(0, "CUTOFF", &filterCutoffSlider);
-    cards[4]->setKnob(1, "ENV DEPTH", &filterDepthSlider);
-    cards[4]->setKnob(2, "DECAY", &filterDecaySlider);
-
-    // Card 5: Ring Mod
-    cards[5]->setKnob(0, "WAVEFORM", &ringModShapeSlider);
-    cards[5]->setKnob(1, "RATE", &ringModRateSlider);
-    cards[5]->setKnob(2, "AMOUNT", &ringModAmountSlider);
-    cards[5]->setKnob(3, "WIDTH", &ringModWidthSlider);
-
-    // Card 6: Grit FX (2 active knobs)
-    cards[6]->setNumActiveKnobs(2);
-    cards[6]->setKnob(0, "BITS", &gritBitsSlider);
-    cards[6]->setKnob(1, "SAMPLE RATE", &gritRateSlider);
-
-    // Card 7: Freq Shifter
-    cards[7]->setKnob(0, "SHIFT", &freqShiftShiftSlider);
-    cards[7]->setKnob(1, "RANGE", &freqShiftRangeSlider);
-    cards[7]->setKnob(2, "BLEND", &freqShiftBlendSlider);
-    cards[7]->setKnob(3, "WIDTH", &freqShiftWidthSlider);
-
-    // Card 8: Amp
-    cards[8]->setKnob(0, "PAN", &ampPanSlider);
-    cards[8]->setKnob(1, "LEVEL", &ampLevelSlider);
-    cards[8]->setKnob(2, "DRIVE", &ampDriveSlider);
-    cards[8]->setKnob(3, "LOW BOOST", &ampLowBoostSlider);
-
-    // Card 9: Amp Env
-    cards[9]->setLedSelector(&ampEnvTypeSelector);
-    cards[9]->setKnob(0, "CLAPS", &ampEnvClapsSlider);
-    cards[9]->setKnob(1, "SLOPE", &ampEnvShapeSlider);
-    cards[9]->setKnob(2, "DECAY", &ampEnvDecaySlider);
-
-    // Header Trigger Button
-    triggerButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff222733));
-    triggerButton.setColour(juce::TextButton::textColourOnId, juce::Colours::white);
-    triggerButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff00d2ff));
-    triggerButton.onClick = [this] {
-        audioProcessor.getEngine().trigger(1.0f);
-    };
-    addAndMakeVisible(triggerButton);
-
-    carrierTrackingBox.onChange = [this] { updateDynamicControls(); };
-    modTypeBox.onChange         = [this] { updateDynamicControls(); };
-    driveTypeBox.onChange       = [this] { updateDynamicControls(); };
-    filterTypeBox.onChange      = [this] { updateDynamicControls(); };
-    ampEnvTypeBox.onChange      = [this] { updateDynamicControls(); };
-
-    // Initial setup
-    updateDynamicControls();
-
-    // 30 Hz timer for smooth scopes and state check
-    startTimerHz(30);
-
-    // 1280 x 720 single screen with no scrolling
-    setSize(1280, 720);
-    setResizable(true, true);
-    setResizeLimits(1000, 600, 2560, 1440);
+    setSize(1440, 920);
+    startTimerHz(30); // 30 FPS oscilloscope & GUI update
 }
 
 BiaEr1AudioProcessorEditor::~BiaEr1AudioProcessorEditor() {
@@ -965,683 +1146,132 @@ BiaEr1AudioProcessorEditor::~BiaEr1AudioProcessorEditor() {
     setLookAndFeel(nullptr);
 }
 
-void BiaEr1AudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour) {
+void BiaEr1AudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar) {
+    slider.setBipolar(isBipolar);
     slider.setColour(juce::Slider::rotarySliderFillColourId, trackColour);
+    slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff232733));
     slider.setRange(0.0, 1.0, 0.0005);
 }
 
 void BiaEr1AudioProcessorEditor::setupBox(juce::ComboBox& box) {
-    box.setJustificationType(juce::Justification::centred);
-}
-
-void BiaEr1AudioProcessorEditor::timerCallback() {
-    // 1. Pull real-time oscilloscope data for all 10 cards
-    float scopeBuffer[128];
-    for (int i = 0; i < 10; ++i) {
-        audioProcessor.getEngine().getScopeData(i, scopeBuffer, 128);
-        cards[i]->updateScope(scopeBuffer, 128);
-    }
-
-    // 2. Check for selector changes
-    int curCarrierTrack = carrierTrackingBox.getSelectedItemIndex();
-    int curModType = modTypeBox.getSelectedItemIndex();
-    int curDriveType = driveTypeBox.getSelectedItemIndex();
-    int curFilterType = filterTypeBox.getSelectedItemIndex();
-    int curAmpEnvType = ampEnvTypeBox.getSelectedItemIndex();
-
-    if (curCarrierTrack != lastCarrierTrack ||
-        curModType != lastModType ||
-        curDriveType != lastDriveType ||
-        curFilterType != lastFilterType ||
-        curAmpEnvType != lastAmpEnvType)
-    {
-        updateDynamicControls();
-    }
+    box.setVisible(false);
 }
 
 void BiaEr1AudioProcessorEditor::updateDynamicControls() {
-    lastCarrierTrack = carrierTrackingBox.getSelectedItemIndex();
-    lastModType      = modTypeBox.getSelectedItemIndex();
-    lastDriveType    = driveTypeBox.getSelectedItemIndex();
-    lastFilterType   = filterTypeBox.getSelectedItemIndex();
-    lastAmpEnvType   = ampEnvTypeBox.getSelectedItemIndex();
-
-    carrierTrackingSelector.setSelectedIndex(lastCarrierTrack, juce::dontSendNotification);
-    modTypeSelector.setSelectedIndex(lastModType, juce::dontSendNotification);
-    driveTypeSelector.setSelectedIndex(lastDriveType, juce::dontSendNotification);
-    filterTypeSelector.setSelectedIndex(lastFilterType, juce::dontSendNotification);
-    ampEnvTypeSelector.setSelectedIndex(lastAmpEnvType, juce::dontSendNotification);
-
-    // ==========================================
-    // 1. CARRIER
-    // ==========================================
-    if (lastCarrierTrack == 0) { // Fixed Freq: 20 Hz to 20 kHz
-        cards[0]->setKnobLabel(0, "FREQUENCY");
-        cards[0]->setKnobLabel(1, "WAVEFORM");
-        carrierPitchSlider.customFormatText = [](double v) {
-            float f = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>(v));
-            return formatHz(f);
-        };
-        carrierPitchSlider.customParseText = [](const juce::String& s) {
-            return parseHz(s, 20.0f, 20000.0f);
-        };
-        carrierShapeSlider.customFormatText = [](double v) {
-            return formatWaveform(static_cast<float>(v));
-        };
-        carrierShapeSlider.customParseText = [](const juce::String& s) {
-            auto t = s.trim().toLowerCase();
-            if (t.contains("sine")) return 0.0;
-            if (t.contains("tri")) return 0.25;
-            if (t.contains("saw")) return 0.40;
-            if (t.contains("sq")) return 0.50;
-            if (t.contains("pwm")) return 0.75;
-            return parsePercent(s, false);
-        };
-    } else if (lastCarrierTrack == 1) { // Fixed Pitch: MIDI note 0 to 127
-        cards[0]->setKnobLabel(0, "PITCH");
-        cards[0]->setKnobLabel(1, "WAVEFORM");
-        carrierPitchSlider.customFormatText = [](double v) {
-            int note = std::clamp(static_cast<int>(std::round(v * 127.0)), 0, 127);
-            return midiNoteName(note);
-        };
-        carrierPitchSlider.customParseText = [](const juce::String& s) {
-            return parseMidiNote(s);
-        };
-        carrierShapeSlider.customFormatText = [](double v) {
-            return formatWaveform(static_cast<float>(v));
-        };
-        carrierShapeSlider.customParseText = [](const juce::String& s) {
-            return parsePercent(s, false);
-        };
-    } else if (lastCarrierTrack == 2) { // MIDI Pitch: offset -60 to +60
-        cards[0]->setKnobLabel(0, "OFFSET");
-        cards[0]->setKnobLabel(1, "WAVEFORM");
-        carrierPitchSlider.customFormatText = [](double v) {
-            float st = std::round((static_cast<float>(v) - 0.5f) * 120.0f);
-            return formatSemitones(st);
-        };
-        carrierPitchSlider.customParseText = [](const juce::String& s) {
-            return parseSemitones(s, -60.0f, 60.0f);
-        };
-        carrierShapeSlider.customFormatText = [](double v) {
-            return formatWaveform(static_cast<float>(v));
-        };
-        carrierShapeSlider.customParseText = [](const juce::String& s) {
-            return parsePercent(s, false);
-        };
-    } else { // Fixed Noise: S&H Rate 0.1 Hz to 5 kHz & LPF 20 Hz to 20 kHz
-        cards[0]->setKnobLabel(0, "S&H RATE");
-        cards[0]->setKnobLabel(1, "NOISE LPF");
-        carrierPitchSlider.customFormatText = [](double v) {
-            float f = 0.1f * std::pow(5000.0f / 0.1f, static_cast<float>(v));
-            return formatHz(f);
-        };
-        carrierPitchSlider.customParseText = [](const juce::String& s) {
-            return parseHz(s, 0.1f, 5000.0f);
-        };
-        carrierShapeSlider.customFormatText = [](double v) {
-            float f = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>(v));
-            return formatHz(f);
-        };
-        carrierShapeSlider.customParseText = [](const juce::String& s) {
-            return parseHz(s, 20.0f, 20000.0f);
-        };
+    int curCarrierTrack = carrierTrackingBox.getSelectedItemIndex();
+    if (curCarrierTrack >= 0 && curCarrierTrack != lastCarrierTrack) {
+        carrierTrackingSelector.setSelectedIndex(curCarrierTrack, juce::dontSendNotification);
+        lastCarrierTrack = curCarrierTrack;
+        carrierPitchSlider.setBipolar(curCarrierTrack == 2);
+        carrierPitchSlider.updateText();
     }
 
-    carrierLevelSlider.customFormatText = [](double v) {
-        return formatLevel(static_cast<float>(v));
-    };
-    carrierLevelSlider.customParseText = [](const juce::String& s) {
-        return parseLevel(s);
-    };
-
-    // ==========================================
-    // 2. MODULATOR
-    // ==========================================
-    modDepthSlider.customFormatText = [](double v) {
-        return formatPercent(static_cast<float>(v), true);
-    };
-    modDepthSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, true);
-    };
-
-    if (lastModType <= 2) { // 0=Fixed, 1=Follow, 2=FM Ratio
-        cards[1]->setKnobLabel(0, "WAVEFORM");
-        modShapeSlider.customFormatText = [](double v) {
-            return formatWaveform(static_cast<float>(v));
-        };
-        modShapeSlider.customParseText = [](const juce::String& s) {
-            return parsePercent(s, false);
-        };
-
-        if (lastModType == 0) {
-            cards[1]->setKnobLabel(2, "SPEED");
-            modSpeedSlider.customFormatText = [](double v) {
-                float f = 0.1f * std::pow(5000.0f / 0.1f, static_cast<float>(v));
-                return formatHz(f);
-            };
-            modSpeedSlider.customParseText = [](const juce::String& s) {
-                return parseHz(s, 0.1f, 5000.0f);
-            };
-        } else if (lastModType == 1) {
-            cards[1]->setKnobLabel(2, "OFFSET");
-            modSpeedSlider.customFormatText = [](double v) {
-                float st = -64.0f + static_cast<float>(v) * 128.0f;
-                return formatSemitones(st);
-            };
-            modSpeedSlider.customParseText = [](const juce::String& s) {
-                return parseSemitones(s, -64.0f, 64.0f);
-            };
-        } else {
-            cards[1]->setKnobLabel(2, "FM RATIO");
-            modSpeedSlider.customFormatText = [](double v) {
-                return formatFmRatio(static_cast<float>(v));
-            };
-            modSpeedSlider.customParseText = [](const juce::String& s) {
-                return parsePercent(s, false);
-            };
-        }
-    } else if (lastModType == 3 || lastModType == 4) { // Sine x Noise
-        cards[1]->setKnobLabel(0, "NOISE RATE");
-        modShapeSlider.customFormatText = [](double v) {
-            float f = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(v));
-            return formatHz(f);
-        };
-        modShapeSlider.customParseText = [](const juce::String& s) {
-            return parseHz(s, 0.1f, 20000.0f);
-        };
-
-        if (lastModType == 3) {
-            cards[1]->setKnobLabel(2, "SINE SPEED");
-            modSpeedSlider.customFormatText = [](double v) {
-                float f = 0.1f * std::pow(5000.0f / 0.1f, static_cast<float>(v));
-                return formatHz(f);
-            };
-            modSpeedSlider.customParseText = [](const juce::String& s) {
-                return parseHz(s, 0.1f, 5000.0f);
-            };
-        } else {
-            cards[1]->setKnobLabel(2, "SINE OFFSET");
-            modSpeedSlider.customFormatText = [](double v) {
-                float st = -64.0f + static_cast<float>(v) * 128.0f;
-                return formatSemitones(st);
-            };
-            modSpeedSlider.customParseText = [](const juce::String& s) {
-                return parseSemitones(s, -64.0f, 64.0f);
-            };
-        }
-    } else if (lastModType == 5) { // S&H Noise
-        cards[1]->setKnobLabel(0, "S&H RATE");
-        cards[1]->setKnobLabel(2, "CLOCK SPEED");
-        modShapeSlider.customFormatText = [](double v) {
-            float f = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(v));
-            return formatHz(f);
-        };
-        modShapeSlider.customParseText = [](const juce::String& s) {
-            return parseHz(s, 0.1f, 20000.0f);
-        };
-        modSpeedSlider.customFormatText = [](double v) {
-            float f = 0.1f * std::pow(5000.0f / 0.1f, static_cast<float>(v));
-            return formatHz(f);
-        };
-        modSpeedSlider.customParseText = [](const juce::String& s) {
-            return parseHz(s, 0.1f, 5000.0f);
-        };
-    } else { // 6=Fast decay, 7=Slow decay
-        cards[1]->setKnobLabel(0, "SLOPE");
-        cards[1]->setKnobLabel(2, "DECAY TIME");
-        modShapeSlider.customFormatText = [](double v) {
-            return formatSlope(static_cast<float>(v));
-        };
-        modShapeSlider.customParseText = [](const juce::String& s) {
-            return parsePercent(s, false);
-        };
-
-        if (lastModType == 6) {
-            modSpeedSlider.customFormatText = [](double v) {
-                float sec = (v <= 0.5) ? (0.010f * std::pow(0.333f / 0.010f, static_cast<float>(v) * 2.0f))
-                                       : (0.333f * std::pow(5.0f / 0.333f, (static_cast<float>(v) - 0.5f) * 2.0f));
-                return formatMsOrS(sec);
-            };
-            modSpeedSlider.customParseText = [](const juce::String& s) {
-                return parseMsOrS(s, 0.010f, 0.333f, 5.0f);
-            };
-        } else {
-            modSpeedSlider.customFormatText = [](double v) {
-                float sec = (v <= 0.5) ? (0.100f * std::pow(5.0f / 0.100f, static_cast<float>(v) * 2.0f))
-                                       : (5.0f * std::pow(60.0f / 5.0f, (static_cast<float>(v) - 0.5f) * 2.0f));
-                return formatMsOrS(sec);
-            };
-            modSpeedSlider.customParseText = [](const juce::String& s) {
-                return parseMsOrS(s, 0.100f, 5.0f, 60.0f);
-            };
-        }
+    int curMod = modTypeBox.getSelectedItemIndex();
+    if (curMod >= 0 && curMod != lastModType) {
+        modTypeSelector.setSelectedIndex(curMod, juce::dontSendNotification);
+        lastModType = curMod;
+        modSpeedSlider.updateText();
     }
 
-    // ==========================================
-    // 3. DRIVE
-    // ==========================================
-    if (lastDriveType == 0) { // Off
-        driveAmountSlider.setEnabled(false);
-        driveBiasSlider.setEnabled(false);
-        driveFilterSlider.setEnabled(false);
-    } else {
-        driveAmountSlider.setEnabled(true);
-        driveBiasSlider.setEnabled(true);
-        driveFilterSlider.setEnabled(true);
+    int curPitchEnv = pitchEnvTargetBox.getSelectedItemIndex();
+    if (curPitchEnv >= 0 && curPitchEnv != lastPitchEnvTarget) {
+        pitchEnvTargetSelector.setSelectedIndex(curPitchEnv, juce::dontSendNotification);
+        lastPitchEnvTarget = curPitchEnv;
     }
 
-    if (lastDriveType == 1) { // Saturation: -6dB to 0dB to +24dB
-        cards[2]->setKnobLabel(0, "DRIVE");
-        driveAmountSlider.customFormatText = [](double v) {
-            float db = (v <= 0.5) ? (-6.0f + static_cast<float>(v) * 12.0f) : ((static_cast<float>(v) - 0.5f) * 48.0f);
-            return formatDb(db);
-        };
-        driveAmountSlider.customParseText = [](const juce::String& s) {
-            return parseDb(s, -6.0f, 0.0f, 24.0f);
-        };
-    } else if (lastDriveType == 2) { // Clipper: -96dB to 0dB
-        cards[2]->setKnobLabel(0, "THRESHOLD");
-        driveAmountSlider.customFormatText = [](double v) {
-            float db = -96.0f + static_cast<float>(v) * 96.0f;
-            return formatDb(db);
-        };
-        driveAmountSlider.customParseText = [](const juce::String& s) {
-            return parseDb(s, -96.0f, -48.0f, 0.0f);
-        };
-    } else { // Wavefolder: -96dB to 0dB
-        cards[2]->setKnobLabel(0, "FOLD GAIN");
-        driveAmountSlider.customFormatText = [](double v) {
-            float db = -96.0f + static_cast<float>(v) * 96.0f;
-            return formatDb(db);
-        };
-        driveAmountSlider.customParseText = [](const juce::String& s) {
-            return parseDb(s, -96.0f, -48.0f, 0.0f);
-        };
+    int curDrive = driveTypeBox.getSelectedItemIndex();
+    if (curDrive >= 0 && curDrive != lastDriveType) {
+        driveTypeSelector.setSelectedIndex(curDrive, juce::dontSendNotification);
+        lastDriveType = curDrive;
+        driveAmountSlider.updateText();
     }
 
-    driveBiasSlider.customFormatText = [](double v) {
-        float b = (static_cast<float>(v) - 0.5f) * 2.0f;
-        return (b > 0.0f ? "+" : "") + juce::String(b, 2);
-    };
-    driveBiasSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, true);
-    };
-
-    driveFilterSlider.customFormatText = [](double v) {
-        if (v >= 0.49 && v <= 0.51) return juce::String("Flat");
-        if (v < 0.49) {
-            float norm = static_cast<float>(v) / 0.49f;
-            float f = 20.0f * std::pow(20000.0f / 20.0f, norm);
-            return "LP " + formatHz(f);
-        } else {
-            float norm = (static_cast<float>(v) - 0.51f) / 0.49f;
-            float f = 20.0f * std::pow(20000.0f / 20.0f, norm);
-            return "HP " + formatHz(f);
-        }
-    };
-    driveFilterSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, false);
-    };
-
-    // ==========================================
-    // 4. NOISE TRANSIENT
-    // ==========================================
-    noiseShRateSlider.customFormatText = [](double v) {
-        float f = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(v));
-        return formatHz(f);
-    };
-    noiseShRateSlider.customParseText = [](const juce::String& s) {
-        return parseHz(s, 0.1f, 20000.0f);
-    };
-
-    noiseFilterSlider.customFormatText = [](double v) {
-        if (v >= 0.49 && v <= 0.51) return juce::String("Flat");
-        if (v < 0.49) {
-            float norm = static_cast<float>(v) / 0.49f;
-            float f = 20.0f * std::pow(20000.0f / 20.0f, norm);
-            return "LP " + formatHz(f);
-        } else {
-            float norm = (static_cast<float>(v) - 0.51f) / 0.49f;
-            float f = 20.0f * std::pow(20000.0f / 20.0f, norm);
-            return "HP " + formatHz(f);
-        }
-    };
-    noiseFilterSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, false);
-    };
-
-    noiseLevelSlider.customFormatText = [](double v) {
-        return formatPercent(static_cast<float>(v));
-    };
-    noiseLevelSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, false);
-    };
-
-    noiseDecaySlider.customFormatText = [](double v) {
-        float sec = (v <= 0.5) ? (0.010f * std::pow(0.333f / 0.010f, static_cast<float>(v) * 2.0f))
-                               : (0.333f * std::pow(5.0f / 0.333f, (static_cast<float>(v) - 0.5f) * 2.0f));
-        return formatMsOrS(sec);
-    };
-    noiseDecaySlider.customParseText = [](const juce::String& s) {
-        return parseMsOrS(s, 0.010f, 0.333f, 5.0f);
-    };
-
-    // ==========================================
-    // 5. FILTER
-    // ==========================================
-    filterCutoffSlider.customFormatText = [](double v) {
-        float f = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>(v));
-        return formatHz(f);
-    };
-    filterCutoffSlider.customParseText = [](const juce::String& s) {
-        return parseHz(s, 20.0f, 20000.0f);
-    };
-
-    if (lastFilterType <= 7) { // NoRez or Rezzy
-        cards[4]->setKnobLabel(1, "ENV DEPTH");
-        cards[4]->setKnobLabel(2, "DECAY");
-        filterDepthSlider.customFormatText = [](double v) {
-            return formatPercent(static_cast<float>(v), true);
-        };
-        filterDepthSlider.customParseText = [](const juce::String& s) {
-            return parsePercent(s, true);
-        };
-
-        if (lastFilterType <= 3) { // NoRez: 100ms to 5s to 60s
-            filterDecaySlider.customFormatText = [](double v) {
-                float sec = (v <= 0.5) ? (0.100f * std::pow(5.0f / 0.100f, static_cast<float>(v) * 2.0f))
-                                       : (5.0f * std::pow(60.0f / 5.0f, (static_cast<float>(v) - 0.5f) * 2.0f));
-                return formatMsOrS(sec);
-            };
-            filterDecaySlider.customParseText = [](const juce::String& s) {
-                return parseMsOrS(s, 0.100f, 5.0f, 60.0f);
-            };
-        } else { // Rezzy: 10ms to 333ms to 5s
-            filterDecaySlider.customFormatText = [](double v) {
-                float sec = (v <= 0.5) ? (0.010f * std::pow(0.333f / 0.010f, static_cast<float>(v) * 2.0f))
-                                       : (0.333f * std::pow(5.0f / 0.333f, (static_cast<float>(v) - 0.5f) * 2.0f));
-                return formatMsOrS(sec);
-            };
-            filterDecaySlider.customParseText = [](const juce::String& s) {
-                return parseMsOrS(s, 0.010f, 0.333f, 5.0f);
-            };
-        }
-    } else if (lastFilterType == 8) { // Comb
-        cards[4]->setKnobLabel(1, "RESONANCE");
-        cards[4]->setKnobLabel(2, "DAMPEN");
-        filterDepthSlider.customFormatText = [](double v) {
-            return formatPercent(static_cast<float>(v), true);
-        };
-        filterDepthSlider.customParseText = [](const juce::String& s) {
-            return parsePercent(s, true);
-        };
-        filterDecaySlider.customFormatText = [](double v) {
-            float f = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(v));
-            return formatHz(f);
-        };
-        filterDecaySlider.customParseText = [](const juce::String& s) {
-            return parseHz(s, 0.1f, 20000.0f);
-        };
-    } else { // APF Disperser
-        cards[4]->setKnobLabel(1, "RESONANCE");
-        cards[4]->setKnobLabel(2, "STAGES");
-        filterDepthSlider.customFormatText = [](double v) {
-            return formatPercent(static_cast<float>(v), true);
-        };
-        filterDepthSlider.customParseText = [](const juce::String& s) {
-            return parsePercent(s, true);
-        };
-        filterDecaySlider.customFormatText = [](double v) {
-            int stages = static_cast<int>(std::round(v * 32.0));
-            return juce::String(stages) + (stages == 1 ? " stage" : " stages");
-        };
-        filterDecaySlider.customParseText = [](const juce::String& s) {
-            int val = s.trim().getIntValue();
-            return std::clamp(static_cast<double>(val) / 32.0, 0.0, 1.0);
-        };
+    int curMixLim = mixerLimiterBox.getSelectedItemIndex();
+    if (curMixLim >= 0 && curMixLim != lastMixerLimiter) {
+        mixerLimiterSelector.setSelectedIndex(curMixLim, juce::dontSendNotification);
+        lastMixerLimiter = curMixLim;
     }
 
-    // ==========================================
-    // 6. RING MOD
-    // ==========================================
-    ringModShapeSlider.customFormatText = [](double v) {
-        return formatWaveform(static_cast<float>(v));
-    };
-    ringModShapeSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, false);
-    };
-
-    ringModRateSlider.customFormatText = [](double v) {
-        float f = 0.1f * std::pow(5000.0f / 0.1f, static_cast<float>(v));
-        return formatHz(f);
-    };
-    ringModRateSlider.customParseText = [](const juce::String& s) {
-        return parseHz(s, 0.1f, 5000.0f);
-    };
-
-    ringModAmountSlider.customFormatText = [](double v) {
-        return formatPercent(static_cast<float>(v));
-    };
-    ringModAmountSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, false);
-    };
-
-    ringModWidthSlider.customFormatText = [](double v) {
-        return formatPercent(static_cast<float>(v), true);
-    };
-    ringModWidthSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, true);
-    };
-
-    // ==========================================
-    // 7. GRIT FX
-    // ==========================================
-    gritBitsSlider.customFormatText = [](double v) {
-        float b = 1.0f + static_cast<float>(v) * 15.0f;
-        return juce::String(b, 1) + " bit";
-    };
-    gritBitsSlider.customParseText = [](const juce::String& s) {
-        auto t = s.trim().toLowerCase();
-        if (t.endsWith("bit")) t = t.upToFirstOccurrenceOf("bit", false, false);
-        double b = t.getDoubleValue();
-        return std::clamp((b - 1.0) / 15.0, 0.0, 1.0);
-    };
-
-    gritRateSlider.customFormatText = [](double v) {
-        float f = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>(v));
-        return formatHz(f);
-    };
-    gritRateSlider.customParseText = [](const juce::String& s) {
-        return parseHz(s, 20.0f, 20000.0f);
-    };
-
-    // ==========================================
-    // 8. FREQUENCY SHIFTER
-    // ==========================================
-    freqShiftRangeSlider.customFormatText = [](double v) {
-        if (!std::isfinite(v)) v = 0.0;
-        float f = static_cast<float>(v) * 5000.0f;
-        return formatHz(f);
-    };
-    freqShiftRangeSlider.customParseText = [](const juce::String& s) {
-        return parseHz(s, 0.0f, 5000.0f);
-    };
-
-    freqShiftShiftSlider.customFormatText = [this](double v) {
-        if (!std::isfinite(v)) v = 0.5;
-        float curRange = static_cast<float>(freqShiftRangeSlider.getValue()) * 5000.0f;
-        float shiftHz = (static_cast<float>(v) - 0.5f) * 2.0f * curRange;
-        return (shiftHz > 0.0f ? "+" : "") + formatHz(shiftHz);
-    };
-    freqShiftShiftSlider.customParseText = [this](const juce::String& s) {
-        float curRange = static_cast<float>(freqShiftRangeSlider.getValue()) * 5000.0f;
-        if (curRange < 0.1f) return 0.5;
-        auto t = s.trim().toLowerCase();
-        double mult = 1.0;
-        if (t.endsWith("khz") || t.endsWith("k")) {
-            mult = 1000.0;
-            t = t.upToFirstOccurrenceOf("k", false, false).trim();
-        } else if (t.endsWith("hz")) {
-            t = t.upToFirstOccurrenceOf("h", false, false).trim();
-        }
-        double val = t.getDoubleValue() * mult;
-        double norm = 0.5 + (val / (2.0 * curRange));
-        if (!std::isfinite(norm)) return 0.5;
-        return std::clamp(norm, 0.0, 1.0);
-    };
-
-    freqShiftBlendSlider.customFormatText = [](double v) {
-        if (v < 0.05) return juce::String("LSB 100%");
-        if (v > 0.95) return juce::String("USB 100%");
-        if (v >= 0.48 && v <= 0.52) return juce::String("Dry");
-        if (v < 0.48) {
-            float p = static_cast<float>(v) / 0.5f;
-            return juce::String(static_cast<int>(std::round((1.0f - p) * 100.0f))) + "% LSB";
-        } else {
-            float p = (static_cast<float>(v) - 0.5f) / 0.5f;
-            return juce::String(static_cast<int>(std::round(p * 100.0f))) + "% USB";
-        }
-    };
-    freqShiftBlendSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, true);
-    };
-
-    freqShiftWidthSlider.customFormatText = [](double v) {
-        return formatPercent(static_cast<float>(v), true);
-    };
-    freqShiftWidthSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, true);
-    };
-
-    // ==========================================
-    // 9. AMP
-    // ==========================================
-    ampPanSlider.customFormatText = [](double v) {
-        if (v >= 0.48 && v <= 0.52) return juce::String("Center");
-        if (v < 0.48) return juce::String(static_cast<int>(std::round((0.5 - v) * 200.0))) + "% L";
-        return juce::String(static_cast<int>(std::round((v - 0.5) * 200.0))) + "% R";
-    };
-    ampPanSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, true);
-    };
-
-    ampLevelSlider.customFormatText = [](double v) {
-        return formatLevel(static_cast<float>(v));
-    };
-    ampLevelSlider.customParseText = [](const juce::String& s) {
-        return parseLevel(s);
-    };
-
-    ampDriveSlider.customFormatText = [](double v) {
-        float db = (v <= 0.5) ? (-6.0f + static_cast<float>(v) * 12.0f) : ((static_cast<float>(v) - 0.5f) * 48.0f);
-        return formatDb(db);
-    };
-    ampDriveSlider.customParseText = [](const juce::String& s) {
-        return parseDb(s, -6.0f, 0.0f, 24.0f);
-    };
-
-    ampLowBoostSlider.customFormatText = [](double v) {
-        float db = static_cast<float>(v) * 24.0f;
-        return formatDb(db);
-    };
-    ampLowBoostSlider.customParseText = [](const juce::String& s) {
-        auto t = s.trim().toLowerCase();
-        if (t.endsWith("db")) t = t.upToFirstOccurrenceOf("db", false, false);
-        double val = t.getDoubleValue();
-        return std::clamp(val / 24.0, 0.0, 1.0);
-    };
-
-    // ==========================================
-    // 10. AMP ENVELOPE
-    // ==========================================
-    ampEnvClapsSlider.customFormatText = [](double v) {
-        int claps = 1 + static_cast<int>(std::round(v * 15.0));
-        return juce::String(claps) + (claps == 1 ? " clap" : " claps");
-    };
-    ampEnvClapsSlider.customParseText = [](const juce::String& s) {
-        int val = s.trim().getIntValue();
-        return std::clamp(static_cast<double>(val - 1) / 15.0, 0.0, 1.0);
-    };
-
-    ampEnvShapeSlider.customFormatText = [](double v) {
-        return formatSlope(static_cast<float>(v));
-    };
-    ampEnvShapeSlider.customParseText = [](const juce::String& s) {
-        return parsePercent(s, false);
-    };
-
-    if (lastAmpEnvType == 0) { // Fast time: 10 ms to 333 ms to 5 s
-        ampEnvDecaySlider.customFormatText = [](double v) {
-            float sec = (v <= 0.5) ? (0.010f * std::pow(0.333f / 0.010f, static_cast<float>(v) * 2.0f))
-                                   : (0.333f * std::pow(5.0f / 0.333f, (static_cast<float>(v) - 0.5f) * 2.0f));
-            return formatMsOrS(sec);
-        };
-        ampEnvDecaySlider.customParseText = [](const juce::String& s) {
-            return parseMsOrS(s, 0.010f, 0.333f, 5.0f);
-        };
-    } else { // Slow time: 100 ms to 5 s to 60 s
-        ampEnvDecaySlider.customFormatText = [](double v) {
-            float sec = (v <= 0.5) ? (0.100f * std::pow(5.0f / 0.100f, static_cast<float>(v) * 2.0f))
-                                   : (5.0f * std::pow(60.0f / 5.0f, (static_cast<float>(v) - 0.5f) * 2.0f));
-            return formatMsOrS(sec);
-        };
-        ampEnvDecaySlider.customParseText = [](const juce::String& s) {
-            return parseMsOrS(s, 0.100f, 5.0f, 60.0f);
-        };
+    int curFilter = filterTypeBox.getSelectedItemIndex();
+    if (curFilter >= 0 && curFilter != lastFilterType) {
+        filterTypeSelector.setSelectedIndex(curFilter, juce::dontSendNotification);
+        lastFilterType = curFilter;
+        filterResonanceSlider.setBipolar(curFilter == 5 || curFilter == 6);
+        filterStyleSlider.updateText();
+        filterResonanceSlider.updateText();
     }
 
-    // Force repaint of text boxes with newly updated formatters
-    repaint();
+    int curAmpLim = ampLimiterBox.getSelectedItemIndex();
+    if (curAmpLim >= 0 && curAmpLim != lastAmpLimiter) {
+        ampLimiterSelector.setSelectedIndex(curAmpLim, juce::dontSendNotification);
+        lastAmpLimiter = curAmpLim;
+    }
+}
+
+void BiaEr1AudioProcessorEditor::timerCallback() {
+    updateDynamicControls();
+
+    // Fetch and display synchronized oscilloscope buffers across all 13 modules
+    float scopeBuffer[128];
+    for (int b = 0; b < static_cast<int>(cards.size()); ++b) {
+        audioProcessor.getEngine().getScopeData(b, scopeBuffer, 128);
+        cards[b]->updateScope(scopeBuffer, 128);
+    }
 }
 
 void BiaEr1AudioProcessorEditor::paint(juce::Graphics& g) {
-    // Window background
-    g.fillAll(juce::Colour(0xff0f1116));
+    // Top-to-bottom subtle gradient
+    juce::ColourGradient bgGrad(juce::Colour(0xff12141a), 0, 0,
+                               juce::Colour(0xff0a0b0e), 0, static_cast<float>(getHeight()), false);
+    g.setGradientFill(bgGrad);
+    g.fillAll();
 
-    // Top Header Banner
-    auto headerBounds = juce::Rectangle<float>(0.0f, 0.0f, static_cast<float>(getWidth()), 44.0f);
-    juce::ColourGradient grad(juce::Colour(0xff181a24), 0.0f, 0.0f,
-                              juce::Colour(0xff11131a), 0.0f, 44.0f, false);
-    g.setGradientFill(grad);
-    g.fillRect(headerBounds);
+    // Header bar
+    g.setColour(juce::Colour(0xff171a22));
+    g.fillRect(0, 0, getWidth(), 40);
 
-    g.setColour(juce::Colour(0xff252936));
-    g.drawHorizontalLine(44, 0.0f, static_cast<float>(getWidth()));
+    g.setColour(juce::Colour(0xff222736));
+    g.drawHorizontalLine(40, 0.0f, static_cast<float>(getWidth()));
 
-    // Title & Subtitle
-    g.setColour(juce::Colours::white);
+    // Title branding
     g.setFont(juce::FontOptions(16.0f, juce::Font::bold));
-    g.drawText("BIA ER-1 DRUM VOICE", 16, 6, 260, 20, juce::Justification::centredLeft);
+    g.setColour(juce::Colours::white);
+    g.drawText("BIA ER-1", 16, 0, 100, 40, juce::Justification::centredLeft);
 
-    g.setColour(juce::Colour(0xff758296));
-    g.setFont(juce::FontOptions(10.5f));
-    g.drawText("10-Block Modular Drum Synthesizer | CTAG TBD Native Engine", 16, 24, 400, 16, juce::Justification::centredLeft);
+    g.setFont(juce::FontOptions(12.0f, juce::Font::plain));
+    g.setColour(juce::Colour(0xff6e7a90));
+    g.drawText("13-MODULE HARDWARE SYNTHESIS DRUM VOICE", 100, 0, 380, 40, juce::Justification::centredLeft);
 }
 
 void BiaEr1AudioProcessorEditor::resized() {
-    auto area = getLocalBounds();
+    triggerButton.setBounds(getWidth() - 148, 7, 134, 26);
 
-    // Top header
-    auto headerArea = area.removeFromTop(44).reduced(12, 6);
-    triggerButton.setBounds(headerArea.removeFromRight(120).reduced(0, 2));
+    int margin = 8;
+    int topOffset = 48;
+    int totalH = getHeight() - topOffset - margin;
+    int rowH = (totalH - 2 * margin) / 3;
 
-    area.reduce(8, 4);
+    // Row 1: 5 Cards (Carrier, Modulator, Pitch Env, Drive, Noise Transient)
+    int row1Y = topOffset;
+    int row1CardW = (getWidth() - 6 * margin) / 5;
+    for (int i = 0; i < 5 && i < static_cast<int>(cards.size()); ++i) {
+        int x = margin + i * (row1CardW + margin);
+        cards[i]->setBounds(x, row1Y, row1CardW, rowH);
+    }
 
-    // 10 cards in 5 columns x 2 rows
-    int numCols = 5;
-    int numRows = 2;
-    int cardW = area.getWidth() / numCols;
-    int cardH = area.getHeight() / numRows;
+    // Row 2: 4 Cards (Mixer, Filter, Filter Env, RingMod)
+    int row2Y = row1Y + rowH + margin;
+    int row2CardW = (getWidth() - 5 * margin) / 4;
+    for (int i = 0; i < 4 && (i + 5) < static_cast<int>(cards.size()); ++i) {
+        int x = margin + i * (row2CardW + margin);
+        cards[i + 5]->setBounds(x, row2Y, row2CardW, rowH);
+    }
 
-    for (int i = 0; i < 10; ++i) {
-        int col = i % numCols;
-        int row = i / numCols;
-        if (i < static_cast<int>(cards.size())) {
-            cards[i]->setBounds(juce::Rectangle<int>(
-                area.getX() + col * cardW,
-                area.getY() + row * cardH,
-                cardW, cardH).reduced(4));
-        }
+    // Row 3: 4 Cards (Freq Shifter, Grit FX, Amp, Amp Env)
+    int row3Y = row2Y + rowH + margin;
+    int row3CardW = (getWidth() - 5 * margin) / 4;
+    for (int i = 0; i < 4 && (i + 9) < static_cast<int>(cards.size()); ++i) {
+        int x = margin + i * (row3CardW + margin);
+        cards[i + 9]->setBounds(x, row3Y, row3CardW, rowH);
     }
 }

@@ -27,12 +27,15 @@ private:
     std::vector<float> points;
 };
 
-// Rotary knob with right-click hovering text box editor
+// Rotary knob with right-click hovering text box editor and bipolar arc support
 class RotaryKnobSlider : public juce::Slider {
 public:
     RotaryKnobSlider();
     void mouseDown(const juce::MouseEvent& e) override;
     void openHoveringEditor();
+
+    bool isBipolar = false;
+    void setBipolar(bool bipolar) { isBipolar = bipolar; repaint(); }
 
     std::function<juce::String(double)> customFormatText;
     std::function<double(const juce::String&)> customParseText;
@@ -69,7 +72,7 @@ private:
     juce::Rectangle<int> getItemBounds(int index) const;
 };
 
-// Card component representing one of the 10 blocks
+// Card component representing one of the 13 blocks
 class ModuleCardComponent : public juce::Component {
 public:
     ModuleCardComponent(const juce::String& title, juce::Colour accentColour);
@@ -112,7 +115,7 @@ private:
     // Header Trigger button for rapid auditioning
     juce::TextButton triggerButton { "AUDITION HIT" };
 
-    // 10 Module Cards
+    // 13 Module Cards
     std::vector<std::unique_ptr<ModuleCardComponent>> cards;
 
     // Block 1: Carrier
@@ -129,53 +132,75 @@ private:
     RotaryKnobSlider modDepthSlider;
     RotaryKnobSlider modSpeedSlider;
 
-    // Block 3: Drive
+    // Block 3: Pitch Envelope
+    juce::ComboBox pitchEnvTargetBox;
+    LedSelectorComponent pitchEnvTargetSelector;
+    RotaryKnobSlider pitchEnvSlopeSlider;
+    RotaryKnobSlider pitchEnvDepthSlider;
+    RotaryKnobSlider pitchEnvDecaySlider;
+
+    // Block 4: Drive
     juce::ComboBox driveTypeBox;
     LedSelectorComponent driveTypeSelector;
     RotaryKnobSlider driveAmountSlider;
     RotaryKnobSlider driveBiasSlider;
     RotaryKnobSlider driveFilterSlider;
 
-    // Block 4: Noise Transient
+    // Block 5: Noise Transient
     RotaryKnobSlider noiseShRateSlider;
     RotaryKnobSlider noiseFilterSlider;
     RotaryKnobSlider noiseLevelSlider;
     RotaryKnobSlider noiseDecaySlider;
 
-    // Block 5: Filter
+    // Block 6: Mixer
+    RotaryKnobSlider mixerCarrierLevelSlider;
+    RotaryKnobSlider mixerNoiseLevelSlider;
+    RotaryKnobSlider mixerDriveSlider;
+    juce::ComboBox mixerLimiterBox;
+    LedSelectorComponent mixerLimiterSelector;
+
+    // Block 7: Filter
     juce::ComboBox filterTypeBox;
     LedSelectorComponent filterTypeSelector;
+    RotaryKnobSlider filterStyleSlider;
     RotaryKnobSlider filterCutoffSlider;
-    RotaryKnobSlider filterDepthSlider;
-    RotaryKnobSlider filterDecaySlider;
+    RotaryKnobSlider filterResonanceSlider;
 
-    // Block 6: RingMod
+    // Block 8: Filter Envelope
+    RotaryKnobSlider filterEnvSlopeSlider;
+    RotaryKnobSlider filterEnvDepthSlider;
+    RotaryKnobSlider filterEnvDecaySlider;
+    RotaryKnobSlider filterEnvPreDriveSlider;
+
+    // Block 9: RingMod
     RotaryKnobSlider ringModShapeSlider;
     RotaryKnobSlider ringModRateSlider;
     RotaryKnobSlider ringModAmountSlider;
     RotaryKnobSlider ringModWidthSlider;
 
-    // Block 7: Grit FX
-    RotaryKnobSlider gritBitsSlider;
-    RotaryKnobSlider gritRateSlider;
-
-    // Block 8: Frequency Shifter
+    // Block 10: Frequency Shifter
     RotaryKnobSlider freqShiftShiftSlider;
     RotaryKnobSlider freqShiftRangeSlider;
     RotaryKnobSlider freqShiftBlendSlider;
     RotaryKnobSlider freqShiftWidthSlider;
 
-    // Block 9: Amp
+    // Block 11: Grit FX
+    RotaryKnobSlider gritBitsSlider;
+    RotaryKnobSlider gritRateSlider;
+    RotaryKnobSlider gritLowBoostSlider;
+    RotaryKnobSlider gritHighBoostSlider;
+
+    // Block 12: Amp
     RotaryKnobSlider ampPanSlider;
     RotaryKnobSlider ampLevelSlider;
     RotaryKnobSlider ampDriveSlider;
-    RotaryKnobSlider ampLowBoostSlider;
+    juce::ComboBox ampLimiterBox;
+    LedSelectorComponent ampLimiterSelector;
 
-    // Block 10: Amp Envelope
-    juce::ComboBox ampEnvTypeBox;
-    LedSelectorComponent ampEnvTypeSelector;
+    // Block 13: Amp Envelope
     RotaryKnobSlider ampEnvClapsSlider;
-    RotaryKnobSlider ampEnvShapeSlider;
+    RotaryKnobSlider ampEnvClapSpeedSlider;
+    RotaryKnobSlider ampEnvSlopeSlider;
     RotaryKnobSlider ampEnvDecaySlider;
 
     // APVTS Attachments
@@ -185,14 +210,16 @@ private:
     std::vector<std::unique_ptr<SliderAttachment>> sliderAttachments;
     std::vector<std::unique_ptr<ComboBoxAttachment>> boxAttachments;
 
-    void setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour);
+    void setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar = false);
     void setupBox(juce::ComboBox& box);
 
     int lastCarrierTrack = -1;
     int lastModType = -1;
+    int lastPitchEnvTarget = -1;
     int lastDriveType = -1;
+    int lastMixerLimiter = -1;
     int lastFilterType = -1;
-    int lastAmpEnvType = -1;
+    int lastAmpLimiter = -1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BiaEr1AudioProcessorEditor)
 };

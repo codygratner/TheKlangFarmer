@@ -44,52 +44,82 @@ private:
     TbdAudio::ModularDrumEngine engine;
 
     // Direct parameter pointers for fast, thread-safe access
+    // 1. Carrier
     juce::AudioParameterChoice* carrierTrackingParam = nullptr;
     juce::AudioParameterFloat*  carrierPitchParam    = nullptr;
     juce::AudioParameterFloat*  carrierShapeParam    = nullptr;
     juce::AudioParameterFloat*  carrierLevelParam    = nullptr;
 
+    // 2. Modulator
     juce::AudioParameterChoice* modTypeParam         = nullptr;
     juce::AudioParameterFloat*  modShapeParam        = nullptr;
     juce::AudioParameterFloat*  modDepthParam        = nullptr;
     juce::AudioParameterFloat*  modSpeedParam        = nullptr;
 
+    // 3. Pitch Envelope
+    juce::AudioParameterChoice* pitchEnvTargetParam  = nullptr;
+    juce::AudioParameterFloat*  pitchEnvSlopeParam   = nullptr;
+    juce::AudioParameterFloat*  pitchEnvDepthParam   = nullptr;
+    juce::AudioParameterFloat*  pitchEnvDecayParam   = nullptr;
+
+    // 4. Drive
     juce::AudioParameterChoice* driveTypeParam       = nullptr;
     juce::AudioParameterFloat*  driveAmountParam     = nullptr;
     juce::AudioParameterFloat*  driveBiasParam       = nullptr;
     juce::AudioParameterFloat*  driveFilterParam     = nullptr;
 
+    // 5. Noise Transient
     juce::AudioParameterFloat*  noiseShRateParam     = nullptr;
     juce::AudioParameterFloat*  noiseFilterParam     = nullptr;
     juce::AudioParameterFloat*  noiseLevelParam      = nullptr;
     juce::AudioParameterFloat*  noiseDecayParam      = nullptr;
 
-    juce::AudioParameterChoice* filterTypeParam      = nullptr;
-    juce::AudioParameterFloat*  filterCutoffParam    = nullptr;
-    juce::AudioParameterFloat*  filterDepthParam     = nullptr;
-    juce::AudioParameterFloat*  filterDecayParam     = nullptr;
+    // 6. Mixer
+    juce::AudioParameterFloat*  mixerCarrierLevelParam = nullptr;
+    juce::AudioParameterFloat*  mixerNoiseLevelParam   = nullptr;
+    juce::AudioParameterFloat*  mixerDriveParam        = nullptr;
+    juce::AudioParameterChoice* mixerLimiterParam      = nullptr;
 
+    // 7. Filter
+    juce::AudioParameterChoice* filterTypeParam      = nullptr;
+    juce::AudioParameterFloat*  filterStyleParam     = nullptr;
+    juce::AudioParameterFloat*  filterCutoffParam    = nullptr;
+    juce::AudioParameterFloat*  filterResonanceParam = nullptr;
+
+    // 8. Filter Envelope
+    juce::AudioParameterFloat*  filterEnvSlopeParam    = nullptr;
+    juce::AudioParameterFloat*  filterEnvDepthParam    = nullptr;
+    juce::AudioParameterFloat*  filterEnvDecayParam    = nullptr;
+    juce::AudioParameterFloat*  filterEnvPreDriveParam = nullptr;
+
+    // 9. RingMod
     juce::AudioParameterFloat*  ringModShapeParam    = nullptr;
     juce::AudioParameterFloat*  ringModRateParam     = nullptr;
     juce::AudioParameterFloat*  ringModAmountParam   = nullptr;
     juce::AudioParameterFloat*  ringModWidthParam    = nullptr;
 
-    juce::AudioParameterFloat*  gritBitsParam        = nullptr;
-    juce::AudioParameterFloat*  gritRateParam        = nullptr;
-
+    // 10. Frequency Shifter
     juce::AudioParameterFloat*  freqShiftShiftParam  = nullptr;
     juce::AudioParameterFloat*  freqShiftRangeParam  = nullptr;
     juce::AudioParameterFloat*  freqShiftBlendParam  = nullptr;
     juce::AudioParameterFloat*  freqShiftWidthParam  = nullptr;
 
+    // 11. Grit FX
+    juce::AudioParameterFloat*  gritBitsParam        = nullptr;
+    juce::AudioParameterFloat*  gritRateParam        = nullptr;
+    juce::AudioParameterFloat*  gritLowBoostParam    = nullptr;
+    juce::AudioParameterFloat*  gritHighBoostParam   = nullptr;
+
+    // 12. Amp
     juce::AudioParameterFloat*  ampPanParam          = nullptr;
     juce::AudioParameterFloat*  ampLevelParam        = nullptr;
     juce::AudioParameterFloat*  ampDriveParam        = nullptr;
-    juce::AudioParameterFloat*  ampLowBoostParam     = nullptr;
+    juce::AudioParameterChoice* ampLimiterParam      = nullptr;
 
-    juce::AudioParameterChoice* ampEnvTypeParam      = nullptr;
+    // 13. Amp Envelope
     juce::AudioParameterFloat*  ampEnvClapsParam     = nullptr;
-    juce::AudioParameterFloat*  ampEnvShapeParam     = nullptr;
+    juce::AudioParameterFloat*  ampEnvClapSpeedParam = nullptr;
+    juce::AudioParameterFloat*  ampEnvSlopeParam     = nullptr;
     juce::AudioParameterFloat*  ampEnvDecayParam     = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BiaEr1AudioProcessor)

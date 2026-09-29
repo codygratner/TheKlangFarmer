@@ -21,6 +21,8 @@ struct BlockContext {
 
     // Inter-block modulation buffers
     std::vector<float> modSignal;
+    std::vector<float> pitchEnvSignal;
+    std::vector<float> filterEnvSignal;
     std::vector<float> ampEnvSignal;
 };
 

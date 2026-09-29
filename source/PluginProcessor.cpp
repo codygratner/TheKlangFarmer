@@ -8,53 +8,83 @@ BiaEr1AudioProcessor::BiaEr1AudioProcessor()
       apvts(*this, nullptr, "Parameters", createParameterLayout())
 {
     // Retrieve direct raw parameter pointers
+    // 1. Carrier
     carrierTrackingParam = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("carrier_tracking"));
     carrierPitchParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("carrier_pitch"));
     carrierShapeParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("carrier_shape"));
     carrierLevelParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("carrier_level"));
 
+    // 2. Modulator
     modTypeParam         = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("mod_type"));
     modShapeParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("mod_shape"));
     modDepthParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("mod_depth"));
     modSpeedParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("mod_speed"));
 
+    // 3. Pitch Envelope
+    pitchEnvTargetParam  = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("pitchenv_target"));
+    pitchEnvSlopeParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("pitchenv_slope"));
+    pitchEnvDepthParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("pitchenv_depth"));
+    pitchEnvDecayParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("pitchenv_decay"));
+
+    // 4. Drive
     driveTypeParam       = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("drive_type"));
     driveAmountParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("drive_amount"));
     driveBiasParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("drive_bias"));
     driveFilterParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("drive_filter"));
 
+    // 5. Noise Transient
     noiseShRateParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("noise_sh_rate"));
     noiseFilterParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("noise_filter"));
     noiseLevelParam      = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("noise_level"));
     noiseDecayParam      = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("noise_decay"));
 
-    filterTypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter_type"));
-    filterCutoffParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_cutoff"));
-    filterDepthParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_depth"));
-    filterDecayParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_decay"));
+    // 6. Mixer
+    mixerCarrierLevelParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("mixer_carrier_level"));
+    mixerNoiseLevelParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("mixer_noise_level"));
+    mixerDriveParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("mixer_drive"));
+    mixerLimiterParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("mixer_limiter"));
 
+    // 7. Filter
+    filterTypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter_type"));
+    filterStyleParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_style"));
+    filterCutoffParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_cutoff"));
+    filterResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_resonance"));
+
+    // 8. Filter Envelope
+    filterEnvSlopeParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv_slope"));
+    filterEnvDepthParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv_depth"));
+    filterEnvDecayParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv_decay"));
+    filterEnvPreDriveParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv_predrive"));
+
+    // 9. RingMod
     ringModShapeParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ringmod_shape"));
     ringModRateParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ringmod_rate"));
     ringModAmountParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ringmod_amount"));
     ringModWidthParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ringmod_width"));
 
-    gritBitsParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_bits"));
-    gritRateParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_rate"));
-
+    // 10. Frequency Shifter
     freqShiftShiftParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("freqshift_shift"));
     freqShiftRangeParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("freqshift_range"));
     freqShiftBlendParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("freqshift_blend"));
     freqShiftWidthParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("freqshift_width"));
 
+    // 11. Grit FX
+    gritBitsParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_bits"));
+    gritRateParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_rate"));
+    gritLowBoostParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_low_boost"));
+    gritHighBoostParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_high_boost"));
+
+    // 12. Amp
     ampPanParam          = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_pan"));
     ampLevelParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_level"));
     ampDriveParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_drive"));
-    ampLowBoostParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_low_boost"));
+    ampLimiterParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("amp_limiter"));
 
-    ampEnvTypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("amp_env_type"));
-    ampEnvClapsParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_env_claps"));
-    ampEnvShapeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_env_shape"));
-    ampEnvDecayParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_env_decay"));
+    // 13. Amp Envelope
+    ampEnvClapsParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_claps"));
+    ampEnvClapSpeedParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_clapspeed"));
+    ampEnvSlopeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_slope"));
+    ampEnvDecayParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_decay"));
 }
 
 void BiaEr1AudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
@@ -88,53 +118,82 @@ void BiaEr1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
         return p ? p->range.convertTo0to1(p->get()) : 0.0f;
     };
 
-    // Update block parameters using normalized values [0.0, 1.0]
-    if (carrierTrackingParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER, 0, static_cast<float>(carrierTrackingParam->getIndex()) / 3.0f);
+    // 1. Carrier
+    if (carrierTrackingParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER, 0, static_cast<float>(carrierTrackingParam->getIndex()) / 2.0f);
     if (carrierPitchParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER, 1, getNorm(carrierPitchParam));
     if (carrierShapeParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER, 2, getNorm(carrierShapeParam));
     if (carrierLevelParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER, 3, getNorm(carrierLevelParam));
 
-    if (modTypeParam)         engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODULATOR, 0, static_cast<float>(modTypeParam->getIndex()) / 7.0f);
+    // 2. Modulator
+    if (modTypeParam)         engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODULATOR, 0, static_cast<float>(modTypeParam->getIndex()) / 6.0f);
     if (modShapeParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODULATOR, 1, getNorm(modShapeParam));
     if (modDepthParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODULATOR, 2, getNorm(modDepthParam));
     if (modSpeedParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODULATOR, 3, getNorm(modSpeedParam));
 
-    if (driveTypeParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 0, static_cast<float>(driveTypeParam->getIndex()) / 3.0f);
+    // 3. Pitch Envelope
+    if (pitchEnvTargetParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 0, static_cast<float>(pitchEnvTargetParam->getIndex()) / 3.0f);
+    if (pitchEnvSlopeParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 1, getNorm(pitchEnvSlopeParam));
+    if (pitchEnvDepthParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 2, getNorm(pitchEnvDepthParam));
+    if (pitchEnvDecayParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 3, getNorm(pitchEnvDecayParam));
+
+    // 4. Drive
+    if (driveTypeParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 0, static_cast<float>(driveTypeParam->getIndex()) / 2.0f);
     if (driveAmountParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 1, getNorm(driveAmountParam));
     if (driveBiasParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 2, getNorm(driveBiasParam));
     if (driveFilterParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 3, getNorm(driveFilterParam));
 
+    // 5. Noise Transient
     if (noiseShRateParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_NOISE, 0, getNorm(noiseShRateParam));
     if (noiseFilterParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_NOISE, 1, getNorm(noiseFilterParam));
     if (noiseLevelParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_NOISE, 2, getNorm(noiseLevelParam));
     if (noiseDecayParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_NOISE, 3, getNorm(noiseDecayParam));
 
-    if (filterTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 0, static_cast<float>(filterTypeParam->getIndex()) / 9.0f);
-    if (filterCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 1, getNorm(filterCutoffParam));
-    if (filterDepthParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 2, getNorm(filterDepthParam));
-    if (filterDecayParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 3, getNorm(filterDecayParam));
+    // 6. Mixer
+    if (mixerCarrierLevelParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 0, getNorm(mixerCarrierLevelParam));
+    if (mixerNoiseLevelParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 1, getNorm(mixerNoiseLevelParam));
+    if (mixerDriveParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 2, getNorm(mixerDriveParam));
+    if (mixerLimiterParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 3, static_cast<float>(mixerLimiterParam->getIndex()));
 
+    // 7. Filter
+    if (filterTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 0, static_cast<float>(filterTypeParam->getIndex()) / 6.0f);
+    if (filterStyleParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 1, getNorm(filterStyleParam));
+    if (filterCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 2, getNorm(filterCutoffParam));
+    if (filterResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 3, getNorm(filterResonanceParam));
+
+    // 8. Filter Envelope
+    if (filterEnvSlopeParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV, 0, getNorm(filterEnvSlopeParam));
+    if (filterEnvDepthParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV, 1, getNorm(filterEnvDepthParam));
+    if (filterEnvDecayParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV, 2, getNorm(filterEnvDecayParam));
+    if (filterEnvPreDriveParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV, 3, getNorm(filterEnvPreDriveParam));
+
+    // 9. RingMod
     if (ringModShapeParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_RINGMOD, 0, getNorm(ringModShapeParam));
     if (ringModRateParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_RINGMOD, 1, getNorm(ringModRateParam));
     if (ringModAmountParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_RINGMOD, 2, getNorm(ringModAmountParam));
     if (ringModWidthParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_RINGMOD, 3, getNorm(ringModWidthParam));
 
-    if (gritBitsParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 0, getNorm(gritBitsParam));
-    if (gritRateParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 1, getNorm(gritRateParam));
-
+    // 10. Frequency Shifter
     if (freqShiftShiftParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 0, getNorm(freqShiftShiftParam));
     if (freqShiftRangeParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 1, getNorm(freqShiftRangeParam));
     if (freqShiftBlendParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 2, getNorm(freqShiftBlendParam));
     if (freqShiftWidthParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 3, getNorm(freqShiftWidthParam));
 
+    // 11. Grit FX
+    if (gritBitsParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 0, getNorm(gritBitsParam));
+    if (gritRateParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 1, getNorm(gritRateParam));
+    if (gritLowBoostParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 2, getNorm(gritLowBoostParam));
+    if (gritHighBoostParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 3, getNorm(gritHighBoostParam));
+
+    // 12. Amp
     if (ampPanParam)          engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMP, 0, getNorm(ampPanParam));
     if (ampLevelParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMP, 1, getNorm(ampLevelParam));
     if (ampDriveParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMP, 2, getNorm(ampDriveParam));
-    if (ampLowBoostParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMP, 3, getNorm(ampLowBoostParam));
+    if (ampLimiterParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMP, 3, static_cast<float>(ampLimiterParam->getIndex()));
 
-    if (ampEnvTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 0, static_cast<float>(ampEnvTypeParam->getIndex()));
-    if (ampEnvClapsParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 1, getNorm(ampEnvClapsParam));
-    if (ampEnvShapeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 2, getNorm(ampEnvShapeParam));
+    // 13. Amp Envelope
+    if (ampEnvClapsParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 0, getNorm(ampEnvClapsParam));
+    if (ampEnvClapSpeedParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 1, getNorm(ampEnvClapSpeedParam));
+    if (ampEnvSlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 2, getNorm(ampEnvSlopeParam));
     if (ampEnvDecayParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 3, getNorm(ampEnvDecayParam));
 
     int numSamples = buffer.getNumSamples();
@@ -215,72 +274,95 @@ juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::create
     // --- 1. CARRIER ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("carrier_tracking", 1), "Carrier: Tracking",
-        juce::StringArray{ "Fixed Freq", "Fixed Pitch", "MIDI Pitch", "Fixed Noise" }, 0));
-    layout.add(makeFloatParam("carrier_pitch", "Carrier: Pitch / Freq", 0.173f)); // ~65 Hz
-    layout.add(makeFloatParam("carrier_shape", "Carrier: Shape", 0.0f));         // Sine
+        juce::StringArray{ "Fixed Freq", "Fixed Pitch", "MIDI Pitch" }, 2)); // default: MIDI Pitch
+    layout.add(makeFloatParam("carrier_pitch", "Carrier: Pitch / Freq", 0.5f));
+    layout.add(makeFloatParam("carrier_shape", "Carrier: Shape", 0.0f));         // Sine (0%)
     layout.add(makeFloatParam("carrier_level", "Carrier: Level", 0.5f));         // 100%
 
     // --- 2. MODULATOR ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("mod_type", 1), "Modulator: Type",
-        juce::StringArray{ "Fixed Osc", "Follow Osc", "FM Ratio", "Sine x Noise",
-                           "Follow x Noise", "S&H Noise", "Fast Decay", "Slow Decay" }, 0));
-    layout.add(makeFloatParam("mod_shape", "Modulator: Shape", 0.0f));          // Sine
+        juce::StringArray{ "Fixed Osc", "Follow Osc", "FM Operator", "Fixed Sine*Noise",
+                           "Follow Sine*Noise", "FM Op Sine*Noise", "S&H Noise" }, 0));
+    layout.add(makeFloatParam("mod_shape", "Modulator: Shape", 0.0f));          // Sine (0%)
     layout.add(makeFloatParam("mod_depth", "Modulator: Depth", 0.5f));          // 0% Depth
-    layout.add(makeFloatParam("mod_speed", "Modulator: Speed", 0.5f));
+    layout.add(makeFloatParam("mod_speed", "Modulator: Speed", 0.5286f));       // 55 Hz (0.5286)
 
-    // --- 3. DRIVE ---
+    // --- 3. PITCH ENVELOPE ---
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("pitchenv_target", 1), "PitchEnv: Target",
+        juce::StringArray{ "Off", "Carrier", "Modulator", "Both" }, 0));
+    layout.add(makeFloatParam("pitchenv_slope", "PitchEnv: Slope", 0.0f));      // Exponential
+    layout.add(makeFloatParam("pitchenv_depth", "PitchEnv: Depth", 0.5f));      // 0%
+    layout.add(makeFloatParam("pitchenv_decay", "PitchEnv: Decay", 0.3806f));   // 333 ms
+
+    // --- 4. DRIVE ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("drive_type", 1), "Drive: Type",
-        juce::StringArray{ "Off", "Saturation", "Clipper", "Wave Folder" }, 0));
-    layout.add(makeFloatParam("drive_amount", "Drive: Amount", 0.20f));         // 0 dB Saturation
+        juce::StringArray{ "Off", "Saturation", "Wave Folder" }, 0));
+    layout.add(makeFloatParam("drive_amount", "Drive: Amount", 0.5f));          // 0 dB / 0 folds
     layout.add(makeFloatParam("drive_bias", "Drive: Bias", 0.5f));              // 0 DC Bias
-    layout.add(makeFloatParam("drive_filter", "Drive: Filter", 0.5f));          // Flat
+    layout.add(makeFloatParam("drive_filter", "Drive: Filter", 0.5f));          // Flat (50%)
 
-    // --- 4. NOISE TRANSIENT ---
-    layout.add(makeFloatParam("noise_sh_rate", "Noise: S&H Rate", 0.755f));     // 1000 Hz
-    layout.add(makeFloatParam("noise_filter", "Noise: Filter", 0.5f));          // Flat
+    // --- 5. NOISE TRANSIENT ---
+    layout.add(makeFloatParam("noise_sh_rate", "Noise: S&H Rate", 1.0f));       // 20 kHz
+    layout.add(makeFloatParam("noise_filter", "Noise: Filter", 0.5f));          // Flat (50%)
     layout.add(makeFloatParam("noise_level", "Noise: Level", 0.0f));            // 0%
-    layout.add(makeFloatParam("noise_decay", "Noise: Decay", 0.297f));          // 100 ms
+    layout.add(makeFloatParam("noise_decay", "Noise: Decay", 0.3078f));         // 100 ms
 
-    // --- 5. FILTER ---
+    // --- 6. MIXER ---
+    layout.add(makeFloatParam("mixer_carrier_level", "Mixer: Carrier Level", 0.5f)); // 100%
+    layout.add(makeFloatParam("mixer_noise_level", "Mixer: Noise Level", 0.5f));     // 100%
+    layout.add(makeFloatParam("mixer_drive", "Mixer: Drive", 0.5f));                 // 0 dB
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("mixer_limiter", 1), "Mixer: Limiter",
+        juce::StringArray{ "Off", "On" }, 1));                                      // On
+
+    // --- 7. FILTER ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("filter_type", 1), "Filter: Type",
-        juce::StringArray{ "NoRez LPF", "NoRez BPF", "NoRez HPF", "NoRez Notch",
-                           "Rezzy LPF", "Rezzy BPF", "Rezzy HPF", "Rezzy Notch", "Comb", "APF Disperser" }, 0));
-    layout.add(makeFloatParam("filter_cutoff", "Filter: Cutoff", 0.90f));       // Open ~10 kHz
-    layout.add(makeFloatParam("filter_depth", "Filter: Depth / Res", 0.5f));    // 0%
-    layout.add(makeFloatParam("filter_decay", "Filter: Decay / Damp / Stages", 0.5f));
+        juce::StringArray{ "Off", "LPF", "BPF", "HPF", "Notch", "Comb", "Disperser" }, 0));
+    layout.add(makeFloatParam("filter_style", "Filter: Style", 0.1667f));       // -12 dB/oct
+    layout.add(makeFloatParam("filter_cutoff", "Filter: Cutoff", 1.0f));        // 20 kHz
+    layout.add(makeFloatParam("filter_resonance", "Filter: Resonance", 0.0f));  // 0%
 
-    // --- 6. RING MOD ---
+    // --- 8. FILTER ENVELOPE ---
+    layout.add(makeFloatParam("filterenv_slope", "FilterEnv: Slope", 0.0f));    // Exponential
+    layout.add(makeFloatParam("filterenv_depth", "FilterEnv: Depth", 0.5f));    // 0%
+    layout.add(makeFloatParam("filterenv_decay", "FilterEnv: Decay", 0.3806f)); // 333 ms
+    layout.add(makeFloatParam("filterenv_predrive", "FilterEnv: Pre-Drive", 0.5f)); // 0 dB
+
+    // --- 9. RING MOD ---
     layout.add(makeFloatParam("ringmod_shape", "RingMod: Waveform", 0.0f));     // Sine
-    layout.add(makeFloatParam("ringmod_rate", "RingMod: Rate", 0.638f));        // 100 Hz
+    layout.add(makeFloatParam("ringmod_rate", "RingMod: Rate", 0.5286f));       // 55 Hz
     layout.add(makeFloatParam("ringmod_amount", "RingMod: Amount", 0.0f));      // 0% (Dry)
-    layout.add(makeFloatParam("ringmod_width", "RingMod: Width", 0.5f));        // Center
+    layout.add(makeFloatParam("ringmod_width", "RingMod: Width", 0.5f));        // Center (0%)
 
-    // --- 7. GRIT FX ---
-    layout.add(makeFloatParam("grit_bits", "Grit: Bit Reduction", 1.0f));       // 16 bits (Clean)
-    layout.add(makeFloatParam("grit_rate", "Grit: Sample Rate", 1.0f));         // 20 kHz (Clean)
-
-    // --- 8. FREQUENCY SHIFTER ---
+    // --- 10. FREQUENCY SHIFTER ---
     layout.add(makeFloatParam("freqshift_shift", "FreqShift: Shift", 0.5f));    // 0 Hz
-    layout.add(makeFloatParam("freqshift_range", "FreqShift: Range", 0.20f));   // 1000 Hz
-    layout.add(makeFloatParam("freqshift_blend", "FreqShift: Blend", 0.5f));    // Dry
-    layout.add(makeFloatParam("freqshift_width", "FreqShift: Width", 0.5f));    // Center
+    layout.add(makeFloatParam("freqshift_range", "FreqShift: Range", 0.0006f)); // 3 Hz
+    layout.add(makeFloatParam("freqshift_blend", "FreqShift: Blend", 0.5f));    // Dry (0%)
+    layout.add(makeFloatParam("freqshift_width", "FreqShift: Width", 0.5f));    // Center (0%)
 
-    // --- 9. AMP ---
+    // --- 11. GRIT FX ---
+    layout.add(makeFloatParam("grit_bits", "Grit: Bit Reduction", 1.0f));       // 16.0 bits
+    layout.add(makeFloatParam("grit_rate", "Grit: Sample Rate", 1.0f));         // 20 kHz
+    layout.add(makeFloatParam("grit_low_boost", "Grit: Low Boost", 0.0f));      // 0 dB
+    layout.add(makeFloatParam("grit_high_boost", "Grit: High Boost", 0.0f));    // 0 dB
+
+    // --- 12. AMP ---
     layout.add(makeFloatParam("amp_pan", "Amp: Pan", 0.5f));                    // Center
     layout.add(makeFloatParam("amp_level", "Amp: Level", 0.5f));                // 100%
-    layout.add(makeFloatParam("amp_drive", "Amp: Drive", 0.20f));               // 0 dB
-    layout.add(makeFloatParam("amp_low_boost", "Amp: Low Boost", 0.0f));        // 0 dB
-
-    // --- 10. AMP ENVELOPE ---
+    layout.add(makeFloatParam("amp_drive", "Amp: Drive", 0.5f));                // 0 dB
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("amp_env_type", 1), "AmpEnv: Type",
-        juce::StringArray{ "Fast Decay", "Slow Decay" }, 0));
-    layout.add(makeFloatParam("amp_env_claps", "AmpEnv: Claps", 0.0f));         // 1 clap
-    layout.add(makeFloatParam("amp_env_shape", "AmpEnv: Shape", 0.5f));         // Linear slope
-    layout.add(makeFloatParam("amp_env_decay", "AmpEnv: Decay", 0.5f));         // ~333 ms
+        juce::ParameterID("amp_limiter", 1), "Amp: Limiter",
+        juce::StringArray{ "Off", "On" }, 1));                                  // On
+
+    // --- 13. AMP ENVELOPE ---
+    layout.add(makeFloatParam("ampenv_claps", "AmpEnv: Claps", 0.0f));          // 0 claps
+    layout.add(makeFloatParam("ampenv_clapspeed", "AmpEnv: Clap Speed", 0.1429f)); // 3 ms
+    layout.add(makeFloatParam("ampenv_slope", "AmpEnv: Slope", 0.0f));          // Exponential
+    layout.add(makeFloatParam("ampenv_decay", "AmpEnv: Decay", 0.3806f));       // 333 ms
 
     return layout;
 }
