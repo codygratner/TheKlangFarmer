@@ -812,7 +812,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     carrierPitchSlider.getDefaultValue = [this]() -> double {
         int track = carrierTrackingSelector.getSelectedIndex();
-        if (track == 0) return std::log(55.0 / 20.0) / std::log(20000.0 / 20.0);
+        if (track == 0) return std::log(55.0 / 20.0) / std::log(24000.0 / 20.0);
         if (track == 1) return 33.0 / 127.0;
         return 0.5;
     };
@@ -820,7 +820,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     carrierPitchSlider.customFormatText = [this](double val) -> juce::String {
         int track = carrierTrackingSelector.getSelectedIndex();
         if (track == 0) {
-            float hz = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>(val));
+            float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val));
             return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
         } else if (track == 1) {
             int note = static_cast<int>(std::round(val * 127.0));
@@ -834,8 +834,8 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         int track = carrierTrackingSelector.getSelectedIndex();
         double parsed = parseNumberSafe(text, carrierPitchSlider.getValue());
         if (track == 0) {
-            double hz = std::clamp(parsed, 20.0, 20000.0);
-            return std::log(hz / 20.0) / std::log(20000.0 / 20.0);
+            double hz = std::clamp(parsed, 20.0, 24000.0);
+            return std::log(hz / 20.0) / std::log(24000.0 / 20.0);
         } else if (track == 1) {
             return std::clamp(parsed / 127.0, 0.0, 1.0);
         } else {
@@ -881,7 +881,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     modSpeedSlider.getDefaultValue = [this]() -> double {
         int t = modTypeSelector.getSelectedIndex();
-        if (t == 0 || t == 3) return std::log(55.0 / 0.1) / std::log(15000.0 / 0.1);
+        if (t == 0 || t == 3) return std::log(55.0 / 0.1) / std::log(24000.0 / 0.1);
         if (t == 1 || t == 4) return 0.5;
         if (t == 2 || t == 5) return 0.5;
         return 1.0;
@@ -899,7 +899,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     modSpeedSlider.customFormatText = [this](double val) -> juce::String {
         int t = modTypeSelector.getSelectedIndex();
         if (t == 0 || t == 3) {
-            float hz = 0.1f * std::pow(15000.0f / 0.1f, static_cast<float>(val));
+            float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
             return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
         } else if (t == 1 || t == 4) {
             int st = static_cast<int>(std::round((val - 0.5) * 128.0));
@@ -913,7 +913,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
                 return juce::String(num, 1) + ":1";
             }
         } else {
-            float hz = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(val));
+            float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
             return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
         }
     };
@@ -921,13 +921,13 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         int t = modTypeSelector.getSelectedIndex();
         double p = parseNumberSafe(text, 55.0);
         if (t == 0 || t == 3) {
-            double hz = std::clamp(p, 0.1, 15000.0);
-            return std::log(hz / 0.1) / std::log(15000.0 / 0.1);
+            double hz = std::clamp(p, 0.1, 24000.0);
+            return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
         } else if (t == 1 || t == 4) {
             return std::clamp(0.5 + p / 128.0, 0.0, 1.0);
         } else {
-            double hz = std::clamp(p, 0.1, 20000.0);
-            return std::log(hz / 0.1) / std::log(20000.0 / 0.1);
+            double hz = std::clamp(p, 0.1, 24000.0);
+            return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
         }
     };
 
@@ -1014,10 +1014,10 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     driveFilterSlider.customFormatText = [](double val) {
         if (val >= 0.49 && val <= 0.51) return juce::String("Flat (50%)");
         if (val < 0.49) {
-            float hz = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>(val / 0.49));
+            float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val / 0.49));
             return "LP " + ((hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k" : juce::String(hz, 0));
         }
-        float hz = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>((val - 0.51) / 0.49));
+        float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>((val - 0.51) / 0.49));
         return "HP " + ((hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k" : juce::String(hz, 0));
     };
 
@@ -1035,12 +1035,12 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     setupKnob(noiseDecaySlider, juce::Colour(0xff00e676), false, 0.3078);
 
     noiseShRateSlider.customFormatText = [](double val) {
-        float hz = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(val));
+        float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
         return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
     };
     noiseShRateSlider.customParseText = [](const juce::String& text) {
-        double hz = std::clamp(parseNumberSafe(text, 20000.0), 0.1, 20000.0);
-        return std::log(hz / 0.1) / std::log(20000.0 / 0.1);
+        double hz = std::clamp(parseNumberSafe(text, 24000.0), 0.1, 24000.0);
+        return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
     };
     noiseFilterSlider.customFormatText = driveFilterSlider.customFormatText;
     noiseDriveSlider.customFormatText = [](double val) {
@@ -1122,12 +1122,12 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     };
 
     filterCutoffSlider.customFormatText = [](double val) {
-        float hz = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(val));
+        float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
         return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
     };
     filterCutoffSlider.customParseText = [](const juce::String& text) {
-        double hz = std::clamp(parseNumberSafe(text, 20000.0), 0.1, 20000.0);
-        return std::log(hz / 0.1) / std::log(20000.0 / 0.1);
+        double hz = std::clamp(parseNumberSafe(text, 24000.0), 0.1, 24000.0);
+        return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
     };
     filterResonanceSlider.customFormatText = [](double val) {
         return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
@@ -1175,12 +1175,12 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     ringModShapeSlider.customFormatText = carrierShapeSlider.customFormatText;
     ringModRateSlider.customFormatText = [](double val) {
-        float hz = 0.1f * std::pow(15000.0f / 0.1f, static_cast<float>(val));
+        float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
         return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
     };
     ringModRateSlider.customParseText = [](const juce::String& text) {
-        double hz = std::clamp(parseNumberSafe(text, 55.0), 0.1, 15000.0);
-        return std::log(hz / 0.1) / std::log(15000.0 / 0.1);
+        double hz = std::clamp(parseNumberSafe(text, 55.0), 0.1, 24000.0);
+        return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
     };
     ringModAmountSlider.customFormatText = [](double val) {
         return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
@@ -1266,12 +1266,12 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         return (b - 1.0) / 15.0;
     };
     gritRateSlider.customFormatText = [](double val) {
-        float hz = 20.0f * std::pow(20000.0f / 20.0f, static_cast<float>(val));
+        float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val));
         return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 0) + " Hz";
     };
     gritRateSlider.customParseText = [](const juce::String& text) {
-        double hz = std::clamp(parseNumberSafe(text, 20000.0), 20.0, 20000.0);
-        return std::log(hz / 20.0) / std::log(20000.0 / 20.0);
+        double hz = std::clamp(parseNumberSafe(text, 24000.0), 20.0, 24000.0);
+        return std::log(hz / 20.0) / std::log(24000.0 / 20.0);
     };
     gritLowBoostSlider.customFormatText = [](double val) {
         return "+" + juce::String(val * 24.0, 1) + " dB";
@@ -1345,7 +1345,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     auto cardAmp = std::make_unique<ModuleCardComponent>("Amp", juce::Colour(0xff00e5ff));
     bindSelector(ampLimiterSelector, ampLimiterBox, "amp_limiter", { "Off", "On" }, 2);
     setupKnob(ampPanSlider, juce::Colour(0xff00e5ff), true, 0.5); // Bipolar
-    setupKnob(ampLevelSlider, juce::Colour(0xff00e5ff), false, 0.5);
+    setupKnob(ampLevelSlider, juce::Colour(0xff00e5ff), false, 1.0);
     setupKnob(ampDriveSlider, juce::Colour(0xff00e5ff), false, 0.5);
 
     ampPanSlider.customFormatText = [](double val) {
@@ -1360,8 +1360,13 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         if (text.containsIgnoreCase("l")) p = -std::abs(p);
         return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
     };
-    ampLevelSlider.customFormatText = format0to400Pct;
-    ampLevelSlider.customParseText = parse0to400Pct;
+    ampLevelSlider.customFormatText = [](double val) {
+        return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
+    };
+    ampLevelSlider.customParseText = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 100.0);
+        return std::clamp(p / 100.0, 0.0, 1.0);
+    };
     ampDriveSlider.customFormatText = mixerDriveSlider.customFormatText;
     ampDriveSlider.customParseText = mixerDriveSlider.customParseText;
 

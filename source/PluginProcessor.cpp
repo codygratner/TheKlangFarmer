@@ -341,7 +341,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("drive_filter", "Drive: Filter", 0.5f));          // Flat (50%)
 
     // --- 5. NOISE TRANSIENT ---
-    layout.add(makeFloatParam("noise_sh_rate", "Noise: S&H Rate", 1.0f));       // 20 kHz
+    layout.add(makeFloatParam("noise_sh_rate", "Noise: S&H Rate", 1.0f));       // 24 kHz
     layout.add(makeFloatParam("noise_filter", "Noise: Filter", 0.5f));          // Flat (50%)
     layout.add(makeFloatParam("noise_drive", "Noise: Drive", 0.5f));            // 0 dB (default)
     layout.add(makeFloatParam("noise_decay", "Noise: Decay", 0.3078f));         // 100 ms
@@ -359,7 +359,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
         juce::ParameterID("filter_type", 1), "Filter: Type",
         juce::StringArray{ "Off", "LPF", "BPF", "HPF", "Notch" }, 0));
     layout.add(makeFloatParam("filter_slope", "Filter: Slope", 0.1667f));       // -12 dB/oct
-    layout.add(makeFloatParam("filter_cutoff", "Filter: Cutoff", 1.0f));        // 20 kHz
+    layout.add(makeFloatParam("filter_cutoff", "Filter: Cutoff", 1.0f));        // 24 kHz
     layout.add(makeFloatParam("filter_resonance", "Filter: Resonance", 0.0f));  // 0%
 
     // --- 8. FILTER ENVELOPE ---
@@ -382,7 +382,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
 
     // --- 11. GRIT FX ---
     layout.add(makeFloatParam("grit_bits", "Grit: Bit Reduction", 1.0f));       // 16.0 bits
-    layout.add(makeFloatParam("grit_rate", "Grit: Sample Rate", 1.0f));         // 20 kHz
+    layout.add(makeFloatParam("grit_rate", "Grit: Sample Rate", 1.0f));         // 24 kHz
     layout.add(makeFloatParam("grit_low_boost", "Grit: Low Boost", 0.0f));      // 0 dB
     layout.add(makeFloatParam("grit_high_boost", "Grit: High Boost", 0.0f));    // 0 dB
 
@@ -390,8 +390,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("comb_type", 1), "Comb: Type",
         juce::StringArray{ "Off", "On" }, 0));
-    layout.add(makeFloatParam("comb_dampening", "Comb: Dampening", 1.0f));      // 20 kHz
-    layout.add(makeFloatParam("comb_cutoff", "Comb: Cutoff", 1.0f));            // 20 kHz
+    layout.add(makeFloatParam("comb_dampening", "Comb: Dampening", 1.0f));      // 24 kHz
+    layout.add(makeFloatParam("comb_cutoff", "Comb: Cutoff", 1.0f));            // 24 kHz
     layout.add(makeFloatParam("comb_resonance", "Comb: Resonance", 0.5f));      // 0% (bipolar center)
 
     // --- 13. DISPERSER ---
@@ -399,12 +399,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
         juce::ParameterID("disperser_type", 1), "Disperser: Type",
         juce::StringArray{ "Off", "On" }, 0));
     layout.add(makeFloatParam("disperser_amount", "Disperser: Amount", 4.0f / 32.0f)); // 4 APFs
-    layout.add(makeFloatParam("disperser_cutoff", "Disperser: Cutoff", 1.0f));         // 20 kHz
+    layout.add(makeFloatParam("disperser_cutoff", "Disperser: Cutoff", 1.0f));         // 24 kHz
     layout.add(makeFloatParam("disperser_resonance", "Disperser: Resonance", 0.5f));   // 0% (bipolar center)
 
     // --- 14. AMP ---
     layout.add(makeFloatParam("amp_pan", "Amp: Pan", 0.5f));                    // Center
-    layout.add(makeFloatParam("amp_level", "Amp: Level", 0.5f));                // 100%
+    layout.add(makeFloatParam("amp_level", "Amp: Level", 1.0f));                // 100%
     layout.add(makeFloatParam("amp_drive", "Amp: Drive", 0.5f));                // 0 dB
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("amp_limiter", 1), "Amp: Limiter",

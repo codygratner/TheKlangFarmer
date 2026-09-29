@@ -176,10 +176,10 @@ struct DJFilter {
 
         bool isLowpass = (knob < 0.49f);
         float norm = isLowpass ? (knob / 0.49f) : ((knob - 0.51f) / 0.49f);
-        float cutoff = 20.0f * std::pow(20000.0f / 20.0f, std::clamp(norm, 0.0f, 1.0f));
+        float cutoff = 20.0f * std::pow(24000.0f / 20.0f, std::clamp(norm, 0.0f, 1.0f));
         float q = isLowpass ? (1.1f - norm * 0.393f) : (0.707f + norm * 0.4f);
 
-        cutoff = std::clamp(cutoff, 20.0f, sampleRate * 0.48f);
+        cutoff = std::clamp(cutoff, 20.0f, sampleRate * 0.485f);
         float g = std::tan(PI * cutoff / sampleRate);
         float k = 1.0f / q;
         float a1 = 1.0f / (1.0f + g * (g + k));
@@ -258,8 +258,8 @@ public:
     float getBasePitch(const BlockContext& ctx) const {
         int style = std::clamp(static_cast<int>(std::round(params[0] * 2.0f)), 0, 2);
         if (style == 0) {
-            // Fixed freq: 20 Hz to 20 kHz (def 55 Hz)
-            return 20.0f * std::pow(20000.0f / 20.0f, params[1]);
+            // Fixed freq: 20 Hz to 24 kHz (def 55 Hz)
+            return 20.0f * std::pow(24000.0f / 20.0f, params[1]);
         } else if (style == 1) {
             // Fixed pitch: MIDI note 0 to 127 (def A1 33)
             float note = params[1] * 127.0f;
@@ -357,11 +357,11 @@ public:
         float speed = params[3];
         float carrierPitch = std::max(ctx.carrierPitchHz, 10.0f);
         float oscFreq = 55.0f;
-        float shRate = 20000.0f;
+        float shRate = 24000.0f;
 
         if (type == 0 || type == 3) {
-            // Fixed frequency: 0.1 Hz to 15 kHz (def 55 Hz)
-            oscFreq = 0.1f * std::pow(15000.0f / 0.1f, speed);
+            // Fixed frequency: 0.1 Hz to 24 kHz (def 55 Hz)
+            oscFreq = 0.1f * std::pow(24000.0f / 0.1f, speed);
         } else if (type == 1 || type == 4) {
             // Following offset: -64 to +64 semitones (def 0)
             float noteOffset = (speed - 0.5f) * 128.0f;
@@ -372,11 +372,11 @@ public:
                                           : (1.0f + ((speed - 0.5f) * 2.0f) * 31.0f);
             oscFreq = carrierPitch * ratio;
         } else {
-            // S&H Noise rate: 0.1 Hz to 20 kHz (def 20 kHz)
-            shRate = 0.1f * std::pow(20000.0f / 0.1f, speed);
+            // S&H Noise rate: 0.1 Hz to 24 kHz (def 24 kHz)
+            shRate = 0.1f * std::pow(24000.0f / 0.1f, speed);
         }
 
-        oscFreq = std::clamp(oscFreq, 0.05f, sampleRate * 0.48f);
+        oscFreq = std::clamp(oscFreq, 0.05f, sampleRate * 0.485f);
 
         ctx.modSignal.resize(numSamples);
         bool applyPitchEnv = (ctx.pitchEnvTarget == 2 || ctx.pitchEnvTarget == 3);
@@ -565,8 +565,8 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. S&H rate: 0.1 Hz to 20 kHz (def 20 kHz)
-        float shRate = 0.1f * std::pow(20000.0f / 0.1f, params[0]);
+        // 1. S&H rate: 0.1 Hz to 24 kHz (def 24 kHz)
+        float shRate = 0.1f * std::pow(24000.0f / 0.1f, params[0]);
 
         // 2. DJ filter knob (def 50% Flat)
         float filterKnob = params[1];
@@ -691,8 +691,8 @@ public:
         // 2. Slope: slope -6dB/oct to -24dB/oct (at 0.5) to -96dB/oct (def -12dB/oct)
         float slope = params[1];
 
-        // 3. Cutoff: 0.1 Hz to 20 kHz (def 20 kHz)
-        float baseCutoff = 0.1f * std::pow(20000.0f / 0.1f, params[2]);
+        // 3. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
+        float baseCutoff = 0.1f * std::pow(24000.0f / 0.1f, params[2]);
 
         // 4. Resonance: 0% to 100%
         float rawRes = params[3];
@@ -723,7 +723,7 @@ public:
             // Cutoff modulated by Filter Envelope
             float fEnv = (i < static_cast<int>(ctx.filterEnvSignal.size())) ? ctx.filterEnvSignal[i] : 0.0f;
             float cutoff = baseCutoff * std::pow(2.0f, fEnv * 5.0f);
-            cutoff = std::clamp(cutoff, 0.1f, sampleRate * 0.48f);
+            cutoff = std::clamp(cutoff, 0.1f, sampleRate * 0.485f);
 
             // SVF filter cascade
             float g = std::tan(PI * cutoff * invSr);
@@ -787,13 +787,13 @@ public:
         bool enabled = (params[0] >= 0.5f);
         if (!enabled) return; // bypass
 
-        // 2. Dampening: 0.1 Hz to 20 kHz (def 20 kHz)
-        float dampHz = 0.1f * std::pow(20000.0f / 0.1f, params[1]);
+        // 2. Dampening: 0.1 Hz to 24 kHz (def 24 kHz)
+        float dampHz = 0.1f * std::pow(24000.0f / 0.1f, params[1]);
         float combDampCoeff = std::clamp(TWO_PI * dampHz * invSr, 0.0001f, 0.999f);
 
-        // 3. Cutoff: 0.1 Hz to 20 kHz (def 20 kHz)
-        float cutoff = 0.1f * std::pow(20000.0f / 0.1f, params[2]);
-        cutoff = std::clamp(cutoff, 20.0f, sampleRate * 0.48f);
+        // 3. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
+        float cutoff = 0.1f * std::pow(24000.0f / 0.1f, params[2]);
+        cutoff = std::clamp(cutoff, 20.0f, sampleRate * 0.485f);
 
         // 4. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
         float rawRes = params[3];
@@ -867,8 +867,8 @@ public:
         int apfStages = std::clamp(static_cast<int>(std::round(params[1] * 32.0f)), 0, 32);
         if (apfStages == 0) return;
 
-        // 3. Cutoff: 0.1 Hz to 20 kHz (def 20 kHz)
-        float cutoff = 0.1f * std::pow(20000.0f / 0.1f, params[2]);
+        // 3. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
+        float cutoff = 0.1f * std::pow(24000.0f / 0.1f, params[2]);
         cutoff = std::clamp(cutoff, 10.0f, sampleRate * 0.485f);
 
         // 4. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
@@ -1003,8 +1003,8 @@ public:
         // 1. Waveform morph: Sine 0% -> Tri 20% -> Saw 40% -> Square 60% -> PWM 0% 100%
         float shape = params[0];
 
-        // 2. Rate: 0.1 Hz to 15 kHz (def 55 Hz)
-        float rate = 0.1f * std::pow(15000.0f / 0.1f, params[1]);
+        // 2. Rate: 0.1 Hz to 24 kHz (def 55 Hz)
+        float rate = 0.1f * std::pow(24000.0f / 0.1f, params[1]);
 
         // 3. Amount: 0% to 100% (def 0%)
         float amount = params[2];
@@ -1184,10 +1184,10 @@ public:
         float steps = std::pow(2.0f, bits);
         bool hasBitCrush = (bits < 15.9f);
 
-        // 2. Sample rate reduction: 20 Hz to 20 kHz (def 20 kHz)
-        float targetSr = 20.0f * std::pow(20000.0f / 20.0f, params[1]);
+        // 2. Sample rate reduction: 20 Hz to 24 kHz (def 24 kHz)
+        float targetSr = 20.0f * std::pow(24000.0f / 20.0f, params[1]);
         float phaseInc = targetSr / sampleRate;
-        bool hasDownsample = (targetSr < sampleRate * 0.48f);
+        bool hasDownsample = (params[1] < 0.999f && targetSr < sampleRate * 0.495f);
 
         // 3. Low Boost: 0 dB to +24 dB (def 0 dB) at 120 Hz
         float lowDb = params[2] * 24.0f;
@@ -1312,8 +1312,8 @@ public:
         float gainL = std::cos(pan * 1.57079632679f);
         float gainR = std::sin(pan * 1.57079632679f);
 
-        // 2. Level: 0% to 100% (at 0.5) to 400% (at 1.0) (def 100%)
-        float level = (params[1] <= 0.5f) ? (params[1] * 2.0f) : (1.0f + (params[1] - 0.5f) * 6.0f);
+        // 2. Level: 0% to 100% (def 100%)
+        float level = params[1];
 
         // 3. Drive: -6dB to 0dB (at 0.5) to +24dB (def 0dB)
         float driveDb = (params[2] <= 0.5f) ? (-6.0f + params[2] * 12.0f) : ((params[2] - 0.5f) * 48.0f);
@@ -1598,9 +1598,9 @@ public:
         setPageParameter(BLK_DISPERSER, 2, 1.0f);
         setPageParameter(BLK_DISPERSER, 3, 0.5f);
 
-        // 14. Amp: Center Pan (0.5), 100% Level (0.5), 0 dB Drive (0.5), Limiter On (1.0)
+        // 14. Amp: Center Pan (0.5), 100% Level (1.0), 0 dB Drive (0.5), Limiter On (1.0)
         setPageParameter(BLK_AMP, 0, 0.5f);
-        setPageParameter(BLK_AMP, 1, 0.5f);
+        setPageParameter(BLK_AMP, 1, 1.0f);
         setPageParameter(BLK_AMP, 2, 0.5f);
         setPageParameter(BLK_AMP, 3, 1.0f);
 
