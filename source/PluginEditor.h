@@ -108,6 +108,8 @@ public:
     void resized() override;
     void timerCallback() override;
     void updateDynamicControls();
+    void bindSelector(LedSelectorComponent& selector, juce::ComboBox& box,
+                      const juce::String& paramId, const juce::StringArray& items, int numColumns = 1);
 
 private:
     BiaEr1AudioProcessor& audioProcessor;
@@ -124,7 +126,7 @@ private:
     LedSelectorComponent carrierTrackingSelector;
     RotaryKnobSlider carrierPitchSlider;
     RotaryKnobSlider carrierShapeSlider;
-    RotaryKnobSlider carrierLevelSlider;
+    RotaryKnobSlider carrierDriveSlider;
 
     // Block 2: Modulator
     juce::ComboBox modTypeBox;
@@ -150,7 +152,7 @@ private:
     // Block 5: Noise Transient
     RotaryKnobSlider noiseShRateSlider;
     RotaryKnobSlider noiseFilterSlider;
-    RotaryKnobSlider noiseLevelSlider;
+    RotaryKnobSlider noiseDriveSlider;
     RotaryKnobSlider noiseDecaySlider;
 
     // Block 6: Mixer

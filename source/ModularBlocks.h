@@ -57,6 +57,35 @@ inline float applyEnvelopeSlope(float linearVal, float shape) {
     return linearVal;
 }
 
+// Drive mapping: -6dB to 0dB (at 50% knob) to +24dB
+inline float normToDriveDb(float norm) {
+    norm = std::clamp(norm, 0.0f, 1.0f);
+    return (norm <= 0.5f) ? (-6.0f + norm * 12.0f) : ((norm - 0.5f) * 48.0f);
+}
+
+inline float driveDbToNorm(float db) {
+    if (db <= 0.0f) {
+        return std::clamp((db + 6.0f) / 12.0f, 0.0f, 0.5f);
+    } else {
+        return std::clamp(0.5f + db / 48.0f, 0.5f, 1.0f);
+    }
+}
+
+inline float normToDriveGain(float norm) {
+    return std::pow(10.0f, normToDriveDb(norm) / 20.0f);
+}
+
+// Frequency Shifter Range mapping: 0 Hz to 5 kHz (cubic curve for fine sub-Hz to multi-kHz control)
+inline float normToRangeHz(float norm) {
+    norm = std::clamp(norm, 0.0f, 1.0f);
+    return 5000.0f * norm * norm * norm;
+}
+
+inline float rangeHzToNorm(float hz) {
+    return std::clamp(std::cbrt(std::clamp(hz, 0.0f, 5000.0f) / 5000.0f), 0.0f, 1.0f);
+}
+
+
 // 5-Point Warp Decay Time:
 // 0%: 5 ms, 25%: 100 ms, 50%: 1 s, 75%: 5 s, 100%: 60 s
 inline float warp5PointTime(float u) {
@@ -254,21 +283,24 @@ public:
         // 3. shape: waveform morph (Sine 0% -> Tri 20% -> Saw 40% -> Square 60% -> PWM 0% 100%)
         float shape = params[2];
 
-        // 4. level: 0% to 100% (at 0.5) to 400% (at 1.0)
-        float gain = (params[3] <= 0.5f) ? (params[3] * 2.0f) : (1.0f + (params[3] - 0.5f) * 6.0f);
+        // 4. drive: -6dB to 0dB (at 0.5) to +24dB (def: 0dB)
+        float gain = normToDriveGain(params[3]);
+
+        bool applyPitchEnv = (ctx.pitchEnvTarget == 1 || ctx.pitchEnvTarget == 3);
 
         for (int i = 0; i < numSamples; ++i) {
             float fmMod = (i < static_cast<int>(ctx.modSignal.size())) ? ctx.modSignal[i] : 0.0f;
-            float pitchEnv = (i < static_cast<int>(ctx.pitchEnvSignal.size())) ? ctx.pitchEnvSignal[i] : 0.0f;
+            float pitchEnv = (applyPitchEnv && i < static_cast<int>(ctx.pitchEnvSignal.size())) ? ctx.pitchEnvSignal[i] : 0.0f;
 
-            // Pitch Envelope modulates carrier pitch
-            float instFreq = baseFreq * std::pow(2.0f, pitchEnv * 4.0f) * std::pow(2.0f, fmMod * 4.0f);
+            // Pitch Envelope modulates carrier pitch: 5 octaves sweep up/down
+            float instFreq = baseFreq * std::pow(2.0f, pitchEnv * 5.0f) * std::pow(2.0f, fmMod * 4.0f);
             instFreq = std::clamp(instFreq, 1.0f, sampleRate * 0.48f);
 
             phase += instFreq * invSr;
             if (phase >= 1.0f) phase -= std::floor(phase);
 
-            float oscOut = evaluateWaveform(phase, shape) * gain;
+            float raw = evaluateWaveform(phase, shape) * gain;
+            float oscOut = (gain > 1.0f) ? std::tanh(raw) : raw;
             currentFreq = instFreq;
 
             if (left) left[i] = oscOut;
@@ -347,10 +379,11 @@ public:
         oscFreq = std::clamp(oscFreq, 0.05f, sampleRate * 0.48f);
 
         ctx.modSignal.resize(numSamples);
+        bool applyPitchEnv = (ctx.pitchEnvTarget == 2 || ctx.pitchEnvTarget == 3);
 
         for (int i = 0; i < numSamples; ++i) {
-            float pitchEnv = (i < static_cast<int>(ctx.pitchEnvSignal.size())) ? ctx.pitchEnvSignal[i] : 0.0f;
-            float instFreq = oscFreq * std::pow(2.0f, pitchEnv * 4.0f);
+            float pitchEnv = (applyPitchEnv && i < static_cast<int>(ctx.pitchEnvSignal.size())) ? ctx.pitchEnvSignal[i] : 0.0f;
+            float instFreq = oscFreq * std::pow(2.0f, pitchEnv * 5.0f);
             instFreq = std::clamp(instFreq, 0.05f, sampleRate * 0.48f);
 
             phase += instFreq * invSr;
@@ -410,6 +443,7 @@ public:
     void processStereo(float* /*left*/, float* /*right*/, int numSamples, BlockContext& ctx) override {
         // 1. Target: 0=Off (def), 1=Carrier, 2=Modulator, 3=Both
         int target = std::clamp(static_cast<int>(std::round(params[0] * 3.0f)), 0, 3);
+        ctx.pitchEnvTarget = target;
 
         // 2. Slope: Exp (0.0) -> Lin (0.5) -> Log (1.0)
         float slope = params[1];
@@ -535,8 +569,8 @@ public:
         // 2. DJ filter knob (def 50% Flat)
         float filterKnob = params[1];
 
-        // 3. Level: 0% to 100% (def 0%)
-        float level = params[2];
+        // 3. Drive: -6dB to 0dB (at 0.5) to +24dB (def: 0dB)
+        float gain = normToDriveGain(params[2]);
 
         // 4. Decay: 5-point warp (1ms, 50ms, 1s, 5s, 60s; def 100ms)
         float decayTime = warpNoiseDecayTime(params[3]);
@@ -554,7 +588,8 @@ public:
             float env = std::exp(-timeSinceTrigger / decayTime);
             timeSinceTrigger += invSr;
 
-            noiseOut = shVal * env * level;
+            float rawNoise = shVal * env * gain;
+            noiseOut = (gain > 1.0f) ? std::tanh(rawNoise) : rawNoise;
 
             float outL = noiseOut;
             float outR = noiseOut;
@@ -926,8 +961,8 @@ public:
         // 1. Shift: -X Hz to 0 Hz to +X Hz (where X is range, bipolar, def 0 Hz)
         float shiftNorm = (params[0] - 0.5f) * 2.0f;
 
-        // 2. Range: 0 Hz to 5 kHz (def 3 Hz)
-        float rangeHz = params[1] * 5000.0f;
+        // 2. Range: 0 Hz to 5 kHz (def 3 Hz, cubic curve for precision control)
+        float rangeHz = normToRangeHz(params[1]);
         float totalShift = shiftNorm * rangeHz;
 
         // 3. Blend: -100% to -50% to 0% (Dry) to +50% to +100%
@@ -1351,10 +1386,10 @@ public:
         setPageParameter(BLK_DRIVE, 2, 0.5f);
         setPageParameter(BLK_DRIVE, 3, 0.5f);
 
-        // 5. Noise Transient: 20 kHz (1.0), Flat Filter (0.5), 0% Level (0.0), 100 ms Decay (0.3078)
+        // 5. Noise Transient: 20 kHz (1.0), Flat Filter (0.5), 0 dB Drive (0.5), 100 ms Decay (0.3078)
         setPageParameter(BLK_NOISE, 0, 1.0f);
         setPageParameter(BLK_NOISE, 1, 0.5f);
-        setPageParameter(BLK_NOISE, 2, 0.0f);
+        setPageParameter(BLK_NOISE, 2, 0.5f);
         setPageParameter(BLK_NOISE, 3, 0.3078f);
 
         // 6. Mixer: Carrier 100% (0.5), Noise 100% (0.5), Drive 0 dB (0.5), Limiter On (1.0)
@@ -1381,9 +1416,9 @@ public:
         setPageParameter(BLK_RINGMOD, 2, 0.0f);
         setPageParameter(BLK_RINGMOD, 3, 0.5f);
 
-        // 10. Frequency Shifter: 0 Hz Shift (0.5), 3 Hz Range (0.0006), 0% Blend (0.5), 0% Width (0.5)
+        // 10. Frequency Shifter: 0 Hz Shift (0.5), 3 Hz Range (rangeHzToNorm(3.0f)), 0% Blend (0.5), 0% Width (0.5)
         setPageParameter(BLK_FREQSHIFT, 0, 0.5f);
-        setPageParameter(BLK_FREQSHIFT, 1, 0.0006f);
+        setPageParameter(BLK_FREQSHIFT, 1, rangeHzToNorm(3.0f));
         setPageParameter(BLK_FREQSHIFT, 2, 0.5f);
         setPageParameter(BLK_FREQSHIFT, 3, 0.5f);
 

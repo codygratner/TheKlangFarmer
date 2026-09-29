@@ -48,7 +48,7 @@ private:
     juce::AudioParameterChoice* carrierTrackingParam = nullptr;
     juce::AudioParameterFloat*  carrierPitchParam    = nullptr;
     juce::AudioParameterFloat*  carrierShapeParam    = nullptr;
-    juce::AudioParameterFloat*  carrierLevelParam    = nullptr;
+    juce::AudioParameterFloat*  carrierDriveParam    = nullptr;
 
     // 2. Modulator
     juce::AudioParameterChoice* modTypeParam         = nullptr;
@@ -71,7 +71,7 @@ private:
     // 5. Noise Transient
     juce::AudioParameterFloat*  noiseShRateParam     = nullptr;
     juce::AudioParameterFloat*  noiseFilterParam     = nullptr;
-    juce::AudioParameterFloat*  noiseLevelParam      = nullptr;
+    juce::AudioParameterFloat*  noiseDriveParam      = nullptr;
     juce::AudioParameterFloat*  noiseDecayParam      = nullptr;
 
     // 6. Mixer

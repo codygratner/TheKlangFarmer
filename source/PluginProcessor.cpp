@@ -12,7 +12,7 @@ BiaEr1AudioProcessor::BiaEr1AudioProcessor()
     carrierTrackingParam = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("carrier_tracking"));
     carrierPitchParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("carrier_pitch"));
     carrierShapeParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("carrier_shape"));
-    carrierLevelParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("carrier_level"));
+    carrierDriveParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("carrier_drive"));
 
     // 2. Modulator
     modTypeParam         = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("mod_type"));
@@ -35,7 +35,7 @@ BiaEr1AudioProcessor::BiaEr1AudioProcessor()
     // 5. Noise Transient
     noiseShRateParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("noise_sh_rate"));
     noiseFilterParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("noise_filter"));
-    noiseLevelParam      = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("noise_level"));
+    noiseDriveParam      = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("noise_drive"));
     noiseDecayParam      = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("noise_decay"));
 
     // 6. Mixer
@@ -122,7 +122,7 @@ void BiaEr1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     if (carrierTrackingParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER, 0, static_cast<float>(carrierTrackingParam->getIndex()) / 2.0f);
     if (carrierPitchParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER, 1, getNorm(carrierPitchParam));
     if (carrierShapeParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER, 2, getNorm(carrierShapeParam));
-    if (carrierLevelParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER, 3, getNorm(carrierLevelParam));
+    if (carrierDriveParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER, 3, getNorm(carrierDriveParam));
 
     // 2. Modulator
     if (modTypeParam)         engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODULATOR, 0, static_cast<float>(modTypeParam->getIndex()) / 6.0f);
@@ -145,7 +145,7 @@ void BiaEr1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     // 5. Noise Transient
     if (noiseShRateParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_NOISE, 0, getNorm(noiseShRateParam));
     if (noiseFilterParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_NOISE, 1, getNorm(noiseFilterParam));
-    if (noiseLevelParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_NOISE, 2, getNorm(noiseLevelParam));
+    if (noiseDriveParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_NOISE, 2, getNorm(noiseDriveParam));
     if (noiseDecayParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_NOISE, 3, getNorm(noiseDecayParam));
 
     // 6. Mixer
@@ -277,7 +277,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::create
         juce::StringArray{ "Fixed Freq", "Fixed Pitch", "MIDI Pitch" }, 2)); // default: MIDI Pitch
     layout.add(makeFloatParam("carrier_pitch", "Carrier: Pitch / Freq", 0.5f));
     layout.add(makeFloatParam("carrier_shape", "Carrier: Shape", 0.0f));         // Sine (0%)
-    layout.add(makeFloatParam("carrier_level", "Carrier: Level", 0.5f));         // 100%
+    layout.add(makeFloatParam("carrier_drive", "Carrier: Drive", 0.5f));         // 0 dB (default)
 
     // --- 2. MODULATOR ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
@@ -307,7 +307,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::create
     // --- 5. NOISE TRANSIENT ---
     layout.add(makeFloatParam("noise_sh_rate", "Noise: S&H Rate", 1.0f));       // 20 kHz
     layout.add(makeFloatParam("noise_filter", "Noise: Filter", 0.5f));          // Flat (50%)
-    layout.add(makeFloatParam("noise_level", "Noise: Level", 0.0f));            // 0%
+    layout.add(makeFloatParam("noise_drive", "Noise: Drive", 0.5f));            // 0 dB (default)
     layout.add(makeFloatParam("noise_decay", "Noise: Decay", 0.3078f));         // 100 ms
 
     // --- 6. MIXER ---
@@ -340,7 +340,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::create
 
     // --- 10. FREQUENCY SHIFTER ---
     layout.add(makeFloatParam("freqshift_shift", "FreqShift: Shift", 0.5f));    // 0 Hz
-    layout.add(makeFloatParam("freqshift_range", "FreqShift: Range", 0.0006f)); // 3 Hz
+    layout.add(makeFloatParam("freqshift_range", "FreqShift: Range", TbdAudio::rangeHzToNorm(3.0f))); // 3 Hz default
     layout.add(makeFloatParam("freqshift_blend", "FreqShift: Blend", 0.5f));    // Dry (0%)
     layout.add(makeFloatParam("freqshift_width", "FreqShift: Width", 0.5f));    // Center (0%)
 

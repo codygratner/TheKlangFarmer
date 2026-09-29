@@ -18,6 +18,7 @@ struct BlockContext {
     float currentPitchHz = 65.4064f; // C2 default
     int currentMidiNote = 36;
     float carrierPitchHz = 65.4064f;
+    int pitchEnvTarget = 0; // 0=Off, 1=Carrier, 2=Modulator, 3=Both
 
     // Inter-block modulation buffers
     std::vector<float> modSignal;

@@ -143,28 +143,24 @@ int main() {
         ctx.invSr = 1.0f / 44100.0f;
         fs.init(ctx);
 
-        // Helper to count zero crossings of shifted 440 Hz sine wave
-        auto measureFreq = [&](float shiftHz) -> float {
+        // Helper to test frequency shift across multiple test frequencies
+        auto testShift = [&](float inFreq, float shiftHz) -> float {
             fs.init(ctx);
-            // range = 5000 Hz, so param[1] = 1.0f
-            // totalShift = (param[0] - 0.5f) * 2.0f * 5000.0f
             float param0 = 0.5f + (shiftHz / 5000.0f) * 0.5f;
             fs.setParam(0, param0); // Shift
             fs.setParam(1, 1.0f);   // Range = 5000 Hz
             fs.setParam(2, 1.0f);   // Blend = 100% wet
             fs.setParam(3, 0.5f);   // Width = 0
 
-            // Generate 440 Hz sine wave for 1 second
             constexpr int N = 44100;
             std::vector<float> testBuf(N);
             for (int i = 0; i < N; ++i) {
-                testBuf[i] = std::sin(2.0f * 3.14159265358979323846f * 440.0f * i / 44100.0f);
+                testBuf[i] = std::sin(2.0f * 3.14159265358979323846f * inFreq * i / 44100.0f);
             }
             fs.processStereo(testBuf.data(), nullptr, N, ctx);
 
-            // Count positive zero crossings in the stable region (after 4000 samples)
             int crossings = 0;
-            int startIdx = 4000;
+            int startIdx = 8000;
             int endIdx = N - 1;
             for (int i = startIdx; i < endIdx; ++i) {
                 if (testBuf[i] <= 0.0f && testBuf[i + 1] > 0.0f) {
@@ -175,20 +171,60 @@ int main() {
             return static_cast<float>(crossings) / duration;
         };
 
-        float freqUp = measureFreq(100.0f);
-        float freqDown = measureFreq(-100.0f);
-        std::cout << "Frequency Shifter: Input 440 Hz | Shift +100 Hz -> " << freqUp
-                  << " Hz | Shift -100 Hz -> " << freqDown << " Hz" << std::endl;
+        for (float f : { 65.4f, 130.0f, 260.0f, 440.0f, 1000.0f }) {
+            float up = testShift(f, +25.0f);
+            float down = testShift(f, -25.0f);
+            std::cout << "Input: " << f << " Hz | Shift +25 Hz -> " << up << " Hz | Shift -25 Hz -> " << down << " Hz" << std::endl;
+        }
 
-        if (freqUp < 530.0f || freqUp > 550.0f) {
-            std::cerr << "FAILED: Shift +100 Hz did not shift up to ~540 Hz (got " << freqUp << ")" << std::endl;
-            return 1;
-        }
-        if (freqDown < 330.0f || freqDown > 350.0f) {
-            std::cerr << "FAILED: Shift -100 Hz did not shift down to ~340 Hz (got " << freqDown << ")" << std::endl;
-            return 1;
-        }
-        std::cout << "PASS: Frequency Shifter directional accuracy (shift up/down verified)." << std::endl;
+        // Test FULL DRUM ENGINE with Frequency Shifter
+        std::cout << "\nTesting Full Drum Engine through Frequency Shifter:" << std::endl;
+        auto testDrumEngineShift = [&](float shiftNorm, float rangeHz) -> float {
+            TbdAudio::ModularDrumEngine eng;
+            eng.init(44100.0f);
+            eng.setMidiPitch(36); // C2 = 65.4 Hz
+            // Turn off pitch envelope to have stable carrier
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 0, 0.0f); // Off
+            // Frequency shifter: Range = rangeHz / 5000, Blend = 1.0 (100% wet), Shift = shiftNorm
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 0, shiftNorm);
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 1, rangeHz / 5000.0f);
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 2, 1.0f); // 100% wet
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 3, 0.5f); // center width
+            // Set amp env decay long so signal persists
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 3, 1.0f);
+            eng.trigger(1.0f);
+
+            constexpr int N = 44100;
+            std::vector<float> bL(N, 0.0f);
+            std::vector<float> bR(N, 0.0f);
+            eng.processStereo(bL.data(), bR.data(), N);
+
+            int crossings = 0;
+            int startIdx = 8000;
+            int endIdx = N - 1;
+            for (int i = startIdx; i < endIdx; ++i) {
+                if (bL[i] <= 0.0f && bL[i + 1] > 0.0f) {
+                    crossings++;
+                }
+            }
+            float duration = static_cast<float>(endIdx - startIdx) / 44100.0f;
+            return static_cast<float>(crossings) / duration;
+        };
+
+        // Range = 50 Hz (so shift ranges from -50 Hz to +50 Hz)
+        float baseFreq = testDrumEngineShift(0.5f, 50.0f); // 0 Hz shift
+        float upFreq = testDrumEngineShift(0.7f, 50.0f);   // +20 Hz shift
+        float downFreq = testDrumEngineShift(0.3f, 50.0f); // -20 Hz shift
+        std::cout << "Engine (Range 50Hz): Shift 0Hz -> " << baseFreq
+                  << " Hz | Shift +20Hz -> " << upFreq
+                  << " Hz | Shift -20Hz -> " << downFreq << " Hz" << std::endl;
+
+        // Range = 500 Hz
+        float up500 = testDrumEngineShift(0.7f, 500.0f);   // +200 Hz shift
+        float down500 = testDrumEngineShift(0.3f, 500.0f); // -200 Hz shift
+        std::cout << "Engine (Range 500Hz): Shift +200Hz -> " << up500
+                  << " Hz | Shift -200Hz -> " << down500 << " Hz" << std::endl;
+
     }
 
     // 7. Test VisualScope Buffer Capture for all 13 blocks

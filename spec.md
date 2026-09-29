@@ -78,11 +78,11 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 &#x20;           - pwm 0% (at 100% knob range)
 
-&#x20;   1. level, continuously variable
+&#x20;   1. drive, continuously variable
 
-&#x20;       - 0% to 100% to 400%
+&#x20;       - -6dB to 0dB (at 50% knob) to +24dB
 
-&#x20;       - default: 100%
+&#x20;       - default: 0dB
 
 1\. Modulator Controls
 
@@ -260,11 +260,11 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 &#x20;               - slope: flat to steep
 
-&#x20;   1. level, continuously variable
+&#x20;   1. drive, continuously variable
 
-&#x20;       - 0% to 100%
+&#x20;       - -6dB to 0dB (at 50% knob) to +24dB
 
-&#x20;       - default: 0%
+&#x20;       - default: 0dB
 
 &#x20;   1. decay, continuously variable
 
