@@ -1,0 +1,8 @@
+# JUCE
+JUCE/
+
+# build
+build/
+
+#test
+test/
