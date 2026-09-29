@@ -69,6 +69,9 @@ static juce::String getMidiNoteName(int noteNumber) {
 
 RotaryKnobLookAndFeel::RotaryKnobLookAndFeel() {
     setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff232733));
+    setColour(juce::Slider::backgroundColourId, juce::Colour(0xff161922));
+    setColour(juce::Slider::trackColourId, juce::Colour(0xff00d2ff));
+    setColour(juce::Slider::thumbColourId, juce::Colour(0xffe8edf5));
     setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffe8edf5));
     setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(0xff12141a));
     setColour(juce::Slider::textBoxOutlineColourId, juce::Colour(0xff2c3240));
@@ -89,11 +92,100 @@ juce::Label* RotaryKnobLookAndFeel::createSliderTextBox(juce::Slider& slider) {
         return new DiagramSliderLabel(*rks);
     }
     auto* l = juce::LookAndFeel_V4::createSliderTextBox(slider);
-    l->setFont(juce::FontOptions(12.5f, juce::Font::bold));
+    l->setFont(juce::FontOptions(11.5f, juce::Font::bold));
     l->setColour(juce::Label::textColourId, juce::Colour(0xffffffff));
     l->setColour(juce::Label::backgroundColourId, juce::Colour(0xee11141a));
     l->setColour(juce::Label::outlineColourId, juce::Colour(0x44303848));
+    l->setJustificationType(juce::Justification::centred);
     return l;
+}
+
+void RotaryKnobLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, int width, int height,
+                                             float sliderPos, float minSliderPos, float maxSliderPos,
+                                             const juce::Slider::SliderStyle style, juce::Slider& slider)
+{
+    if (style != juce::Slider::LinearHorizontal) {
+        juce::LookAndFeel_V4::drawLinearSlider(g, x, y, width, height, sliderPos, minSliderPos, maxSliderPos, style, slider);
+        return;
+    }
+
+    auto fillColour = slider.findColour(juce::Slider::rotarySliderFillColourId);
+    bool isBipolar = false;
+    if (auto* rks = dynamic_cast<RotaryKnobSlider*>(&slider)) {
+        isBipolar = rks->isBipolar;
+    }
+
+    // Outer track bounds
+    float trackHeight = 6.0f;
+    float trackY = static_cast<float>(y) + (static_cast<float>(height) - trackHeight) * 0.5f;
+    float trackX = static_cast<float>(x) + 2.0f;
+    float trackW = static_cast<float>(width) - 4.0f;
+    juce::Rectangle<float> trackRect(trackX, trackY, trackW, trackHeight);
+
+    // 1. Draw recessed track background
+    g.setColour(juce::Colour(0xff161922));
+    g.fillRoundedRectangle(trackRect, 3.0f);
+    g.setColour(juce::Colour(0xff2a3040));
+    g.drawRoundedRectangle(trackRect, 3.0f, 1.0f);
+
+    // 2. Draw active value fill
+    if (slider.isEnabled() && trackW > 2.0f) {
+        float minX = trackX;
+        float maxX = trackX + trackW;
+        float clampedPos = std::clamp(sliderPos, minX, maxX);
+
+        if (isBipolar) {
+            float midX = trackX + trackW * 0.5f;
+            float startX = std::min(midX, clampedPos);
+            float endX = std::max(midX, clampedPos);
+            float fillW = endX - startX;
+
+            if (fillW > 0.5f) {
+                juce::Rectangle<float> fillRect(startX, trackY + 1.0f, fillW, trackHeight - 2.0f);
+                g.setColour(fillColour.withAlpha(0.85f));
+                g.fillRoundedRectangle(fillRect, 2.0f);
+            }
+
+            // Center zero tick mark
+            g.setColour(juce::Colour(0xff5a667d));
+            g.drawVerticalLine(static_cast<int>(midX), trackY - 2.0f, trackY + trackHeight + 2.0f);
+        } else {
+            float fillW = clampedPos - minX;
+            if (fillW > 0.5f) {
+                juce::Rectangle<float> fillRect(minX + 1.0f, trackY + 1.0f, fillW - 1.0f, trackHeight - 2.0f);
+                g.setColour(fillColour.withAlpha(0.85f));
+                g.fillRoundedRectangle(fillRect, 2.0f);
+            }
+        }
+    }
+
+    // 3. Draw modern hardware fader thumb / handle
+    float thumbW = 7.0f;
+    float thumbH = std::min(static_cast<float>(height) - 2.0f, 16.0f);
+    float thumbY = static_cast<float>(y) + (static_cast<float>(height) - thumbH) * 0.5f;
+    float thumbX = std::clamp(sliderPos - thumbW * 0.5f, static_cast<float>(x), static_cast<float>(x + width) - thumbW);
+
+    juce::Rectangle<float> thumbRect(thumbX, thumbY, thumbW, thumbH);
+
+    // Subtle glow if mouse is over or dragging
+    if (slider.isMouseOverOrDragging()) {
+        g.setColour(fillColour.withAlpha(0.35f));
+        g.drawRoundedRectangle(thumbRect.expanded(1.5f), 2.5f, 1.5f);
+    }
+
+    // Metallic thumb gradient
+    juce::ColourGradient thumbGrad(juce::Colour(0xffeff3fa), thumbX, thumbY,
+                                  juce::Colour(0xffb0bac9), thumbX, thumbY + thumbH, false);
+    g.setGradientFill(thumbGrad);
+    g.fillRoundedRectangle(thumbRect, 2.0f);
+
+    // Thumb border
+    g.setColour(juce::Colour(0xff12151c));
+    g.drawRoundedRectangle(thumbRect, 2.0f, 1.0f);
+
+    // Thumb center indicator line
+    g.setColour(fillColour);
+    g.drawVerticalLine(static_cast<int>(thumbRect.getCentreX()), thumbY + 2.5f, thumbY + thumbH - 2.5f);
 }
 
 void RotaryKnobLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
@@ -233,6 +325,7 @@ DiagramSliderLabel::DiagramSliderLabel(RotaryKnobSlider& s)
 {
     slider.addListener(this);
     setFont(juce::FontOptions(11.5f, juce::Font::bold));
+    setJustificationType(juce::Justification::centred);
     setColour(juce::Label::textColourId, juce::Colour(0xffffffff));
     setColour(juce::Label::backgroundColourId, juce::Colour(0xee11141a));
     setColour(juce::Label::outlineColourId, juce::Colour(0x44303848));
@@ -368,11 +461,22 @@ void DiagramSliderLabel::mouseDoubleClick(const juce::MouseEvent& e) {
     slider.mouseDoubleClick(e);
 }
 
-// --- ROTARY KNOB SLIDER WITH RIGHT CLICK EDITING ---
+void DiagramSliderLabel::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) {
+    slider.mouseWheelMove(e.getEventRelativeTo(&slider), wheel);
+}
+
+// --- ROTARY KNOB / HORIZONTAL SLIDER WITH RIGHT CLICK EDITING ---
 
 RotaryKnobSlider::RotaryKnobSlider() {
-    setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    setTextBoxStyle(juce::Slider::TextBoxBelow, false, 58, 18);
+    setSliderStyle(juce::Slider::LinearHorizontal);
+    setTextBoxStyle(juce::Slider::TextBoxRight, false, 58, 18);
+    setScrollWheelEnabled(true);
+}
+
+void RotaryKnobSlider::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) {
+    if (isScrollWheelEnabled()) {
+        juce::Slider::mouseWheelMove(e, wheel);
+    }
 }
 
 void RotaryKnobSlider::mouseDown(const juce::MouseEvent& e) {
@@ -565,9 +669,9 @@ ModuleCardComponent::ModuleCardComponent(const juce::String& title, juce::Colour
     addAndMakeVisible(oscilloscope);
 
     for (int i = 0; i < 4; ++i) {
-        labels[i].setFont(juce::FontOptions(12.5f, juce::Font::bold));
-        labels[i].setColour(juce::Label::textColourId, juce::Colour(0xffffffff));
-        labels[i].setJustificationType(juce::Justification::centred);
+        labels[i].setFont(juce::FontOptions(11.5f, juce::Font::bold));
+        labels[i].setColour(juce::Label::textColourId, juce::Colour(0xffc5d0e0));
+        labels[i].setJustificationType(juce::Justification::centredLeft);
         addAndMakeVisible(labels[i]);
     }
 }
@@ -629,26 +733,27 @@ void ModuleCardComponent::resized() {
     oscilloscope.setBounds(area.removeFromTop(24).reduced(2, 0));
     area.removeFromTop(4);
 
+    int count = 4;
     if (ledSelector != nullptr) {
-        int selH = (ledSelector->getNumItems() > 4) ? 34 : 22;
+        int selH = (ledSelector->getNumItems() > 4) ? 32 : 22;
         ledSelector->setBounds(area.removeFromTop(selH));
-        area.removeFromTop(3);
+        area.removeFromTop(4);
+        count = 3;
+        labels[3].setVisible(false);
+        if (knobs[3]) knobs[3]->setVisible(false);
+    }
 
-        int knobCount = 3;
-        int knobW = area.getWidth() / knobCount;
-        for (int i = 0; i < knobCount; ++i) {
-            auto kArea = area.removeFromLeft(knobW);
-            labels[i].setBounds(kArea.removeFromTop(14));
-            if (knobs[i]) knobs[i]->setBounds(kArea);
-        }
-    } else {
-        // 4 knobs arranged in a single row across the card
-        int knobCount = 4;
-        int knobW = area.getWidth() / knobCount;
-        for (int i = 0; i < knobCount; ++i) {
-            auto kArea = area.removeFromLeft(knobW);
-            labels[i].setBounds(kArea.removeFromTop(14));
-            if (knobs[i]) knobs[i]->setBounds(kArea);
+    int rowH = area.getHeight() / count;
+    int labelW = 68;
+
+    for (int i = 0; i < count; ++i) {
+        auto row = area.removeFromTop(rowH).reduced(0, 1);
+        labels[i].setVisible(true);
+        labels[i].setBounds(row.removeFromLeft(labelW));
+        row.removeFromLeft(4);
+        if (knobs[i]) {
+            knobs[i]->setVisible(true);
+            knobs[i]->setBounds(row);
         }
     }
 }
@@ -1436,9 +1541,15 @@ TheKlangFarmerAudioProcessorEditor::~TheKlangFarmerAudioProcessorEditor() {
 }
 
 void TheKlangFarmerAudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar, double defaultVal) {
+    slider.setSliderStyle(juce::Slider::LinearHorizontal);
+    slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 58, 18);
+    slider.setScrollWheelEnabled(true);
     slider.setBipolar(isBipolar);
     slider.setColour(juce::Slider::rotarySliderFillColourId, trackColour);
+    slider.setColour(juce::Slider::trackColourId, trackColour);
     slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff232733));
+    slider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff161922));
+    slider.setColour(juce::Slider::thumbColourId, juce::Colour(0xffe8edf5));
     slider.setRange(0.0, 1.0, 0.0005);
     slider.setDoubleClickReturnValue(true, defaultVal);
     slider.getDefaultValue = [defaultVal]() { return defaultVal; };

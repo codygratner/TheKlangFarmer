@@ -10,6 +10,9 @@
 class RotaryKnobLookAndFeel : public juce::LookAndFeel_V4 {
 public:
     RotaryKnobLookAndFeel();
+    void drawLinearSlider(juce::Graphics&, int x, int y, int width, int height,
+                          float sliderPos, float minSliderPos, float maxSliderPos,
+                          juce::Slider::SliderStyle, juce::Slider&) override;
     void drawRotarySlider(juce::Graphics&, int x, int y, int width, int height,
                           float sliderPosProportional, float rotaryStartAngle,
                           float rotaryEndAngle, juce::Slider&) override;
@@ -28,7 +31,7 @@ private:
     std::vector<float> points;
 };
 
-// Rotary knob with right-click hovering text box editor, bipolar arc, and waveform/slope diagram support
+// Rotary knob / horizontal slider with right-click hovering text box editor, bipolar arc/bar, and waveform/slope diagram support
 class RotaryKnobSlider : public juce::Slider {
 public:
     enum class DiagramType {
@@ -42,6 +45,7 @@ public:
     RotaryKnobSlider();
     void mouseDown(const juce::MouseEvent& e) override;
     void mouseDoubleClick(const juce::MouseEvent& e) override;
+    void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
     void openHoveringEditor();
 
     bool isBipolar = false;
@@ -67,6 +71,7 @@ public:
     void mouseDrag(const juce::MouseEvent& e) override;
     void mouseUp(const juce::MouseEvent& e) override;
     void mouseDoubleClick(const juce::MouseEvent& e) override;
+    void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
     void sliderValueChanged(juce::Slider*) override { repaint(); }
 
 private:

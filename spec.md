@@ -64,7 +64,7 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;   1. pitch / frequency value, continuously variable
 
-&#x20;       - fixed frequency: 20 Hz to 20 kHz (default 55 Hz)
+&#x20;       - fixed frequency: 20 Hz to 24 kHz (default 55 Hz)
 
 &#x20;       - fixed pitch: midi note 0 to 127 (default "A1 \[33]")
 
@@ -130,7 +130,7 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;               - 0% to 49%
 
-&#x20;                   - LPF: 20 Hz to 20 kHz
+&#x20;                   - LPF: 20 Hz to 24 kHz
 
 &#x20;                   - slope: steep to flat
 
@@ -138,15 +138,15 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;               - 51% to 100%
 
-&#x20;                   - HPF: 20 Hz to 20 kHz
+&#x20;                   - HPF: 20 Hz to 24 kHz
 
 &#x20;                   - slope: flat to steep
 
 &#x20;       - sample and hold noise rate
 
-&#x20;           - 0.1 Hz to 20 kHz
+&#x20;           - 0.1 Hz to 24 kHz
 
-&#x20;           - default: 20 kHz
+&#x20;           - default: 24 kHz
 
 &#x20;   1. depth, continuously variable
 
@@ -156,13 +156,13 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;   1. speed, continuously variable
 
-&#x20;       - fixed frequency: 0.1 Hz to 15 kHz (default 55 Hz)
+&#x20;       - fixed frequency: 0.1 Hz to 24 kHz (default 55 Hz)
 
 &#x20;       - following offset: -64 to 0 to +64 midi notes (default 0)
 
 &#x20;       - fm ratio: 1:32.0 to 1.0:1.0 to 32.0:1 (default 1.0:1.0)
 
-&#x20;       - sample and hold rate: 0.1 Hz to 20 kHz (default: 20 kHz)
+&#x20;       - sample and hold rate: 0.1 Hz to 24 kHz (default: 20 kHz)
 
 1\. Pitch Envelope Controls
 
@@ -230,33 +230,7 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;           - 0% to 49%
 
-&#x20;               - LPF: 20 Hz to 20 kHz
-
-&#x20;               - slope: steep to flat
-
-&#x20;           - 50%: no filter (the default)
-
-&#x20;           - 51% to 100%
-
-&#x20;               - HPF: 20 Hz to 20 kHz
-
-&#x20;               - slope: flat to steep
-
-1\. Noise Transient Controls
-
-&#x20;   1. sample and hold rate, continuously variable
-
-&#x20;       - 0.1 Hz to 20 kHz
-
-&#x20;       - default: 20 kHz
-
-&#x20;   1. filter, continuously variable
-
-&#x20;       - dj style filter
-
-&#x20;           - 0% to 49%
-
-&#x20;               - LPF: 20 Hz to 20 kHz
+&#x20;               - LPF: 20 Hz to 24 kHz
 
 &#x20;               - slope: -24dB/oct to -6dB/oct
 
@@ -264,7 +238,33 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;           - 51% to 100%
 
-&#x20;               - HPF: 20 Hz to 20 kHz
+&#x20;               - HPF: 20 Hz to 24 kHz
+
+&#x20;               - slope: -6dB/oct to -24dB/oct
+
+1\. Noise Transient Controls
+
+&#x20;   1. sample and hold rate, continuously variable
+
+&#x20;       - 0.1 Hz to 24 kHz
+
+&#x20;       - default: 24 kHz
+
+&#x20;   1. filter, continuously variable
+
+&#x20;       - dj style filter
+
+&#x20;           - 0% to 49%
+
+&#x20;               - LPF: 20 Hz to 24 kHz
+
+&#x20;               - slope: -24dB/oct to -6dB/oct
+
+&#x20;           - 50%: no filter (the default)
+
+&#x20;           - 51% to 100%
+
+&#x20;               - HPF: 20 Hz to 24 kHz
 
 &#x20;               - slope: -6dB/oct to -24dB/oct
 
@@ -336,9 +336,9 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;   1. cutoff, continuously variable
 
-&#x20;       - 0.1 Hz to 20 kHz
+&#x20;       - 0.1 Hz to 24 kHz
 
-&#x20;       - defaul: 20 kHz
+&#x20;       - defaul: 24 kHz
 
 &#x20;   1. resonance, continuously variable
 
@@ -396,7 +396,7 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;   1. rate, continuously variable
 
-&#x20;       - 0.1 Hz to 15 kHz
+&#x20;       - 0.1 Hz to 24 kHz
 
 &#x20;       - default: 55 Hz
 
@@ -448,9 +448,9 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;   1. sampe rate reduction, continuously variable
 
-&#x20;       - 20 Hz to 20 kHz
+&#x20;       - 20 Hz to 24 kHz
 
-&#x20;       - default: 20 kHz
+&#x20;       - default: 24 kHz
 
 &#x20;   1. low boost, continuously variable
 
@@ -482,9 +482,9 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;   1. cutoff, continuously variable
 
-&#x20;       - 0.1 Hz to 20 kHz
+&#x20;       - 0.1 Hz to 24 kHz
 
-&#x20;       - defaul: 20 kHz
+&#x20;       - defaul: 24 kHz
 
 &#x20;   1. resonance, continuously variable
 
@@ -502,15 +502,15 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;   1. dampening, continuously variable
 
-&#x20;       - 0.1 Hz to 20 kHz
+&#x20;       - 0.1 Hz to 24 kHz
 
-&#x20;       - default: 20 kHz
+&#x20;       - default: 24 kHz
 
 &#x20;   1. cutoff, continuously variable
 
-&#x20;       - 0.1 Hz to 20 kHz
+&#x20;       - 0.1 Hz to 24 kHz
 
-&#x20;       - defaul: 20 kHz
+&#x20;       - defaul: 24 kHz
 
 &#x20;   1. resonance, continuously variable
 
@@ -534,7 +534,7 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;   1. level, continuously variable
 
-&#x20;       - 0% to 100% to 400%
+&#x20;       - 0% to 100%
 
 &#x20;       - default: 100%
 
