@@ -312,7 +312,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::create
 
     // --- 6. MIXER ---
     layout.add(makeFloatParam("mixer_carrier_level", "Mixer: Carrier Level", 0.5f)); // 100%
-    layout.add(makeFloatParam("mixer_noise_level", "Mixer: Noise Level", 0.5f));     // 100%
+    layout.add(makeFloatParam("mixer_noise_level", "Mixer: Noise Level", 0.0f));     // 0%
     layout.add(makeFloatParam("mixer_drive", "Mixer: Drive", 0.5f));                 // 0 dB
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("mixer_limiter", 1), "Mixer: Limiter",

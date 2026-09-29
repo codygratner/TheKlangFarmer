@@ -33,11 +33,13 @@ class RotaryKnobSlider : public juce::Slider {
 public:
     RotaryKnobSlider();
     void mouseDown(const juce::MouseEvent& e) override;
+    void mouseDoubleClick(const juce::MouseEvent& e) override;
     void openHoveringEditor();
 
     bool isBipolar = false;
     void setBipolar(bool bipolar) { isBipolar = bipolar; repaint(); }
 
+    std::function<double()> getDefaultValue;
     std::function<juce::String(double)> customFormatText;
     std::function<double(const juce::String&)> customParseText;
 
@@ -115,8 +117,10 @@ private:
     BiaEr1AudioProcessor& audioProcessor;
     RotaryKnobLookAndFeel knobLookAndFeel;
 
-    // Header Trigger button for rapid auditioning
+    // Header buttons
+    juce::TextButton initButton { "INIT" };
     juce::TextButton triggerButton { "AUDITION HIT" };
+    void resetToDefaults();
 
     // 13 Module Cards
     std::vector<std::unique_ptr<ModuleCardComponent>> cards;
@@ -213,7 +217,7 @@ private:
     std::vector<std::unique_ptr<SliderAttachment>> sliderAttachments;
     std::vector<std::unique_ptr<ComboBoxAttachment>> boxAttachments;
 
-    void setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar = false);
+    void setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar = false, double defaultVal = 0.5);
     void setupBox(juce::ComboBox& box);
 
     int lastCarrierTrack = -1;

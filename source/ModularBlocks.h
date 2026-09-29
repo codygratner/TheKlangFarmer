@@ -1392,9 +1392,9 @@ public:
         setPageParameter(BLK_NOISE, 2, 0.5f);
         setPageParameter(BLK_NOISE, 3, 0.3078f);
 
-        // 6. Mixer: Carrier 100% (0.5), Noise 100% (0.5), Drive 0 dB (0.5), Limiter On (1.0)
+        // 6. Mixer: Carrier 100% (0.5), Noise 0% (0.0), Drive 0 dB (0.5), Limiter On (1.0)
         setPageParameter(BLK_MIXER, 0, 0.5f);
-        setPageParameter(BLK_MIXER, 1, 0.5f);
+        setPageParameter(BLK_MIXER, 1, 0.0f);
         setPageParameter(BLK_MIXER, 2, 0.5f);
         setPageParameter(BLK_MIXER, 3, 1.0f);
 

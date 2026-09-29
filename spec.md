@@ -176,9 +176,9 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 &#x20;   1. depth, continuously variable
 
-&#x20;       - -100% to 0% to 100%
+&#x20;       - -5 Octaves to 0 to +5 Octaves
 
-&#x20;       - default: 0%
+&#x20;       - default: 0
 
 &#x20;   1. decay, continuously variable
 
@@ -282,6 +282,12 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 1\. Mixer Controls
 
+&#x20;   1. limiter, selector
+
+&#x20;       - off
+
+&#x20;       - on (default)
+
 &#x20;   1. carrier level (this is after the drive block), continuously variable
 
 &#x20;       - 0% to 100%  (at 50% knob range) to 400%
@@ -292,19 +298,13 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 &#x20;       - 0% to 100%  (at 50% knob range) to 400%
 
-&#x20;       - default: 100%
+&#x20;       - default: 0%
 
 &#x20;   1. drive, continuously variable
 
 &#x20;       - -6dB to 0dB (at 50% knob) to +24dB
 
 &#x20;       - default: 0dB
-
-&#x20;   1. limiter, selector
-
-&#x20;       - off
-
-&#x20;       - on (default)
 
 1\. Filter Controls
 
@@ -480,6 +480,12 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 1\. Amp Controls
 
+&#x20;   1. limiter, selector
+
+&#x20;       - off
+
+&#x20;       - on (default)
+
 &#x20;   1. pan, continuously variable
 
 &#x20;       - 100% left to center to 100% right
@@ -497,12 +503,6 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 &#x20;       - -6dB to 0dB (at 50% knob) to +24dB
 
 &#x20;       - default: 0dB
-
-&#x20;   1. limiter, selector
-
-&#x20;       - off
-
-&#x20;       - on (default)
 
 1\. Amp Envelope Controls
 
