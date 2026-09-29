@@ -25,6 +25,12 @@ struct BlockContext {
     std::vector<float> pitchEnvSignal;
     std::vector<float> filterEnvSignal;
     std::vector<float> ampEnvSignal;
+
+    // Velocity modulation state
+    float curvedVelocity = 1.0f;
+    float velDecayMod = 0.0f;
+    float velDepthMod = 0.0f;
+    float velVolumeGain = 1.0f;
 };
 
 class DSPBlock {

@@ -44,6 +44,14 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 
 
+for all slope controls, show a little diagram of the current slope instead of the value (but can still be right clocked to edit the value)
+
+
+
+for all waveform controls, show a little diagram of the current wave shape instead of the value (but can still be right clocked to edit the value)
+
+
+
 1\. Carrier Controls
 
 &#x20;   1. pitch tracking style, selector
@@ -570,5 +578,29 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 &#x20;       - default: 333 ms
 
+1\. Velocity Controls
 
+&#x20;   1. slope, continuously variable (sets the slope of the velocity curve)
+
+&#x20;       - exponential to linear to logarithmic
+
+&#x20;       - default: linear
+
+&#x20;   1. decay, continuously variable (adds to all decay times)
+
+&#x20;       - -100% 0% to 100%
+
+&#x20;       - default: 0%
+
+&#x20;   1. depth, continuously variable (adds to all envelope depths)
+
+&#x20;       - -100% to 0% to +100%
+
+&#x20;       - default: 0%
+
+&#x20;   1. volume, continuously variable (sets the minimum output volume for lowest velocity)
+
+&#x20;       - 0% (no change to volume) to -100% (lowest velocity is quietest)
+
+&#x20;       - default: 0%
 

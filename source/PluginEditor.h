@@ -28,9 +28,17 @@ private:
     std::vector<float> points;
 };
 
-// Rotary knob with right-click hovering text box editor and bipolar arc support
+// Rotary knob with right-click hovering text box editor, bipolar arc, and waveform/slope diagram support
 class RotaryKnobSlider : public juce::Slider {
 public:
+    enum class DiagramType {
+        None,
+        Waveform,
+        EnvelopeSlope,
+        VelocitySlope,
+        FilterSlope
+    };
+
     RotaryKnobSlider();
     void mouseDown(const juce::MouseEvent& e) override;
     void mouseDoubleClick(const juce::MouseEvent& e) override;
@@ -39,12 +47,30 @@ public:
     bool isBipolar = false;
     void setBipolar(bool bipolar) { isBipolar = bipolar; repaint(); }
 
+    DiagramType diagramType = DiagramType::None;
+
     std::function<double()> getDefaultValue;
     std::function<juce::String(double)> customFormatText;
     std::function<double(const juce::String&)> customParseText;
 
     juce::String getTextFromValue(double val) override;
     double getValueFromText(const juce::String& text) override;
+};
+
+// Custom diagram-rendering label used as slider text box
+class DiagramSliderLabel : public juce::Label, public juce::Slider::Listener {
+public:
+    explicit DiagramSliderLabel(RotaryKnobSlider& s);
+    ~DiagramSliderLabel() override;
+    void paint(juce::Graphics& g) override;
+    void mouseDown(const juce::MouseEvent& e) override;
+    void mouseDrag(const juce::MouseEvent& e) override;
+    void mouseUp(const juce::MouseEvent& e) override;
+    void mouseDoubleClick(const juce::MouseEvent& e) override;
+    void sliderValueChanged(juce::Slider*) override { repaint(); }
+
+private:
+    RotaryKnobSlider& slider;
 };
 
 // Sleek hardware-style LED list selector
@@ -223,6 +249,12 @@ private:
     RotaryKnobSlider ampEnvClapSpeedSlider;
     RotaryKnobSlider ampEnvSlopeSlider;
     RotaryKnobSlider ampEnvDecaySlider;
+
+    // Block 16: Velocity
+    RotaryKnobSlider velSlopeSlider;
+    RotaryKnobSlider velDecaySlider;
+    RotaryKnobSlider velDepthSlider;
+    RotaryKnobSlider velVolumeSlider;
 
     // APVTS Attachments
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;

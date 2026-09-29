@@ -85,6 +85,9 @@ RotaryKnobLookAndFeel::RotaryKnobLookAndFeel() {
 }
 
 juce::Label* RotaryKnobLookAndFeel::createSliderTextBox(juce::Slider& slider) {
+    if (auto* rks = dynamic_cast<RotaryKnobSlider*>(&slider)) {
+        return new DiagramSliderLabel(*rks);
+    }
     auto* l = juce::LookAndFeel_V4::createSliderTextBox(slider);
     l->setFont(juce::FontOptions(12.5f, juce::Font::bold));
     l->setColour(juce::Label::textColourId, juce::Colour(0xffffffff));
@@ -223,11 +226,153 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
     g.strokePath(p, juce::PathStrokeType(1.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
 
+// --- DIAGRAM SLIDER LABEL ---
+
+DiagramSliderLabel::DiagramSliderLabel(RotaryKnobSlider& s)
+    : slider(s)
+{
+    slider.addListener(this);
+    setFont(juce::FontOptions(11.5f, juce::Font::bold));
+    setColour(juce::Label::textColourId, juce::Colour(0xffffffff));
+    setColour(juce::Label::backgroundColourId, juce::Colour(0xee11141a));
+    setColour(juce::Label::outlineColourId, juce::Colour(0x44303848));
+}
+
+DiagramSliderLabel::~DiagramSliderLabel() {
+    slider.removeListener(this);
+}
+
+void DiagramSliderLabel::paint(juce::Graphics& g) {
+    if (slider.diagramType == RotaryKnobSlider::DiagramType::None) {
+        juce::Label::paint(g);
+        return;
+    }
+
+    auto bounds = getLocalBounds().toFloat().reduced(1.5f, 1.0f);
+    g.setColour(juce::Colour(0xee11141a));
+    g.fillRoundedRectangle(bounds, 3.0f);
+    g.setColour(juce::Colour(0x44303848));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 3.0f, 1.0f);
+
+    auto drawArea = bounds.reduced(5.0f, 2.5f);
+    if (drawArea.getWidth() <= 4.0f || drawArea.getHeight() <= 4.0f) return;
+
+    juce::Colour traceColour = slider.findColour(juce::Slider::rotarySliderFillColourId);
+    float val = static_cast<float>(slider.getValue());
+
+    if (slider.diagramType == RotaryKnobSlider::DiagramType::Waveform) {
+        g.setColour(juce::Colour(0x22ffffff));
+        g.drawHorizontalLine(static_cast<int>(drawArea.getCentreY()), drawArea.getX(), drawArea.getRight());
+
+        juce::Path p;
+        constexpr int numPts = 32;
+        for (int i = 0; i <= numPts; ++i) {
+            float phase = static_cast<float>(i) / static_cast<float>(numPts);
+            float waveY = TbdAudio::evaluateWaveform(phase, val);
+            float px = drawArea.getX() + phase * drawArea.getWidth();
+            float py = drawArea.getCentreY() - waveY * (drawArea.getHeight() * 0.44f);
+            if (i == 0) p.startNewSubPath(px, py);
+            else p.lineTo(px, py);
+        }
+        g.setColour(traceColour);
+        g.strokePath(p, juce::PathStrokeType(1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+    else if (slider.diagramType == RotaryKnobSlider::DiagramType::EnvelopeSlope) {
+        g.setColour(juce::Colour(0x22ffffff));
+        g.drawHorizontalLine(static_cast<int>(drawArea.getBottom() - 1.0f), drawArea.getX(), drawArea.getRight());
+
+        juce::Path p;
+        constexpr int numPts = 24;
+        for (int i = 0; i <= numPts; ++i) {
+            float t = static_cast<float>(i) / static_cast<float>(numPts);
+            float y = TbdAudio::applyEnvelopeSlope(1.0f - t, val);
+            float px = drawArea.getX() + t * drawArea.getWidth();
+            float py = drawArea.getBottom() - y * (drawArea.getHeight() * 0.88f) - 1.0f;
+            if (i == 0) p.startNewSubPath(px, py);
+            else p.lineTo(px, py);
+        }
+        g.setColour(traceColour);
+        g.strokePath(p, juce::PathStrokeType(1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+    else if (slider.diagramType == RotaryKnobSlider::DiagramType::VelocitySlope) {
+        g.setColour(juce::Colour(0x22ffffff));
+        g.drawHorizontalLine(static_cast<int>(drawArea.getBottom() - 1.0f), drawArea.getX(), drawArea.getRight());
+
+        juce::Path p;
+        constexpr int numPts = 24;
+        for (int i = 0; i <= numPts; ++i) {
+            float t = static_cast<float>(i) / static_cast<float>(numPts);
+            float y = TbdAudio::applyEnvelopeSlope(t, val);
+            float px = drawArea.getX() + t * drawArea.getWidth();
+            float py = drawArea.getBottom() - y * (drawArea.getHeight() * 0.88f) - 1.0f;
+            if (i == 0) p.startNewSubPath(px, py);
+            else p.lineTo(px, py);
+        }
+        g.setColour(traceColour);
+        g.strokePath(p, juce::PathStrokeType(1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+    else if (slider.diagramType == RotaryKnobSlider::DiagramType::FilterSlope) {
+        g.setColour(juce::Colour(0x22ffffff));
+        g.drawHorizontalLine(static_cast<int>(drawArea.getBottom() - 1.0f), drawArea.getX(), drawArea.getRight());
+
+        juce::Path p;
+        constexpr int numPts = 24;
+        float cutoffX = 0.55f;
+        float exponent = 1.0f + val * 6.0f;
+        for (int i = 0; i <= numPts; ++i) {
+            float t = static_cast<float>(i) / static_cast<float>(numPts);
+            float mag = 1.0f;
+            if (t > cutoffX) {
+                float f = (t - cutoffX) / (1.0f - cutoffX);
+                mag = std::clamp(1.0f - std::pow(f, 1.0f / exponent), 0.0f, 1.0f);
+            }
+            float px = drawArea.getX() + t * drawArea.getWidth();
+            float py = drawArea.getBottom() - mag * (drawArea.getHeight() * 0.88f) - 1.0f;
+            if (i == 0) p.startNewSubPath(px, py);
+            else p.lineTo(px, py);
+        }
+        g.setColour(traceColour);
+        g.strokePath(p, juce::PathStrokeType(1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+}
+
+void DiagramSliderLabel::mouseDown(const juce::MouseEvent& e) {
+    if (e.mods.isRightButtonDown() || e.mods.isPopupMenu()) {
+        slider.openHoveringEditor();
+        return;
+    }
+    if (slider.diagramType != RotaryKnobSlider::DiagramType::None) {
+        slider.mouseDown(e.getEventRelativeTo(&slider));
+        return;
+    }
+    juce::Label::mouseDown(e);
+}
+
+void DiagramSliderLabel::mouseDrag(const juce::MouseEvent& e) {
+    if (slider.diagramType != RotaryKnobSlider::DiagramType::None) {
+        slider.mouseDrag(e.getEventRelativeTo(&slider));
+        return;
+    }
+    juce::Label::mouseDrag(e);
+}
+
+void DiagramSliderLabel::mouseUp(const juce::MouseEvent& e) {
+    if (slider.diagramType != RotaryKnobSlider::DiagramType::None) {
+        slider.mouseUp(e.getEventRelativeTo(&slider));
+        return;
+    }
+    juce::Label::mouseUp(e);
+}
+
+void DiagramSliderLabel::mouseDoubleClick(const juce::MouseEvent& e) {
+    slider.mouseDoubleClick(e);
+}
+
 // --- ROTARY KNOB SLIDER WITH RIGHT CLICK EDITING ---
 
 RotaryKnobSlider::RotaryKnobSlider() {
     setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    setTextBoxStyle(juce::Slider::TextBoxBelow, false, 76, 20);
+    setTextBoxStyle(juce::Slider::TextBoxBelow, false, 58, 18);
 }
 
 void RotaryKnobSlider::mouseDown(const juce::MouseEvent& e) {
@@ -481,11 +626,11 @@ void ModuleCardComponent::resized() {
     auto area = getLocalBounds().reduced(5);
     area.removeFromTop(18); // Header title
 
-    oscilloscope.setBounds(area.removeFromTop(26).reduced(2, 0));
+    oscilloscope.setBounds(area.removeFromTop(24).reduced(2, 0));
     area.removeFromTop(4);
 
     if (ledSelector != nullptr) {
-        int selH = (ledSelector->getNumItems() > 4) ? 36 : 22;
+        int selH = (ledSelector->getNumItems() > 4) ? 34 : 22;
         ledSelector->setBounds(area.removeFromTop(selH));
         area.removeFromTop(3);
 
@@ -493,33 +638,18 @@ void ModuleCardComponent::resized() {
         int knobW = area.getWidth() / knobCount;
         for (int i = 0; i < knobCount; ++i) {
             auto kArea = area.removeFromLeft(knobW);
-            labels[i].setBounds(kArea.removeFromTop(15));
+            labels[i].setBounds(kArea.removeFromTop(14));
             if (knobs[i]) knobs[i]->setBounds(kArea);
         }
     } else {
-        // 4 knobs in 2x2 grid
-        int rowH = area.getHeight() / 2;
-        auto topRow = area.removeFromTop(rowH);
-        auto botRow = area;
-
-        int wTop = topRow.getWidth() / 2;
-        int wBot = botRow.getWidth() / 2;
-
-        auto k0Area = topRow.removeFromLeft(wTop);
-        labels[0].setBounds(k0Area.removeFromTop(15));
-        if (knobs[0]) knobs[0]->setBounds(k0Area);
-
-        auto k1Area = topRow;
-        labels[1].setBounds(k1Area.removeFromTop(15));
-        if (knobs[1]) knobs[1]->setBounds(k1Area);
-
-        auto k2Area = botRow.removeFromLeft(wBot);
-        labels[2].setBounds(k2Area.removeFromTop(15));
-        if (knobs[2]) knobs[2]->setBounds(k2Area);
-
-        auto k3Area = botRow;
-        labels[3].setBounds(k3Area.removeFromTop(15));
-        if (knobs[3]) knobs[3]->setBounds(k3Area);
+        // 4 knobs arranged in a single row across the card
+        int knobCount = 4;
+        int knobW = area.getWidth() / knobCount;
+        for (int i = 0; i < knobCount; ++i) {
+            auto kArea = area.removeFromLeft(knobW);
+            labels[i].setBounds(kArea.removeFromTop(14));
+            if (knobs[i]) knobs[i]->setBounds(kArea);
+        }
     }
 }
 
@@ -572,6 +702,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     bindSelector(carrierTrackingSelector, carrierTrackingBox, "carrier_tracking", { "Fixed Freq", "Fixed Pitch", "MIDI Pitch" }, 3);
     setupKnob(carrierPitchSlider, juce::Colour(0xff00d2ff), false, 0.5);
     setupKnob(carrierShapeSlider, juce::Colour(0xff00d2ff), false, 0.0);
+    carrierShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
     setupKnob(carrierDriveSlider, juce::Colour(0xff00d2ff), false, 0.5);
 
     carrierPitchSlider.getDefaultValue = [this]() -> double {
@@ -639,6 +770,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     bindSelector(modTypeSelector, modTypeBox, "mod_type",
                  { "Fixed", "Follow", "FM Op", "Fix Sin*Nz", "Fol Sin*Nz", "FM Sin*Nz", "S&H Nz" }, 4);
     setupKnob(modShapeSlider, juce::Colour(0xffff7043), false, 0.0);
+    modShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
     setupKnob(modDepthSlider, juce::Colour(0xffff7043), true, 0.5); // Bipolar
     setupKnob(modSpeedSlider, juce::Colour(0xffff7043), false, 0.5286);
 
@@ -705,6 +837,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     bindSelector(pitchEnvTargetSelector, pitchEnvTargetBox, "pitchenv_target",
                  { "Off", "Carrier", "Mod", "Both" }, 4);
     setupKnob(pitchEnvSlopeSlider, juce::Colour(0xffffab00), false, 0.0);
+    pitchEnvSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     setupKnob(pitchEnvDepthSlider, juce::Colour(0xffffab00), true, 0.5); // Bipolar
     setupKnob(pitchEnvDecaySlider, juce::Colour(0xffffab00), false, 0.3806);
 
@@ -869,6 +1002,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     bindSelector(filterTypeSelector, filterTypeBox, "filter_type",
                  { "Off", "LPF", "BPF", "HPF", "Notch" }, 5);
     setupKnob(filterSlopeSlider, juce::Colour(0xff7c4dff), false, 0.1667);
+    filterSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::FilterSlope;
     setupKnob(filterCutoffSlider, juce::Colour(0xff7c4dff), false, 1.0);
     setupKnob(filterResonanceSlider, juce::Colour(0xff7c4dff), false, 0.0); // 0% unipolar
 
@@ -907,6 +1041,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 8. FILTER ENVELOPE CARD (4 Knobs)
     auto cardFilterEnv = std::make_unique<ModuleCardComponent>("Filter Env", juce::Colour(0xffb388ff));
     setupKnob(filterEnvSlopeSlider, juce::Colour(0xffb388ff), false, 0.0);
+    filterEnvSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     setupKnob(filterEnvDepthSlider, juce::Colour(0xffb388ff), true, 0.5); // Bipolar
     setupKnob(filterEnvDecaySlider, juce::Colour(0xffb388ff), false, 0.3806);
     setupKnob(filterEnvPreDriveSlider, juce::Colour(0xffb388ff), false, 0.5);
@@ -928,6 +1063,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 9. RINGMOD CARD (4 Knobs)
     auto cardRingMod = std::make_unique<ModuleCardComponent>("RingMod", juce::Colour(0xffff5252));
     setupKnob(ringModShapeSlider, juce::Colour(0xffff5252), false, 0.0);
+    ringModShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
     setupKnob(ringModRateSlider, juce::Colour(0xffff5252), false, 0.5286);
     setupKnob(ringModAmountSlider, juce::Colour(0xffff5252), false, 0.0);
     setupKnob(ringModWidthSlider, juce::Colour(0xffff5252), true, 0.5); // Bipolar
@@ -1135,6 +1271,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     setupKnob(ampEnvClapsSlider, juce::Colour(0xff64ffda), false, 0.0);
     setupKnob(ampEnvClapSpeedSlider, juce::Colour(0xff64ffda), false, 0.1429);
     setupKnob(ampEnvSlopeSlider, juce::Colour(0xff64ffda), false, 0.0);
+    ampEnvSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     setupKnob(ampEnvDecaySlider, juce::Colour(0xff64ffda), false, 0.3806);
 
     ampEnvClapsSlider.customFormatText = [](double val) {
@@ -1161,7 +1298,46 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     cardAmpEnv->setKnob(3, "Decay", &ampEnvDecaySlider);
     cards.push_back(std::move(cardAmpEnv));
 
-    // Add all 15 cards to editor
+    // 16. VELOCITY CARD (4 Knobs)
+    auto cardVel = std::make_unique<ModuleCardComponent>("Velocity", juce::Colour(0xff80cbc4));
+    setupKnob(velSlopeSlider, juce::Colour(0xff80cbc4), false, 0.5); // Linear default
+    velSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::VelocitySlope;
+    setupKnob(velDecaySlider, juce::Colour(0xff80cbc4), true, 0.5);  // 0% default (bipolar)
+    setupKnob(velDepthSlider, juce::Colour(0xff80cbc4), true, 0.5);  // 0% default (bipolar)
+    setupKnob(velVolumeSlider, juce::Colour(0xff80cbc4), false, 0.0); // 0% default (unipolar)
+
+    velSlopeSlider.customFormatText = [](double val) {
+        if (val < 0.33) return "Exp (" + juce::String(static_cast<int>(val * 300.0)) + "%)";
+        if (val < 0.67) return "Lin (" + juce::String(static_cast<int>((val - 0.33) * 300.0)) + "%)";
+        return "Log (" + juce::String(static_cast<int>((val - 0.67) * 300.0)) + "%)";
+    };
+    velDecaySlider.customFormatText = [](double val) {
+        int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
+        return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
+    };
+    velDecaySlider.customParseText = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0);
+        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
+    };
+    velDepthSlider.customFormatText = velDecaySlider.customFormatText;
+    velDepthSlider.customParseText  = velDecaySlider.customParseText;
+
+    velVolumeSlider.customFormatText = [](double val) {
+        int pct = static_cast<int>(std::round(val * 100.0));
+        return (pct == 0) ? "0%" : "-" + juce::String(pct) + "%";
+    };
+    velVolumeSlider.customParseText = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0);
+        return std::clamp(std::abs(p) / 100.0, 0.0, 1.0);
+    };
+
+    cardVel->setKnob(0, "Slope", &velSlopeSlider);
+    cardVel->setKnob(1, "Decay", &velDecaySlider);
+    cardVel->setKnob(2, "Depth", &velDepthSlider);
+    cardVel->setKnob(3, "Volume", &velVolumeSlider);
+    cards.push_back(std::move(cardVel));
+
+    // Add all 16 cards to editor
     for (auto& c : cards) {
         addAndMakeVisible(c.get());
     }
@@ -1242,8 +1418,13 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_slope", ampEnvSlopeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_decay", ampEnvDecaySlider));
 
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_slope", velSlopeSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_decay", velDecaySlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_depth", velDepthSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_volume", velVolumeSlider));
+
     updateDynamicControls();
-    setSize(1100, 620);
+    setSize(1160, 680);
     setResizable(true, true);
     setResizeLimits(900, 500, 1920, 1200);
     startTimerHz(30); // 30 FPS oscilloscope & GUI update
@@ -1364,7 +1545,7 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
 
     g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("15-MODULE HARDWARE SYNTHESIS DRUM VOICE", 182, 0, 380, 36, juce::Justification::centredLeft);
+    g.drawText("16-MODULE HARDWARE SYNTHESIS DRUM VOICE", 182, 0, 380, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangFarmerAudioProcessorEditor::resized() {
@@ -1373,28 +1554,19 @@ void TheKlangFarmerAudioProcessorEditor::resized() {
 
     int margin = 6;
     int topOffset = 38;
+    int totalW = getWidth() - 2 * margin;
     int totalH = getHeight() - topOffset - margin;
-    int rowH = (totalH - 2 * margin) / 3;
-    int cardW = (getWidth() - 6 * margin) / 5;
 
-    // Row 1: 5 Cards (Carrier, Modulator, Pitch Env, Drive, Noise Transient)
-    int row1Y = topOffset;
-    for (int i = 0; i < 5 && i < static_cast<int>(cards.size()); ++i) {
-        int x = margin + i * (cardW + margin);
-        cards[i]->setBounds(x, row1Y, cardW, rowH);
-    }
+    int numCols = 4;
+    int numRows = 4;
+    int cardW = (totalW - (numCols - 1) * margin) / numCols;
+    int rowH  = (totalH - (numRows - 1) * margin) / numRows;
 
-    // Row 2: 5 Cards (Mixer, Filter, Filter Env, RingMod, Frequency Shifter)
-    int row2Y = row1Y + rowH + margin;
-    for (int i = 0; i < 5 && (i + 5) < static_cast<int>(cards.size()); ++i) {
-        int x = margin + i * (cardW + margin);
-        cards[i + 5]->setBounds(x, row2Y, cardW, rowH);
-    }
-
-    // Row 3: 5 Cards (Grit FX, Comb Filter, Disperser, Amp, Amp Env)
-    int row3Y = row2Y + rowH + margin;
-    for (int i = 0; i < 5 && (i + 10) < static_cast<int>(cards.size()); ++i) {
-        int x = margin + i * (cardW + margin);
-        cards[i + 10]->setBounds(x, row3Y, cardW, rowH);
+    for (int i = 0; i < static_cast<int>(cards.size()); ++i) {
+        int col = i % numCols;
+        int row = i / numCols;
+        int x = margin + col * (cardW + margin);
+        int y = topOffset + row * (rowH + margin);
+        cards[i]->setBounds(x, y, cardW, rowH);
     }
 }

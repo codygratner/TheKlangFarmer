@@ -97,6 +97,12 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     ampEnvClapSpeedParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_clapspeed"));
     ampEnvSlopeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_slope"));
     ampEnvDecayParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_decay"));
+
+    // 16. Velocity
+    velSlopeParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_slope"));
+    velDecayParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_decay"));
+    velDepthParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_depth"));
+    velVolumeParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_volume"));
 }
 
 void TheKlangFarmerAudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
@@ -219,6 +225,12 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     if (ampEnvClapSpeedParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 1, getNorm(ampEnvClapSpeedParam));
     if (ampEnvSlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 2, getNorm(ampEnvSlopeParam));
     if (ampEnvDecayParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 3, getNorm(ampEnvDecayParam));
+
+    // 16. Velocity
+    if (velSlopeParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 0, getNorm(velSlopeParam));
+    if (velDecayParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, getNorm(velDecayParam));
+    if (velDepthParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, getNorm(velDepthParam));
+    if (velVolumeParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 3, getNorm(velVolumeParam));
 
     int numSamples = buffer.getNumSamples();
     float* left = buffer.getNumChannels() > 0 ? buffer.getWritePointer(0) : nullptr;
@@ -403,6 +415,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("ampenv_clapspeed", "AmpEnv: Clap Speed", 0.1429f)); // 3 ms
     layout.add(makeFloatParam("ampenv_slope", "AmpEnv: Slope", 0.0f));          // Exponential
     layout.add(makeFloatParam("ampenv_decay", "AmpEnv: Decay", 0.3806f));       // 333 ms
+
+    // --- 16. VELOCITY ---
+    layout.add(makeFloatParam("vel_slope", "Velocity: Slope", 0.5f));            // Linear
+    layout.add(makeFloatParam("vel_decay", "Velocity: Decay", 0.5f));            // 0% (bipolar center)
+    layout.add(makeFloatParam("vel_depth", "Velocity: Depth", 0.5f));            // 0% (bipolar center)
+    layout.add(makeFloatParam("vel_volume", "Velocity: Volume", 0.0f));          // 0% (unipolar min)
 
     return layout;
 }

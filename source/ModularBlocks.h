@@ -448,11 +448,13 @@ public:
         // 2. Slope: Exp (0.0) -> Lin (0.5) -> Log (1.0)
         float slope = params[1];
 
-        // 3. Depth: -100% to 0% to +100% (bipolar, def 0%)
-        float depth = (params[2] - 0.5f) * 2.0f;
+        // 3. Depth: -100% to 0% to +100% (bipolar, def 0%) + velocity modulation
+        float baseDepth = (params[2] - 0.5f) * 2.0f;
+        float depth = std::clamp(baseDepth + ctx.velDepthMod, -1.0f, 1.0f);
 
-        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms)
-        float decayTime = warp5PointTime(params[3]);
+        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + velocity modulation
+        float decayParam = std::clamp(params[3] + ctx.velDecayMod, 0.0f, 1.0f);
+        float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
 
         ctx.pitchEnvSignal.resize(numSamples);
@@ -562,7 +564,7 @@ public:
         processStereo(buffer, nullptr, numSamples, ctx);
     }
 
-    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+    void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
         // 1. S&H rate: 0.1 Hz to 20 kHz (def 20 kHz)
         float shRate = 0.1f * std::pow(20000.0f / 0.1f, params[0]);
 
@@ -572,8 +574,9 @@ public:
         // 3. Drive: -6dB to 0dB (at 0.5) to +24dB (def: 0dB)
         float gain = normToDriveGain(params[2]);
 
-        // 4. Decay: 5-point warp (1ms, 50ms, 1s, 5s, 60s; def 100ms)
-        float decayTime = warpNoiseDecayTime(params[3]);
+        // 4. Decay: 5-point warp (1ms, 50ms, 1s, 5s, 60s; def 100ms) + velocity modulation
+        float decayParam = std::clamp(params[3] + ctx.velDecayMod, 0.0f, 1.0f);
+        float decayTime = warpNoiseDecayTime(decayParam);
         decayTime = std::max(decayTime, 0.0005f);
 
         for (int i = 0; i < numSamples; ++i) {
@@ -918,11 +921,13 @@ public:
         // 1. Slope: Exp (0.0, def) -> Lin (0.5) -> Log (1.0)
         float slope = params[0];
 
-        // 2. Depth: -100% to 0% to +100% (bipolar, def 0%)
-        float depth = (params[1] - 0.5f) * 2.0f;
+        // 2. Depth: -100% to 0% to +100% (bipolar, def 0%) + velocity modulation
+        float baseDepth = (params[1] - 0.5f) * 2.0f;
+        float depth = std::clamp(baseDepth + ctx.velDepthMod, -1.0f, 1.0f);
 
-        // 3. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms)
-        float decayTime = warp5PointTime(params[2]);
+        // 3. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + velocity modulation
+        float decayParam = std::clamp(params[2] + ctx.velDecayMod, 0.0f, 1.0f);
+        float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
 
         // 4. Pre-drive: -6dB to 0dB (at 0.5) to +24dB
@@ -1289,8 +1294,9 @@ public:
             float inL = left ? left[i] : 0.0f;
             float inR = right ? right[i] : inL;
 
-            float curL = inL * envVal * vel * level;
-            float curR = inR * envVal * vel * level;
+            float effectiveGain = ctx.velVolumeGain * level;
+            float curL = inL * envVal * effectiveGain;
+            float curR = inR * envVal * effectiveGain;
 
             if (hasDrive) {
                 curL *= driveGain;
@@ -1339,8 +1345,9 @@ public:
         // 3. Slope: Exp (0.0, def) -> Lin (0.5) -> Log (1.0)
         float slope = params[2];
 
-        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms)
-        float decayTime = warp5PointTime(params[3]);
+        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + velocity modulation
+        float decayParam = std::clamp(params[3] + ctx.velDecayMod, 0.0f, 1.0f);
+        float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
 
         float clapBurstsDuration = (numClaps > 0) ? (numClaps * clapInterval) : 0.0f;
@@ -1372,6 +1379,56 @@ private:
     float timeSinceTrigger = 1000.0f;
 };
 
+// --- BLOCK 16: VELOCITY (Slope, Decay, Depth, Volume) ---
+class VelocityBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        sampleRate = ctx.sampleRate;
+        invSr = ctx.invSr;
+        for (int i = 0; i < 128; ++i) scopeData[i] = 0.0f;
+    }
+
+    void trigger(float velocity) override {
+        lastVelocity = velocity;
+    }
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* /*left*/, float* /*right*/, int /*numSamples*/, BlockContext& ctx) override {
+        // Parameters:
+        // 0: slope: 0.0 Exp -> 0.5 Lin (def) -> 1.0 Log
+        // 1: decay: -100% (0.0) to 0% (0.5, def) to +100% (1.0)
+        // 2: depth: -100% (0.0) to 0% (0.5, def) to +100% (1.0)
+        // 3: volume: 0% (0.0, def) to -100% (1.0)
+
+        float slope = params[0];
+        for (int i = 0; i < 128; ++i) {
+            float t = static_cast<float>(i) / 127.0f;
+            float y = applyEnvelopeSlope(t, slope);
+            // Highlight current velocity hit with a subtle blip marker
+            if (std::abs(t - ctx.curvedVelocity) < 0.045f) {
+                y = std::clamp(y + 0.3f, 0.0f, 1.0f);
+            }
+            scopeData[i] = y * 1.8f - 0.9f;
+        }
+    }
+
+    void getVisualScopeData(float* dest, int numSamples) const {
+        for (int i = 0; i < numSamples; ++i) {
+            int idx = (i * 128) / numSamples;
+            dest[i] = scopeData[std::clamp(idx, 0, 127)];
+        }
+    }
+
+private:
+    float sampleRate = 44100.0f;
+    float invSr = 1.0f / 44100.0f;
+    float lastVelocity = 1.0f;
+    float scopeData[128] = { 0.0f };
+};
+
 // --- MODULAR DRUM ENGINE ---
 class ModularDrumEngine {
 public:
@@ -1391,14 +1448,15 @@ public:
         BLK_DISPERSER,
         BLK_AMP,
         BLK_AMPENV,
-        NUM_BLOCKS = 15
+        BLK_VELOCITY,
+        NUM_BLOCKS = 16
     };
 
     void init(float sampleRate) {
         ctx.sampleRate = sampleRate;
         ctx.invSr = 1.0f / sampleRate;
 
-        // Instantiate all 15 blocks
+        // Instantiate all 16 blocks
         allBlocks.resize(NUM_BLOCKS);
         allBlocks[BLK_CARRIER]   = std::make_unique<CarrierBlock>();
         allBlocks[BLK_MODULATOR] = std::make_unique<ModulatorBlock>();
@@ -1415,6 +1473,7 @@ public:
         allBlocks[BLK_DISPERSER] = std::make_unique<DisperserBlock>();
         allBlocks[BLK_AMP]       = std::make_unique<AmpBlock>();
         allBlocks[BLK_AMPENV]    = std::make_unique<AmpEnvelopeBlock>();
+        allBlocks[BLK_VELOCITY]  = std::make_unique<VelocityBlock>();
 
         for (auto& b : allBlocks) b->init(ctx);
 
@@ -1516,11 +1575,32 @@ public:
         setPageParameter(BLK_AMPENV, 1, 0.1429f);
         setPageParameter(BLK_AMPENV, 2, 0.0f);
         setPageParameter(BLK_AMPENV, 3, 0.3806f);
+
+        // 16. Velocity: Linear (0.5), 0% Decay (0.5), 0% Depth (0.5), 0% Volume (0.0)
+        setPageParameter(BLK_VELOCITY, 0, 0.5f);
+        setPageParameter(BLK_VELOCITY, 1, 0.5f);
+        setPageParameter(BLK_VELOCITY, 2, 0.5f);
+        setPageParameter(BLK_VELOCITY, 3, 0.0f);
     }
 
     void trigger(float velocity = 1.0f) {
+        velocity = std::clamp(velocity, 0.0f, 1.0f);
         ctx.triggerVelocity = velocity;
         ctx.isTriggered = true;
+
+        float velSlope  = allBlocks[BLK_VELOCITY] ? allBlocks[BLK_VELOCITY]->getParam(0) : 0.5f;
+        float velDecay  = allBlocks[BLK_VELOCITY] ? (allBlocks[BLK_VELOCITY]->getParam(1) - 0.5f) * 2.0f : 0.0f; // -1 to +1
+        float velDepth  = allBlocks[BLK_VELOCITY] ? (allBlocks[BLK_VELOCITY]->getParam(2) - 0.5f) * 2.0f : 0.0f; // -1 to +1
+        float velVolume = allBlocks[BLK_VELOCITY] ? allBlocks[BLK_VELOCITY]->getParam(3) : 0.0f; // 0 to 1
+
+        float curvedVel = applyEnvelopeSlope(velocity, velSlope);
+        ctx.curvedVelocity = curvedVel;
+
+        // Minimum output volume at lowest velocity: (1.0 - velVolume), up to 1.0 at max velocity
+        ctx.velVolumeGain = 1.0f - (1.0f - curvedVel) * velVolume;
+        ctx.velDecayMod   = (curvedVel - 1.0f) * velDecay;
+        ctx.velDepthMod   = (curvedVel - 1.0f) * velDepth;
+
         for (auto& b : allBlocks) b->trigger(velocity);
     }
 
@@ -1544,6 +1624,13 @@ public:
 
     void getScopeData(int blockIndex, float* dest, int count) const {
         if (blockIndex < 0 || blockIndex >= NUM_BLOCKS || !dest || count <= 0) return;
+
+        if (blockIndex == BLK_VELOCITY) {
+            if (auto* velBlk = dynamic_cast<VelocityBlock*>(allBlocks[BLK_VELOCITY].get())) {
+                velBlk->getVisualScopeData(dest, count);
+                return;
+            }
+        }
 
         float f0 = lastCarrierFreq.load(std::memory_order_relaxed);
         if (!std::isfinite(f0) || f0 < 20.0f) f0 = 55.0f;
@@ -1671,6 +1758,9 @@ public:
         // 15. Amp (with Amp Envelope, Pan, Master Level, Master Drive, Limiter)
         allBlocks[BLK_AMP]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_AMP].pushBlock(left, numSamples);
+
+        // 16. Velocity (updates transfer curve scope visualization)
+        allBlocks[BLK_VELOCITY]->processStereo(nullptr, nullptr, numSamples, ctx);
     }
 
 private:

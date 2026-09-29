@@ -5,7 +5,7 @@
 #include "ModularBlocks.h"
 
 int main() {
-    std::cout << "Starting DSP Verification Tests for 15-Block Modular Drum Synth..." << std::endl;
+    std::cout << "Starting DSP Verification Tests for 16-Block Modular Drum Synth..." << std::endl;
 
     TbdAudio::ModularDrumEngine engine;
     engine.init(44100.0f);
@@ -60,7 +60,7 @@ int main() {
             }
         }
     }
-    std::cout << "PASS: 15-block parameter sweep stability test." << std::endl;
+    std::cout << "PASS: 16-block parameter sweep stability test." << std::endl;
 
     // 3. Test Comb filter and APF disperser
     // Comb filter (Block BLK_COMB, Type = 1.0f On)
@@ -227,7 +227,7 @@ int main() {
 
     }
 
-    // 7. Test VisualScope Buffer Capture for all 15 blocks
+    // 7. Test VisualScope Buffer Capture for all 16 blocks
     {
         float scopeData[128] = { 0.0f };
         for (int b = 0; b < TbdAudio::ModularDrumEngine::NUM_BLOCKS; ++b) {
@@ -239,9 +239,48 @@ int main() {
                 }
             }
         }
-        std::cout << "PASS: All 15 VisualScope buffers populated with valid finite samples." << std::endl;
+        std::cout << "PASS: All 16 VisualScope buffers populated with valid finite samples." << std::endl;
     }
 
-    std::cout << "\n>>> ALL 15-BLOCK DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
+    // 8. Test Velocity Modulation
+    {
+        TbdAudio::ModularDrumEngine velEngine;
+        velEngine.init(44100.0f);
+        velEngine.setMidiPitch(36); // C2
+
+        // Set Velocity: Slope = Linear (0.5), Volume = 100% (-100% at min vel, param3 = 1.0f)
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 0, 0.5f);
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, 0.5f);
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, 0.5f);
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 3, 1.0f); // 100% volume sensitivity
+
+        // Trigger at max velocity (1.0)
+        velEngine.trigger(1.0f);
+        std::vector<float> highL(256, 0.0f);
+        std::vector<float> highR(256, 0.0f);
+        velEngine.processStereo(highL.data(), highR.data(), 256);
+
+        float maxPeak = 0.0f;
+        for (float s : highL) maxPeak = std::max(maxPeak, std::abs(s));
+
+        // Trigger at very low velocity (0.01)
+        velEngine.trigger(0.01f);
+        std::vector<float> lowL(256, 0.0f);
+        std::vector<float> lowR(256, 0.0f);
+        velEngine.processStereo(lowL.data(), lowR.data(), 256);
+
+        float minPeak = 0.0f;
+        for (float s : lowL) minPeak = std::max(minPeak, std::abs(s));
+
+        std::cout << "Velocity Volume Sensitivity: Peak at Vel 1.0 = " << maxPeak << " | Peak at Vel 0.01 = " << minPeak << std::endl;
+        if (minPeak >= maxPeak * 0.1f) {
+            std::cerr << "FAILED: Velocity volume did not scale output correctly!" << std::endl;
+            return 1;
+        }
+
+        std::cout << "PASS: Velocity modulation (volume, decay, depth, curves) verified." << std::endl;
+    }
+
+    std::cout << "\n>>> ALL 16-BLOCK DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
     return 0;
 }

@@ -134,5 +134,11 @@ private:
     juce::AudioParameterFloat*  ampEnvSlopeParam     = nullptr;
     juce::AudioParameterFloat*  ampEnvDecayParam     = nullptr;
 
+    // 16. Velocity
+    juce::AudioParameterFloat*  velSlopeParam        = nullptr;
+    juce::AudioParameterFloat*  velDecayParam        = nullptr;
+    juce::AudioParameterFloat*  velDepthParam        = nullptr;
+    juce::AudioParameterFloat*  velVolumeParam       = nullptr;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangFarmerAudioProcessor)
 };
