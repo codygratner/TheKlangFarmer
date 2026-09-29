@@ -257,16 +257,17 @@ public:
 
     float getBasePitch(const BlockContext& ctx) const {
         int style = std::clamp(static_cast<int>(std::round(params[0] * 2.0f)), 0, 2);
+        float pitchParam = std::clamp(params[1] + ctx.slopCarrierPitch, 0.0f, 1.0f);
         if (style == 0) {
             // Fixed freq: 20 Hz to 24 kHz (def 55 Hz)
-            return 20.0f * std::pow(24000.0f / 20.0f, params[1]);
+            return 20.0f * std::pow(24000.0f / 20.0f, pitchParam);
         } else if (style == 1) {
             // Fixed pitch: MIDI note 0 to 127 (def A1 33)
-            float note = params[1] * 127.0f;
+            float note = pitchParam * 127.0f;
             return 440.0f * std::pow(2.0f, (note - 69.0f) / 12.0f);
         } else {
             // MIDI pitch: offset from -60 to +60 semitones (def 0)
-            float offset = std::round((params[1] - 0.5f) * 120.0f);
+            float offset = std::round((pitchParam - 0.5f) * 120.0f);
             return ctx.currentPitchHz * std::pow(2.0f, offset / 12.0f);
         }
     }
@@ -347,14 +348,14 @@ public:
         // 2. shape:
         // Types 0..2: waveform morph
         // Types 3..5: noise DJ filter
-        // Type 6: S&H rate 0.1Hz..20kHz
-        float shape = params[1];
+        // Type 6: S&H rate 0.1Hz..24kHz
+        float shape = (type >= 3) ? std::clamp(params[1] + ctx.slopModFilter, 0.0f, 1.0f) : params[1];
 
         // 3. depth: -200% to 0% to +200%
         float depth = (params[2] - 0.5f) * 4.0f;
 
         // 4. speed:
-        float speed = params[3];
+        float speed = std::clamp(params[3] + ctx.slopModFreq, 0.0f, 1.0f);
         float carrierPitch = std::max(ctx.carrierPitchHz, 10.0f);
         float oscFreq = 55.0f;
         float shRate = 24000.0f;
@@ -448,12 +449,13 @@ public:
         // 2. Slope: Exp (0.0) -> Lin (0.5) -> Log (1.0)
         float slope = params[1];
 
-        // 3. Depth: -100% to 0% to +100% (bipolar, def 0%) + velocity modulation
-        float baseDepth = (params[2] - 0.5f) * 2.0f;
+        // 3. Depth: -100% to 0% to +100% (bipolar, def 0%) + slop + velocity modulation
+        float effDepthParam = std::clamp(params[2] + ctx.slopPitchEnvDepth, 0.0f, 1.0f);
+        float baseDepth = (effDepthParam - 0.5f) * 2.0f;
         float depth = std::clamp(baseDepth + ctx.velDepthMod, -1.0f, 1.0f);
 
-        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + velocity modulation
-        float decayParam = std::clamp(params[3] + ctx.velDecayMod, 0.0f, 1.0f);
+        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + slop + velocity modulation
+        float decayParam = std::clamp(params[3] + ctx.slopPitchEnvDecay + ctx.velDecayMod, 0.0f, 1.0f);
         float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
 
@@ -492,7 +494,7 @@ public:
         processStereo(buffer, nullptr, numSamples, ctx);
     }
 
-    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+    void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
         // 1. type: 0=Off (def), 1=Saturation, 2=Wave Folder
         int type = std::clamp(static_cast<int>(std::round(params[0] * 2.0f)), 0, 2);
         if (type == 0) return; // bypass
@@ -508,7 +510,7 @@ public:
         float bias = (params[2] - 0.5f) * 2.0f;
 
         // 4. DJ Filter
-        float filterKnob = params[3];
+        float filterKnob = std::clamp(params[3] + ctx.slopDriveFilter, 0.0f, 1.0f);
 
         for (int i = 0; i < numSamples; ++i) {
             float inL = left ? left[i] : 0.0f;
@@ -566,16 +568,17 @@ public:
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
         // 1. S&H rate: 0.1 Hz to 24 kHz (def 24 kHz)
-        float shRate = 0.1f * std::pow(24000.0f / 0.1f, params[0]);
+        float shParam = std::clamp(params[0] + ctx.slopNoiseShRate, 0.0f, 1.0f);
+        float shRate = 0.1f * std::pow(24000.0f / 0.1f, shParam);
 
         // 2. DJ filter knob (def 50% Flat)
-        float filterKnob = params[1];
+        float filterKnob = std::clamp(params[1] + ctx.slopNoiseFilter, 0.0f, 1.0f);
 
         // 3. Drive: -6dB to 0dB (at 0.5) to +24dB (def: 0dB)
         float gain = normToDriveGain(params[2]);
 
-        // 4. Decay: 5-point warp (1ms, 50ms, 1s, 5s, 60s; def 100ms) + velocity modulation
-        float decayParam = std::clamp(params[3] + ctx.velDecayMod, 0.0f, 1.0f);
+        // 4. Decay: 5-point warp (1ms, 50ms, 1s, 5s, 60s; def 100ms) + slop + velocity modulation
+        float decayParam = std::clamp(params[3] + ctx.slopNoiseDecay + ctx.velDecayMod, 0.0f, 1.0f);
         float decayTime = warpNoiseDecayTime(decayParam);
         decayTime = std::max(decayTime, 0.0005f);
 
@@ -692,7 +695,8 @@ public:
         float slope = params[1];
 
         // 3. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
-        float baseCutoff = 0.1f * std::pow(24000.0f / 0.1f, params[2]);
+        float cutoffParam = std::clamp(params[2] + ctx.slopFilterCutoff, 0.0f, 1.0f);
+        float baseCutoff = 0.1f * std::pow(24000.0f / 0.1f, cutoffParam);
 
         // 4. Resonance: 0% to 100%
         float rawRes = params[3];
@@ -782,17 +786,19 @@ public:
         processStereo(buffer, nullptr, numSamples, ctx);
     }
 
-    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+    void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
         // 1. Type: 0=Off (def), 1=On
         bool enabled = (params[0] >= 0.5f);
         if (!enabled) return; // bypass
 
         // 2. Dampening: 0.1 Hz to 24 kHz (def 24 kHz)
-        float dampHz = 0.1f * std::pow(24000.0f / 0.1f, params[1]);
+        float dampParam = std::clamp(params[1] + ctx.slopCombDamp, 0.0f, 1.0f);
+        float dampHz = 0.1f * std::pow(24000.0f / 0.1f, dampParam);
         float combDampCoeff = std::clamp(TWO_PI * dampHz * invSr, 0.0001f, 0.999f);
 
         // 3. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
-        float cutoff = 0.1f * std::pow(24000.0f / 0.1f, params[2]);
+        float cutoffParam = std::clamp(params[2] + ctx.slopCombCutoff, 0.0f, 1.0f);
+        float cutoff = 0.1f * std::pow(24000.0f / 0.1f, cutoffParam);
         cutoff = std::clamp(cutoff, 20.0f, sampleRate * 0.485f);
 
         // 4. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
@@ -858,7 +864,7 @@ public:
         processStereo(buffer, nullptr, numSamples, ctx);
     }
 
-    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+    void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
         // 1. Type: 0=Off (def), 1=On
         bool enabled = (params[0] >= 0.5f);
         if (!enabled) return; // bypass
@@ -868,7 +874,8 @@ public:
         if (apfStages == 0) return;
 
         // 3. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
-        float cutoff = 0.1f * std::pow(24000.0f / 0.1f, params[2]);
+        float cutoffParam = std::clamp(params[2] + ctx.slopDisperserCutoff, 0.0f, 1.0f);
+        float cutoff = 0.1f * std::pow(24000.0f / 0.1f, cutoffParam);
         cutoff = std::clamp(cutoff, 10.0f, sampleRate * 0.485f);
 
         // 4. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
@@ -955,12 +962,13 @@ public:
         // 1. Slope: Exp (0.0, def) -> Lin (0.5) -> Log (1.0)
         float slope = params[0];
 
-        // 2. Depth: -100% to 0% to +100% (bipolar, def 0%) + velocity modulation
-        float baseDepth = (params[1] - 0.5f) * 2.0f;
+        // 2. Depth: -100% to 0% to +100% (bipolar, def 0%) + slop + velocity modulation
+        float effDepthParam = std::clamp(params[1] + ctx.slopFilterEnvDepth, 0.0f, 1.0f);
+        float baseDepth = (effDepthParam - 0.5f) * 2.0f;
         float depth = std::clamp(baseDepth + ctx.velDepthMod, -1.0f, 1.0f);
 
-        // 3. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + velocity modulation
-        float decayParam = std::clamp(params[2] + ctx.velDecayMod, 0.0f, 1.0f);
+        // 3. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + slop + velocity modulation
+        float decayParam = std::clamp(params[2] + ctx.slopFilterEnvDecay + ctx.velDecayMod, 0.0f, 1.0f);
         float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
 
@@ -999,12 +1007,13 @@ public:
         processStereo(buffer, nullptr, numSamples, ctx);
     }
 
-    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+    void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
         // 1. Waveform morph: Sine 0% -> Tri 20% -> Saw 40% -> Square 60% -> PWM 0% 100%
         float shape = params[0];
 
         // 2. Rate: 0.1 Hz to 24 kHz (def 55 Hz)
-        float rate = 0.1f * std::pow(24000.0f / 0.1f, params[1]);
+        float rateParam = std::clamp(params[1] + ctx.slopRingModRate, 0.0f, 1.0f);
+        float rate = 0.1f * std::pow(24000.0f / 0.1f, rateParam);
 
         // 3. Amount: 0% to 100% (def 0%)
         float amount = params[2];
@@ -1308,7 +1317,7 @@ public:
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
         // 1. Pan: 100% L to Center to 100% R (def Center)
-        float pan = params[0];
+        float pan = std::clamp(params[0] + ctx.slopAmpPan, 0.0f, 1.0f);
         float gainL = std::cos(pan * 1.57079632679f);
         float gainR = std::sin(pan * 1.57079632679f);
 
@@ -1379,8 +1388,8 @@ public:
         // 3. Slope: Exp (0.0, def) -> Lin (0.5) -> Log (1.0)
         float slope = params[2];
 
-        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + velocity modulation
-        float decayParam = std::clamp(params[3] + ctx.velDecayMod, 0.0f, 1.0f);
+        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + slop + velocity modulation
+        float decayParam = std::clamp(params[3] + ctx.slopAmpEnvDecay + ctx.velDecayMod, 0.0f, 1.0f);
         float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
 
@@ -1463,6 +1472,67 @@ private:
     float scopeData[128] = { 0.0f };
 };
 
+// --- BLOCK 17: SLOP (Frequency, Depth, Decay, Pan) ---
+class SlopBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        sampleRate = ctx.sampleRate;
+        invSr = ctx.invSr;
+        for (int i = 0; i < 128; ++i) scopeData[i] = 0.0f;
+    }
+
+    void trigger(float /*velocity*/) override {}
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* /*left*/, float* /*right*/, int /*numSamples*/, BlockContext& ctx) override {
+        // 4 categories across 128 scope samples:
+        // Category 0 (0..31): Frequency slop
+        // Category 1 (32..63): Depth slop
+        // Category 2 (64..95): Decay slop
+        // Category 3 (96..127): Pan slop
+        float currentOffsets[4] = {
+            ctx.slopFilterCutoff,
+            ctx.slopPitchEnvDepth,
+            ctx.slopAmpEnvDecay,
+            ctx.slopAmpPan
+        };
+        float maxBounds[4] = {
+            params[0],
+            params[1],
+            params[2],
+            params[3]
+        };
+
+        for (int i = 0; i < 128; ++i) {
+            int cat = std::clamp(i / 32, 0, 3);
+            int localI = i % 32;
+            float val = 0.0f;
+            if (localI >= 4 && localI <= 27) {
+                val = std::clamp(currentOffsets[cat] * 0.9f, -0.9f, 0.9f);
+            }
+            if (localI == 2 || localI == 29) {
+                val = std::clamp(maxBounds[cat] * 0.9f, -0.9f, 0.9f);
+            }
+            scopeData[i] = val;
+        }
+    }
+
+    void getVisualScopeData(float* dest, int numSamples) const {
+        for (int i = 0; i < numSamples; ++i) {
+            int idx = (i * 128) / numSamples;
+            dest[i] = scopeData[std::clamp(idx, 0, 127)];
+        }
+    }
+
+private:
+    float sampleRate = 44100.0f;
+    float invSr = 1.0f / 44100.0f;
+    float scopeData[128] = { 0.0f };
+};
+
 // --- MODULAR DRUM ENGINE ---
 class ModularDrumEngine {
 public:
@@ -1483,14 +1553,15 @@ public:
         BLK_AMP,
         BLK_AMPENV,
         BLK_VELOCITY,
-        NUM_BLOCKS = 16
+        BLK_SLOP,
+        NUM_BLOCKS = 17
     };
 
     void init(float sampleRate) {
         ctx.sampleRate = sampleRate;
         ctx.invSr = 1.0f / sampleRate;
 
-        // Instantiate all 16 blocks
+        // Instantiate all 17 blocks
         allBlocks.resize(NUM_BLOCKS);
         allBlocks[BLK_CARRIER]   = std::make_unique<CarrierBlock>();
         allBlocks[BLK_MODULATOR] = std::make_unique<ModulatorBlock>();
@@ -1508,6 +1579,7 @@ public:
         allBlocks[BLK_AMP]       = std::make_unique<AmpBlock>();
         allBlocks[BLK_AMPENV]    = std::make_unique<AmpEnvelopeBlock>();
         allBlocks[BLK_VELOCITY]  = std::make_unique<VelocityBlock>();
+        allBlocks[BLK_SLOP]      = std::make_unique<SlopBlock>();
 
         for (auto& b : allBlocks) b->init(ctx);
 
@@ -1615,6 +1687,12 @@ public:
         setPageParameter(BLK_VELOCITY, 1, 0.5f);
         setPageParameter(BLK_VELOCITY, 2, 0.5f);
         setPageParameter(BLK_VELOCITY, 3, 0.0f);
+
+        // 17. Slop: 0% Freq, 0% Depth, 0% Decay, 0% Pan
+        setPageParameter(BLK_SLOP, 0, 0.0f);
+        setPageParameter(BLK_SLOP, 1, 0.0f);
+        setPageParameter(BLK_SLOP, 2, 0.0f);
+        setPageParameter(BLK_SLOP, 3, 0.0f);
     }
 
     void trigger(float velocity = 1.0f) {
@@ -1638,6 +1716,34 @@ public:
         float velModFactor = curvedVel * 2.0f - 1.0f;
         ctx.velDecayMod   = velModFactor * velDecay;
         ctx.velDepthMod   = velModFactor * velDepth;
+
+        // Sample independent stepped random offsets for Slop
+        float slopFreq  = allBlocks[BLK_SLOP] ? allBlocks[BLK_SLOP]->getParam(0) : 0.0f;
+        float slopDepth = allBlocks[BLK_SLOP] ? allBlocks[BLK_SLOP]->getParam(1) : 0.0f;
+        float slopDecay = allBlocks[BLK_SLOP] ? allBlocks[BLK_SLOP]->getParam(2) : 0.0f;
+        float slopPan   = allBlocks[BLK_SLOP] ? allBlocks[BLK_SLOP]->getParam(3) : 0.0f;
+
+        ctx.slopCarrierPitch    = slopFreq  * fastRng(slopRngState);
+        ctx.slopModFreq         = slopFreq  * fastRng(slopRngState);
+        ctx.slopModFilter       = slopFreq  * fastRng(slopRngState);
+        ctx.slopDriveFilter     = slopFreq  * fastRng(slopRngState);
+        ctx.slopNoiseShRate     = slopFreq  * fastRng(slopRngState);
+        ctx.slopNoiseFilter     = slopFreq  * fastRng(slopRngState);
+        ctx.slopFilterCutoff    = slopFreq  * fastRng(slopRngState);
+        ctx.slopRingModRate     = slopFreq  * fastRng(slopRngState);
+        ctx.slopCombDamp        = slopFreq  * fastRng(slopRngState);
+        ctx.slopCombCutoff      = slopFreq  * fastRng(slopRngState);
+        ctx.slopDisperserCutoff = slopFreq  * fastRng(slopRngState);
+
+        ctx.slopPitchEnvDepth   = slopDepth * fastRng(slopRngState);
+        ctx.slopFilterEnvDepth  = slopDepth * fastRng(slopRngState);
+
+        ctx.slopPitchEnvDecay   = slopDecay * fastRng(slopRngState);
+        ctx.slopNoiseDecay      = slopDecay * fastRng(slopRngState);
+        ctx.slopFilterEnvDecay  = slopDecay * fastRng(slopRngState);
+        ctx.slopAmpEnvDecay     = slopDecay * fastRng(slopRngState);
+
+        ctx.slopAmpPan          = slopPan   * fastRng(slopRngState);
 
         for (auto& b : allBlocks) b->trigger(velocity);
     }
@@ -1668,6 +1774,12 @@ public:
         if (blockIndex == BLK_VELOCITY) {
             if (auto* velBlk = dynamic_cast<VelocityBlock*>(allBlocks[BLK_VELOCITY].get())) {
                 velBlk->getVisualScopeData(dest, count);
+                return;
+            }
+        }
+        if (blockIndex == BLK_SLOP) {
+            if (auto* slopBlk = dynamic_cast<SlopBlock*>(allBlocks[BLK_SLOP].get())) {
+                slopBlk->getVisualScopeData(dest, count);
                 return;
             }
         }
@@ -1801,6 +1913,9 @@ public:
 
         // 16. Velocity (updates transfer curve scope visualization)
         allBlocks[BLK_VELOCITY]->processStereo(nullptr, nullptr, numSamples, ctx);
+
+        // 17. Slop (updates stepped scope visualization)
+        allBlocks[BLK_SLOP]->processStereo(nullptr, nullptr, numSamples, ctx);
     }
 
 private:
@@ -1810,6 +1925,7 @@ private:
     mutable std::atomic<float> lastCarrierFreq{ 55.0f };
     std::vector<float> tempNoiseL;
     std::vector<float> tempNoiseR;
+    uint32_t slopRngState = 0x13579bdf;
 };
 
 } // namespace TbdAudio

@@ -162,7 +162,7 @@ for all waveform controls, show a little diagram of the current wave shape inste
 
 &#x20;       - fm ratio: 1:32.0 to 1.0:1.0 to 32.0:1 (default 1.0:1.0)
 
-&#x20;       - sample and hold rate: 0.1 Hz to 24 kHz (default: 20 kHz)
+&#x20;       - sine \* white noise, the sine frequency: 0.1 Hz to 24 kHz (default: 24 kHz)
 
 1\. Pitch Envelope Controls
 
@@ -601,6 +601,34 @@ for all waveform controls, show a little diagram of the current wave shape inste
 &#x20;   1. volume, continuously variable (sets the minimum output volume for lowest velocity)
 
 &#x20;       - 0% (no change to volume) to -100% (lowest velocity is quietest)
+
+&#x20;       - default: 0%
+
+1\. Slop Controls
+
+&#x20;   this should randomly change values (all random, not the same random per altered control) on each new trigger
+
+&#x20;   1. frequency (both pitch and filters), continuously variable
+
+&#x20;       - 0% to +/-100%
+
+&#x20;       - default: 0%
+
+&#x20;   1. envelope depths, continuously variable
+
+&#x20;       - 0% to +/-100%
+
+&#x20;       - default: 0%
+
+&#x20;   1. envelope decays, continuously variable
+
+&#x20;       - 0% to +/-100%
+
+&#x20;       - default: 0%
+
+&#x20;   1. pan, continuously variable
+
+&#x20;       - 0% to +/-100%
 
 &#x20;       - default: 0%
 

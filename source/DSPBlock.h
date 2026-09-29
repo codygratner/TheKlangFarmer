@@ -31,6 +31,33 @@ struct BlockContext {
     float velDecayMod = 0.0f;
     float velDepthMod = 0.0f;
     float velVolumeGain = 1.0f;
+
+    // Slop modulation state (independent stepped bipolar random offsets drawn on each trigger)
+    // 1. Frequency (pitch and filters)
+    float slopCarrierPitch = 0.0f;
+    float slopModFreq = 0.0f;
+    float slopModFilter = 0.0f;
+    float slopDriveFilter = 0.0f;
+    float slopNoiseShRate = 0.0f;
+    float slopNoiseFilter = 0.0f;
+    float slopFilterCutoff = 0.0f;
+    float slopRingModRate = 0.0f;
+    float slopCombDamp = 0.0f;
+    float slopCombCutoff = 0.0f;
+    float slopDisperserCutoff = 0.0f;
+
+    // 2. Envelope Depths
+    float slopPitchEnvDepth = 0.0f;
+    float slopFilterEnvDepth = 0.0f;
+
+    // 3. Envelope Decays
+    float slopPitchEnvDecay = 0.0f;
+    float slopNoiseDecay = 0.0f;
+    float slopFilterEnvDecay = 0.0f;
+    float slopAmpEnvDecay = 0.0f;
+
+    // 4. Pan
+    float slopAmpPan = 0.0f;
 };
 
 class DSPBlock {

@@ -140,5 +140,11 @@ private:
     juce::AudioParameterFloat*  velDepthParam        = nullptr;
     juce::AudioParameterFloat*  velVolumeParam       = nullptr;
 
+    // 17. Slop
+    juce::AudioParameterFloat*  slopFreqParam        = nullptr;
+    juce::AudioParameterFloat*  slopDepthParam       = nullptr;
+    juce::AudioParameterFloat*  slopDecayParam       = nullptr;
+    juce::AudioParameterFloat*  slopPanParam         = nullptr;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangFarmerAudioProcessor)
 };

@@ -758,6 +758,72 @@ void ModuleCardComponent::resized() {
     }
 }
 
+// --- MASTER / OUTPUT CARD COMPONENT (Slot 18) ---
+
+MasterCardComponent::MasterCardComponent(juce::Colour accentColour)
+    : accent(accentColour), oscilloscope(accentColour)
+{
+    addAndMakeVisible(oscilloscope);
+
+    triggerButton.setColour(juce::TextButton::buttonColourId, accentColour);
+    triggerButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff0f1115));
+    triggerButton.onClick = [this]() {
+        if (onTrigger) onTrigger();
+    };
+    addAndMakeVisible(triggerButton);
+
+    initButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff222736));
+    initButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffc5d1e8));
+    initButton.onClick = [this]() {
+        if (onReset) onReset();
+    };
+    addAndMakeVisible(initButton);
+
+    infoLabel.setText("24-BIT / 24 KHZ STEREO DSP", juce::dontSendNotification);
+    infoLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
+    infoLabel.setColour(juce::Label::textColourId, juce::Colour(0xff5c6a82));
+    infoLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(infoLabel);
+}
+
+void MasterCardComponent::updateScope(const float* data, int numSamples) {
+    oscilloscope.updateData(data, numSamples);
+}
+
+void MasterCardComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+
+    g.setColour(juce::Colour(0xff151821));
+    g.fillRoundedRectangle(bounds, 6.0f);
+
+    g.setColour(juce::Colour(0xff222736));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
+
+    auto headerStrip = bounds.removeFromTop(3.0f);
+    g.setColour(accent);
+    g.fillRoundedRectangle(headerStrip, 2.0f);
+
+    g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+    g.setColour(accent);
+    g.drawText("OUTPUT", 8, 4, getWidth() - 16, 16, juce::Justification::left, true);
+}
+
+void MasterCardComponent::resized() {
+    auto area = getLocalBounds().reduced(5);
+    area.removeFromTop(18); // Header title
+
+    oscilloscope.setBounds(area.removeFromTop(24).reduced(2, 0));
+    area.removeFromTop(8);
+
+    triggerButton.setBounds(area.removeFromTop(38).reduced(4, 0));
+    area.removeFromTop(6);
+
+    initButton.setBounds(area.removeFromTop(30).reduced(4, 0));
+    area.removeFromTop(6);
+
+    infoLabel.setBounds(area.removeFromTop(20));
+}
+
 // --- THE KLANG FARMER EDITOR ---
 
 TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangFarmerAudioProcessor& p)
@@ -881,10 +947,10 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     modSpeedSlider.getDefaultValue = [this]() -> double {
         int t = modTypeSelector.getSelectedIndex();
-        if (t == 0 || t == 3) return std::log(55.0 / 0.1) / std::log(24000.0 / 0.1);
+        if (t == 0) return std::log(55.0 / 0.1) / std::log(24000.0 / 0.1);
         if (t == 1 || t == 4) return 0.5;
         if (t == 2 || t == 5) return 0.5;
-        return 1.0;
+        return 1.0; // t == 3 (sine * noise def 24 kHz) and t == 6 (S&H rate def 24 kHz)
     };
 
     modDepthSlider.customFormatText = [](double val) {
@@ -1447,7 +1513,51 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     cardVel->setKnob(3, "Volume", &velVolumeSlider);
     cards.push_back(std::move(cardVel));
 
-    // Add all 16 cards to editor
+    // 17. SLOP CARD (4 Knobs)
+    auto cardSlop = std::make_unique<ModuleCardComponent>("Slop", juce::Colour(0xffffa726));
+    setupKnob(slopFreqSlider, juce::Colour(0xffffa726), false, 0.0); // 0% default (unipolar)
+    setupKnob(slopDepthSlider, juce::Colour(0xffffa726), false, 0.0); // 0% default (unipolar)
+    setupKnob(slopDecaySlider, juce::Colour(0xffffa726), false, 0.0); // 0% default (unipolar)
+    setupKnob(slopPanSlider, juce::Colour(0xffffa726), false, 0.0);   // 0% default (unipolar)
+
+    auto formatSlop = [](double val) {
+        int pct = static_cast<int>(std::round(val * 100.0));
+        return (pct == 0) ? "0%" : "+/-" + juce::String(pct) + "%";
+    };
+    auto parseSlop = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0);
+        return std::clamp(p / 100.0, 0.0, 1.0);
+    };
+
+    slopFreqSlider.customFormatText = formatSlop;
+    slopFreqSlider.customParseText  = parseSlop;
+
+    slopDepthSlider.customFormatText = formatSlop;
+    slopDepthSlider.customParseText  = parseSlop;
+
+    slopDecaySlider.customFormatText = formatSlop;
+    slopDecaySlider.customParseText  = parseSlop;
+
+    slopPanSlider.customFormatText = formatSlop;
+    slopPanSlider.customParseText  = parseSlop;
+
+    cardSlop->setKnob(0, "Freq", &slopFreqSlider);
+    cardSlop->setKnob(1, "Depth", &slopDepthSlider);
+    cardSlop->setKnob(2, "Decay", &slopDecaySlider);
+    cardSlop->setKnob(3, "Pan", &slopPanSlider);
+    cards.push_back(std::move(cardSlop));
+
+    // 18. MASTER / OUTPUT CARD
+    masterCard = std::make_unique<MasterCardComponent>(juce::Colour(0xff00d2ff));
+    masterCard->onTrigger = [this]() {
+        audioProcessor.getEngine().trigger(1.0f);
+    };
+    masterCard->onReset = [this]() {
+        resetToDefaults();
+    };
+    addAndMakeVisible(*masterCard);
+
+    // Add all 17 cards to editor
     for (auto& c : cards) {
         addAndMakeVisible(c.get());
     }
@@ -1533,10 +1643,15 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_depth", velDepthSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_volume", velVolumeSlider));
 
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_freq", slopFreqSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_depth", slopDepthSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_decay", slopDecaySlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_pan", slopPanSlider));
+
     updateDynamicControls();
-    setSize(1160, 680);
+    setSize(1380, 700);
     setResizable(true, true);
-    setResizeLimits(900, 500, 1920, 1200);
+    setResizeLimits(1000, 520, 2560, 1440);
     startTimerHz(30); // 30 FPS oscilloscope & GUI update
 }
 
@@ -1632,11 +1747,16 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
 void TheKlangFarmerAudioProcessorEditor::timerCallback() {
     updateDynamicControls();
 
-    // Fetch and display synchronized oscilloscope buffers across all 15 modules
+    // Fetch and display synchronized oscilloscope buffers across all 17 modules
     float scopeBuffer[128];
     for (int b = 0; b < static_cast<int>(cards.size()); ++b) {
         audioProcessor.getEngine().getScopeData(b, scopeBuffer, 128);
         cards[b]->updateScope(scopeBuffer, 128);
+    }
+
+    if (masterCard != nullptr) {
+        audioProcessor.getEngine().getScopeData(TbdAudio::ModularDrumEngine::BLK_AMP, scopeBuffer, 128);
+        masterCard->updateScope(scopeBuffer, 128);
     }
 }
 
@@ -1661,7 +1781,7 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
 
     g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("16-MODULE HARDWARE SYNTHESIS DRUM VOICE", 182, 0, 380, 36, juce::Justification::centredLeft);
+    g.drawText("17-MODULE HARDWARE SYNTHESIS DRUM VOICE", 182, 0, 380, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangFarmerAudioProcessorEditor::resized() {
@@ -1673,8 +1793,8 @@ void TheKlangFarmerAudioProcessorEditor::resized() {
     int totalW = getWidth() - 2 * margin;
     int totalH = getHeight() - topOffset - margin;
 
-    int numCols = 4;
-    int numRows = 4;
+    int numCols = 6;
+    int numRows = 3;
     int cardW = (totalW - (numCols - 1) * margin) / numCols;
     int rowH  = (totalH - (numRows - 1) * margin) / numRows;
 
@@ -1684,5 +1804,13 @@ void TheKlangFarmerAudioProcessorEditor::resized() {
         int x = margin + col * (cardW + margin);
         int y = topOffset + row * (rowH + margin);
         cards[i]->setBounds(x, y, cardW, rowH);
+    }
+
+    if (masterCard != nullptr) {
+        int col = 17 % numCols;
+        int row = 17 / numCols;
+        int x = margin + col * (cardW + margin);
+        int y = topOffset + row * (rowH + margin);
+        masterCard->setBounds(x, y, cardW, rowH);
     }
 }

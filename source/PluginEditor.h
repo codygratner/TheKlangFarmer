@@ -132,6 +132,25 @@ private:
     int numActiveKnobs = 4;
 };
 
+// Card component representing the master output / control station (Slot 18)
+class MasterCardComponent : public juce::Component {
+public:
+    MasterCardComponent(juce::Colour accentColour);
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void updateScope(const float* data, int numSamples);
+
+    std::function<void()> onTrigger;
+    std::function<void()> onReset;
+
+private:
+    juce::Colour accent;
+    MiniOscilloscopeComponent oscilloscope;
+    juce::TextButton triggerButton { "AUDITION HIT" };
+    juce::TextButton initButton { "RESET DEFAULTS" };
+    juce::Label infoLabel;
+};
+
 class TheKlangFarmerAudioProcessorEditor : public juce::AudioProcessorEditor, private juce::Timer {
 public:
     explicit TheKlangFarmerAudioProcessorEditor(TheKlangFarmerAudioProcessor&);
@@ -260,6 +279,15 @@ private:
     RotaryKnobSlider velDecaySlider;
     RotaryKnobSlider velDepthSlider;
     RotaryKnobSlider velVolumeSlider;
+
+    // Block 17: Slop
+    RotaryKnobSlider slopFreqSlider;
+    RotaryKnobSlider slopDepthSlider;
+    RotaryKnobSlider slopDecaySlider;
+    RotaryKnobSlider slopPanSlider;
+
+    // Slot 18: Output / Master Card
+    std::unique_ptr<MasterCardComponent> masterCard;
 
     // APVTS Attachments
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;

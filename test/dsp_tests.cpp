@@ -354,6 +354,103 @@ int main() {
         std::cout << "PASS: Velocity modulation (volume, decay, depth polarity, curves) verified." << std::endl;
     }
 
-    std::cout << "\n>>> ALL 16-BLOCK DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
+    // 9. Test Slop Modulation (Block 17)
+    {
+        TbdAudio::ModularDrumEngine slopEngine;
+        slopEngine.init(44100.0f);
+        slopEngine.setMidiPitch(36);
+
+        // A. At default 0% Slop, all offsets MUST be strictly 0.0f
+        slopEngine.trigger(1.0f);
+        const auto& ctxDef = slopEngine.getContext();
+        assert(ctxDef.slopCarrierPitch == 0.0f);
+        assert(ctxDef.slopModFreq == 0.0f);
+        assert(ctxDef.slopModFilter == 0.0f);
+        assert(ctxDef.slopDriveFilter == 0.0f);
+        assert(ctxDef.slopNoiseShRate == 0.0f);
+        assert(ctxDef.slopNoiseFilter == 0.0f);
+        assert(ctxDef.slopFilterCutoff == 0.0f);
+        assert(ctxDef.slopRingModRate == 0.0f);
+        assert(ctxDef.slopCombDamp == 0.0f);
+        assert(ctxDef.slopCombCutoff == 0.0f);
+        assert(ctxDef.slopDisperserCutoff == 0.0f);
+        assert(ctxDef.slopPitchEnvDepth == 0.0f);
+        assert(ctxDef.slopFilterEnvDepth == 0.0f);
+        assert(ctxDef.slopPitchEnvDecay == 0.0f);
+        assert(ctxDef.slopNoiseDecay == 0.0f);
+        assert(ctxDef.slopFilterEnvDecay == 0.0f);
+        assert(ctxDef.slopAmpEnvDecay == 0.0f);
+        assert(ctxDef.slopAmpPan == 0.0f);
+        std::cout << "PASS: Slop defaults strictly zero with zero offsets." << std::endl;
+
+        // B. Enable Slop (Freq = 50%, Depth = 40%, Decay = 30%, Pan = 60%)
+        slopEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 0, 0.50f);
+        slopEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 1, 0.40f);
+        slopEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 2, 0.30f);
+        slopEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 3, 0.60f);
+
+        // Trigger multiple hits and verify independent stepped randomization
+        float prevCarrierPitch = 0.0f;
+        float prevCutoff = 0.0f;
+        float prevPan = 0.0f;
+        bool hasVariation = false;
+        bool hasIndependentDraws = false;
+
+        for (int hit = 0; hit < 10; ++hit) {
+            slopEngine.trigger(1.0f);
+            const auto& ctx = slopEngine.getContext();
+
+            // Check range bounds
+            assert(std::abs(ctx.slopCarrierPitch) <= 0.501f);
+            assert(std::abs(ctx.slopModFreq) <= 0.501f);
+            assert(std::abs(ctx.slopFilterCutoff) <= 0.501f);
+            assert(std::abs(ctx.slopPitchEnvDepth) <= 0.401f);
+            assert(std::abs(ctx.slopFilterEnvDepth) <= 0.401f);
+            assert(std::abs(ctx.slopPitchEnvDecay) <= 0.301f);
+            assert(std::abs(ctx.slopAmpEnvDecay) <= 0.301f);
+            assert(std::abs(ctx.slopAmpPan) <= 0.601f);
+
+            // Verify independent random values across different destinations in the same trigger hit
+            if (ctx.slopCarrierPitch != ctx.slopFilterCutoff &&
+                ctx.slopFilterCutoff != ctx.slopModFreq &&
+                ctx.slopPitchEnvDecay != ctx.slopAmpEnvDecay) {
+                hasIndependentDraws = true;
+            }
+
+            // Verify variation across hits
+            if (hit > 0) {
+                if (ctx.slopCarrierPitch != prevCarrierPitch ||
+                    ctx.slopFilterCutoff != prevCutoff ||
+                    ctx.slopAmpPan != prevPan) {
+                    hasVariation = true;
+                }
+            }
+
+            prevCarrierPitch = ctx.slopCarrierPitch;
+            prevCutoff = ctx.slopFilterCutoff;
+            prevPan = ctx.slopAmpPan;
+
+            // Process buffer to verify audio stability with slop
+            std::vector<float> slopL(blockSize, 0.0f);
+            std::vector<float> slopR(blockSize, 0.0f);
+            slopEngine.processStereo(slopL.data(), slopR.data(), blockSize);
+            for (int i = 0; i < blockSize; ++i) {
+                assert(!std::isnan(slopL[i]) && !std::isinf(slopL[i]));
+                assert(!std::isnan(slopR[i]) && !std::isinf(slopR[i]));
+            }
+        }
+
+        if (!hasIndependentDraws) {
+            std::cerr << "FAILED: Slop did not generate independent random values across controls!" << std::endl;
+            return 1;
+        }
+        if (!hasVariation) {
+            std::cerr << "FAILED: Slop did not vary across consecutive hits!" << std::endl;
+            return 1;
+        }
+        std::cout << "PASS: Independent stepped random Slop controls (frequency, depth, decay, pan) verified." << std::endl;
+    }
+
+    std::cout << "\n>>> ALL 17-BLOCK DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
     return 0;
 }

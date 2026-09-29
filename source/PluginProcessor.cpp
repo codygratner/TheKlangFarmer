@@ -103,6 +103,12 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     velDecayParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_decay"));
     velDepthParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_depth"));
     velVolumeParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_volume"));
+
+    // 17. Slop
+    slopFreqParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_freq"));
+    slopDepthParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_depth"));
+    slopDecayParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_decay"));
+    slopPanParam         = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_pan"));
 }
 
 void TheKlangFarmerAudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
@@ -231,6 +237,12 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     if (velDecayParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, getNorm(velDecayParam));
     if (velDepthParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, getNorm(velDepthParam));
     if (velVolumeParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 3, getNorm(velVolumeParam));
+
+    // 17. Slop
+    if (slopFreqParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 0, getNorm(slopFreqParam));
+    if (slopDepthParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 1, getNorm(slopDepthParam));
+    if (slopDecayParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 2, getNorm(slopDecayParam));
+    if (slopPanParam)         engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 3, getNorm(slopPanParam));
 
     int numSamples = buffer.getNumSamples();
     float* left = buffer.getNumChannels() > 0 ? buffer.getWritePointer(0) : nullptr;
@@ -421,6 +433,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("vel_decay", "Velocity: Decay", 0.5f));            // 0% (bipolar center)
     layout.add(makeFloatParam("vel_depth", "Velocity: Depth", 0.5f));            // 0% (bipolar center)
     layout.add(makeFloatParam("vel_volume", "Velocity: Volume", 0.0f));          // 0% (unipolar min)
+
+    // --- 17. SLOP ---
+    layout.add(makeFloatParam("slop_freq", "Slop: Frequency", 0.0f));           // 0% (unipolar min)
+    layout.add(makeFloatParam("slop_depth", "Slop: Depth", 0.0f));              // 0% (unipolar min)
+    layout.add(makeFloatParam("slop_decay", "Slop: Decay", 0.0f));              // 0% (unipolar min)
+    layout.add(makeFloatParam("slop_pan", "Slop: Pan", 0.0f));                  // 0% (unipolar min)
 
     return layout;
 }
