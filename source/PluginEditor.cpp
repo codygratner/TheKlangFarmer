@@ -84,15 +84,26 @@ RotaryKnobLookAndFeel::RotaryKnobLookAndFeel() {
     setColour(juce::PopupMenu::highlightedTextColourId, juce::Colour(0xff0f1115));
 }
 
+juce::Label* RotaryKnobLookAndFeel::createSliderTextBox(juce::Slider& slider) {
+    auto* l = juce::LookAndFeel_V4::createSliderTextBox(slider);
+    l->setFont(juce::FontOptions(11.5f, juce::Font::bold));
+    l->setColour(juce::Label::textColourId, juce::Colour(0xffffffff));
+    l->setColour(juce::Label::backgroundColourId, juce::Colour(0xee11141a));
+    l->setColour(juce::Label::outlineColourId, juce::Colour(0x44303848));
+    return l;
+}
+
 void RotaryKnobLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, int width, int height,
                                              float sliderPosProportional, float rotaryStartAngle,
                                              float rotaryEndAngle, juce::Slider& slider)
 {
     auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat().reduced(2.0f);
-    auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * 0.5f;
+    // Compact dial radius so larger text and labels have plenty of breathing room
+    auto radius = juce::jmin(bounds.getWidth() * 0.5f, bounds.getHeight() * 0.48f) - 2.5f;
+    radius = juce::jmax(9.0f, radius);
     auto toAngle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
     auto centre = bounds.getCentre();
-    auto lineW = juce::jmax(2.5f, radius * 0.16f);
+    auto lineW = juce::jmax(2.2f, radius * 0.16f);
     auto arcRadius = radius - lineW * 0.5f;
 
     // Track background
@@ -135,7 +146,7 @@ void RotaryKnobLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
 
     // Inner dial disc
     auto innerRadius = arcRadius - lineW * 0.9f;
-    if (innerRadius > 4.0f) {
+    if (innerRadius > 3.0f) {
         auto knobBounds = juce::Rectangle<float>(centre.x - innerRadius, centre.y - innerRadius,
                                                  innerRadius * 2.0f, innerRadius * 2.0f);
         juce::ColourGradient grad(juce::Colour(0xff2a2f3d), centre.x, centre.y - innerRadius,
@@ -148,7 +159,7 @@ void RotaryKnobLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
         // Pointer indicator
         juce::Path p;
         auto pointerLength = innerRadius * 0.65f;
-        auto pointerThickness = 2.0f;
+        auto pointerThickness = juce::jmax(1.6f, innerRadius * 0.14f);
         p.addRoundedRectangle(-pointerThickness * 0.5f, -innerRadius + 1.0f, pointerThickness, pointerLength, 1.0f);
         p.applyTransform(juce::AffineTransform::rotation(toAngle).translated(centre.x, centre.y));
         g.setColour(juce::Colour(0xffffffff));
@@ -216,7 +227,7 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
 
 RotaryKnobSlider::RotaryKnobSlider() {
     setSliderStyle(juce::Slider::RotaryVerticalDrag);
-    setTextBoxStyle(juce::Slider::TextBoxBelow, false, 74, 16);
+    setTextBoxStyle(juce::Slider::TextBoxBelow, false, 76, 18);
 }
 
 void RotaryKnobSlider::mouseDown(const juce::MouseEvent& e) {
@@ -229,8 +240,8 @@ void RotaryKnobSlider::mouseDown(const juce::MouseEvent& e) {
 
 void RotaryKnobSlider::openHoveringEditor() {
     auto editor = std::make_unique<juce::TextEditor>();
-    editor->setSize(88, 24);
-    editor->setFont(juce::FontOptions(12.0f, juce::Font::bold));
+    editor->setSize(96, 26);
+    editor->setFont(juce::FontOptions(13.0f, juce::Font::bold));
     editor->setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff12141a));
     editor->setColour(juce::TextEditor::textColourId, juce::Colour(0xffffffff));
     editor->setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff00d2ff));
@@ -344,8 +355,8 @@ void LedSelectorComponent::paint(juce::Graphics& g) {
         }
 
         // Draw LED dot
-        float ledSize = 5.5f;
-        float ledX = r.getX() + 5.0f;
+        float ledSize = 6.0f;
+        float ledX = r.getX() + 4.5f;
         float ledY = r.getCentreY() - ledSize * 0.5f;
         auto ledBounds = juce::Rectangle<float>(ledX, ledY, ledSize, ledSize);
 
@@ -365,8 +376,8 @@ void LedSelectorComponent::paint(juce::Graphics& g) {
 
         // Draw Item Text
         auto textBounds = r.withTrimmedLeft(14.0f).withTrimmedRight(2.0f);
-        g.setFont(juce::FontOptions(isSel ? 10.5f : 10.0f, isSel ? juce::Font::bold : juce::Font::plain));
-        g.setColour(isSel ? juce::Colours::white : (isHov ? juce::Colour(0xffd0d6e2) : juce::Colour(0xff8c96a8)));
+        g.setFont(juce::FontOptions(isSel ? 11.5f : 11.0f, juce::Font::bold));
+        g.setColour(isSel ? juce::Colours::white : (isHov ? juce::Colour(0xffe6edf8) : juce::Colour(0xffb8c4d8)));
         g.drawFittedText(items[i], textBounds.toNearestInt(), juce::Justification::centredLeft, 1);
     }
 }
@@ -401,8 +412,8 @@ ModuleCardComponent::ModuleCardComponent(const juce::String& title, juce::Colour
     addAndMakeVisible(oscilloscope);
 
     for (int i = 0; i < 4; ++i) {
-        labels[i].setFont(juce::FontOptions(10.0f, juce::Font::bold));
-        labels[i].setColour(juce::Label::textColourId, juce::Colour(0xff94a0b8));
+        labels[i].setFont(juce::FontOptions(11.5f, juce::Font::bold));
+        labels[i].setColour(juce::Label::textColourId, juce::Colour(0xffe2e8f4));
         labels[i].setJustificationType(juce::Justification::centred);
         addAndMakeVisible(labels[i]);
     }
@@ -453,28 +464,28 @@ void ModuleCardComponent::paint(juce::Graphics& g) {
     g.fillRoundedRectangle(headerStrip, 2.0f);
 
     // Title label
-    g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+    g.setFont(juce::FontOptions(12.5f, juce::Font::bold));
     g.setColour(accent);
-    g.drawText(moduleTitle.toUpperCase(), 8, 5, getWidth() - 16, 16, juce::Justification::left, true);
+    g.drawText(moduleTitle.toUpperCase(), 8, 4, getWidth() - 16, 16, juce::Justification::left, true);
 }
 
 void ModuleCardComponent::resized() {
-    auto area = getLocalBounds().reduced(6);
+    auto area = getLocalBounds().reduced(5);
     area.removeFromTop(18); // Header title
 
-    oscilloscope.setBounds(area.removeFromTop(36).reduced(2, 0));
+    oscilloscope.setBounds(area.removeFromTop(26).reduced(2, 0));
     area.removeFromTop(4);
 
     if (ledSelector != nullptr) {
-        int selH = (ledSelector->getNumItems() > 4) ? 42 : 24;
+        int selH = (ledSelector->getNumItems() > 4) ? 36 : 22;
         ledSelector->setBounds(area.removeFromTop(selH));
-        area.removeFromTop(4);
+        area.removeFromTop(3);
 
         int knobCount = 3;
         int knobW = area.getWidth() / knobCount;
         for (int i = 0; i < knobCount; ++i) {
             auto kArea = area.removeFromLeft(knobW);
-            labels[i].setBounds(kArea.removeFromTop(14));
+            labels[i].setBounds(kArea.removeFromTop(15));
             if (knobs[i]) knobs[i]->setBounds(kArea);
         }
     } else {
@@ -487,19 +498,19 @@ void ModuleCardComponent::resized() {
         int wBot = botRow.getWidth() / 2;
 
         auto k0Area = topRow.removeFromLeft(wTop);
-        labels[0].setBounds(k0Area.removeFromTop(14));
+        labels[0].setBounds(k0Area.removeFromTop(15));
         if (knobs[0]) knobs[0]->setBounds(k0Area);
 
         auto k1Area = topRow;
-        labels[1].setBounds(k1Area.removeFromTop(14));
+        labels[1].setBounds(k1Area.removeFromTop(15));
         if (knobs[1]) knobs[1]->setBounds(k1Area);
 
         auto k2Area = botRow.removeFromLeft(wBot);
-        labels[2].setBounds(k2Area.removeFromTop(14));
+        labels[2].setBounds(k2Area.removeFromTop(15));
         if (knobs[2]) knobs[2]->setBounds(k2Area);
 
         auto k3Area = botRow;
-        labels[3].setBounds(k3Area.removeFromTop(14));
+        labels[3].setBounds(k3Area.removeFromTop(15));
         if (knobs[3]) knobs[3]->setBounds(k3Area);
     }
 }
@@ -948,8 +959,8 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     freqShiftBlendSlider.customFormatText = [](double val) {
         int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
         if (pct == 0) return juce::String("Dry (0%)");
-        if (pct < 0) return juce::String(pct) + "% (LSB)";
-        return "+" + juce::String(pct) + "% (USB)";
+        if (pct < 0) return juce::String(pct) + "% (Inv)";
+        return "+" + juce::String(pct) + "%";
     };
     freqShiftBlendSlider.customParseText = [](const juce::String& text) {
         double p = parseNumberSafe(text, 0.0);
@@ -1137,7 +1148,9 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_slope", ampEnvSlopeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_decay", ampEnvDecaySlider));
 
-    setSize(1440, 920);
+    setSize(1180, 680);
+    setResizable(true, true);
+    setResizeLimits(920, 520, 1920, 1200);
     startTimerHz(30); // 30 FPS oscilloscope & GUI update
 }
 
@@ -1228,26 +1241,26 @@ void BiaEr1AudioProcessorEditor::paint(juce::Graphics& g) {
 
     // Header bar
     g.setColour(juce::Colour(0xff171a22));
-    g.fillRect(0, 0, getWidth(), 40);
+    g.fillRect(0, 0, getWidth(), 36);
 
     g.setColour(juce::Colour(0xff222736));
-    g.drawHorizontalLine(40, 0.0f, static_cast<float>(getWidth()));
+    g.drawHorizontalLine(36, 0.0f, static_cast<float>(getWidth()));
 
     // Title branding
-    g.setFont(juce::FontOptions(16.0f, juce::Font::bold));
+    g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
     g.setColour(juce::Colours::white);
-    g.drawText("BIA ER-1", 16, 0, 100, 40, juce::Justification::centredLeft);
+    g.drawText("BIA ER-1", 14, 0, 90, 36, juce::Justification::centredLeft);
 
-    g.setFont(juce::FontOptions(12.0f, juce::Font::plain));
-    g.setColour(juce::Colour(0xff6e7a90));
-    g.drawText("13-MODULE HARDWARE SYNTHESIS DRUM VOICE", 100, 0, 380, 40, juce::Justification::centredLeft);
+    g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff75849b));
+    g.drawText("13-MODULE HARDWARE SYNTHESIS DRUM VOICE", 94, 0, 380, 36, juce::Justification::centredLeft);
 }
 
 void BiaEr1AudioProcessorEditor::resized() {
-    triggerButton.setBounds(getWidth() - 148, 7, 134, 26);
+    triggerButton.setBounds(getWidth() - 138, 5, 124, 26);
 
-    int margin = 8;
-    int topOffset = 48;
+    int margin = 6;
+    int topOffset = 38;
     int totalH = getHeight() - topOffset - margin;
     int rowH = (totalH - 2 * margin) / 3;
 

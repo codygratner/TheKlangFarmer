@@ -911,9 +911,10 @@ public:
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
         phaseL = phaseR = 0.0f;
+        dL = dR = 0.0f;
         for (int k = 0; k < 4; ++k) {
-            apI1L[k] = apI2L[k] = apQ1L[k] = apQ2L[k] = 0.0f;
-            apI1R[k] = apI2R[k] = apQ1R[k] = apQ2R[k] = 0.0f;
+            s1_1L[k] = s2_1L[k] = s1_2L[k] = s2_2L[k] = 0.0f;
+            s1_1R[k] = s2_1R[k] = s1_2R[k] = s2_2R[k] = 0.0f;
         }
     }
 
@@ -929,7 +930,7 @@ public:
         float rangeHz = params[1] * 5000.0f;
         float totalShift = shiftNorm * rangeHz;
 
-        // 3. Blend: -100% (LSB) to 0% (Dry) to +100% (USB)
+        // 3. Blend: -100% to -50% to 0% (Dry) to +50% to +100%
         float blend = (params[2] - 0.5f) * 2.0f;
 
         // 4. Width: -100% to 0% to +100% (def 0%)
@@ -938,70 +939,78 @@ public:
         float shiftL = totalShift * (1.0f - width * 0.35f);
         float shiftR = totalShift * (1.0f + width * 0.35f);
 
-        constexpr float polesI[4] = { 0.161758f, 0.733029f, 0.945350f, 0.990598f };
-        constexpr float polesQ[4] = { 0.479401f, 0.876218f, 0.976598f, 0.997500f };
+        // 4-section Niemitalo half-band allpass filter coefficients (squared pole locations)
+        // Maintains exact 90-degree phase difference across entire audio band
+        constexpr float poles1[4] = { 0.4794009f, 0.8762185f, 0.9765976f, 0.9974992f };
+        constexpr float poles2[4] = { 0.1617585f, 0.7330290f, 0.9453500f, 0.9905990f };
+
+        float wetAmount = std::abs(blend);
+        float wetSign = (blend >= 0.0f) ? 1.0f : -1.0f;
 
         for (int i = 0; i < numSamples; ++i) {
             phaseL += shiftL * invSr;
-            if (phaseL >= 1.0f) phaseL -= std::floor(phaseL);
-            if (phaseL < 0.0f) phaseL += 1.0f - std::floor(phaseL);
+            phaseL -= std::floor(phaseL);
 
             phaseR += shiftR * invSr;
-            if (phaseR >= 1.0f) phaseR -= std::floor(phaseR);
-            if (phaseR < 0.0f) phaseR += 1.0f - std::floor(phaseR);
+            phaseR -= std::floor(phaseR);
 
             float inL = left ? left[i] : 0.0f;
             float inR = right ? right[i] : inL;
 
-            // Hilbert split Left
+            // Left Channel Hilbert 90-deg Phase Split
+            // Branch 1 (Q path, with 1-sample delay)
+            float qL = dL;
+            dL = inL;
+            for (int k = 0; k < 4; ++k) {
+                float c = poles1[k];
+                float out = c * qL + s2_1L[k];
+                s2_1L[k] = s1_1L[k];
+                s1_1L[k] = -qL + c * out;
+                qL = out;
+            }
+
+            // Branch 2 (I path)
             float iL = inL;
             for (int k = 0; k < 4; ++k) {
-                float y = polesI[k] * iL + apI1L[k];
-                apI1L[k] = iL - polesI[k] * y;
-                iL = y;
-            }
-            float qL = inL;
-            for (int k = 0; k < 4; ++k) {
-                float y = polesQ[k] * qL + apQ1L[k];
-                apQ1L[k] = qL - polesQ[k] * y;
-                qL = y;
+                float c = poles2[k];
+                float out = c * iL + s2_2L[k];
+                s2_2L[k] = s1_2L[k];
+                s1_2L[k] = -iL + c * out;
+                iL = out;
             }
 
-            // Hilbert split Right
+            // Right Channel Hilbert 90-deg Phase Split
+            float qR = dR;
+            dR = inR;
+            for (int k = 0; k < 4; ++k) {
+                float c = poles1[k];
+                float out = c * qR + s2_1R[k];
+                s2_1R[k] = s1_1R[k];
+                s1_1R[k] = -qR + c * out;
+                qR = out;
+            }
+
             float iR = inR;
             for (int k = 0; k < 4; ++k) {
-                float y = polesI[k] * iR + apI1R[k];
-                apI1R[k] = iR - polesI[k] * y;
-                iR = y;
-            }
-            float qR = inR;
-            for (int k = 0; k < 4; ++k) {
-                float y = polesQ[k] * qR + apQ1R[k];
-                apQ1R[k] = qR - polesQ[k] * y;
-                qR = y;
+                float c = poles2[k];
+                float out = c * iR + s2_2R[k];
+                s2_2R[k] = s1_2R[k];
+                s1_2R[k] = -iR + c * out;
+                iR = out;
             }
 
+            // Quadrature carrier modulation
+            // shift > 0 shifts frequency UP; shift < 0 shifts frequency DOWN
             float cosL = std::cos(phaseL * TWO_PI);
             float sinL = std::sin(phaseL * TWO_PI);
-            float usbL = iL * cosL - qL * sinL;
-            float lsbL = iL * cosL + qL * sinL;
+            float shiftedL = iL * cosL - qL * sinL;
 
             float cosR = std::cos(phaseR * TWO_PI);
             float sinR = std::sin(phaseR * TWO_PI);
-            float usbR = iR * cosR - qR * sinR;
-            float lsbR = iR * cosR + qR * sinR;
+            float shiftedR = iR * cosR - qR * sinR;
 
-            float outL = inL;
-            float outR = inR;
-
-            if (blend > 0.0f) {
-                outL = inL * (1.0f - blend) + usbL * blend;
-                outR = inR * (1.0f - blend) + usbR * blend;
-            } else {
-                float absB = -blend;
-                outL = inL * (1.0f - absB) + lsbL * absB;
-                outR = inR * (1.0f - absB) + lsbR * absB;
-            }
+            float outL = inL * (1.0f - wetAmount) + (shiftedL * wetSign) * wetAmount;
+            float outR = inR * (1.0f - wetAmount) + (shiftedR * wetSign) * wetAmount;
 
             if (left) left[i] = outL;
             if (right) right[i] = outR;
@@ -1011,8 +1020,11 @@ public:
 private:
     float invSr = 1.0f / 44100.0f;
     float phaseL = 0.0f, phaseR = 0.0f;
-    float apI1L[4] = {0.0f}, apI2L[4] = {0.0f}, apQ1L[4] = {0.0f}, apQ2L[4] = {0.0f};
-    float apI1R[4] = {0.0f}, apI2R[4] = {0.0f}, apQ1R[4] = {0.0f}, apQ2R[4] = {0.0f};
+    float dL = 0.0f, dR = 0.0f;
+    float s1_1L[4] = { 0.0f }, s2_1L[4] = { 0.0f };
+    float s1_2L[4] = { 0.0f }, s2_2L[4] = { 0.0f };
+    float s1_1R[4] = { 0.0f }, s2_1R[4] = { 0.0f };
+    float s1_2R[4] = { 0.0f }, s2_2R[4] = { 0.0f };
 };
 
 // --- BLOCK 11: GRIT FX (Bits, Sample Rate, Low Boost, High Boost) ---
