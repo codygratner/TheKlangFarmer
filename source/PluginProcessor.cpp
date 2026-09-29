@@ -236,7 +236,7 @@ bool BiaEr1AudioProcessor::hasEditor() const {
 }
 
 const juce::String BiaEr1AudioProcessor::getName() const {
-    return "BIA ER-1 Voice";
+    return "The Klang Farmer";
 }
 
 bool BiaEr1AudioProcessor::acceptsMidi() const {

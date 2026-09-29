@@ -1360,11 +1360,11 @@ void BiaEr1AudioProcessorEditor::paint(juce::Graphics& g) {
     // Title branding
     g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
     g.setColour(juce::Colours::white);
-    g.drawText("BIA ER-1", 14, 0, 90, 36, juce::Justification::centredLeft);
+    g.drawText("THE KLANG FARMER", 14, 0, 165, 36, juce::Justification::centredLeft);
 
     g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("15-MODULE HARDWARE SYNTHESIS DRUM VOICE", 94, 0, 380, 36, juce::Justification::centredLeft);
+    g.drawText("15-MODULE HARDWARE SYNTHESIS DRUM VOICE", 182, 0, 380, 36, juce::Justification::centredLeft);
 }
 
 void BiaEr1AudioProcessorEditor::resized() {

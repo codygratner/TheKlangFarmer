@@ -24,7 +24,7 @@ juce_add_plugin(BiaEr1Voice
     
     # Builds both the DAW plugin and a standalone runnable executable for rapid DSP iteration
     FORMATS VST3 Standalone
-    PRODUCT_NAME "BIA ER-1 Voice"
+    PRODUCT_NAME "The Klang Farmer"
     VST3_CAN_REPLACE_VST2 FALSE
 )
 
