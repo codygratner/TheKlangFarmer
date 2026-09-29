@@ -1,7 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-BiaEr1AudioProcessor::BiaEr1AudioProcessor()
+TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     : AudioProcessor(BusesProperties()
                      .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                      .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
@@ -46,7 +46,7 @@ BiaEr1AudioProcessor::BiaEr1AudioProcessor()
 
     // 7. Filter
     filterTypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter_type"));
-    filterStyleParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_style"));
+    filterSlopeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_slope"));
     filterCutoffParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_cutoff"));
     filterResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_resonance"));
 
@@ -99,14 +99,14 @@ BiaEr1AudioProcessor::BiaEr1AudioProcessor()
     ampEnvDecayParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_decay"));
 }
 
-void BiaEr1AudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
+void TheKlangFarmerAudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
     engine.init(static_cast<float>(sampleRate));
 }
 
-void BiaEr1AudioProcessor::releaseResources() {
+void TheKlangFarmerAudioProcessor::releaseResources() {
 }
 
-bool BiaEr1AudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const {
+bool TheKlangFarmerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const {
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
         return false;
@@ -114,7 +114,7 @@ bool BiaEr1AudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) co
     return true;
 }
 
-void BiaEr1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
+void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
     juce::ScopedNoDenormals noDenormals;
 
     // Handle MIDI triggers
@@ -168,7 +168,7 @@ void BiaEr1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
 
     // 7. Filter
     if (filterTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 0, static_cast<float>(filterTypeParam->getIndex()) / 4.0f);
-    if (filterStyleParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 1, getNorm(filterStyleParam));
+    if (filterSlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 1, getNorm(filterSlopeParam));
     if (filterCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 2, getNorm(filterCutoffParam));
     if (filterResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 3, getNorm(filterResonanceParam));
 
@@ -227,66 +227,66 @@ void BiaEr1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     engine.processStereo(left, right, numSamples);
 }
 
-juce::AudioProcessorEditor* BiaEr1AudioProcessor::createEditor() {
-    return new BiaEr1AudioProcessorEditor(*this);
+juce::AudioProcessorEditor* TheKlangFarmerAudioProcessor::createEditor() {
+    return new TheKlangFarmerAudioProcessorEditor(*this);
 }
 
-bool BiaEr1AudioProcessor::hasEditor() const {
+bool TheKlangFarmerAudioProcessor::hasEditor() const {
     return true;
 }
 
-const juce::String BiaEr1AudioProcessor::getName() const {
+const juce::String TheKlangFarmerAudioProcessor::getName() const {
     return "The Klang Farmer";
 }
 
-bool BiaEr1AudioProcessor::acceptsMidi() const {
+bool TheKlangFarmerAudioProcessor::acceptsMidi() const {
     return true;
 }
 
-bool BiaEr1AudioProcessor::producesMidi() const {
+bool TheKlangFarmerAudioProcessor::producesMidi() const {
     return false;
 }
 
-bool BiaEr1AudioProcessor::isMidiEffect() const {
+bool TheKlangFarmerAudioProcessor::isMidiEffect() const {
     return false;
 }
 
-double BiaEr1AudioProcessor::getTailLengthSeconds() const {
+double TheKlangFarmerAudioProcessor::getTailLengthSeconds() const {
     return 0.0;
 }
 
-int BiaEr1AudioProcessor::getNumPrograms() {
+int TheKlangFarmerAudioProcessor::getNumPrograms() {
     return 1;
 }
 
-int BiaEr1AudioProcessor::getCurrentProgram() {
+int TheKlangFarmerAudioProcessor::getCurrentProgram() {
     return 0;
 }
 
-void BiaEr1AudioProcessor::setCurrentProgram(int) {
+void TheKlangFarmerAudioProcessor::setCurrentProgram(int) {
 }
 
-const juce::String BiaEr1AudioProcessor::getProgramName(int) {
+const juce::String TheKlangFarmerAudioProcessor::getProgramName(int) {
     return {};
 }
 
-void BiaEr1AudioProcessor::changeProgramName(int, const juce::String&) {
+void TheKlangFarmerAudioProcessor::changeProgramName(int, const juce::String&) {
 }
 
-void BiaEr1AudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
+void TheKlangFarmerAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
     auto state = apvts.copyState();
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
 }
 
-void BiaEr1AudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
+void TheKlangFarmerAudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
     std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
     if (xmlState.get() != nullptr && xmlState->hasTagName(apvts.state.getType())) {
         apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
     }
 }
 
-juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::createParameterLayout() {
+juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor::createParameterLayout() {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     auto makeFloatParam = [](const char* id, const char* name, float defaultVal) {
@@ -346,7 +346,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::create
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("filter_type", 1), "Filter: Type",
         juce::StringArray{ "Off", "LPF", "BPF", "HPF", "Notch" }, 0));
-    layout.add(makeFloatParam("filter_style", "Filter: Style", 0.1667f));       // -12 dB/oct
+    layout.add(makeFloatParam("filter_slope", "Filter: Slope", 0.1667f));       // -12 dB/oct
     layout.add(makeFloatParam("filter_cutoff", "Filter: Cutoff", 1.0f));        // 20 kHz
     layout.add(makeFloatParam("filter_resonance", "Filter: Resonance", 0.0f));  // 0%
 
@@ -409,5 +409,5 @@ juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::create
 
 // JUCE plugin entry point factory
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
-    return new BiaEr1AudioProcessor();
+    return new TheKlangFarmerAudioProcessor();
 }

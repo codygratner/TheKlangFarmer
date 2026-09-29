@@ -523,9 +523,9 @@ void ModuleCardComponent::resized() {
     }
 }
 
-// --- BIA ER-1 EDITOR ---
+// --- THE KLANG FARMER EDITOR ---
 
-BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
+TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangFarmerAudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p),
       carrierTrackingSelector(juce::Colour(0xff00d2ff)),
       modTypeSelector(juce::Colour(0xffff7043)),
@@ -868,15 +868,15 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     auto cardFilter = std::make_unique<ModuleCardComponent>("Filter", juce::Colour(0xff7c4dff));
     bindSelector(filterTypeSelector, filterTypeBox, "filter_type",
                  { "Off", "LPF", "BPF", "HPF", "Notch" }, 5);
-    setupKnob(filterStyleSlider, juce::Colour(0xff7c4dff), false, 0.1667);
+    setupKnob(filterSlopeSlider, juce::Colour(0xff7c4dff), false, 0.1667);
     setupKnob(filterCutoffSlider, juce::Colour(0xff7c4dff), false, 1.0);
     setupKnob(filterResonanceSlider, juce::Colour(0xff7c4dff), false, 0.0); // 0% unipolar
 
-    filterStyleSlider.customFormatText = [](double val) {
+    filterSlopeSlider.customFormatText = [](double val) {
         float db = (val <= 0.5) ? static_cast<float>(-6.0 - val * 36.0) : static_cast<float>(-24.0 - (val - 0.5) * 144.0);
         return juce::String(static_cast<int>(std::round(db))) + " dB/oct";
     };
-    filterStyleSlider.customParseText = [](const juce::String& text) {
+    filterSlopeSlider.customParseText = [](const juce::String& text) {
         double db = parseNumberSafe(text, -12.0);
         if (db >= -24.0) return std::clamp((-db - 6.0) / 36.0, 0.0, 0.5);
         return std::clamp(0.5 + (-db - 24.0) / 144.0, 0.5, 1.0);
@@ -899,7 +899,7 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     };
 
     cardFilter->setLedSelector(&filterTypeSelector);
-    cardFilter->setKnob(0, "Style", &filterStyleSlider);
+    cardFilter->setKnob(0, "Slope", &filterSlopeSlider);
     cardFilter->setKnob(1, "Cutoff", &filterCutoffSlider);
     cardFilter->setKnob(2, "Resonance", &filterResonanceSlider);
     cards.push_back(std::move(cardFilter));
@@ -1198,7 +1198,7 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "mixer_limiter", mixerLimiterBox));
 
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter_type", filterTypeBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_style", filterStyleSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_slope", filterSlopeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_cutoff", filterCutoffSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_resonance", filterResonanceSlider));
 
@@ -1249,12 +1249,12 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     startTimerHz(30); // 30 FPS oscilloscope & GUI update
 }
 
-BiaEr1AudioProcessorEditor::~BiaEr1AudioProcessorEditor() {
+TheKlangFarmerAudioProcessorEditor::~TheKlangFarmerAudioProcessorEditor() {
     stopTimer();
     setLookAndFeel(nullptr);
 }
 
-void BiaEr1AudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar, double defaultVal) {
+void TheKlangFarmerAudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar, double defaultVal) {
     slider.setBipolar(isBipolar);
     slider.setColour(juce::Slider::rotarySliderFillColourId, trackColour);
     slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff232733));
@@ -1263,11 +1263,11 @@ void BiaEr1AudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colou
     slider.getDefaultValue = [defaultVal]() { return defaultVal; };
 }
 
-void BiaEr1AudioProcessorEditor::setupBox(juce::ComboBox& box) {
+void TheKlangFarmerAudioProcessorEditor::setupBox(juce::ComboBox& box) {
     box.setVisible(false);
 }
 
-void BiaEr1AudioProcessorEditor::resetToDefaults() {
+void TheKlangFarmerAudioProcessorEditor::resetToDefaults() {
     for (auto* param : audioProcessor.getParameters()) {
         if (auto* rangedParam = dynamic_cast<juce::RangedAudioParameter*>(param)) {
             rangedParam->setValueNotifyingHost(rangedParam->getDefaultValue());
@@ -1277,7 +1277,7 @@ void BiaEr1AudioProcessorEditor::resetToDefaults() {
     repaint();
 }
 
-void BiaEr1AudioProcessorEditor::bindSelector(LedSelectorComponent& selector, juce::ComboBox& box,
+void TheKlangFarmerAudioProcessorEditor::bindSelector(LedSelectorComponent& selector, juce::ComboBox& box,
                                               const juce::String& paramId, const juce::StringArray& items, int numColumns) {
     box.clear();
     box.addItemList(items, 1);
@@ -1291,7 +1291,7 @@ void BiaEr1AudioProcessorEditor::bindSelector(LedSelectorComponent& selector, ju
     };
 }
 
-void BiaEr1AudioProcessorEditor::updateDynamicControls() {
+void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
     auto syncSelector = [this](juce::ComboBox& box, LedSelectorComponent& selector, const juce::String& paramId, int& lastVal) {
         int idx = box.getSelectedItemIndex();
         if (idx < 0) {
@@ -1332,7 +1332,7 @@ void BiaEr1AudioProcessorEditor::updateDynamicControls() {
     syncSelector(ampLimiterBox, ampLimiterSelector, "amp_limiter", lastAmpLimiter);
 }
 
-void BiaEr1AudioProcessorEditor::timerCallback() {
+void TheKlangFarmerAudioProcessorEditor::timerCallback() {
     updateDynamicControls();
 
     // Fetch and display synchronized oscilloscope buffers across all 15 modules
@@ -1343,10 +1343,10 @@ void BiaEr1AudioProcessorEditor::timerCallback() {
     }
 }
 
-void BiaEr1AudioProcessorEditor::paint(juce::Graphics& g) {
+void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
     // Top-to-bottom subtle gradient
     juce::ColourGradient bgGrad(juce::Colour(0xff12141a), 0, 0,
-                               juce::Colour(0xff0a0b0e), 0, static_cast<float>(getHeight()), false);
+                                juce::Colour(0xff0a0b0e), 0, static_cast<float>(getHeight()), false);
     g.setGradientFill(bgGrad);
     g.fillAll();
 
@@ -1367,7 +1367,7 @@ void BiaEr1AudioProcessorEditor::paint(juce::Graphics& g) {
     g.drawText("15-MODULE HARDWARE SYNTHESIS DRUM VOICE", 182, 0, 380, 36, juce::Justification::centredLeft);
 }
 
-void BiaEr1AudioProcessorEditor::resized() {
+void TheKlangFarmerAudioProcessorEditor::resized() {
     initButton.setBounds(getWidth() - 232, 5, 84, 26);
     triggerButton.setBounds(getWidth() - 138, 5, 124, 26);
 

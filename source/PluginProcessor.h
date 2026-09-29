@@ -3,10 +3,10 @@
 #include <juce_audio_utils/juce_audio_utils.h>
 #include "ModularBlocks.h"
 
-class BiaEr1AudioProcessor : public juce::AudioProcessor {
+class TheKlangFarmerAudioProcessor : public juce::AudioProcessor {
 public:
-    BiaEr1AudioProcessor();
-    ~BiaEr1AudioProcessor() override = default;
+    TheKlangFarmerAudioProcessor();
+    ~TheKlangFarmerAudioProcessor() override = default;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -82,7 +82,7 @@ private:
 
     // 7. Filter
     juce::AudioParameterChoice* filterTypeParam      = nullptr;
-    juce::AudioParameterFloat*  filterStyleParam     = nullptr;
+    juce::AudioParameterFloat*  filterSlopeParam     = nullptr;
     juce::AudioParameterFloat*  filterCutoffParam    = nullptr;
     juce::AudioParameterFloat*  filterResonanceParam = nullptr;
 
@@ -134,5 +134,5 @@ private:
     juce::AudioParameterFloat*  ampEnvSlopeParam     = nullptr;
     juce::AudioParameterFloat*  ampEnvDecayParam     = nullptr;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BiaEr1AudioProcessor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangFarmerAudioProcessor)
 };

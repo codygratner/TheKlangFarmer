@@ -75,7 +75,7 @@ private:
     juce::Rectangle<int> getItemBounds(int index) const;
 };
 
-// Card component representing one of the 13 blocks
+// Card component representing one of the 15 blocks
 class ModuleCardComponent : public juce::Component {
 public:
     ModuleCardComponent(const juce::String& title, juce::Colour accentColour);
@@ -101,10 +101,10 @@ private:
     int numActiveKnobs = 4;
 };
 
-class BiaEr1AudioProcessorEditor : public juce::AudioProcessorEditor, private juce::Timer {
+class TheKlangFarmerAudioProcessorEditor : public juce::AudioProcessorEditor, private juce::Timer {
 public:
-    explicit BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor&);
-    ~BiaEr1AudioProcessorEditor() override;
+    explicit TheKlangFarmerAudioProcessorEditor(TheKlangFarmerAudioProcessor&);
+    ~TheKlangFarmerAudioProcessorEditor() override;
 
     void paint(juce::Graphics&) override;
     void resized() override;
@@ -114,7 +114,7 @@ public:
                       const juce::String& paramId, const juce::StringArray& items, int numColumns = 1);
 
 private:
-    BiaEr1AudioProcessor& audioProcessor;
+    TheKlangFarmerAudioProcessor& audioProcessor;
     RotaryKnobLookAndFeel knobLookAndFeel;
 
     // Header buttons
@@ -122,7 +122,7 @@ private:
     juce::TextButton triggerButton { "AUDITION HIT" };
     void resetToDefaults();
 
-    // 13 Module Cards
+    // 15 Module Cards
     std::vector<std::unique_ptr<ModuleCardComponent>> cards;
 
     // Block 1: Carrier
@@ -169,7 +169,7 @@ private:
     // Block 7: Filter
     juce::ComboBox filterTypeBox;
     LedSelectorComponent filterTypeSelector;
-    RotaryKnobSlider filterStyleSlider;
+    RotaryKnobSlider filterSlopeSlider;
     RotaryKnobSlider filterCutoffSlider;
     RotaryKnobSlider filterResonanceSlider;
 
@@ -244,5 +244,5 @@ private:
     int lastDisperserType = -1;
     int lastAmpLimiter = -1;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BiaEr1AudioProcessorEditor)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangFarmerAudioProcessorEditor)
 };

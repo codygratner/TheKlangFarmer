@@ -665,7 +665,7 @@ private:
     int tempNoiseCount = 0;
 };
 
-// --- BLOCK 7: FILTER (Type, Style, Cutoff, Resonance) ---
+// --- BLOCK 7: FILTER (Type, Slope, Cutoff, Resonance) ---
 class FilterBlock : public DSPBlock {
 public:
     void init(const BlockContext& ctx) override {
@@ -685,8 +685,8 @@ public:
         int type = std::clamp(static_cast<int>(std::round(params[0] * 4.0f)), 0, 4);
         if (type == 0) return; // bypass
 
-        // 2. Style: slope -6dB/oct to -24dB/oct (at 0.5) to -96dB/oct (def -12dB/oct)
-        float style = params[1];
+        // 2. Slope: slope -6dB/oct to -24dB/oct (at 0.5) to -96dB/oct (def -12dB/oct)
+        float slope = params[1];
 
         // 3. Cutoff: 0.1 Hz to 20 kHz (def 20 kHz)
         float baseCutoff = 0.1f * std::pow(20000.0f / 0.1f, params[2]);
@@ -697,10 +697,10 @@ public:
 
         // Slope mapping: 0.0 -> 1 pole (6dB), 0.1667 -> 2 poles (12dB), 0.5 -> 4 poles (24dB), 1.0 -> 16 poles (96dB)
         int filterStages = 1;
-        if (style <= 0.5f) {
-            filterStages = 1 + static_cast<int>(std::round(style * 2.0f)); // 1 to 2 SVF stages (12 to 24 dB)
+        if (slope <= 0.5f) {
+            filterStages = 1 + static_cast<int>(std::round(slope * 2.0f)); // 1 to 2 SVF stages (12 to 24 dB)
         } else {
-            filterStages = 2 + static_cast<int>(std::round((style - 0.5f) * 12.0f)); // 2 to 8 SVF stages (24 to 96 dB)
+            filterStages = 2 + static_cast<int>(std::round((slope - 0.5f) * 12.0f)); // 2 to 8 SVF stages (24 to 96 dB)
         }
         filterStages = std::clamp(filterStages, 1, 8);
 

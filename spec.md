@@ -320,13 +320,11 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 &#x20;       - Notch
 
-&#x20;   1. style, continuously variable
+&#x20;   1. slope, continuously variable
 
-&#x20;       - Filter: slope
+&#x20;       - -6dB/oct to -24dB/oct (at 50%) to -96dB/oct
 
-&#x20;           - -6dB/oct to -24dB/oct (at 50%) to -96dB/oct
-
-&#x20;           - default: -12dB/oct
+&#x20;       - default: -12dB/oct
 
 &#x20;   1. cutoff, continuously variable
 
