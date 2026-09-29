@@ -533,6 +533,8 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
       driveTypeSelector(juce::Colour(0xffff4081)),
       mixerLimiterSelector(juce::Colour(0xff40c4ff)),
       filterTypeSelector(juce::Colour(0xff7c4dff)),
+      combTypeSelector(juce::Colour(0xff26a69a)),
+      disperserTypeSelector(juce::Colour(0xffec407a)),
       ampLimiterSelector(juce::Colour(0xff00e5ff))
 {
     setLookAndFeel(&knobLookAndFeel);
@@ -865,36 +867,21 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     // 7. FILTER CARD
     auto cardFilter = std::make_unique<ModuleCardComponent>("Filter", juce::Colour(0xff7c4dff));
     bindSelector(filterTypeSelector, filterTypeBox, "filter_type",
-                 { "Off", "LPF", "BPF", "HPF", "Notch", "Comb", "Disperser" }, 4);
+                 { "Off", "LPF", "BPF", "HPF", "Notch" }, 5);
     setupKnob(filterStyleSlider, juce::Colour(0xff7c4dff), false, 0.1667);
     setupKnob(filterCutoffSlider, juce::Colour(0xff7c4dff), false, 1.0);
-    setupKnob(filterResonanceSlider, juce::Colour(0xff7c4dff), false, 0.0);
+    setupKnob(filterResonanceSlider, juce::Colour(0xff7c4dff), false, 0.0); // 0% unipolar
 
-    filterStyleSlider.getDefaultValue = [this]() -> double {
-        int t = filterTypeSelector.getSelectedIndex();
-        if (t <= 4) return 0.1667;
-        if (t == 5) return 1.0;
-        return 4.0 / 32.0;
+    filterStyleSlider.customFormatText = [](double val) {
+        float db = (val <= 0.5) ? static_cast<float>(-6.0 - val * 36.0) : static_cast<float>(-24.0 - (val - 0.5) * 144.0);
+        return juce::String(static_cast<int>(std::round(db))) + " dB/oct";
     };
-    filterResonanceSlider.getDefaultValue = [this]() -> double {
-        int t = filterTypeSelector.getSelectedIndex();
-        if (t == 5 || t == 6) return 0.5; // 0% center for Comb and Disperser
-        return 0.0;                       // 0% min for standard filters
+    filterStyleSlider.customParseText = [](const juce::String& text) {
+        double db = parseNumberSafe(text, -12.0);
+        if (db >= -24.0) return std::clamp((-db - 6.0) / 36.0, 0.0, 0.5);
+        return std::clamp(0.5 + (-db - 24.0) / 144.0, 0.5, 1.0);
     };
 
-    filterStyleSlider.customFormatText = [this](double val) -> juce::String {
-        int t = filterTypeSelector.getSelectedIndex();
-        if (t <= 4) {
-            float db = (val <= 0.5) ? static_cast<float>(-6.0 - val * 36.0) : static_cast<float>(-24.0 - (val - 0.5) * 144.0);
-            return juce::String(static_cast<int>(std::round(db))) + " dB/oct";
-        } else if (t == 5) {
-            float hz = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(val));
-            return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k Damp" : juce::String(hz, 0) + " Hz";
-        } else {
-            int stages = static_cast<int>(std::round(val * 32.0));
-            return juce::String(stages) + " APFs";
-        }
-    };
     filterCutoffSlider.customFormatText = [](double val) {
         float hz = 0.1f * std::pow(20000.0f / 0.1f, static_cast<float>(val));
         return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
@@ -903,18 +890,11 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
         double hz = std::clamp(parseNumberSafe(text, 20000.0), 0.1, 20000.0);
         return std::log(hz / 0.1) / std::log(20000.0 / 0.1);
     };
-    filterResonanceSlider.customFormatText = [this](double val) -> juce::String {
-        int t = filterTypeSelector.getSelectedIndex();
-        if (t == 5 || t == 6) {
-            int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
-            return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
-        }
+    filterResonanceSlider.customFormatText = [](double val) {
         return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
     };
-    filterResonanceSlider.customParseText = [this](const juce::String& text) -> double {
-        int t = filterTypeSelector.getSelectedIndex();
+    filterResonanceSlider.customParseText = [](const juce::String& text) {
         double p = parseNumberSafe(text, 0.0);
-        if (t == 5 || t == 6) return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
         return std::clamp(p / 100.0, 0.0, 1.0);
     };
 
@@ -1067,7 +1047,60 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     cardGrit->setKnob(3, "High Boost", &gritHighBoostSlider);
     cards.push_back(std::move(cardGrit));
 
-    // 12. AMP CARD
+    // 12. COMB FILTER CARD
+    auto cardComb = std::make_unique<ModuleCardComponent>("Comb Filter", juce::Colour(0xff26a69a));
+    bindSelector(combTypeSelector, combTypeBox, "comb_type", { "Off", "On" }, 2);
+    setupKnob(combDampeningSlider, juce::Colour(0xff26a69a), false, 1.0);
+    setupKnob(combCutoffSlider, juce::Colour(0xff26a69a), false, 1.0);
+    setupKnob(combResonanceSlider, juce::Colour(0xff26a69a), true, 0.5); // Bipolar, 0% default
+
+    combDampeningSlider.customFormatText = filterCutoffSlider.customFormatText;
+    combDampeningSlider.customParseText  = filterCutoffSlider.customParseText;
+    combCutoffSlider.customFormatText    = filterCutoffSlider.customFormatText;
+    combCutoffSlider.customParseText     = filterCutoffSlider.customParseText;
+
+    combResonanceSlider.customFormatText = [](double val) {
+        int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
+        return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
+    };
+    combResonanceSlider.customParseText = [](const juce::String& text) {
+        double p = parseNumberSafe(text, 0.0);
+        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
+    };
+
+    cardComb->setLedSelector(&combTypeSelector);
+    cardComb->setKnob(0, "Dampening", &combDampeningSlider);
+    cardComb->setKnob(1, "Cutoff", &combCutoffSlider);
+    cardComb->setKnob(2, "Resonance", &combResonanceSlider);
+    cards.push_back(std::move(cardComb));
+
+    // 13. DISPERSER CARD
+    auto cardDisperser = std::make_unique<ModuleCardComponent>("Disperser", juce::Colour(0xffec407a));
+    bindSelector(disperserTypeSelector, disperserTypeBox, "disperser_type", { "Off", "On" }, 2);
+    setupKnob(disperserAmountSlider, juce::Colour(0xffec407a), false, 4.0 / 32.0); // 4 APFs default
+    setupKnob(disperserCutoffSlider, juce::Colour(0xffec407a), false, 1.0);
+    setupKnob(disperserResonanceSlider, juce::Colour(0xffec407a), true, 0.5); // Bipolar, 0% default
+
+    disperserAmountSlider.customFormatText = [](double val) {
+        int stages = static_cast<int>(std::round(val * 32.0));
+        return juce::String(stages) + " APFs";
+    };
+    disperserAmountSlider.customParseText = [](const juce::String& text) {
+        double s = parseNumberSafe(text, 4.0);
+        return std::clamp(s / 32.0, 0.0, 1.0);
+    };
+    disperserCutoffSlider.customFormatText = filterCutoffSlider.customFormatText;
+    disperserCutoffSlider.customParseText  = filterCutoffSlider.customParseText;
+    disperserResonanceSlider.customFormatText = combResonanceSlider.customFormatText;
+    disperserResonanceSlider.customParseText  = combResonanceSlider.customParseText;
+
+    cardDisperser->setLedSelector(&disperserTypeSelector);
+    cardDisperser->setKnob(0, "Amount", &disperserAmountSlider);
+    cardDisperser->setKnob(1, "Cutoff", &disperserCutoffSlider);
+    cardDisperser->setKnob(2, "Resonance", &disperserResonanceSlider);
+    cards.push_back(std::move(cardDisperser));
+
+    // 14. AMP CARD
     auto cardAmp = std::make_unique<ModuleCardComponent>("Amp", juce::Colour(0xff00e5ff));
     bindSelector(ampLimiterSelector, ampLimiterBox, "amp_limiter", { "Off", "On" }, 2);
     setupKnob(ampPanSlider, juce::Colour(0xff00e5ff), true, 0.5); // Bipolar
@@ -1097,7 +1130,7 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     cardAmp->setKnob(2, "Drive", &ampDriveSlider);
     cards.push_back(std::move(cardAmp));
 
-    // 13. AMP ENVELOPE CARD (4 Knobs)
+    // 15. AMP ENVELOPE CARD (4 Knobs)
     auto cardAmpEnv = std::make_unique<ModuleCardComponent>("Amp Env", juce::Colour(0xff64ffda));
     setupKnob(ampEnvClapsSlider, juce::Colour(0xff64ffda), false, 0.0);
     setupKnob(ampEnvClapSpeedSlider, juce::Colour(0xff64ffda), false, 0.1429);
@@ -1128,7 +1161,7 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     cardAmpEnv->setKnob(3, "Decay", &ampEnvDecaySlider);
     cards.push_back(std::move(cardAmpEnv));
 
-    // Add all 13 cards to editor
+    // Add all 15 cards to editor
     for (auto& c : cards) {
         addAndMakeVisible(c.get());
     }
@@ -1188,6 +1221,16 @@ BiaEr1AudioProcessorEditor::BiaEr1AudioProcessorEditor(BiaEr1AudioProcessor& p)
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_rate", gritRateSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_low_boost", gritLowBoostSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_high_boost", gritHighBoostSlider));
+
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "comb_type", combTypeBox));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "comb_dampening", combDampeningSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "comb_cutoff", combCutoffSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "comb_resonance", combResonanceSlider));
+
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "disperser_type", disperserTypeBox));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "disperser_amount", disperserAmountSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "disperser_cutoff", disperserCutoffSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "disperser_resonance", disperserResonanceSlider));
 
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_pan", ampPanSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_level", ampLevelSlider));
@@ -1283,22 +1326,16 @@ void BiaEr1AudioProcessorEditor::updateDynamicControls() {
 
     syncSelector(mixerLimiterBox, mixerLimiterSelector, "mixer_limiter", lastMixerLimiter);
 
-    int curFilter = syncSelector(filterTypeBox, filterTypeSelector, "filter_type", lastFilterType);
-    if (curFilter >= 0) {
-        bool isBipolarRes = (curFilter == 5 || curFilter == 6);
-        filterResonanceSlider.setBipolar(isBipolarRes);
-        filterResonanceSlider.setDoubleClickReturnValue(true, isBipolarRes ? 0.5 : 0.0);
-        filterStyleSlider.updateText();
-        filterResonanceSlider.updateText();
-    }
-
+    syncSelector(filterTypeBox, filterTypeSelector, "filter_type", lastFilterType);
+    syncSelector(combTypeBox, combTypeSelector, "comb_type", lastCombType);
+    syncSelector(disperserTypeBox, disperserTypeSelector, "disperser_type", lastDisperserType);
     syncSelector(ampLimiterBox, ampLimiterSelector, "amp_limiter", lastAmpLimiter);
 }
 
 void BiaEr1AudioProcessorEditor::timerCallback() {
     updateDynamicControls();
 
-    // Fetch and display synchronized oscilloscope buffers across all 13 modules
+    // Fetch and display synchronized oscilloscope buffers across all 15 modules
     float scopeBuffer[128];
     for (int b = 0; b < static_cast<int>(cards.size()); ++b) {
         audioProcessor.getEngine().getScopeData(b, scopeBuffer, 128);
@@ -1327,7 +1364,7 @@ void BiaEr1AudioProcessorEditor::paint(juce::Graphics& g) {
 
     g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("13-MODULE HARDWARE SYNTHESIS DRUM VOICE", 94, 0, 380, 36, juce::Justification::centredLeft);
+    g.drawText("15-MODULE HARDWARE SYNTHESIS DRUM VOICE", 94, 0, 380, 36, juce::Justification::centredLeft);
 }
 
 void BiaEr1AudioProcessorEditor::resized() {
@@ -1338,28 +1375,26 @@ void BiaEr1AudioProcessorEditor::resized() {
     int topOffset = 38;
     int totalH = getHeight() - topOffset - margin;
     int rowH = (totalH - 2 * margin) / 3;
+    int cardW = (getWidth() - 6 * margin) / 5;
 
     // Row 1: 5 Cards (Carrier, Modulator, Pitch Env, Drive, Noise Transient)
     int row1Y = topOffset;
-    int row1CardW = (getWidth() - 6 * margin) / 5;
     for (int i = 0; i < 5 && i < static_cast<int>(cards.size()); ++i) {
-        int x = margin + i * (row1CardW + margin);
-        cards[i]->setBounds(x, row1Y, row1CardW, rowH);
+        int x = margin + i * (cardW + margin);
+        cards[i]->setBounds(x, row1Y, cardW, rowH);
     }
 
-    // Row 2: 4 Cards (Mixer, Filter, Filter Env, RingMod)
+    // Row 2: 5 Cards (Mixer, Filter, Filter Env, RingMod, Frequency Shifter)
     int row2Y = row1Y + rowH + margin;
-    int row2CardW = (getWidth() - 5 * margin) / 4;
-    for (int i = 0; i < 4 && (i + 5) < static_cast<int>(cards.size()); ++i) {
-        int x = margin + i * (row2CardW + margin);
-        cards[i + 5]->setBounds(x, row2Y, row2CardW, rowH);
+    for (int i = 0; i < 5 && (i + 5) < static_cast<int>(cards.size()); ++i) {
+        int x = margin + i * (cardW + margin);
+        cards[i + 5]->setBounds(x, row2Y, cardW, rowH);
     }
 
-    // Row 3: 4 Cards (Freq Shifter, Grit FX, Amp, Amp Env)
+    // Row 3: 5 Cards (Grit FX, Comb Filter, Disperser, Amp, Amp Env)
     int row3Y = row2Y + rowH + margin;
-    int row3CardW = (getWidth() - 5 * margin) / 4;
-    for (int i = 0; i < 4 && (i + 9) < static_cast<int>(cards.size()); ++i) {
-        int x = margin + i * (row3CardW + margin);
-        cards[i + 9]->setBounds(x, row3Y, row3CardW, rowH);
+    for (int i = 0; i < 5 && (i + 10) < static_cast<int>(cards.size()); ++i) {
+        int x = margin + i * (cardW + margin);
+        cards[i + 10]->setBounds(x, row3Y, cardW, rowH);
     }
 }

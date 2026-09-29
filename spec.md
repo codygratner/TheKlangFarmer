@@ -250,7 +250,7 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 &#x20;               - LPF: 20 Hz to 20 kHz
 
-&#x20;               - slope: steep to flat
+&#x20;               - slope: -24dB/oct to -6dB/oct
 
 &#x20;           - 50%: no filter (the default)
 
@@ -258,7 +258,7 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 &#x20;               - HPF: 20 Hz to 20 kHz
 
-&#x20;               - slope: flat to steep
+&#x20;               - slope: -6dB/oct to -24dB/oct
 
 &#x20;   1. drive, continuously variable
 
@@ -320,10 +320,6 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 
 &#x20;       - Notch
 
-&#x20;       - Comb
-
-&#x20;       - Disperser (series of all-pass filters)
-
 &#x20;   1. style, continuously variable
 
 &#x20;       - Filter: slope
@@ -331,18 +327,6 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 &#x20;           - -6dB/oct to -24dB/oct (at 50%) to -96dB/oct
 
 &#x20;           - default: -12dB/oct
-
-&#x20;       - Comb: dampening
-
-&#x20;           - 0.1 Hz to 20 kHz
-
-&#x20;           - default: 20 kHz
-
-&#x20;       - Disperser: series of all-pass filters
-
-&#x20;           - 0 to 32
-
-&#x20;           - default: 4
 
 &#x20;   1. cutoff, continuously variable
 
@@ -353,10 +337,6 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 &#x20;   1. resonance, continuously variable
 
 &#x20;       - resonance on filter: 0% to 100%
-
-&#x20;       - resonance on Comb: -100% to 0% to +100%
-
-&#x20;       - resonance on Disperser: -100% to 0% to +100%
 
 &#x20;       - default: 0%
 
@@ -477,6 +457,60 @@ for unipolar controls, have the UI show the fill on the knob starting from minim
 &#x20;       - 0dB to +24dB
 
 &#x20;       - default: 0dB
+
+1\. Disperser Controls
+
+&#x20;   1. type, selector
+
+&#x20;       - off (default)
+
+&#x20;       - on
+
+&#x20;   1. amount, continuously variable
+
+&#x20;       - series of all-pass filters
+
+&#x20;           - 0 to 32
+
+&#x20;           - default: 4
+
+&#x20;   1. cutoff, continuously variable
+
+&#x20;       - 0.1 Hz to 20 kHz
+
+&#x20;       - defaul: 20 kHz
+
+&#x20;   1. resonance, continuously variable
+
+&#x20;       - -100% to 0% to +100%
+
+&#x20;       - default: 0%
+
+1\. Comb Filter Controls
+
+&#x20;   1. type, selector
+
+&#x20;       - off (default)
+
+&#x20;       - on
+
+&#x20;   1. dampening, continuously variable
+
+&#x20;       - 0.1 Hz to 20 kHz
+
+&#x20;       - default: 20 kHz
+
+&#x20;   1. cutoff, continuously variable
+
+&#x20;       - 0.1 Hz to 20 kHz
+
+&#x20;       - defaul: 20 kHz
+
+&#x20;   1. resonance, continuously variable
+
+&#x20;       - -100% to 0% to +100%
+
+&#x20;       - default: 0%
 
 1\. Amp Controls
 

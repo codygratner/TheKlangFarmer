@@ -5,7 +5,7 @@
 #include "ModularBlocks.h"
 
 int main() {
-    std::cout << "Starting DSP Verification Tests for 13-Block Modular Drum Synth..." << std::endl;
+    std::cout << "Starting DSP Verification Tests for 15-Block Modular Drum Synth..." << std::endl;
 
     TbdAudio::ModularDrumEngine engine;
     engine.init(44100.0f);
@@ -37,7 +37,7 @@ int main() {
     }
     std::cout << "PASS: Basic trigger and audio generation." << std::endl;
 
-    // 2. Test Parameter Sweeps across all 13 blocks (0.0, 0.25, 0.5, 0.75, 1.0)
+    // 2. Test Parameter Sweeps across all 15 blocks (0.0, 0.25, 0.5, 0.75, 1.0)
     constexpr float testVals[] = { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f };
     for (int b = 0; b < TbdAudio::ModularDrumEngine::NUM_BLOCKS; ++b) {
         auto blockId = static_cast<TbdAudio::ModularDrumEngine::BlockID>(b);
@@ -60,14 +60,14 @@ int main() {
             }
         }
     }
-    std::cout << "PASS: 13-block parameter sweep stability test." << std::endl;
+    std::cout << "PASS: 15-block parameter sweep stability test." << std::endl;
 
     // 3. Test Comb filter and APF disperser
-    // Comb filter (Type 5 = 5/6.0f)
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 0, 5.0f / 6.0f); // Comb
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 1, 0.5f);        // Dampening
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 2, 0.5f);        // Cutoff
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 3, 0.95f);       // High resonance
+    // Comb filter (Block BLK_COMB, Type = 1.0f On)
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 0, 1.0f);        // On
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 1, 0.5f);        // Dampening
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 2, 0.5f);        // Cutoff
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 3, 0.95f);       // High resonance
     engine.trigger(1.0f);
     for (int block = 0; block < 50; ++block) {
         engine.processStereo(left.data(), right.data(), blockSize);
@@ -81,11 +81,11 @@ int main() {
     }
     std::cout << "PASS: Comb filter test." << std::endl;
 
-    // APF Disperser (Type 6 = 1.0f)
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 0, 1.0f); // Disperser
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 1, 1.0f); // 32 stages
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 2, 0.6f); // Cutoff
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 3, 0.8f); // Resonance
+    // APF Disperser (Block BLK_DISPERSER, Type = 1.0f On)
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 0, 1.0f); // On
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 1, 1.0f); // 32 stages
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 2, 0.6f); // Cutoff
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 3, 0.8f); // Resonance
     engine.trigger(1.0f);
     for (int block = 0; block < 50; ++block) {
         engine.processStereo(left.data(), right.data(), blockSize);
@@ -227,7 +227,7 @@ int main() {
 
     }
 
-    // 7. Test VisualScope Buffer Capture for all 13 blocks
+    // 7. Test VisualScope Buffer Capture for all 15 blocks
     {
         float scopeData[128] = { 0.0f };
         for (int b = 0; b < TbdAudio::ModularDrumEngine::NUM_BLOCKS; ++b) {
@@ -239,9 +239,9 @@ int main() {
                 }
             }
         }
-        std::cout << "PASS: All 13 VisualScope buffers populated with valid finite samples." << std::endl;
+        std::cout << "PASS: All 15 VisualScope buffers populated with valid finite samples." << std::endl;
     }
 
-    std::cout << "\n>>> ALL 13-BLOCK DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
+    std::cout << "\n>>> ALL 15-BLOCK DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
     return 0;
 }

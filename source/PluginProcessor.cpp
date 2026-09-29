@@ -74,13 +74,25 @@ BiaEr1AudioProcessor::BiaEr1AudioProcessor()
     gritLowBoostParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_low_boost"));
     gritHighBoostParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_high_boost"));
 
-    // 12. Amp
+    // 12. Comb Filter
+    combTypeParam        = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("comb_type"));
+    combDampeningParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_dampening"));
+    combCutoffParam      = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_cutoff"));
+    combResonanceParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_resonance"));
+
+    // 13. Disperser
+    disperserTypeParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("disperser_type"));
+    disperserAmountParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("disperser_amount"));
+    disperserCutoffParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("disperser_cutoff"));
+    disperserResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("disperser_resonance"));
+
+    // 14. Amp
     ampPanParam          = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_pan"));
     ampLevelParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_level"));
     ampDriveParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_drive"));
     ampLimiterParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("amp_limiter"));
 
-    // 13. Amp Envelope
+    // 15. Amp Envelope
     ampEnvClapsParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_claps"));
     ampEnvClapSpeedParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_clapspeed"));
     ampEnvSlopeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ampenv_slope"));
@@ -155,7 +167,7 @@ void BiaEr1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     if (mixerLimiterParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 3, static_cast<float>(mixerLimiterParam->getIndex()));
 
     // 7. Filter
-    if (filterTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 0, static_cast<float>(filterTypeParam->getIndex()) / 6.0f);
+    if (filterTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 0, static_cast<float>(filterTypeParam->getIndex()) / 4.0f);
     if (filterStyleParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 1, getNorm(filterStyleParam));
     if (filterCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 2, getNorm(filterCutoffParam));
     if (filterResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 3, getNorm(filterResonanceParam));
@@ -184,13 +196,25 @@ void BiaEr1AudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::
     if (gritLowBoostParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 2, getNorm(gritLowBoostParam));
     if (gritHighBoostParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 3, getNorm(gritHighBoostParam));
 
-    // 12. Amp
+    // 12. Comb Filter
+    if (combTypeParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 0, static_cast<float>(combTypeParam->getIndex()));
+    if (combDampeningParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 1, getNorm(combDampeningParam));
+    if (combCutoffParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 2, getNorm(combCutoffParam));
+    if (combResonanceParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 3, getNorm(combResonanceParam));
+
+    // 13. Disperser
+    if (disperserTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 0, static_cast<float>(disperserTypeParam->getIndex()));
+    if (disperserAmountParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 1, getNorm(disperserAmountParam));
+    if (disperserCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 2, getNorm(disperserCutoffParam));
+    if (disperserResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 3, getNorm(disperserResonanceParam));
+
+    // 14. Amp
     if (ampPanParam)          engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMP, 0, getNorm(ampPanParam));
     if (ampLevelParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMP, 1, getNorm(ampLevelParam));
     if (ampDriveParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMP, 2, getNorm(ampDriveParam));
     if (ampLimiterParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMP, 3, static_cast<float>(ampLimiterParam->getIndex()));
 
-    // 13. Amp Envelope
+    // 15. Amp Envelope
     if (ampEnvClapsParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 0, getNorm(ampEnvClapsParam));
     if (ampEnvClapSpeedParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 1, getNorm(ampEnvClapSpeedParam));
     if (ampEnvSlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 2, getNorm(ampEnvSlopeParam));
@@ -321,7 +345,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::create
     // --- 7. FILTER ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("filter_type", 1), "Filter: Type",
-        juce::StringArray{ "Off", "LPF", "BPF", "HPF", "Notch", "Comb", "Disperser" }, 0));
+        juce::StringArray{ "Off", "LPF", "BPF", "HPF", "Notch" }, 0));
     layout.add(makeFloatParam("filter_style", "Filter: Style", 0.1667f));       // -12 dB/oct
     layout.add(makeFloatParam("filter_cutoff", "Filter: Cutoff", 1.0f));        // 20 kHz
     layout.add(makeFloatParam("filter_resonance", "Filter: Resonance", 0.0f));  // 0%
@@ -350,7 +374,23 @@ juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::create
     layout.add(makeFloatParam("grit_low_boost", "Grit: Low Boost", 0.0f));      // 0 dB
     layout.add(makeFloatParam("grit_high_boost", "Grit: High Boost", 0.0f));    // 0 dB
 
-    // --- 12. AMP ---
+    // --- 12. COMB FILTER ---
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("comb_type", 1), "Comb: Type",
+        juce::StringArray{ "Off", "On" }, 0));
+    layout.add(makeFloatParam("comb_dampening", "Comb: Dampening", 1.0f));      // 20 kHz
+    layout.add(makeFloatParam("comb_cutoff", "Comb: Cutoff", 1.0f));            // 20 kHz
+    layout.add(makeFloatParam("comb_resonance", "Comb: Resonance", 0.5f));      // 0% (bipolar center)
+
+    // --- 13. DISPERSER ---
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("disperser_type", 1), "Disperser: Type",
+        juce::StringArray{ "Off", "On" }, 0));
+    layout.add(makeFloatParam("disperser_amount", "Disperser: Amount", 4.0f / 32.0f)); // 4 APFs
+    layout.add(makeFloatParam("disperser_cutoff", "Disperser: Cutoff", 1.0f));         // 20 kHz
+    layout.add(makeFloatParam("disperser_resonance", "Disperser: Resonance", 0.5f));   // 0% (bipolar center)
+
+    // --- 14. AMP ---
     layout.add(makeFloatParam("amp_pan", "Amp: Pan", 0.5f));                    // Center
     layout.add(makeFloatParam("amp_level", "Amp: Level", 0.5f));                // 100%
     layout.add(makeFloatParam("amp_drive", "Amp: Drive", 0.5f));                // 0 dB
@@ -358,7 +398,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout BiaEr1AudioProcessor::create
         juce::ParameterID("amp_limiter", 1), "Amp: Limiter",
         juce::StringArray{ "Off", "On" }, 1));                                  // On
 
-    // --- 13. AMP ENVELOPE ---
+    // --- 15. AMP ENVELOPE ---
     layout.add(makeFloatParam("ampenv_claps", "AmpEnv: Claps", 0.0f));          // 0 claps
     layout.add(makeFloatParam("ampenv_clapspeed", "AmpEnv: Clap Speed", 0.1429f)); // 3 ms
     layout.add(makeFloatParam("ampenv_slope", "AmpEnv: Slope", 0.0f));          // Exponential

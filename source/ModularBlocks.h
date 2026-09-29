@@ -674,12 +674,6 @@ public:
         for (int s = 0; s < 8; ++s) {
             s1L[s] = s2L[s] = s1R[s] = s2R[s] = 0.0f;
         }
-        combBufferL.assign(maxDelaySamples, 0.0f);
-        combBufferR.assign(maxDelaySamples, 0.0f);
-        combWriteIdx = 0;
-        combDampL = combDampR = 0.0f;
-        apfStateL.assign(32, 0.0f);
-        apfStateR.assign(32, 0.0f);
     }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
@@ -687,46 +681,28 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. Type: 0=Off (def), 1=LPF, 2=BPF, 3=HPF, 4=Notch, 5=Comb, 6=Disperser
-        int type = std::clamp(static_cast<int>(std::round(params[0] * 6.0f)), 0, 6);
+        // 1. Type: 0=Off (def), 1=LPF, 2=BPF, 3=HPF, 4=Notch
+        int type = std::clamp(static_cast<int>(std::round(params[0] * 4.0f)), 0, 4);
         if (type == 0) return; // bypass
 
-        // 2. Style:
-        // Filter: slope -6dB/oct to -24dB/oct (at 0.5) to -96dB/oct (def -12dB/oct)
-        // Comb: dampening 0.1 Hz to 20 kHz (def 20 kHz)
-        // Disperser: APFs 0 to 32 (def 4)
+        // 2. Style: slope -6dB/oct to -24dB/oct (at 0.5) to -96dB/oct (def -12dB/oct)
         float style = params[1];
 
         // 3. Cutoff: 0.1 Hz to 20 kHz (def 20 kHz)
         float baseCutoff = 0.1f * std::pow(20000.0f / 0.1f, params[2]);
 
-        // 4. Resonance:
-        // Filter: 0% to 100%
-        // Comb: -100% to +100%
-        // Disperser: -100% to +100%
+        // 4. Resonance: 0% to 100%
         float rawRes = params[3];
         float filterQ = 0.707f + rawRes * 18.0f;
-        float combFb = (rawRes - 0.5f) * 2.0f * 0.98f;
-        float disperserRes = (rawRes - 0.5f) * 2.0f;
 
-        float combDampCoeff = 0.999f;
-        int apfStages = 4;
-        int filterStages = 1; // 1 stage = 12dB/oct default
-
-        if (type <= 4) {
-            // Slope mapping: 0.0 -> 1 pole (6dB), 0.1667 -> 2 poles (12dB), 0.5 -> 4 poles (24dB), 1.0 -> 16 poles (96dB)
-            if (style <= 0.5f) {
-                filterStages = 1 + static_cast<int>(std::round(style * 2.0f)); // 1 to 2 SVF stages (12 to 24 dB)
-            } else {
-                filterStages = 2 + static_cast<int>(std::round((style - 0.5f) * 12.0f)); // 2 to 8 SVF stages (24 to 96 dB)
-            }
-            filterStages = std::clamp(filterStages, 1, 8);
-        } else if (type == 5) {
-            float dampHz = 0.1f * std::pow(20000.0f / 0.1f, style);
-            combDampCoeff = std::clamp(TWO_PI * dampHz * invSr, 0.0001f, 0.999f);
+        // Slope mapping: 0.0 -> 1 pole (6dB), 0.1667 -> 2 poles (12dB), 0.5 -> 4 poles (24dB), 1.0 -> 16 poles (96dB)
+        int filterStages = 1;
+        if (style <= 0.5f) {
+            filterStages = 1 + static_cast<int>(std::round(style * 2.0f)); // 1 to 2 SVF stages (12 to 24 dB)
         } else {
-            apfStages = std::clamp(static_cast<int>(std::round(style * 32.0f)), 0, 32);
+            filterStages = 2 + static_cast<int>(std::round((style - 0.5f) * 12.0f)); // 2 to 8 SVF stages (24 to 96 dB)
         }
+        filterStages = std::clamp(filterStages, 1, 8);
 
         // Pre-Drive gain from Filter Envelope
         float preDriveGain = predriveGain;
@@ -746,70 +722,29 @@ public:
             float cutoff = baseCutoff * std::pow(2.0f, fEnv * 5.0f);
             cutoff = std::clamp(cutoff, 0.1f, sampleRate * 0.48f);
 
-            if (type <= 4) {
-                // SVF filter cascade
-                float g = std::tan(PI * cutoff * invSr);
-                float k = 1.0f / filterQ;
-                float a1 = 1.0f / (1.0f + g * (g + k));
-                int svfMode = type - 1; // 0=LP, 1=BP, 2=HP, 3=Notch
+            // SVF filter cascade
+            float g = std::tan(PI * cutoff * invSr);
+            float k = 1.0f / filterQ;
+            float a1 = 1.0f / (1.0f + g * (g + k));
+            int svfMode = type - 1; // 0=LP, 1=BP, 2=HP, 3=Notch
 
-                for (int s = 0; s < filterStages; ++s) {
-                    float hpL = (inL - (g + k) * s1L[s] - s2L[s]) * a1;
-                    float bpL = g * hpL + s1L[s];
-                    s1L[s] = g * hpL + bpL;
-                    float lpL = g * bpL + s2L[s];
-                    s2L[s] = g * bpL + lpL;
+            for (int s = 0; s < filterStages; ++s) {
+                float hpL = (inL - (g + k) * s1L[s] - s2L[s]) * a1;
+                float bpL = g * hpL + s1L[s];
+                s1L[s] = g * hpL + bpL;
+                float lpL = g * bpL + s2L[s];
+                s2L[s] = g * bpL + lpL;
 
-                    float hpR = (inR - (g + k) * s1R[s] - s2R[s]) * a1;
-                    float bpR = g * hpR + s1R[s];
-                    s1R[s] = g * hpR + bpR;
-                    float lpR = g * bpR + s2R[s];
-                    s2R[s] = g * bpR + lpR;
+                float hpR = (inR - (g + k) * s1R[s] - s2R[s]) * a1;
+                float bpR = g * hpR + s1R[s];
+                s1R[s] = g * hpR + bpR;
+                float lpR = g * bpR + s2R[s];
+                s2R[s] = g * bpR + lpR;
 
-                    if (svfMode == 0)      { inL = lpL; inR = lpR; }
-                    else if (svfMode == 1) { inL = bpL; inR = bpR; }
-                    else if (svfMode == 2) { inL = hpL; inR = hpR; }
-                    else                   { inL = hpL + lpL; inR = hpR + lpR; }
-                }
-            } else if (type == 5) {
-                // Comb Filter
-                float delayLen = std::clamp(sampleRate / std::clamp(cutoff, 20.0f, 15000.0f), 2.0f, static_cast<float>(maxDelaySamples - 2));
-                float readPos = static_cast<float>(combWriteIdx) - delayLen;
-                if (readPos < 0.0f) readPos += maxDelaySamples;
-
-                int iPos = static_cast<int>(readPos);
-                float frac = readPos - iPos;
-                int iNext = (iPos + 1) % maxDelaySamples;
-
-                float delayedL = combBufferL[iPos] * (1.0f - frac) + combBufferL[iNext] * frac;
-                float delayedR = combBufferR[iPos] * (1.0f - frac) + combBufferR[iNext] * frac;
-
-                combDampL += combDampCoeff * (delayedL - combDampL);
-                combDampR += combDampCoeff * (delayedR - combDampR);
-
-                combBufferL[combWriteIdx] = inL + combDampL * combFb;
-                combBufferR[combWriteIdx] = inR + combDampR * combFb;
-                combWriteIdx = (combWriteIdx + 1) % maxDelaySamples;
-
-                inL = inL + delayedL;
-                inR = inR + delayedR;
-            } else {
-                // Disperser (APF cascade)
-                if (apfStages > 0) {
-                    float tanVal = std::tan(PI * cutoff * invSr);
-                    float a = (tanVal - 1.0f) / (tanVal + 1.0f);
-                    a = std::clamp(a + disperserRes * 0.15f, -0.99f, 0.99f);
-
-                    for (int st = 0; st < apfStages && st < 32; ++st) {
-                        float yL = a * inL + apfStateL[st];
-                        apfStateL[st] = inL - a * yL;
-                        inL = yL;
-
-                        float yR = a * inR + apfStateR[st];
-                        apfStateR[st] = inR - a * yR;
-                        inR = yR;
-                    }
-                }
+                if (svfMode == 0)      { inL = lpL; inR = lpR; }
+                else if (svfMode == 1) { inL = bpL; inR = bpR; }
+                else if (svfMode == 2) { inL = hpL; inR = hpR; }
+                else                   { inL = hpL + lpL; inR = hpR + lpR; }
             }
 
             if (left) left[i] = inL;
@@ -826,13 +761,139 @@ private:
 
     float s1L[8] = { 0.0f }, s2L[8] = { 0.0f };
     float s1R[8] = { 0.0f }, s2R[8] = { 0.0f };
+};
 
+// --- BLOCK: COMB FILTER (Type, Dampening, Cutoff, Resonance) ---
+class CombFilterBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        invSr = ctx.invSr;
+        sampleRate = ctx.sampleRate;
+        combBufferL.assign(maxDelaySamples, 0.0f);
+        combBufferR.assign(maxDelaySamples, 0.0f);
+        combWriteIdx = 0;
+        combDampL = combDampR = 0.0f;
+    }
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+        // 1. Type: 0=Off (def), 1=On
+        bool enabled = (params[0] >= 0.5f);
+        if (!enabled) return; // bypass
+
+        // 2. Dampening: 0.1 Hz to 20 kHz (def 20 kHz)
+        float dampHz = 0.1f * std::pow(20000.0f / 0.1f, params[1]);
+        float combDampCoeff = std::clamp(TWO_PI * dampHz * invSr, 0.0001f, 0.999f);
+
+        // 3. Cutoff: 0.1 Hz to 20 kHz (def 20 kHz)
+        float cutoff = 0.1f * std::pow(20000.0f / 0.1f, params[2]);
+        cutoff = std::clamp(cutoff, 20.0f, sampleRate * 0.48f);
+
+        // 4. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
+        float rawRes = params[3];
+        float combFb = (rawRes - 0.5f) * 2.0f * 0.98f;
+
+        float delayLen = std::clamp(sampleRate / cutoff, 2.0f, static_cast<float>(maxDelaySamples - 2));
+
+        for (int i = 0; i < numSamples; ++i) {
+            float inL = left ? left[i] : 0.0f;
+            float inR = right ? right[i] : inL;
+
+            float readPos = static_cast<float>(combWriteIdx) - delayLen;
+            if (readPos < 0.0f) readPos += maxDelaySamples;
+
+            int iPos = static_cast<int>(readPos);
+            float frac = readPos - iPos;
+            int iNext = (iPos + 1) % maxDelaySamples;
+
+            float delayedL = combBufferL[iPos] * (1.0f - frac) + combBufferL[iNext] * frac;
+            float delayedR = combBufferR[iPos] * (1.0f - frac) + combBufferR[iNext] * frac;
+
+            combDampL += combDampCoeff * (delayedL - combDampL);
+            combDampR += combDampCoeff * (delayedR - combDampR);
+
+            combBufferL[combWriteIdx] = inL + combDampL * combFb;
+            combBufferR[combWriteIdx] = inR + combDampR * combFb;
+            combWriteIdx = (combWriteIdx + 1) % maxDelaySamples;
+
+            inL = inL + delayedL;
+            inR = inR + delayedR;
+
+            if (left) left[i] = inL;
+            if (right) right[i] = inR;
+        }
+    }
+
+private:
+    float invSr = 1.0f / 44100.0f;
+    float sampleRate = 44100.0f;
     static constexpr int maxDelaySamples = 4096;
     std::vector<float> combBufferL;
     std::vector<float> combBufferR;
     int combWriteIdx = 0;
     float combDampL = 0.0f, combDampR = 0.0f;
+};
 
+// --- BLOCK: DISPERSER (Type, Amount, Cutoff, Resonance) ---
+class DisperserBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        invSr = ctx.invSr;
+        sampleRate = ctx.sampleRate;
+        apfStateL.assign(32, 0.0f);
+        apfStateR.assign(32, 0.0f);
+    }
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+        // 1. Type: 0=Off (def), 1=On
+        bool enabled = (params[0] >= 0.5f);
+        if (!enabled) return; // bypass
+
+        // 2. Amount: 0 to 32 APFs (def 4 = 4.0 / 32.0)
+        int apfStages = std::clamp(static_cast<int>(std::round(params[1] * 32.0f)), 0, 32);
+        if (apfStages == 0) return;
+
+        // 3. Cutoff: 0.1 Hz to 20 kHz (def 20 kHz)
+        float cutoff = 0.1f * std::pow(20000.0f / 0.1f, params[2]);
+        cutoff = std::clamp(cutoff, 0.1f, sampleRate * 0.48f);
+
+        // 4. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
+        float rawRes = params[3];
+        float disperserRes = (rawRes - 0.5f) * 2.0f;
+
+        float tanVal = std::tan(PI * cutoff * invSr);
+        float a = (tanVal - 1.0f) / (tanVal + 1.0f);
+        a = std::clamp(a + disperserRes * 0.15f, -0.99f, 0.99f);
+
+        for (int i = 0; i < numSamples; ++i) {
+            float inL = left ? left[i] : 0.0f;
+            float inR = right ? right[i] : inL;
+
+            for (int st = 0; st < apfStages && st < 32; ++st) {
+                float yL = a * inL + apfStateL[st];
+                apfStateL[st] = inL - a * yL;
+                inL = yL;
+
+                float yR = a * inR + apfStateR[st];
+                apfStateR[st] = inR - a * yR;
+                inR = yR;
+            }
+
+            if (left) left[i] = inL;
+            if (right) right[i] = inR;
+        }
+    }
+
+private:
+    float invSr = 1.0f / 44100.0f;
+    float sampleRate = 44100.0f;
     std::vector<float> apfStateL;
     std::vector<float> apfStateR;
 };
@@ -1326,16 +1387,18 @@ public:
         BLK_RINGMOD,
         BLK_FREQSHIFT,
         BLK_GRIT,
+        BLK_COMB,
+        BLK_DISPERSER,
         BLK_AMP,
         BLK_AMPENV,
-        NUM_BLOCKS = 13
+        NUM_BLOCKS = 15
     };
 
     void init(float sampleRate) {
         ctx.sampleRate = sampleRate;
         ctx.invSr = 1.0f / sampleRate;
 
-        // Instantiate all 13 blocks
+        // Instantiate all 15 blocks
         allBlocks.resize(NUM_BLOCKS);
         allBlocks[BLK_CARRIER]   = std::make_unique<CarrierBlock>();
         allBlocks[BLK_MODULATOR] = std::make_unique<ModulatorBlock>();
@@ -1348,6 +1411,8 @@ public:
         allBlocks[BLK_RINGMOD]   = std::make_unique<RingModBlock>();
         allBlocks[BLK_FREQSHIFT] = std::make_unique<FrequencyShifterBlock>();
         allBlocks[BLK_GRIT]      = std::make_unique<GritBlock>();
+        allBlocks[BLK_COMB]      = std::make_unique<CombFilterBlock>();
+        allBlocks[BLK_DISPERSER] = std::make_unique<DisperserBlock>();
         allBlocks[BLK_AMP]       = std::make_unique<AmpBlock>();
         allBlocks[BLK_AMPENV]    = std::make_unique<AmpEnvelopeBlock>();
 
@@ -1428,13 +1493,25 @@ public:
         setPageParameter(BLK_GRIT, 2, 0.0f);
         setPageParameter(BLK_GRIT, 3, 0.0f);
 
-        // 12. Amp: Center Pan (0.5), 100% Level (0.5), 0 dB Drive (0.5), Limiter On (1.0)
+        // 12. Comb Filter: Off (0.0), Dampening 20 kHz (1.0), Cutoff 20 kHz (1.0), Resonance 0% (0.5)
+        setPageParameter(BLK_COMB, 0, 0.0f);
+        setPageParameter(BLK_COMB, 1, 1.0f);
+        setPageParameter(BLK_COMB, 2, 1.0f);
+        setPageParameter(BLK_COMB, 3, 0.5f);
+
+        // 13. Disperser: Off (0.0), Amount 4 APFs (4.0f / 32.0f), Cutoff 20 kHz (1.0), Resonance 0% (0.5)
+        setPageParameter(BLK_DISPERSER, 0, 0.0f);
+        setPageParameter(BLK_DISPERSER, 1, 4.0f / 32.0f);
+        setPageParameter(BLK_DISPERSER, 2, 1.0f);
+        setPageParameter(BLK_DISPERSER, 3, 0.5f);
+
+        // 14. Amp: Center Pan (0.5), 100% Level (0.5), 0 dB Drive (0.5), Limiter On (1.0)
         setPageParameter(BLK_AMP, 0, 0.5f);
         setPageParameter(BLK_AMP, 1, 0.5f);
         setPageParameter(BLK_AMP, 2, 0.5f);
         setPageParameter(BLK_AMP, 3, 1.0f);
 
-        // 13. Amp Envelope: 0 Claps (0.0), 3 ms Speed (0.1429), Exponential (0.0), 333 ms Decay (0.3806)
+        // 15. Amp Envelope: 0 Claps (0.0), 3 ms Speed (0.1429), Exponential (0.0), 333 ms Decay (0.3806)
         setPageParameter(BLK_AMPENV, 0, 0.0f);
         setPageParameter(BLK_AMPENV, 1, 0.1429f);
         setPageParameter(BLK_AMPENV, 2, 0.0f);
@@ -1583,7 +1660,15 @@ public:
         allBlocks[BLK_GRIT]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_GRIT].pushBlock(left, numSamples);
 
-        // 13. Amp (with Amp Envelope, Pan, Master Level, Master Drive, Limiter)
+        // 13. Comb Filter
+        allBlocks[BLK_COMB]->processStereo(left, right, numSamples, ctx);
+        scopes[BLK_COMB].pushBlock(left, numSamples);
+
+        // 14. Disperser
+        allBlocks[BLK_DISPERSER]->processStereo(left, right, numSamples, ctx);
+        scopes[BLK_DISPERSER].pushBlock(left, numSamples);
+
+        // 15. Amp (with Amp Envelope, Pan, Master Level, Master Drive, Limiter)
         allBlocks[BLK_AMP]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_AMP].pushBlock(left, numSamples);
     }

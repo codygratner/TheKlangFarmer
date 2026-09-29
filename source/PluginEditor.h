@@ -197,14 +197,28 @@ private:
     RotaryKnobSlider gritLowBoostSlider;
     RotaryKnobSlider gritHighBoostSlider;
 
-    // Block 12: Amp
+    // Block 12: Comb Filter
+    juce::ComboBox combTypeBox;
+    LedSelectorComponent combTypeSelector;
+    RotaryKnobSlider combDampeningSlider;
+    RotaryKnobSlider combCutoffSlider;
+    RotaryKnobSlider combResonanceSlider;
+
+    // Block 13: Disperser
+    juce::ComboBox disperserTypeBox;
+    LedSelectorComponent disperserTypeSelector;
+    RotaryKnobSlider disperserAmountSlider;
+    RotaryKnobSlider disperserCutoffSlider;
+    RotaryKnobSlider disperserResonanceSlider;
+
+    // Block 14: Amp
     RotaryKnobSlider ampPanSlider;
     RotaryKnobSlider ampLevelSlider;
     RotaryKnobSlider ampDriveSlider;
     juce::ComboBox ampLimiterBox;
     LedSelectorComponent ampLimiterSelector;
 
-    // Block 13: Amp Envelope
+    // Block 15: Amp Envelope
     RotaryKnobSlider ampEnvClapsSlider;
     RotaryKnobSlider ampEnvClapSpeedSlider;
     RotaryKnobSlider ampEnvSlopeSlider;
@@ -226,6 +240,8 @@ private:
     int lastDriveType = -1;
     int lastMixerLimiter = -1;
     int lastFilterType = -1;
+    int lastCombType = -1;
+    int lastDisperserType = -1;
     int lastAmpLimiter = -1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(BiaEr1AudioProcessorEditor)

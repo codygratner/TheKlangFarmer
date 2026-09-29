@@ -110,13 +110,25 @@ private:
     juce::AudioParameterFloat*  gritLowBoostParam    = nullptr;
     juce::AudioParameterFloat*  gritHighBoostParam   = nullptr;
 
-    // 12. Amp
+    // 12. Comb Filter
+    juce::AudioParameterChoice* combTypeParam        = nullptr;
+    juce::AudioParameterFloat*  combDampeningParam   = nullptr;
+    juce::AudioParameterFloat*  combCutoffParam      = nullptr;
+    juce::AudioParameterFloat*  combResonanceParam   = nullptr;
+
+    // 13. Disperser
+    juce::AudioParameterChoice* disperserTypeParam   = nullptr;
+    juce::AudioParameterFloat*  disperserAmountParam = nullptr;
+    juce::AudioParameterFloat*  disperserCutoffParam = nullptr;
+    juce::AudioParameterFloat*  disperserResonanceParam = nullptr;
+
+    // 14. Amp
     juce::AudioParameterFloat*  ampPanParam          = nullptr;
     juce::AudioParameterFloat*  ampLevelParam        = nullptr;
     juce::AudioParameterFloat*  ampDriveParam        = nullptr;
     juce::AudioParameterChoice* ampLimiterParam      = nullptr;
 
-    // 13. Amp Envelope
+    // 15. Amp Envelope
     juce::AudioParameterFloat*  ampEnvClapsParam     = nullptr;
     juce::AudioParameterFloat*  ampEnvClapSpeedParam = nullptr;
     juce::AudioParameterFloat*  ampEnvSlopeParam     = nullptr;
