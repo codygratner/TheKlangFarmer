@@ -1598,8 +1598,12 @@ public:
 
         // Minimum output volume at lowest velocity: (1.0 - velVolume), up to 1.0 at max velocity
         ctx.velVolumeGain = 1.0f - (1.0f - curvedVel) * velVolume;
-        ctx.velDecayMod   = (curvedVel - 1.0f) * velDecay;
-        ctx.velDepthMod   = (curvedVel - 1.0f) * velDepth;
+
+        // Bipolar velocity factor: -1.0 at min velocity, 0.0 at mid, +1.0 at max velocity
+        // For higher velocities: positive values increase controls, negative values decrease controls
+        float velModFactor = curvedVel * 2.0f - 1.0f;
+        ctx.velDecayMod   = velModFactor * velDecay;
+        ctx.velDepthMod   = velModFactor * velDepth;
 
         for (auto& b : allBlocks) b->trigger(velocity);
     }
@@ -1621,6 +1625,8 @@ public:
         }
         return 0.0f;
     }
+
+    const BlockContext& getContext() const { return ctx; }
 
     void getScopeData(int blockIndex, float* dest, int count) const {
         if (blockIndex < 0 || blockIndex >= NUM_BLOCKS || !dest || count <= 0) return;

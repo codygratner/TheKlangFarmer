@@ -278,7 +278,44 @@ int main() {
             return 1;
         }
 
-        std::cout << "PASS: Velocity modulation (volume, decay, depth, curves) verified." << std::endl;
+        // Test Decay and Depth polarity for higher vs lower velocities
+        // 1. Positive velDecay/velDepth (+100%, knob = 1.0f) at high velocity (1.0f) -> MUST INCREASE (> 0)
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, 1.0f); // +100%
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, 1.0f); // +100%
+        velEngine.trigger(1.0f);
+        if (velEngine.getContext().velDecayMod <= 0.0f || velEngine.getContext().velDepthMod <= 0.0f) {
+            std::cerr << "FAILED: Positive velDecay/velDepth did not increase controls at high velocity!" << std::endl;
+            return 1;
+        }
+
+        // 2. Negative velDecay/velDepth (-100%, knob = 0.0f) at high velocity (1.0f) -> MUST DECREASE (< 0)
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, 0.0f); // -100%
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, 0.0f); // -100%
+        velEngine.trigger(1.0f);
+        if (velEngine.getContext().velDecayMod >= 0.0f || velEngine.getContext().velDepthMod >= 0.0f) {
+            std::cerr << "FAILED: Negative velDecay/velDepth did not decrease controls at high velocity!" << std::endl;
+            return 1;
+        }
+
+        // 3. Positive velDecay/velDepth (+100%, knob = 1.0f) at low velocity (0.1f) -> MUST DECREASE (< 0)
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, 1.0f); // +100%
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, 1.0f); // +100%
+        velEngine.trigger(0.1f);
+        if (velEngine.getContext().velDecayMod >= 0.0f || velEngine.getContext().velDepthMod >= 0.0f) {
+            std::cerr << "FAILED: Positive velDecay/velDepth did not decrease controls at low velocity!" << std::endl;
+            return 1;
+        }
+
+        // 4. Negative velDecay/velDepth (-100%, knob = 0.0f) at low velocity (0.1f) -> MUST INCREASE (> 0)
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, 0.0f); // -100%
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, 0.0f); // -100%
+        velEngine.trigger(0.1f);
+        if (velEngine.getContext().velDecayMod <= 0.0f || velEngine.getContext().velDepthMod <= 0.0f) {
+            std::cerr << "FAILED: Negative velDecay/velDepth did not increase controls at low velocity!" << std::endl;
+            return 1;
+        }
+
+        std::cout << "PASS: Velocity modulation (volume, decay, depth polarity, curves) verified." << std::endl;
     }
 
     std::cout << "\n>>> ALL 16-BLOCK DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
