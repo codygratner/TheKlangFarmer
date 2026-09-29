@@ -846,9 +846,13 @@ public:
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
         sampleRate = ctx.sampleRate;
-        apfStateL.assign(32, 0.0f);
-        apfStateR.assign(32, 0.0f);
+        for (int i = 0; i < 32; ++i) {
+            apfS1L[i] = apfS2L[i] = 0.0f;
+            apfS1R[i] = apfS2R[i] = 0.0f;
+        }
     }
+
+    void trigger(float) override {}
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
@@ -865,28 +869,56 @@ public:
 
         // 3. Cutoff: 0.1 Hz to 20 kHz (def 20 kHz)
         float cutoff = 0.1f * std::pow(20000.0f / 0.1f, params[2]);
-        cutoff = std::clamp(cutoff, 0.1f, sampleRate * 0.48f);
+        cutoff = std::clamp(cutoff, 10.0f, sampleRate * 0.485f);
 
         // 4. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
-        float rawRes = params[3];
-        float disperserRes = (rawRes - 0.5f) * 2.0f;
+        // High resonance (Q) creates a steep 2nd-order phase transition and dramatic group delay
+        // (the classic laser zap / chirp / smearing of Kilohearts Disperser)
+        float disperserRes = (params[3] - 0.5f) * 2.0f;
+        float Q = 0.7071f;
+        if (disperserRes >= 0.0f) {
+            Q = 0.7071f * std::pow(35.0f, disperserRes);
+        } else {
+            Q = 0.7071f * std::pow(0.25f, -disperserRes);
+        }
+        Q = std::clamp(Q, 0.1f, 30.0f);
 
-        float tanVal = std::tan(PI * cutoff * invSr);
-        float a = (tanVal - 1.0f) / (tanVal + 1.0f);
-        a = std::clamp(a + disperserRes * 0.15f, -0.99f, 0.99f);
+        // 2nd-order allpass biquad coefficients (RBJ Cookbook normalized)
+        float w0 = TWO_PI * cutoff * invSr;
+        w0 = std::clamp(w0, 0.001f, 3.10f);
+        float cosw0 = std::cos(w0);
+        float sinw0 = std::sin(w0);
+        float alpha = std::clamp(sinw0 / (2.0f * Q), 1e-6f, 10.0f);
+
+        float a0 = 1.0f + alpha;
+        float b0 = (1.0f - alpha) / a0;
+        float b1 = (-2.0f * cosw0) / a0;
+        float b2 = 1.0f;
+        float a1 = b1;
+        float a2 = b0;
 
         for (int i = 0; i < numSamples; ++i) {
             float inL = left ? left[i] : 0.0f;
             float inR = right ? right[i] : inL;
 
-            for (int st = 0; st < apfStages && st < 32; ++st) {
-                float yL = a * inL + apfStateL[st];
-                apfStateL[st] = inL - a * yL;
+            for (int st = 0; st < apfStages; ++st) {
+                // Left channel Direct Form II Transposed
+                float yL = b0 * inL + apfS1L[st];
+                apfS1L[st] = b1 * inL - a1 * yL + apfS2L[st];
+                apfS2L[st] = b2 * inL - a2 * yL;
                 inL = yL;
 
-                float yR = a * inR + apfStateR[st];
-                apfStateR[st] = inR - a * yR;
+                // Right channel Direct Form II Transposed
+                float yR = b0 * inR + apfS1R[st];
+                apfS1R[st] = b1 * inR - a1 * yR + apfS2R[st];
+                apfS2R[st] = b2 * inR - a2 * yR;
                 inR = yR;
+
+                // Flush denormals
+                if (std::abs(apfS1L[st]) < 1e-15f) apfS1L[st] = 0.0f;
+                if (std::abs(apfS2L[st]) < 1e-15f) apfS2L[st] = 0.0f;
+                if (std::abs(apfS1R[st]) < 1e-15f) apfS1R[st] = 0.0f;
+                if (std::abs(apfS2R[st]) < 1e-15f) apfS2R[st] = 0.0f;
             }
 
             if (left) left[i] = inL;
@@ -897,8 +929,10 @@ public:
 private:
     float invSr = 1.0f / 44100.0f;
     float sampleRate = 44100.0f;
-    std::vector<float> apfStateL;
-    std::vector<float> apfStateR;
+    float apfS1L[32] = { 0.0f };
+    float apfS2L[32] = { 0.0f };
+    float apfS1R[32] = { 0.0f };
+    float apfS2R[32] = { 0.0f };
 };
 
 // --- BLOCK 8: FILTER ENVELOPE (Slope, Depth, Decay, Pre-Drive) ---

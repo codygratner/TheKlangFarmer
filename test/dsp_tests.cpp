@@ -97,7 +97,43 @@ int main() {
             }
         }
     }
-    std::cout << "PASS: APF Disperser test." << std::endl;
+    // Verify 2nd-order Disperser phase smearing and allpass energy preservation
+    {
+        TbdAudio::DisperserBlock disp;
+        TbdAudio::BlockContext ctx;
+        ctx.sampleRate = 44100.0f;
+        ctx.invSr = 1.0f / 44100.0f;
+        disp.init(ctx);
+        disp.setParam(0, 1.0f);          // On
+        disp.setParam(1, 16.0f / 32.0f); // 16 stages
+        disp.setParam(2, 0.65f);         // ~600 Hz cutoff
+        disp.setParam(3, 0.85f);         // High resonance (Q ~ 14.5)
+
+        constexpr int impLen = 512;
+        std::vector<float> impBuf(impLen, 0.0f);
+        impBuf[0] = 1.0f; // Single impulse
+        disp.processStereo(impBuf.data(), nullptr, impLen, ctx);
+
+        float energy = 0.0f;
+        int nonZeroSamples = 0;
+        for (float s : impBuf) {
+            energy += s * s;
+            if (std::abs(s) > 0.005f) nonZeroSamples++;
+        }
+
+        // Energy should be strictly conserved within ~5% for allpass
+        if (std::abs(energy - 1.0f) > 0.05f) {
+            std::cerr << "FAILED: Disperser is not preserving allpass energy! Energy = " << energy << std::endl;
+            return 1;
+        }
+
+        // 16 cascaded 2nd-order APF stages must smear the single-sample impulse over dozens of samples
+        if (nonZeroSamples < 20) {
+            std::cerr << "FAILED: Disperser did not smear impulse! Nonzero samples: " << nonZeroSamples << std::endl;
+            return 1;
+        }
+    }
+    std::cout << "PASS: 2nd-order APF Disperser smearing, zapping, and energy conservation verified." << std::endl;
 
     // 4. Test Pitch Envelope Modulation
     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 0, 1.0f); // Both
