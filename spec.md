@@ -2,24 +2,49 @@
 
 ## 1. Architectural & Implementation Highlights
 
-"The Klang Farmer" is a 22-module dual-FM synthesizer drum voice engineered in modern C++20 / JUCE 8. It replicates the tactile immediacy of a boutique modular hardware drum rack within a single 3-row by 8-column Eurorack-style chassis (1840 × 760 px).
+"The Klang Farmer" is a 22-module dual-FM synthesizer drum voice engineered in modern C++20 and JUCE 8. It replicates the tactile immediacy of a boutique modular hardware drum rack within a compact, ergonomically structured 2-row by 4-column Eurorack-style chassis (1040 × 740 px).
 
-### Built Engine & System Capabilities
-- **Dual FM Voice Architecture**: Two fully featured carrier/modulator pairs (`Carrier 1` & `Modulator 1`, `Carrier 2` & `Modulator 2`) with dynamic frequency modulation depth ($\pm 200\%$) and cross-voice ring modulation.
+### System & Engine Capabilities
+- **2x4 Paged Rack Architecture**:
+  - The rack presents 8 modular slots in a 2-row by 4-column layout (Slots 1–4 on the top row, Slots 5–8 on the bottom row).
+  - **Slot 1 (Top Left)**: Fixed **Navigation Module** providing immediate single-click access across 7 dedicated functional pages:
+    1. `Voice 1`
+    2. `Voice 2`
+    3. `Transients`
+    4. `Pre-Amp FX`
+    5. `Amplifier`
+    6. `Post-Amp FX`
+    7. `Modulations`
+  - **Slot 8 (Bottom Right)**: Fixed **Visualization Module** dynamically presenting tabbed real-time oscilloscopes and frequency-response plots for the active page's modules.
+  - **Slots 2–7**: Dynamically populated with active module cards, multi-instance FX slots, and brushed-aluminum blank plates according to the selected page.
+- **Multi-Instance FX Slots (8 Independent FX Blocks)**:
+  - Both the **Pre-Amp FX** rack (Slots 1–4) and **Post-Amp FX** rack (Slots 1–4) allow **any effect to be instantiated into any slot without restriction**.
+  - A user can load up to 8 instances of the exact same effect (e.g., 8 cascaded Wavefolders) or any mix of the 9 available processors.
+  - Each slot maintains its own discrete parameter set (32 APVTS parameters: `pre_fx_1_p1`..`pre_fx_4_p4` and `post_fx_1_p1`..`post_fx_4_p4`), parameter smoothing, DSP instance, and dedicated visualizer buffer.
+- **Dual FM Voice Architecture with Per-Voice Filtering**:
+  - Two fully featured carrier/modulator pairs (`Carrier 1` & `Modulator 1`, `Carrier 2` & `Modulator 2`).
+  - Carrier modulation depths are bipolar controls (**-100% to +100%**, default 0% center) driven directly by their respective modulators.
+  - Each voice features its own dedicated multimode filter and filter envelope (`Filter 1` + `Filter Env 1`, `Filter 2` + `Filter Env 2`) prior to entering the mixer.
+  - Cross-voice ring modulation (`Carrier 1 × Carrier 2`) is routed into the mixer as an independent, blendable source.
+- **Transient Generation**:
+  - Dedicated `Noise Transient` generator routed through its own dedicated filter and envelope (`Filter 3` + `Filter Env 3`) before entering the mixer.
+- **Dedicated Pre-Amp & Post-Amp Limiters**:
+  - Independent brickwall lookahead/saturating limiters placed at the end of the Pre-Amp FX chain and the Post-Amp FX chain, featuring Enable, Input Gain, Threshold, and Release controls.
 - **Renoise & DAW Offline Bounce Stability**:
-  - Zero dynamic heap memory allocations (`malloc`/`new`) on the audio rendering thread.
-  - Multi-clap burst buffers, envelope signal arrays, and internal voice sub-buffers are pre-allocated with sample-accurate rendering.
-  - Guaranteed stability with arbitrary and varying buffer sizes (from 64 up to 2048+ samples) during offline audio rendering.
+  - Strictly **zero dynamic heap memory allocations** (`malloc`/`new`) on the real-time audio thread.
+  - Multi-clap burst buffers, envelope signal arrays, visualizer ring buffers, and internal voice sub-buffers are pre-allocated with sample-accurate rendering.
+  - Rock-solid stability guaranteed across arbitrary, varying buffer sizes (from 64 up to 2048+ samples) during offline audio rendering.
 - **Advanced Real-Time Visualizations**:
-  - **Self-Locked Oscilloscopes**: Modulators and Carriers dynamically phase-lock to their own internal fundamental frequency and rising zero-crossings, preventing visual drift or "wibbly wobbly" phase jitter even during detuning, audio-rate FM, or variable pitch envelopes.
-  - **X-Y Frequency vs. Gain Response Plots**: Dedicated real-time magnitude response graphs for both the **Filter** and **Bell EQ** blocks. Plotted on a logarithmic frequency axis ($20\,\text{Hz} - 24\,\text{kHz}$) with grid reference marks ($100\,\text{Hz}$, $1\,\text{kHz}$, $10\,\text{kHz}$), a $0\,\text{dB}$ center line, area fill, glowing response trace, and active frequency cutoff/peak marker dots.
+  - **Self-Locked Oscilloscopes**: Modulators and Carriers dynamically phase-lock to their own internal fundamental frequencies and zero-crossings, preventing visual drift or phase jitter even during detuning, audio-rate FM, or variable pitch sweeps.
+  - **X-Y Frequency vs. Gain Response Plots**: Dedicated Bode magnitude response plots for all **Filter** and **Bell EQ** blocks. Rendered on a logarithmic frequency axis ($20\,\text{Hz} - 24\,\text{kHz}$) with grid reference marks ($100\,\text{Hz}$, $1\,\text{kHz}$, $10\,\text{kHz}$), $0\,\text{dB}$ center line, translucent area fill, glowing response curve, and interactive cutoff/peak marker handles.
   - **Dynamic Curve Graphs**: Velocity displays its live transfer curve; Slop displays its stepped random distribution.
-- **Hardware-Style Interaction & Tactile Feel**:
-  - Small rotary knobs with right-aligned text readouts across all continuous parameters.
+- **Tactile Feel & Large High-Contrast Typography**:
+  - High-contrast, bold typography optimized for legibility across all components (Card titles: 15pt bold; parameter labels: 13pt bold; knob value textboxes: 13.5pt bold; buttons & selectors: 13–13.5pt bold; header title: 17pt bold).
+  - Rotary knobs with right-aligned text readouts across all continuous parameters.
   - Inline diagrams rendered directly inside text boxes (waveform morphing crossfades, envelope decay curves, velocity response shapes, and filter slope steps).
   - Hovering pop-up numerical entry upon right-clicking any continuous control.
   - Mouse-wheel support across all knobs and diagram readouts.
-  - Double-click default return (including Mixer secondary sources snapping immediately to 100%).
+  - Double-click default return (Mixer secondary sources snap immediately to 100%).
   - Exponential tactile scaling on Slop and Velocity controls: the first 50% of knob travel controls the first 10% of modulation depth (and $\pm 25\%$ knob travel covers $\pm 5\%$).
   - Independent stepped random Slop offsets computed per trigger across 24 separate parameters.
 
@@ -28,22 +53,46 @@
 ## 2. Signal Routing Pipeline
 
 ```
-[Modulator 1] ──(FM Depth)──> [Carrier 1] ──┐
-                                             │
-[Modulator 2] ──(FM Depth)──> [Carrier 2] ──┼──> [Mixer] ──> [Drive] ──> [Filter] ──> [Wave Folder]
-                                             │       │
-[Carrier 1 x Carrier 2] ──────(RingMod)─────┼───────┤
-                                             │
-[Noise Transient] ───────────────────────────┘
-
-      ──> [RingMod FX] ──> [Frequency Shifter] ──> [Grit FX] ──> [Comb Filter]
-      ──> [Disperser] ──> [Bell EQ] ──> [Amp] ──> Stereo Audio Output
+[Voice 1]
+ Modulator 1 ──(FM Depth: -100%..+100%)──> Carrier 1 ──> Filter 1 (Modulated by Pitch Env 1 & Filter Env 1) ──┐
+                                                                                                               │
+[Voice 2]                                                                                                      │
+ Modulator 2 ──(FM Depth: -100%..+100%)──> Carrier 2 ──> Filter 2 (Modulated by Pitch Env 2 & Filter Env 2) ──┼──> [Mixer]
+                                                                                                               │       │
+[Cross RingMod]                                                                                                │       │
+ Carrier 1 x Carrier 2 ────────────────────────────────────────────────────────────────────────────────────────┼───────┤
+                                                                                                               │
+[Transients]                                                                                                   │
+ Noise Transient ──────────────────────────────────────> Filter 3 (Modulated by Filter Env 3) ─────────────────┘
+                                                                                                                       │
+                                                                                                                       ▼
+                                                                                                             [Pre-Amp FX Rack]
+                                                                                                              (Slots 1 to 4: Any FX)
+                                                                                                                       │
+                                                                                                                       ▼
+                                                                                                              [Pre-Amp Limiter]
+                                                                                                                       │
+                                                                                                                       ▼
+                                                                                                              [Amplifier Stage]
+                                                                                                              (Amp + Amp Envelope)
+                                                                                                                       │
+                                                                                                                       ▼
+                                                                                                             [Post-Amp FX Rack]
+                                                                                                              (Slots 1 to 4: Any FX)
+                                                                                                                       │
+                                                                                                                       ▼
+                                                                                                              [Post-Amp Limiter]
+                                                                                                                       │
+                                                                                                                       ▼
+                                                                                                              Stereo Audio Output
 ```
 
 ### Modulation Signals
 - **Pitch Envelope 1**: Modulates Carrier 1, Modulator 1, or Both.
 - **Pitch Envelope 2**: Modulates Carrier 2, Modulator 2, or Both.
-- **Filter Envelope**: Modulates Filter Cutoff frequency + Filter Post-Drive.
+- **Filter Envelope 1**: Modulates Filter 1 Cutoff frequency + Filter 1 Post-Drive.
+- **Filter Envelope 2**: Modulates Filter 2 Cutoff frequency + Filter 2 Post-Drive.
+- **Filter Envelope 3**: Modulates Filter 3 Cutoff frequency + Filter 3 Post-Drive.
 - **Amp Envelope**: Modulates Master Output Level (with multi-burst clap generator).
 - **Velocity**: Modulates volume attenuation, all envelope decays, and all envelope depths via selectable slope curves.
 - **Slop**: Injects independent stepped random offsets per trigger into 24 distinct engine parameters.
@@ -52,7 +101,7 @@
 
 ## 3. Shared & Standardized Parameter Definitions
 
-To keep module controls clean and consistent across the synth, the following standard parameter paradigms are shared across multiple blocks:
+To maintain consistency across all modules and effect cards, standard parameter behaviors are shared throughout the synthesizer:
 
 ### 3.1. Waveform Morphing
 *Used in: `Carrier 1`, `Modulator 1` (Oscillator mode), `Carrier 2`, `Modulator 2` (Oscillator mode), `RingMod FX`*
@@ -72,18 +121,18 @@ To keep module controls clean and consistent across the synth, the following sta
   - **51% to 100%**: High-Pass Filter ($20\,\text{Hz} - 24\,\text{kHz}$, gentle to steep slope).
 
 ### 3.3. Musical Envelope Decay Times
-*Used in: `Pitch Env 1`, `Pitch Env 2`, `Filter Env`, `Amp Env`*
-- Five-point piecewise logarithmic / exponential decay curve tailored for percussive punch and long sub sustain:
+*Used in: `Pitch Env 1`, `Pitch Env 2`, `Filter Env 1`, `Filter Env 2`, `Filter Env 3`, `Amp Env`*
+- Five-point piecewise logarithmic/exponential decay curve tailored for percussive punch and long sub sustain:
   - **0%**: $5\,\text{ms}$
   - **25%**: $100\,\text{ms}$
   - **50%**: $1.0\,\text{second}$
   - **75%**: $5.0\,\text{seconds}$
   - **100%**: $60.0\,\text{seconds}$
   - **Default**: $333\,\text{ms}$ ($0.3806$ normalized knob position).
-*(Note: Noise Transient uses a tighter percussive range: $1\,\text{ms}$ at 0%, $50\,\text{ms}$ at 25%, $1\,\text{s}$ at 50%, $60\,\text{s}$ at 100%, default $100\,\text{ms}$).*
+*(Note: Noise Transient uses a tighter percussive decay: $1\,\text{ms}$ at 0%, $50\,\text{ms}$ at 25%, $1\,\text{s}$ at 50%, $60\,\text{s}$ at 100%, default $100\,\text{ms}$).*
 
 ### 3.4. Envelope & Velocity Slope Curves
-*Used in: `Pitch Env 1`, `Pitch Env 2`, `Filter Env`, `Amp Env`, `Velocity`*
+*Used in: `Pitch Env 1`, `Pitch Env 2`, `Filter Env 1–3`, `Amp Env`, `Velocity`*
 - Continuously blends between response contours:
   - **0.0 (0%)**: Exponential (Default for snappy drum envelopes).
   - **0.5 (50%)**: Linear.
@@ -95,6 +144,7 @@ To keep module controls clean and consistent across the synth, the following sta
 - **Wide Modular / LFO Spectrum**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (logarithmic scale, used in Modulators, Filter Cutoff, Comb Filter, Disperser, RingMod).
 
 ### 3.6. Bipolar Modulations & Gains
+- **Carrier Modulation Depth**: $-100\%$ to $0\%$ to $+100\%$ (bipolar, $0\% = 0.5$ default).
 - **EQ & Shelf Gains**: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, $0\,\text{dB} = 0.5$ default).
 - **Drive / Saturation**: $-6\,\text{dB}$ to $+24\,\text{dB}$ ($0\,\text{dB} = 0.2$ default).
 - **Stereo Width**: $-100\%$ (inverted phase/swap) to $0\%$ (center mono) to $+100\%$ (extra wide).
@@ -106,244 +156,243 @@ To keep module controls clean and consistent across the synth, the following sta
 
 ---
 
-## 4. Hardware Rack Module Specifications (3 × 8 Layout)
+## 4. Hardware Rack Module Specifications (2 × 4 Paged Rack Layout)
 
-### Row 1: Voice Generation & Primary Mixing
+The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 5–8 on bottom).
 
-#### Module 1: Carrier 1
-- **Tracking (Selector)**: `Fixed Frequency` (0), `Fixed Pitch` (1), `MIDI Pitch` (2, default).
-- **Pitch / Freq (Continuous)**:
-  - Fixed Frequency: $20\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
-  - Fixed Pitch: MIDI note 0 to 127 (default `A1 [33]`, shows note name and number).
-  - MIDI Pitch: Note offset $-60$ to $+60$ semitones (default $0$).
-- **Shape (Continuous)**: Waveform Morph (Sine $\to$ Tri $\to$ Saw $\to$ Square $\to$ PWM).
-- **Depth (Continuous)**: FM Depth from Modulator 1: $-200\%$ to $+200\%$ (default $0\% = 0.5$).
-- **Display**: Self-locked oscilloscope triggered to Carrier 1 fundamental.
+```
+┌─────────────────┬─────────────────┬─────────────────┬─────────────────┐
+│     SLOT 1      │     SLOT 2      │     SLOT 3      │     SLOT 4      │
+│ Navigation Card │  Page Module 1  │  Page Module 2  │  Page Module 3  │
+├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
+│     SLOT 5      │     SLOT 6      │     SLOT 7      │     SLOT 8      │
+│  Page Module 4  │  Page Module 5  │  Page Module 6  │  Visualizations │
+└─────────────────┴─────────────────┴─────────────────┴─────────────────┘
+```
 
-#### Module 2: Modulator 1
-- **Pitch Tracking (Selector)**: `Fixed` (0), `Following` (1), `FM Operator` (2).
-- **Type (Selector)**: `Oscillator` (0), `Cyclic` (1, Sine $\times$ Noise), `Noise` (2, S&H).
-- **Shape (Continuous)**: Dynamic context-dependent control:
-  - Oscillator: Waveform Morph (Sine $\to$ PWM).
-  - Cyclic: White noise DJ-style filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
-  - Noise: Sample & Hold noise clock rate ($0.1\,\text{Hz} - 24\,\text{kHz}$, default $24\,\text{kHz}$).
-- **Speed (Continuous)**: Context-dependent frequency:
-  - Fixed: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
-  - Following: Pitch offset $-64$ to $+64$ semitones (default $0$).
-  - FM Operator: Ratio 1:32.0 to 1.0:1.0 to 32.0:1 (default 1.0:1.0).
-  - Cyclic Sine: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
-- **Display**: Self-locked oscilloscope phase-locked to Modulator 1's own internal frequency and zero crossings.
+### 4.1. Navigation Module (Slot 1 — Fixed Across All Pages)
+- **Grid of 7 Page Buttons**:
+  - `Voice 1`
+  - `Voice 2`
+  - `Transients`
+  - `Pre-Amp FX`
+  - `Amplifier`
+  - `Post-Amp FX`
+  - `Modulations`
+- Highlighted active LED indicator denoting current page.
 
-#### Module 3: Pitch Envelope 1
-- **Target (Selector)**: `Off` (0, default), `Carrier` (1), `Modulator` (2), `Both` (3).
-- **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
-- **Depth (Continuous)**: $-5$ to $+5$ octaves (default $0$).
-- **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
-- **Display**: Real-time decaying envelope oscilloscope trace.
-
-#### Module 4: Carrier 2
-- **Tracking (Selector)**: `Fixed Frequency` (0), `Fixed Pitch` (1), `MIDI Pitch` (2, default).
-- **Pitch / Freq (Continuous)**: Same range as Carrier 1.
-- **Shape (Continuous)**: Waveform Morph (Sine $\to$ PWM).
-- **Depth (Continuous)**: FM Depth from Modulator 2: $-200\%$ to $+200\%$ (default $0\% = 0.5$).
-- **Display**: Self-locked oscilloscope triggered to Carrier 2 fundamental.
-
-#### Module 5: Modulator 2
-- **Pitch Tracking (Selector)**: `Fixed` (0), `Following` (1), `FM Operator` (2).
-- **Type (Selector)**: `Oscillator` (0), `Cyclic` (1), `Noise` (2).
-- **Shape (Continuous)**: Waveform Morph / DJ Filter / S&H Clock Rate.
-- **Speed (Continuous)**: Frequency / Offset / FM Ratio.
-- **Display**: Self-locked oscilloscope phase-locked to Modulator 2's own internal frequency and zero crossings.
-
-#### Module 6: Pitch Envelope 2
-- **Target (Selector)**: `Off` (0, default), `Carrier` (1), `Modulator` (2), `Both` (3).
-- **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
-- **Depth (Continuous)**: $-5$ to $+5$ octaves (default $0$).
-- **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
-- **Display**: Real-time decaying envelope oscilloscope trace.
-
-#### Module 7: Noise Transient
-- **S&H Rate (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
-- **Filter (Continuous)**: DJ-style filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
-- **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
-- **Decay (Continuous)**: Percussive decay ($1\,\text{ms} - 60\,\text{s}$, default $100\,\text{ms}$).
-- **Display**: Noise burst oscilloscope trace.
-
-#### Module 8: Mixer
-- **Carrier 1 Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $100\%$).
-- **Carrier 2 Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
-- **RingMod Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
-- **Noise Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
-- **Display**: Mixed voice summing oscilloscope trace.
+### 4.2. Visualization Module (Slot 8 — Fixed Across All Pages)
+- Tabbed selector dynamically populated with the active modules on the current page.
+- **Oscilloscope Mode**: Real-time waveform rendering with self-locking on fundamental zero-crossings for modulators and carriers.
+- **X-Y Bode Magnitude Plot Mode**: Logarithmic frequency ($20\,\text{Hz} - 24\,\text{kHz}$) vs. gain ($\text{dB}$) magnitude plot for any Filter block or Bell EQ block, showing exact filter shapes, slopes, resonance peaks, and interactive cutoff/gain markers.
+- **Velocity Transfer Plot Mode**: Live graph of velocity response transfer curves.
+- **Slop Distribution Plot Mode**: Live visualization of stepped random parameter offsets.
 
 ---
 
-### Row 2: Tone Shaping & Color FX
+### 4.3. Page 1: Voice 1
+- **Slot 1**: Navigation Module.
+- **Slot 2: Carrier 1**
+  - **Tracking (Selector)**: `Fixed Frequency` (0), `Fixed Pitch` (1), `MIDI Pitch` (2, default).
+  - **Pitch / Freq (Continuous)**:
+    - Fixed Frequency: $20\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
+    - Fixed Pitch: MIDI note 0 to 127 (default `A1 [33]`, shows note name and number).
+    - MIDI Pitch: Note offset $-60$ to $+60$ semitones (default $0$).
+  - **Shape (Continuous)**: Waveform Morph (Sine $\to$ Tri $\to$ Saw $\to$ Square $\to$ PWM).
+  - **Mod Depth (Continuous)**: Modulation depth from Modulator 1: $-100\%$ to $+100\%$ (default $0\% = 0.5$).
+  - **Visualizer**: Self-locked oscilloscope phase-locked to Carrier 1 fundamental.
+- **Slot 3: Modulator 1**
+  - **Pitch Tracking (Selector)**: `Fixed` (0), `Following` (1), `FM Operator` (2).
+  - **Type (Selector)**: `Oscillator` (0), `Cyclic` (1, Sine $\times$ Noise), `Noise` (2, S&H).
+  - **Shape (Continuous)**: Waveform Morph / DJ Filter / S&H Clock Rate.
+  - **Speed (Continuous)**: Frequency ($0.1\,\text{Hz} - 24\,\text{kHz}$) / Offset ($-64$ to $+64$ st) / FM Ratio (1:32 to 32:1).
+  - **Visualizer**: Self-locked oscilloscope phase-locked to Modulator 1's own internal frequency and zero crossings.
+- **Slot 4: Pitch Envelope 1**
+  - **Target (Selector)**: `Off` (0, default), `Carrier` (1), `Modulator` (2), `Both` (3).
+  - **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
+  - **Depth (Continuous)**: $-5$ to $+5$ octaves (default $0$).
+  - **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
+- **Slot 5: Filter 1**
+  - **Type (Selector)**: `Off` (0, default), `LPF` (1), `BPF` (2), `HPF` (3), `BRF / Notch` (4).
+  - **Slope (Selector)**: `-6dB/oct` (0), `-12dB/oct` (1, default), `-18dB/oct` (2), `-24dB/oct` (3), `-36dB/oct` (4).
+  - **Cutoff (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+  - **Resonance (Continuous)**: $0\% - 100\%$ ($Q \approx 0.707 - 18.7$).
+  - **Visualizer**: X-Y Frequency vs. Gain Bode plot with cutoff marker.
+- **Slot 6: Filter Envelope 1**
+  - **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
+  - **Depth (Continuous)**: $-10$ to $+10$ octaves (default $0$ oct).
+  - **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
+  - **Post-Drive (Continuous)**: Filter post-saturation gain: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+- **Slot 7: Mixer**
+  - **Carrier 1 Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $100\%$).
+  - **Carrier 2 Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
+  - **RingMod Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
+  - **Noise Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
+- **Slot 8**: Visualization Module.
 
-#### Module 9: Drive
+---
+
+### 4.4. Page 2: Voice 2
+- **Slot 1**: Navigation Module.
+- **Slot 2: Carrier 2**
+  - Identical parameters and behavior to Carrier 1.
+- **Slot 3: Modulator 2**
+  - Identical parameters and behavior to Modulator 1.
+- **Slot 4: Pitch Envelope 2**
+  - Identical parameters and behavior to Pitch Envelope 1.
+- **Slot 5: Filter 2**
+  - Identical parameters and behavior to Filter 1 (dedicated to Voice 2).
+- **Slot 6: Filter Envelope 2**
+  - Identical parameters and behavior to Filter Envelope 1 (dedicated to Filter 2).
+- **Slot 7: Mixer** (Carrier 1, Carrier 2, RingMod, Noise levels).
+- **Slot 8**: Visualization Module.
+
+---
+
+### 4.5. Page 3: Transients
+- **Slot 1**: Navigation Module.
+- **Slot 2: Noise Transient**
+  - **S&H Rate (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+  - **Filter (Continuous)**: DJ-style filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
+  - **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+  - **Decay (Continuous)**: Percussive decay ($1\,\text{ms} - 60\,\text{s}$, default $100\,\text{ms}$).
+- **Slot 3 & 4**: Blank Rack Plates.
+- **Slot 5: Filter 3**
+  - Identical parameters and behavior to Filter 1 (dedicated to Noise Transient).
+- **Slot 6: Filter Envelope 3**
+  - Identical parameters and behavior to Filter Envelope 1 (dedicated to Filter 3).
+- **Slot 7: Mixer** (Carrier 1, Carrier 2, RingMod, Noise levels).
+- **Slot 8**: Visualization Module.
+
+---
+
+### 4.6. Page 4: Pre-Amp FX
+- **Slot 1**: Navigation Module.
+- **Slot 2: FX Picker**
+  - **4 Dropdown Selectors**: Independently assign an effect into Pre-Amp FX Slots 1, 2, 3, and 4.
+  - Multi-instance allowed: any effect can be chosen in any number of slots.
+- **Slots 3–6: Pre-Amp FX Slots 1 to 4**
+  - Dynamically configured to the selected effect (see Section 5: Effects Catalog).
+- **Slot 7: Pre-Amp Limiter**
+  - **Enable (Selector)**: `Off` (0), `On` (1, default).
+  - **Input Gain (Continuous)**: $-12\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+  - **Threshold (Continuous)**: $-24\,\text{dB}$ to $0\,\text{dB}$ (default $0\,\text{dB}$).
+  - **Release (Continuous)**: $1\,\text{ms}$ to $500\,\text{ms}$ (default $50\,\text{ms}$).
+- **Slot 8**: Visualization Module.
+
+---
+
+### 4.7. Page 5: Amplifier
+- **Slot 1**: Navigation Module.
+- **Slot 2: Amp**
+  - **Level (Continuous)**: Master level $0\% - 100\%$ (default $100\%$).
+  - **Pan (Continuous)**: Stereo pan 100% Left $\leftrightarrow$ Center $\leftrightarrow$ 100% Right (default Center).
+  - **Drive (Continuous)**: Output saturation $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+  - **Limiter (Selector)**: `Off` (0), `On` (1, default, post-drive safety limiter).
+- **Slot 3: Amp Envelope**
+  - **Claps (Continuous)**: Multi-burst clap triggers: 0 to 32 claps (default 0).
+  - **Clap Speed (Continuous)**: Decay time per clap: $1\,\text{ms} - 15\,\text{ms}$ (default $3\,\text{ms}$).
+  - **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
+  - **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
+- **Slots 4–6**: Blank Rack Plates.
+- **Slot 7: Post-Amp Limiter** (Master Limiter controls).
+- **Slot 8**: Visualization Module.
+
+---
+
+### 4.8. Page 6: Post-Amp FX
+- **Slot 1**: Navigation Module.
+- **Slot 2: FX Picker**
+  - **4 Dropdown Selectors**: Independently assign an effect into Post-Amp FX Slots 1, 2, 3, and 4.
+  - Multi-instance allowed: any effect can be chosen in any number of slots.
+- **Slots 3–6: Post-Amp FX Slots 1 to 4**
+  - Dynamically configured to the selected effect (see Section 5: Effects Catalog).
+- **Slot 7: Post-Amp Limiter**
+  - **Enable (Selector)**: `Off` (0), `On` (1, default).
+  - **Input Gain (Continuous)**: $-12\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+  - **Threshold (Continuous)**: $-24\,\text{dB}$ to $0\,\text{dB}$ (default $0\,\text{dB}$).
+  - **Release (Continuous)**: $1\,\text{ms}$ to $500\,\text{ms}$ (default $50\,\text{ms}$).
+- **Slot 8**: Visualization Module.
+
+---
+
+### 4.9. Page 7: Modulations
+- **Slot 1**: Navigation Module.
+- **Slot 2: Velocity**
+  - **Slope (Continuous)**: Velocity response curve: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
+  - **Decay (Continuous)**: Velocity-to-decay scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
+  - **Depth (Continuous)**: Velocity-to-envelope depth scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
+  - **Volume (Continuous)**: Velocity-to-output volume attenuation: $0\%$ (full volume) to $-100\%$ (min velocity is silent) (default $0\%$).
+- **Slot 3: Slop**
+  - Injects independent, stepped random values per trigger hit across 24 engine parameters.
+  - **Frequency (Continuous)**: $0\%$ to $\pm 100\%$ (controls pitch and filter frequencies).
+  - **Envelope Depths (Continuous)**: $0\%$ to $\pm 100\%$ (controls all envelope depths).
+  - **Envelope Decays (Continuous)**: $0\%$ to $\pm 100\%$ (controls all envelope decay times).
+  - **Pan (Continuous)**: $0\%$ to $\pm 100\%$ (controls output stereo panning).
+- **Slots 4–7**: Blank Rack Plates.
+- **Slot 8**: Visualization Module.
+
+---
+
+## 5. Effects Catalog (Selectable into any Pre-Amp or Post-Amp FX Slot)
+
+Any of the following 9 processors (or `None / Bypass`) can be assigned to any of the 8 FX slots simultaneously:
+
+### 1. Drive
 - **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
 - **Bias (Continuous)**: DC offset $-1.0$ to $+1.0$ (default $0.0$).
 - **Post-Filter (Continuous)**: DJ-style filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
-- **Limiter (Selector)**: `Off` (0), `On` (1, default, safety hard clipper after saturation).
-- **Display**: Saturated output oscilloscope trace.
+- **Limiter (Selector)**: `Off` (0), `On` (1, default).
 
-#### Module 10: Filter
+### 2. Filter (Standalone Effect)
 - **Type (Selector)**: `Off` (0, default), `LPF` (1), `BPF` (2), `HPF` (3), `BRF / Notch` (4).
 - **Slope (Selector)**: `-6dB/oct` (0), `-12dB/oct` (1, default), `-18dB/oct` (2), `-24dB/oct` (3), `-36dB/oct` (4).
 - **Cutoff (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Resonance (Continuous)**: $0\% - 100\%$ ($Q \approx 0.707 - 18.7$).
-- **Display**: **Real-Time X-Y Magnitude Response Plot**:
-  - Logarithmic frequency axis ($20\,\text{Hz} - 24\,\text{kHz}$) vs Gain (dB).
-  - Accurate multi-pole curves for all 5 filter types and 5 slope orders.
-  - Interactive Cutoff frequency marker line.
+- *Visualizer*: Real-time X-Y Frequency vs. Gain Bode magnitude plot.
 
-#### Module 11: Filter Envelope
-- **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
-- **Depth (Continuous)**: $-10$ to $+10$ octaves (default $0$ oct).
-- **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
-- **Post-Drive (Continuous)**: Filter post-saturation gain: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
-- **Display**: Real-time decaying filter envelope trace.
-
-#### Module 12: Wave Folder
+### 3. Wave Folder
 - **Type (Selector)**: `Off` (0, default), `On` (1).
 - **Fold (Continuous)**: 0 to 8 wavefolds (default 0).
 - **Bias (Continuous)**: DC offset $-1.0$ to $+1.0$ (default $0.0$).
 - **Post-Filter (Continuous)**: DJ-style filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
-- **Display**: Wavefolded output oscilloscope trace.
 
-#### Module 13: RingMod FX
-- **Waveform (Continuous)**: Waveform Morph (Sine $\to$ PWM).
+### 4. Stereo Chorus
+- **Rate (Continuous)**: $0.1\,\text{Hz} - 20.0\,\text{Hz}$ (default $1.0\,\text{Hz}$).
+- **Depth (Continuous)**: $0\% - 100\%$ (default $50\%$).
+- **Feedback (Continuous)**: $-100\% - +100\%$ (default $0\%$).
+- **Mix (Continuous)**: Dry/Wet $0\% - 100\%$ (default $50\%$).
+
+### 5. Ring Modulator
+- **Waveform (Continuous)**: Waveform Morph (Sine $\to$ Tri $\to$ Saw $\to$ Square $\to$ PWM).
 - **Rate (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
-- **Amount (Continuous)**: Dry/Wet $0\% - 100\%$ (default $0\%$).
+- **Mix (Continuous)**: Dry/Wet $0\% - 100\%$ (default $0\%$).
 - **Width (Continuous)**: Stereo phase width $-100\% - +100\%$ (default $0\%$).
-- **Display**: Ring-modulated audio oscilloscope trace.
 
-#### Module 14: Frequency Shifter
-- **Shift (Continuous)**: Bipolar shift $-X\,\text{Hz}$ to $0\,\text{Hz}$ to $+X\,\text{Hz}$ (default $0\,\text{Hz}$).
-- **Range (Continuous)**: Maximum shift range $0\,\text{Hz} - 5\,\text{kHz}$ (default $3\,\text{Hz}$).
-- **Blend (Continuous)**: $-100\%$ (wet negative sideband) $\to 0\%$ (dry) $\to +100\%$ (wet positive sideband).
-- **Width (Continuous)**: Stereo quadrature phase width $-100\% - +100\%$ (default $0\%$).
-- **Display**: Frequency-shifted audio oscilloscope trace.
-
-#### Module 15: Grit FX
-- **Bit Rate (Continuous)**: $1.0\,\text{bit} - 16.0\,\text{bit}$ (default $16.0\,\text{bit}$).
+### 6. BitCrusher (Grit FX)
+- **Bit Depth (Continuous)**: $1.0\,\text{bit} - 16.0\,\text{bit}$ (default $16.0\,\text{bit}$).
 - **Sample Rate (Continuous)**: $20\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Low (Continuous)**: Low shelf filter: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, default $0\,\text{dB}$).
 - **High (Continuous)**: High shelf filter: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, default $0\,\text{dB}$).
-- **Display**: Decimated lo-fi audio oscilloscope trace.
 
-#### Module 16: Comb Filter
+### 7. Comb Filter
 - **Type (Selector)**: `Off` (0, default), `On` (1).
 - **Dampening (Continuous)**: Internal feedback damping $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Cutoff (Continuous)**: Comb fundamental frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Resonance (Continuous)**: Feedback $-100\%$ to $+100\%$ (default $0\%$).
-- **Display**: Comb-filtered resonant oscilloscope trace.
 
----
-
-### Row 3: Spatial, Output & Master Modulation
-
-#### Module 17: Disperser
+### 8. Disperser
 - **Type (Selector)**: `Off` (0, default), `On` (1).
 - **Amount (Continuous)**: Cascaded 2nd-order all-pass filter stages: 0 to 32 stages (default 4).
 - **Cutoff (Continuous)**: APF center frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $220\,\text{Hz}$).
 - **Resonance (Continuous)**: APF Q factor $-100\%$ to $+100\%$ (default $0\%$).
-- **Display**: Phase-smeared / zapped audio oscilloscope trace.
 
-#### Module 18: Bell EQ
+### 9. Bell EQ
 - **Frequency (Continuous)**: $20\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Width (Continuous)**: $0.1 - 10$ octaves (default $0.1$ octaves).
 - **Gain (Continuous)**: $-24\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$, transparent passthrough).
 - **DJ Filter (Continuous)**: DJ-style tilt filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
-- **Display**: **Real-Time X-Y Magnitude Response Plot**:
-  - Logarithmic frequency axis ($20\,\text{Hz} - 24\,\text{kHz}$) vs Gain (dB).
-  - RBJ peaking/dipping bell curve combined with DJ filter tilt.
-  - Interactive Center Frequency / Gain handle marker dot.
+- *Visualizer*: Real-time X-Y Frequency vs. Gain Bode magnitude plot with peaking curve and DJ tilt.
 
-#### Module 19: Amp
-- **Level (Continuous)**: Master level $0\% - 100\%$ (default $100\%$).
-- **Pan (Continuous)**: Stereo pan 100% Left $\leftrightarrow$ Center $\leftrightarrow$ 100% Right (default Center).
-- **Drive (Continuous)**: Output saturation $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
-- **Limiter (Selector)**: `Off` (0), `On` (1, default, post-drive safety limiter).
-- **Display**: Master output stereo waveform oscilloscope trace.
-
-#### Module 20: Amp Envelope
-- **Claps (Continuous)**: Multi-burst clap triggers: 0 to 32 claps (default 0).
-- **Clap Speed (Continuous)**: Decay time per clap: $1\,\text{ms} - 15\,\text{ms}$ (default $3\,\text{ms}$).
-- **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
-- **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
-- **Display**: Multi-burst clap & main decay amplitude envelope trace.
-
-#### Module 21: Velocity
-- **Slope (Continuous)**: Velocity response curve: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
-- **Decay (Continuous)**: Velocity-to-decay scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
-- **Depth (Continuous)**: Velocity-to-envelope depth scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
-- **Volume (Continuous)**: Velocity-to-output volume attenuation: $0\%$ (full volume) to $-100\%$ (min velocity is silent) (default $0\%$).
-- **Display**: Dynamic velocity input-to-output transfer curve visualization.
-
-#### Module 22: Slop
-- Injects independent, stepped random values per trigger hit across 24 engine parameters.
-- **Frequency (Continuous)**: $0\%$ to $\pm 100\%$ (controls pitch and filter frequencies).
-- **Envelope Depths (Continuous)**: $0\%$ to $\pm 100\%$ (controls all envelope depths).
-- **Envelope Decays (Continuous)**: $0\%$ to $\pm 100\%$ (controls all envelope decay times).
-- **Pan (Continuous)**: $0\%$ to $\pm 100\%$ (controls output stereo panning).
-- **Display**: Stepped random distribution visualization.
-
-#### Slots 23 & 24: Blank Rack Plates
-- Brushed anodized dark faceplates with hardware rack corner screws, preserving modular rack aesthetics.
-
----
-
-## 4. New UI Layout
-
-The UI uses a 2x4 rack layout (Slots 1..4 on the top row, Slots 5..8 on the bottom row). Slot 1 will always be the navigation block. Slot 8 will always be the Visualizations for the preceding blocks.
-
-### 4.1. Navigation Block
-
-- Voice 1 (these will be in Slots 2 to 6 with Mixer in Slot 7)
-    - Carrier 1
-    - Modulator 1
-    - Pitch Envelope 1
-    - Filter 1
-    - Filter Envelope 1
-- Voice 2 (these will be in Slots 2 to 6 with Mixer in Slot 7)
-    - Carrier 2
-    - Modulator 2
-    - Pitch Envelope 2
-    - Filter 2
-    - Filter Envelope 2
-- Transients (these will be in Slots 2 to 6 with Mixer in Slot 7)
-    - Noise Transient
-    - Blank Rack Plate
-    - Blank Rack Plate
-    - Filter 3
-    - Filter Envelope 3
-- Pre-Amp FX (this will show the FX Picker in Slot 2)
-    - FX Picker
-        - 4 drop downs that have all the different effects listed and each dropdown selects an effect for Pre-Amp FX Block 1 to 4 in Slots 3 to 6
-    - Pre-Amp FX Block 1
-    - Pre-Amp FX Block 2
-    - Pre-Amp FX Block 3
-    - Pre-Amp FX Block 4
-    - Limiter
-- Amplifier (this will show the Mixer in Slot 7)
-    - Amp
-    - Amp Envelope
-    - Blank Rack Plate
-    - Blank Rack Plate
-    - Limiter
-- Post-Amp FX (this will show the FX Picker in Slot 2)
-    - FX Picker
-        - 4 drop downs that have all the different effects listed and each dropdown selects an effect for Post-Amp FX Block 1 to 4 in Slots 3 to 6
-    - Post-Amp FX Block 1
-    - Post-Amp FX Block 2
-    - Post-Amp FX Block 3
-    - Post-Amp FX Block 4
-    - Limiter
-- Modulations
-    - Velocity
-    - Slop
-    - Blank Rack Plate
-    - Blank Rack Plate
-    - Blank Rack Plate
-    - Blank Rack Plate
+### None / Bypass
+- Fully bypasses processing for that slot and renders a brushed-aluminum blank rack plate.
