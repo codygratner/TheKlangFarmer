@@ -3044,15 +3044,22 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
             break;
     }
 
-    for (int i = 0; i < 6; ++i) {
+    vizCard.setBounds(getSlotBounds(4));
+    vizCard.setVisible(true);
+
+    for (int i = 0; i < 3; ++i) {
         if (slotComponents[i]) {
             slotComponents[i]->setBounds(getSlotBounds(i + 1));
             slotComponents[i]->setVisible(true);
         }
     }
 
-    vizCard.setBounds(getSlotBounds(7));
-    vizCard.setVisible(true);
+    for (int i = 3; i < 6; ++i) {
+        if (slotComponents[i]) {
+            slotComponents[i]->setBounds(getSlotBounds(i + 2));
+            slotComponents[i]->setVisible(true);
+        }
+    }
 
     if (!vizCard.getIsLocked()) {
         switch (currentPage) {

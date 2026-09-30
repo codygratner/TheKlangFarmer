@@ -128,7 +128,7 @@ The 8-slot, 2x4 layout is organized as follows:
 | :---: | :---: | :---: | :---: |
 | **Navigation Module** *(Fixed)* | Active Page Card | Active Page Card | Active Page Card |
 | **Slot 5 (Bottom Left)** | **Slot 6** | **Slot 7** | **Slot 8 (Bottom Right)** |
-| Active Page Card | Active Page Card | Active Page Card | **Visualizer Module** *(Fixed)* |
+| **Visualizer Module** *(Fixed)* | Active Page Card | Active Page Card | Active Page Card |
 
 ### Navigation Pages
 1. **Voice 1**: Pitch Envelope 1, Modulator 1, Carrier 1, Filter 1, Filter Env 1

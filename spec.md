@@ -15,8 +15,8 @@
     5. `Amplifier`
     6. `Post-Amp FX`
     7. `Modulations`
-  - **Slot 8 (Bottom Right)**: Fixed **Visualization Module** dynamically presenting tabbed real-time oscilloscopes and frequency-response plots for the active page's modules.
-  - **Slots 2–7**: Dynamically populated with active module cards, multi-instance FX slots, and brushed-aluminum blank plates according to the selected page.
+  - **Slot 5 (Bottom Left)**: Fixed **Visualization Module** dynamically presenting real-time oscilloscopes, logarithmic Bode plots, transfer curves, and auto-tracking with padlock lock toggle.
+  - **Slots 2–4 & Slots 6–8**: Dynamically populated with active module cards, multi-instance FX slots, and brushed-aluminum blank plates according to the selected page.
 - **Multi-Instance FX Slots (8 Independent FX Blocks)**:
   - Both the **Pre-Amp FX** rack (Slots 1–4) and **Post-Amp FX** rack (Slots 1–4) allow **any effect to be instantiated into any slot without restriction**.
   - A user can load up to 8 instances of the exact same effect (e.g., 8 cascaded Wavefolders) or any mix of the 13 available processors.
