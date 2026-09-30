@@ -75,3 +75,14 @@ add_executable(dsp_tests
     source/ModularBlocks.h
 )
 target_include_directories(dsp_tests PRIVATE source)
+
+# 7. Screenshot snapshot generator
+add_executable(capture_screenshot
+    test/capture_screenshot.cpp
+)
+target_link_libraries(capture_screenshot PRIVATE
+    TheKlangFarmer
+    juce::juce_gui_basics
+    juce::juce_graphics
+)
+target_include_directories(capture_screenshot PRIVATE source)

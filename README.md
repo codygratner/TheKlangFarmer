@@ -14,7 +14,7 @@
 
 ---
 
-![The Klang Farmer GUI](screenshots/Screenshot%202026-09-30%20064704.png)
+![The Klang Farmer GUI](screenshots/TheKlangFarmer_GUI.png)
 
 ---
 
