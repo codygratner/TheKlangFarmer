@@ -62,17 +62,66 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     driveFilterParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("drive_filter"));
     driveLimiterParam    = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("drive_limiter"));
 
-    // 10. Filter
-    filterTypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter_type"));
-    filterSlopeParam     = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter_slope"));
-    filterCutoffParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_cutoff"));
-    filterResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter_resonance"));
+    // Voice 1 Filter & Env
+    filter1TypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter1_type"));
+    filter1SlopeParam     = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter1_slope"));
+    filter1CutoffParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter1_cutoff"));
+    filter1ResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter1_resonance"));
 
-    // 11. Filter Envelope
-    filterEnvSlopeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv_slope"));
-    filterEnvDepthParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv_depth"));
-    filterEnvDecayParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv_decay"));
-    filterEnvPostDriveParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv_postdrive"));
+    filterEnv1SlopeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv1_slope"));
+    filterEnv1DepthParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv1_depth"));
+    filterEnv1DecayParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv1_decay"));
+    filterEnv1PostDriveParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv1_postdrive"));
+
+    // Voice 2 Filter & Env
+    filter2TypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter2_type"));
+    filter2SlopeParam     = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter2_slope"));
+    filter2CutoffParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter2_cutoff"));
+    filter2ResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter2_resonance"));
+
+    filterEnv2SlopeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv2_slope"));
+    filterEnv2DepthParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv2_depth"));
+    filterEnv2DecayParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv2_decay"));
+    filterEnv2PostDriveParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv2_postdrive"));
+
+    // Transients Filter & Env
+    filter3TypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter3_type"));
+    filter3SlopeParam     = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter3_slope"));
+    filter3CutoffParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter3_cutoff"));
+    filter3ResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filter3_resonance"));
+
+    filterEnv3SlopeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv3_slope"));
+    filterEnv3DepthParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv3_depth"));
+    filterEnv3DecayParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv3_decay"));
+    filterEnv3PostDriveParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv3_postdrive"));
+
+    // Standalone FX Filter
+    fxFilterTypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("fxfilter_type"));
+    fxFilterSlopeParam     = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("fxfilter_slope"));
+    fxFilterCutoffParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("fxfilter_cutoff"));
+    fxFilterResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("fxfilter_resonance"));
+
+    // Limiters
+    preLimiterEnableParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("pre_limiter_enable"));
+    preLimiterGainParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("pre_limiter_gain"));
+    preLimiterThreshParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("pre_limiter_thresh"));
+    preLimiterReleaseParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("pre_limiter_release"));
+
+    postLimiterEnableParam  = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("post_limiter_enable"));
+    postLimiterGainParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("post_limiter_gain"));
+    postLimiterThreshParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("post_limiter_thresh"));
+    postLimiterReleaseParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("post_limiter_release"));
+
+    // FX Pickers
+    preFX1TypeParam  = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("pre_fx_1_type"));
+    preFX2TypeParam  = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("pre_fx_2_type"));
+    preFX3TypeParam  = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("pre_fx_3_type"));
+    preFX4TypeParam  = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("pre_fx_4_type"));
+
+    postFX1TypeParam = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("post_fx_1_type"));
+    postFX2TypeParam = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("post_fx_2_type"));
+    postFX3TypeParam = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("post_fx_3_type"));
+    postFX4TypeParam = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("post_fx_4_type"));
 
     // 12. Wave Folder
     waveFolderTypeParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("wavefolder_type"));
@@ -217,17 +266,66 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     if (driveFilterParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 2, getNorm(driveFilterParam));
     if (driveLimiterParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 3, static_cast<float>(driveLimiterParam->getIndex()));
 
-    // 10. Filter
-    if (filterTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 0, static_cast<float>(filterTypeParam->getIndex()) / 4.0f);
-    if (filterSlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 1, static_cast<float>(filterSlopeParam->getIndex()) / 4.0f);
-    if (filterCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 2, getNorm(filterCutoffParam));
-    if (filterResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER, 3, getNorm(filterResonanceParam));
+    // Voice 1 Filter & Env
+    if (filter1TypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 0, static_cast<float>(filter1TypeParam->getIndex()) / 4.0f);
+    if (filter1SlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 1, static_cast<float>(filter1SlopeParam->getIndex()) / 4.0f);
+    if (filter1CutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 2, getNorm(filter1CutoffParam));
+    if (filter1ResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 3, getNorm(filter1ResonanceParam));
 
-    // 11. Filter Envelope
-    if (filterEnvSlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV, 0, getNorm(filterEnvSlopeParam));
-    if (filterEnvDepthParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV, 1, getNorm(filterEnvDepthParam));
-    if (filterEnvDecayParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV, 2, getNorm(filterEnvDecayParam));
-    if (filterEnvPostDriveParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV, 3, getNorm(filterEnvPostDriveParam));
+    if (filterEnv1SlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV1, 0, getNorm(filterEnv1SlopeParam));
+    if (filterEnv1DepthParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV1, 1, getNorm(filterEnv1DepthParam));
+    if (filterEnv1DecayParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV1, 2, getNorm(filterEnv1DecayParam));
+    if (filterEnv1PostDriveParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV1, 3, getNorm(filterEnv1PostDriveParam));
+
+    // Voice 2 Filter & Env
+    if (filter2TypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER2, 0, static_cast<float>(filter2TypeParam->getIndex()) / 4.0f);
+    if (filter2SlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER2, 1, static_cast<float>(filter2SlopeParam->getIndex()) / 4.0f);
+    if (filter2CutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER2, 2, getNorm(filter2CutoffParam));
+    if (filter2ResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER2, 3, getNorm(filter2ResonanceParam));
+
+    if (filterEnv2SlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV2, 0, getNorm(filterEnv2SlopeParam));
+    if (filterEnv2DepthParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV2, 1, getNorm(filterEnv2DepthParam));
+    if (filterEnv2DecayParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV2, 2, getNorm(filterEnv2DecayParam));
+    if (filterEnv2PostDriveParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV2, 3, getNorm(filterEnv2PostDriveParam));
+
+    // Transients Filter & Env
+    if (filter3TypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER3, 0, static_cast<float>(filter3TypeParam->getIndex()) / 4.0f);
+    if (filter3SlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER3, 1, static_cast<float>(filter3SlopeParam->getIndex()) / 4.0f);
+    if (filter3CutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER3, 2, getNorm(filter3CutoffParam));
+    if (filter3ResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER3, 3, getNorm(filter3ResonanceParam));
+
+    if (filterEnv3SlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV3, 0, getNorm(filterEnv3SlopeParam));
+    if (filterEnv3DepthParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV3, 1, getNorm(filterEnv3DepthParam));
+    if (filterEnv3DecayParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV3, 2, getNorm(filterEnv3DecayParam));
+    if (filterEnv3PostDriveParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV3, 3, getNorm(filterEnv3PostDriveParam));
+
+    // Standalone FX Filter
+    if (fxFilterTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 0, static_cast<float>(fxFilterTypeParam->getIndex()) / 4.0f);
+    if (fxFilterSlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 1, static_cast<float>(fxFilterSlopeParam->getIndex()) / 4.0f);
+    if (fxFilterCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 2, getNorm(fxFilterCutoffParam));
+    if (fxFilterResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 3, getNorm(fxFilterResonanceParam));
+
+    // Limiters
+    if (preLimiterEnableParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PRE_LIMITER, 0, static_cast<float>(preLimiterEnableParam->getIndex()));
+    if (preLimiterGainParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PRE_LIMITER, 1, getNorm(preLimiterGainParam));
+    if (preLimiterThreshParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PRE_LIMITER, 2, getNorm(preLimiterThreshParam));
+    if (preLimiterReleaseParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PRE_LIMITER, 3, getNorm(preLimiterReleaseParam));
+
+    if (postLimiterEnableParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_POST_LIMITER, 0, static_cast<float>(postLimiterEnableParam->getIndex()));
+    if (postLimiterGainParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_POST_LIMITER, 1, getNorm(postLimiterGainParam));
+    if (postLimiterThreshParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_POST_LIMITER, 2, getNorm(postLimiterThreshParam));
+    if (postLimiterReleaseParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_POST_LIMITER, 3, getNorm(postLimiterReleaseParam));
+
+    // FX Pickers
+    if (preFX1TypeParam)  engine.setPreFXType(0, preFX1TypeParam->getIndex());
+    if (preFX2TypeParam)  engine.setPreFXType(1, preFX2TypeParam->getIndex());
+    if (preFX3TypeParam)  engine.setPreFXType(2, preFX3TypeParam->getIndex());
+    if (preFX4TypeParam)  engine.setPreFXType(3, preFX4TypeParam->getIndex());
+
+    if (postFX1TypeParam) engine.setPostFXType(0, postFX1TypeParam->getIndex());
+    if (postFX2TypeParam) engine.setPostFXType(1, postFX2TypeParam->getIndex());
+    if (postFX3TypeParam) engine.setPostFXType(2, postFX3TypeParam->getIndex());
+    if (postFX4TypeParam) engine.setPostFXType(3, postFX4TypeParam->getIndex());
 
     // 12. Wave Folder
     if (waveFolderTypeParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER, 0, static_cast<float>(waveFolderTypeParam->getIndex()));
@@ -474,21 +572,95 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
         juce::ParameterID("drive_limiter", 1), "Drive: Limiter",
         juce::StringArray{ "Off", "On" }, 1));                                      // On
 
-    // --- 10. FILTER ---
+    // --- VOICE 1 FILTER & FILTER ENVELOPE ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("filter_type", 1), "Filter: Type",
+        juce::ParameterID("filter1_type", 1), "Filter 1: Type",
         juce::StringArray{ "Off", "LPF", "BPF", "HPF", "BRF" }, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("filter_slope", 1), "Filter: Slope",
-        juce::StringArray{ "-6dB/oct", "-12dB/oct", "-18dB/oct", "-24dB/oct", "-36dB/oct" }, 1)); // -12dB/oct
-    layout.add(makeFloatParam("filter_cutoff", "Filter: Cutoff", 1.0f));        // 24 kHz
-    layout.add(makeFloatParam("filter_resonance", "Filter: Resonance", 0.0f));  // 0%
+        juce::ParameterID("filter1_slope", 1), "Filter 1: Slope",
+        juce::StringArray{ "-6dB/oct", "-12dB/oct", "-18dB/oct", "-24dB/oct", "-36dB/oct" }, 1));
+    layout.add(makeFloatParam("filter1_cutoff", "Filter 1: Cutoff", 1.0f));
+    layout.add(makeFloatParam("filter1_resonance", "Filter 1: Resonance", 0.0f));
 
-    // --- 11. FILTER ENVELOPE ---
-    layout.add(makeFloatParam("filterenv_slope", "FilterEnv: Slope", 0.0f));    // Exponential
-    layout.add(makeFloatParam("filterenv_depth", "FilterEnv: Depth", 0.5f));    // 0 octaves
-    layout.add(makeFloatParam("filterenv_decay", "FilterEnv: Decay", 0.3806f)); // 333 ms
-    layout.add(makeFloatParam("filterenv_postdrive", "FilterEnv: Post-Drive", 0.5f)); // 0 dB
+    layout.add(makeFloatParam("filterenv1_slope", "FilterEnv 1: Slope", 0.0f));
+    layout.add(makeFloatParam("filterenv1_depth", "FilterEnv 1: Depth", 0.5f));
+    layout.add(makeFloatParam("filterenv1_decay", "FilterEnv 1: Decay", 0.3806f));
+    layout.add(makeFloatParam("filterenv1_postdrive", "FilterEnv 1: Post-Drive", 0.5f));
+
+    // --- VOICE 2 FILTER & FILTER ENVELOPE ---
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("filter2_type", 1), "Filter 2: Type",
+        juce::StringArray{ "Off", "LPF", "BPF", "HPF", "BRF" }, 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("filter2_slope", 1), "Filter 2: Slope",
+        juce::StringArray{ "-6dB/oct", "-12dB/oct", "-18dB/oct", "-24dB/oct", "-36dB/oct" }, 1));
+    layout.add(makeFloatParam("filter2_cutoff", "Filter 2: Cutoff", 1.0f));
+    layout.add(makeFloatParam("filter2_resonance", "Filter 2: Resonance", 0.0f));
+
+    layout.add(makeFloatParam("filterenv2_slope", "FilterEnv 2: Slope", 0.0f));
+    layout.add(makeFloatParam("filterenv2_depth", "FilterEnv 2: Depth", 0.5f));
+    layout.add(makeFloatParam("filterenv2_decay", "FilterEnv 2: Decay", 0.3806f));
+    layout.add(makeFloatParam("filterenv2_postdrive", "FilterEnv 2: Post-Drive", 0.5f));
+
+    // --- TRANSIENTS FILTER & FILTER ENVELOPE ---
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("filter3_type", 1), "Filter 3: Type",
+        juce::StringArray{ "Off", "LPF", "BPF", "HPF", "BRF" }, 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("filter3_slope", 1), "Filter 3: Slope",
+        juce::StringArray{ "-6dB/oct", "-12dB/oct", "-18dB/oct", "-24dB/oct", "-36dB/oct" }, 1));
+    layout.add(makeFloatParam("filter3_cutoff", "Filter 3: Cutoff", 1.0f));
+    layout.add(makeFloatParam("filter3_resonance", "Filter 3: Resonance", 0.0f));
+
+    layout.add(makeFloatParam("filterenv3_slope", "FilterEnv 3: Slope", 0.0f));
+    layout.add(makeFloatParam("filterenv3_depth", "FilterEnv 3: Depth", 0.5f));
+    layout.add(makeFloatParam("filterenv3_decay", "FilterEnv 3: Decay", 0.3078f));
+    layout.add(makeFloatParam("filterenv3_postdrive", "FilterEnv 3: Post-Drive", 0.5f));
+
+    // --- STANDALONE FX FILTER ---
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("fxfilter_type", 1), "FX Filter: Type",
+        juce::StringArray{ "Off", "LPF", "BPF", "HPF", "BRF" }, 0));
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("fxfilter_slope", 1), "FX Filter: Slope",
+        juce::StringArray{ "-6dB/oct", "-12dB/oct", "-18dB/oct", "-24dB/oct", "-36dB/oct" }, 1));
+    layout.add(makeFloatParam("fxfilter_cutoff", "FX Filter: Cutoff", 1.0f));
+    layout.add(makeFloatParam("fxfilter_resonance", "FX Filter: Resonance", 0.0f));
+
+    // --- LIMITERS ---
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("pre_limiter_enable", 1), "Pre-Limiter: Enable",
+        juce::StringArray{ "Off", "On" }, 1));
+    layout.add(makeFloatParam("pre_limiter_gain", "Pre-Limiter: Input Gain", 12.0f / 36.0f)); // 0 dB
+    layout.add(makeFloatParam("pre_limiter_thresh", "Pre-Limiter: Threshold", 1.0f));          // 0 dB
+    layout.add(makeFloatParam("pre_limiter_release", "Pre-Limiter: Release", 0.6296f));       // 50 ms
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("post_limiter_enable", 1), "Post-Limiter: Enable",
+        juce::StringArray{ "Off", "On" }, 1));
+    layout.add(makeFloatParam("post_limiter_gain", "Post-Limiter: Input Gain", 12.0f / 36.0f)); // 0 dB
+    layout.add(makeFloatParam("post_limiter_thresh", "Post-Limiter: Threshold", 1.0f));          // 0 dB
+    layout.add(makeFloatParam("post_limiter_release", "Post-Limiter: Release", 0.6296f));       // 50 ms
+
+    // --- FX PICKERS ---
+    const juce::StringArray fxChoices { "None", "Drive", "Filter", "Wave Folder", "RingMod", "Frequency Shifter", "Grit FX", "Comb Filter", "Disperser", "Bell EQ" };
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("pre_fx_1_type", 1), "Pre FX 1: Type", fxChoices, 1)); // Drive
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("pre_fx_2_type", 1), "Pre FX 2: Type", fxChoices, 3)); // Wave Folder
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("pre_fx_3_type", 1), "Pre FX 3: Type", fxChoices, 4)); // RingMod
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("pre_fx_4_type", 1), "Pre FX 4: Type", fxChoices, 5)); // Frequency Shifter
+
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("post_fx_1_type", 1), "Post FX 1: Type", fxChoices, 6)); // Grit FX
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("post_fx_2_type", 1), "Post FX 2: Type", fxChoices, 7)); // Comb Filter
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("post_fx_3_type", 1), "Post FX 3: Type", fxChoices, 8)); // Disperser
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("post_fx_4_type", 1), "Post FX 4: Type", fxChoices, 9)); // Bell EQ
 
     // --- 12. WAVE FOLDER ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(

@@ -19,7 +19,7 @@ public:
     juce::Label* createSliderTextBox(juce::Slider& slider) override;
 };
 
-// Mini Oscilloscope or Frequency-Gain Plot widget inside each card
+// Mini Oscilloscope or Frequency-Gain Plot widget
 class MiniOscilloscopeComponent : public juce::Component {
 public:
     enum class PlotMode {
@@ -128,7 +128,7 @@ private:
     juce::Rectangle<int> getItemBounds(int index) const;
 };
 
-// Card component representing one of the 15 blocks
+// Card component representing one modular block in the rack
 class ModuleCardComponent : public juce::Component {
 public:
     ModuleCardComponent(const juce::String& title, juce::Colour accentColour);
@@ -146,6 +146,8 @@ public:
     void setKnobLabel(int slotIndex, const juce::String& label);
     void setNumActiveKnobs(int count) { numActiveKnobs = count; }
 
+    juce::String getTitle() const { return moduleTitle; }
+
 private:
     juce::String moduleTitle;
     juce::Colour accent;
@@ -159,6 +161,77 @@ private:
     int numActiveKnobs = 4;
 };
 
+// Hardware rack blank faceplate
+class BlankPlateComponent : public juce::Component {
+public:
+    void paint(juce::Graphics& g) override;
+};
+
+// Permanent Slot 1: Navigation Block
+class NavigationCardComponent : public juce::Component {
+public:
+    NavigationCardComponent();
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void setSelectedPage(int pageIndex);
+    int getSelectedPage() const { return selectedPage; }
+
+    std::function<void(int)> onPageSelected;
+
+private:
+    int selectedPage = 0;
+    juce::StringArray pageNames {
+        "VOICE 1",
+        "VOICE 2",
+        "TRANSIENTS",
+        "PRE-AMP FX",
+        "AMPLIFIER",
+        "POST-AMP FX",
+        "MODULATIONS"
+    };
+    std::vector<std::unique_ptr<juce::TextButton>> buttons;
+};
+
+// Slot 2: FX Picker Component (4 dropdown selectors)
+class FXPickerCardComponent : public juce::Component {
+public:
+    FXPickerCardComponent(const juce::String& titleText, juce::Colour accentCol);
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    juce::ComboBox& getBox(int index) { return boxes[index]; }
+
+private:
+    juce::String title;
+    juce::Colour accent;
+    juce::Label labels[4];
+    juce::ComboBox boxes[4];
+};
+
+// Permanent Slot 8: Visualizations Block with tab selector and large display
+class VisualizationCardComponent : public juce::Component {
+public:
+    VisualizationCardComponent(juce::Colour accentColour);
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void setAvailableTabs(const juce::StringArray& tabNames, const std::vector<int>& blockIndices);
+    void selectTab(int tabIndex);
+    void selectBlock(int blockIndex);
+    int getCurrentBlockIndex() const;
+    juce::String getCurrentTabName() const;
+    MiniOscilloscopeComponent& getOscilloscope() { return oscilloscope; }
+
+    std::function<void(int)> onTabSelected;
+
+private:
+    void updateButtonStyles();
+
+    juce::Colour accent;
+    juce::StringArray currentTabs;
+    std::vector<int> currentBlockIndices;
+    int selectedTab = 0;
+    std::vector<std::unique_ptr<juce::TextButton>> tabButtons;
+    MiniOscilloscopeComponent oscilloscope;
+};
 
 class TheKlangFarmerAudioProcessorEditor : public juce::AudioProcessorEditor, private juce::Timer {
 public:
@@ -172,6 +245,9 @@ public:
     void bindSelector(LedSelectorComponent& selector, juce::ComboBox& box,
                       const juce::String& paramId, const juce::StringArray& items, int numColumns = 1);
 
+    void setPage(int pageIndex);
+    void updatePageLayout();
+
 private:
     TheKlangFarmerAudioProcessor& audioProcessor;
     RotaryKnobLookAndFeel knobLookAndFeel;
@@ -181,17 +257,66 @@ private:
     juce::TextButton triggerButton { "AUDITION HIT" };
     void resetToDefaults();
 
-    // 22 Module Cards
-    std::vector<std::unique_ptr<ModuleCardComponent>> cards;
+    // Permanent blocks (Slot 1 and Slot 8)
+    NavigationCardComponent navCard;
+    VisualizationCardComponent vizCard;
+    int currentPage = 0;
 
-    // Block 1: Carrier 1
+    // Blank plates for empty rack slots
+    BlankPlateComponent blankPlates[6];
+
+    // FX Pickers
+    std::unique_ptr<FXPickerCardComponent> preFXPickerCard;
+    std::unique_ptr<FXPickerCardComponent> postFXPickerCard;
+
+    // Module Cards
+    std::unique_ptr<ModuleCardComponent> cardCarrier1;
+    std::unique_ptr<ModuleCardComponent> cardMod1;
+    std::unique_ptr<ModuleCardComponent> cardPitchEnv1;
+    std::unique_ptr<ModuleCardComponent> cardFilter1;
+    std::unique_ptr<ModuleCardComponent> cardFilterEnv1;
+
+    std::unique_ptr<ModuleCardComponent> cardCarrier2;
+    std::unique_ptr<ModuleCardComponent> cardMod2;
+    std::unique_ptr<ModuleCardComponent> cardPitchEnv2;
+    std::unique_ptr<ModuleCardComponent> cardFilter2;
+    std::unique_ptr<ModuleCardComponent> cardFilterEnv2;
+
+    std::unique_ptr<ModuleCardComponent> cardNoise;
+    std::unique_ptr<ModuleCardComponent> cardFilter3;
+    std::unique_ptr<ModuleCardComponent> cardFilterEnv3;
+
+    std::unique_ptr<ModuleCardComponent> cardMixer;
+
+    std::unique_ptr<ModuleCardComponent> cardDrive;
+    std::unique_ptr<ModuleCardComponent> cardFXFilter;
+    std::unique_ptr<ModuleCardComponent> cardWaveFolder;
+    std::unique_ptr<ModuleCardComponent> cardRingMod;
+    std::unique_ptr<ModuleCardComponent> cardFreqShift;
+    std::unique_ptr<ModuleCardComponent> cardGrit;
+    std::unique_ptr<ModuleCardComponent> cardComb;
+    std::unique_ptr<ModuleCardComponent> cardDisperser;
+    std::unique_ptr<ModuleCardComponent> cardEQ;
+
+    std::unique_ptr<ModuleCardComponent> cardAmp;
+    std::unique_ptr<ModuleCardComponent> cardAmpEnv;
+
+    std::unique_ptr<ModuleCardComponent> cardPreLimiter;
+    std::unique_ptr<ModuleCardComponent> cardPostLimiter;
+
+    std::unique_ptr<ModuleCardComponent> cardVelocity;
+    std::unique_ptr<ModuleCardComponent> cardSlop;
+
+    ModuleCardComponent* getFXCard(int fxType);
+
+    // --- Controls ---
+    // Voice 1
     juce::ComboBox carrier1TrackingBox;
     LedSelectorComponent carrier1TrackingSelector;
     RotaryKnobSlider carrier1PitchSlider;
     RotaryKnobSlider carrier1ShapeSlider;
     RotaryKnobSlider carrier1DepthSlider;
 
-    // Block 2: Modulator 1
     juce::ComboBox mod1TrackBox;
     LedSelectorComponent mod1TrackSelector;
     juce::ComboBox mod1TypeBox;
@@ -199,21 +324,31 @@ private:
     RotaryKnobSlider mod1ShapeSlider;
     RotaryKnobSlider mod1SpeedSlider;
 
-    // Block 3: Pitch Envelope 1
     juce::ComboBox pitchEnv1TargetBox;
     LedSelectorComponent pitchEnv1TargetSelector;
     RotaryKnobSlider pitchEnv1SlopeSlider;
     RotaryKnobSlider pitchEnv1DepthSlider;
     RotaryKnobSlider pitchEnv1DecaySlider;
 
-    // Block 4: Carrier 2
+    juce::ComboBox filter1TypeBox;
+    LedSelectorComponent filter1TypeSelector;
+    juce::ComboBox filter1SlopeBox;
+    LedSelectorComponent filter1SlopeSelector;
+    RotaryKnobSlider filter1CutoffSlider;
+    RotaryKnobSlider filter1ResonanceSlider;
+
+    RotaryKnobSlider filterEnv1SlopeSlider;
+    RotaryKnobSlider filterEnv1DepthSlider;
+    RotaryKnobSlider filterEnv1DecaySlider;
+    RotaryKnobSlider filterEnv1PostDriveSlider;
+
+    // Voice 2
     juce::ComboBox carrier2TrackingBox;
     LedSelectorComponent carrier2TrackingSelector;
     RotaryKnobSlider carrier2PitchSlider;
     RotaryKnobSlider carrier2ShapeSlider;
     RotaryKnobSlider carrier2DepthSlider;
 
-    // Block 5: Modulator 2
     juce::ComboBox mod2TrackBox;
     LedSelectorComponent mod2TrackSelector;
     juce::ComboBox mod2TypeBox;
@@ -221,111 +356,142 @@ private:
     RotaryKnobSlider mod2ShapeSlider;
     RotaryKnobSlider mod2SpeedSlider;
 
-    // Block 6: Pitch Envelope 2
     juce::ComboBox pitchEnv2TargetBox;
     LedSelectorComponent pitchEnv2TargetSelector;
     RotaryKnobSlider pitchEnv2SlopeSlider;
     RotaryKnobSlider pitchEnv2DepthSlider;
     RotaryKnobSlider pitchEnv2DecaySlider;
 
-    // Block 7: Noise Transient
+    juce::ComboBox filter2TypeBox;
+    LedSelectorComponent filter2TypeSelector;
+    juce::ComboBox filter2SlopeBox;
+    LedSelectorComponent filter2SlopeSelector;
+    RotaryKnobSlider filter2CutoffSlider;
+    RotaryKnobSlider filter2ResonanceSlider;
+
+    RotaryKnobSlider filterEnv2SlopeSlider;
+    RotaryKnobSlider filterEnv2DepthSlider;
+    RotaryKnobSlider filterEnv2DecaySlider;
+    RotaryKnobSlider filterEnv2PostDriveSlider;
+
+    // Transients
     RotaryKnobSlider noiseShRateSlider;
     RotaryKnobSlider noiseFilterSlider;
     RotaryKnobSlider noiseDriveSlider;
     RotaryKnobSlider noiseDecaySlider;
 
-    // Block 8: Mixer
+    juce::ComboBox filter3TypeBox;
+    LedSelectorComponent filter3TypeSelector;
+    juce::ComboBox filter3SlopeBox;
+    LedSelectorComponent filter3SlopeSelector;
+    RotaryKnobSlider filter3CutoffSlider;
+    RotaryKnobSlider filter3ResonanceSlider;
+
+    RotaryKnobSlider filterEnv3SlopeSlider;
+    RotaryKnobSlider filterEnv3DepthSlider;
+    RotaryKnobSlider filterEnv3DecaySlider;
+    RotaryKnobSlider filterEnv3PostDriveSlider;
+
+    // Mixer
     RotaryKnobSlider mixerCarrier1LevelSlider;
     RotaryKnobSlider mixerCarrier2LevelSlider;
     RotaryKnobSlider mixerRingModSlider;
     RotaryKnobSlider mixerNoiseLevelSlider;
 
-    // Block 9: Drive
+    // Drive
     juce::ComboBox driveLimiterBox;
     LedSelectorComponent driveLimiterSelector;
     RotaryKnobSlider driveAmountSlider;
     RotaryKnobSlider driveBiasSlider;
     RotaryKnobSlider driveFilterSlider;
 
-    // Block 10: Filter
-    juce::ComboBox filterTypeBox;
-    LedSelectorComponent filterTypeSelector;
-    juce::ComboBox filterSlopeBox;
-    LedSelectorComponent filterSlopeSelector;
-    RotaryKnobSlider filterCutoffSlider;
-    RotaryKnobSlider filterResonanceSlider;
+    // Standalone FX Filter
+    juce::ComboBox fxFilterTypeBox;
+    LedSelectorComponent fxFilterTypeSelector;
+    juce::ComboBox fxFilterSlopeBox;
+    LedSelectorComponent fxFilterSlopeSelector;
+    RotaryKnobSlider fxFilterCutoffSlider;
+    RotaryKnobSlider fxFilterResonanceSlider;
 
-    // Block 11: Filter Envelope
-    RotaryKnobSlider filterEnvSlopeSlider;
-    RotaryKnobSlider filterEnvDepthSlider;
-    RotaryKnobSlider filterEnvDecaySlider;
-    RotaryKnobSlider filterEnvPostDriveSlider;
-
-    // Block 12: Wave Folder
+    // Wave Folder
     juce::ComboBox waveFolderTypeBox;
     LedSelectorComponent waveFolderTypeSelector;
     RotaryKnobSlider waveFolderFoldSlider;
     RotaryKnobSlider waveFolderBiasSlider;
     RotaryKnobSlider waveFolderFilterSlider;
 
-    // Block 13: RingMod
+    // RingMod
     RotaryKnobSlider ringModShapeSlider;
     RotaryKnobSlider ringModRateSlider;
     RotaryKnobSlider ringModAmountSlider;
     RotaryKnobSlider ringModWidthSlider;
 
-    // Block 14: Frequency Shifter
+    // Frequency Shifter
     RotaryKnobSlider freqShiftShiftSlider;
     RotaryKnobSlider freqShiftRangeSlider;
     RotaryKnobSlider freqShiftBlendSlider;
     RotaryKnobSlider freqShiftWidthSlider;
 
-    // Block 15: Grit FX
+    // Grit FX
     RotaryKnobSlider gritBitsSlider;
     RotaryKnobSlider gritRateSlider;
     RotaryKnobSlider gritLowSlider;
     RotaryKnobSlider gritHighSlider;
 
-    // Block 16: Comb Filter
+    // Comb Filter
     juce::ComboBox combTypeBox;
     LedSelectorComponent combTypeSelector;
     RotaryKnobSlider combDampeningSlider;
     RotaryKnobSlider combCutoffSlider;
     RotaryKnobSlider combResonanceSlider;
 
-    // Block 17: Disperser
+    // Disperser
     juce::ComboBox disperserTypeBox;
     LedSelectorComponent disperserTypeSelector;
     RotaryKnobSlider disperserAmountSlider;
     RotaryKnobSlider disperserCutoffSlider;
     RotaryKnobSlider disperserResonanceSlider;
 
-    // Block 18: EQ (Bell EQ)
+    // Bell EQ
     RotaryKnobSlider eqFreqSlider;
     RotaryKnobSlider eqWidthSlider;
     RotaryKnobSlider eqGainSlider;
     RotaryKnobSlider eqFilterSlider;
 
-    // Block 19: Amp
+    // Amp
     RotaryKnobSlider ampPanSlider;
     RotaryKnobSlider ampLevelSlider;
     RotaryKnobSlider ampDriveSlider;
     juce::ComboBox ampLimiterBox;
     LedSelectorComponent ampLimiterSelector;
 
-    // Block 20: Amp Envelope
+    // Amp Envelope
     RotaryKnobSlider ampEnvClapsSlider;
     RotaryKnobSlider ampEnvClapSpeedSlider;
     RotaryKnobSlider ampEnvSlopeSlider;
     RotaryKnobSlider ampEnvDecaySlider;
 
-    // Block 21: Velocity
+    // Pre-Amp Limiter
+    juce::ComboBox preLimiterEnableBox;
+    LedSelectorComponent preLimiterEnableSelector;
+    RotaryKnobSlider preLimiterGainSlider;
+    RotaryKnobSlider preLimiterThreshSlider;
+    RotaryKnobSlider preLimiterReleaseSlider;
+
+    // Post-Amp Limiter (Master Limiter)
+    juce::ComboBox postLimiterEnableBox;
+    LedSelectorComponent postLimiterEnableSelector;
+    RotaryKnobSlider postLimiterGainSlider;
+    RotaryKnobSlider postLimiterThreshSlider;
+    RotaryKnobSlider postLimiterReleaseSlider;
+
+    // Velocity
     RotaryKnobSlider velSlopeSlider;
     RotaryKnobSlider velDecaySlider;
     RotaryKnobSlider velDepthSlider;
     RotaryKnobSlider velVolumeSlider;
 
-    // Block 22: Slop
+    // Slop
     RotaryKnobSlider slopFreqSlider;
     RotaryKnobSlider slopDepthSlider;
     RotaryKnobSlider slopDecaySlider;
@@ -341,21 +507,35 @@ private:
     void setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar = false, double defaultVal = 0.5);
     void setupBox(juce::ComboBox& box);
 
+    // Tracking states
     int lastCarrier1Track = -1;
     int lastMod1Track = -1;
     int lastMod1Type = -1;
     int lastPitchEnv1Target = -1;
+    int lastFilter1Type = -1;
+    int lastFilter1Slope = -1;
+
     int lastCarrier2Track = -1;
     int lastMod2Track = -1;
     int lastMod2Type = -1;
     int lastPitchEnv2Target = -1;
+    int lastFilter2Type = -1;
+    int lastFilter2Slope = -1;
+
+    int lastFilter3Type = -1;
+    int lastFilter3Slope = -1;
+
     int lastDriveLimiter = -1;
-    int lastFilterType = -1;
-    int lastFilterSlope = -1;
+    int lastFXFilterType = -1;
+    int lastFXFilterSlope = -1;
     int lastWaveFolderType = -1;
     int lastCombType = -1;
     int lastDisperserType = -1;
     int lastAmpLimiter = -1;
+    int lastPreLimiterEnable = -1;
+    int lastPostLimiterEnable = -1;
+
+    std::vector<float> scopeBuffer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangFarmerAudioProcessorEditor)
 };

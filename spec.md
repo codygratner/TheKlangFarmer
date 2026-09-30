@@ -291,3 +291,59 @@ To keep module controls clean and consistent across the synth, the following sta
 
 #### Slots 23 & 24: Blank Rack Plates
 - Brushed anodized dark faceplates with hardware rack corner screws, preserving modular rack aesthetics.
+
+---
+
+## 4. New UI Layout
+
+The new UI will be a single row of 8 slots of blocks. Slot 1 will always be the navigation block. Slot 8 will always be the Visualizations for the preceeding blocks.
+
+### 4.1. Navigation Block
+
+- Voice 1 (these will be in Slots 2 to 6 with Mixer in Slot 7)
+    - Carrier 1
+    - Modulator 1
+    - Pitch Envelope 1
+    - Filter 1
+    - Filter Envelope 1
+- Voice 2 (these will be in Slots 2 to 6 with Mixer in Slot 7)
+    - Carrier 2
+    - Modulator 2
+    - Pitch Envelope 2
+    - Filter 2
+    - Filter Envelope 2
+- Transients (these will be in Slots 2 to 6 with Mixer in Slot 7)
+    - Noise Transient
+    - Blank Rack Plate
+    - Blank Rack Plate
+    - Filter 3
+    - Filter Envelope 3
+- Pre-Amp FX (this will show the FX Picker in Slot 2)
+    - FX Picker
+        - 4 drop downs that have all the different effects listed and each dropdown selects an effect for Pre-Amp FX Block 1 to 4 in Slots 3 to 6
+    - Pre-Amp FX Block 1
+    - Pre-Amp FX Block 2
+    - Pre-Amp FX Block 3
+    - Pre-Amp FX Block 4
+    - Limiter
+- Amplifier (this will show the Mixer in Slot 7)
+    - Amp
+    - Amp Envelope
+    - Blank Rack Plate
+    - Blank Rack Plate
+    - Limiter
+- Post-Amp FX (this will show the FX Picker in Slot 2)
+    - FX Picker
+        - 4 drop downs that have all the different effects listed and each dropdown selects an effect for Post-Amp FX Block 1 to 4 in Slots 3 to 6
+    - Post-Amp FX Block 1
+    - Post-Amp FX Block 2
+    - Post-Amp FX Block 3
+    - Post-Amp FX Block 4
+    - Limiter
+- Modulations
+    - Velocity
+    - Slop
+    - Blank Rack Plate
+    - Blank Rack Plate
+    - Blank Rack Plate
+    - Blank Rack Plate

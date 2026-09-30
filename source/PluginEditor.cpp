@@ -65,6 +65,246 @@ static juce::String getMidiNoteName(int noteNumber) {
     return juce::String(names[noteNumber % 12]) + juce::String(octave) + " [" + juce::String(noteNumber) + "]";
 }
 
+// Formatters and parsers
+static juce::String formatMidiNote(double val) {
+    int note = static_cast<int>(std::round(val * 127.0));
+    return getMidiNoteName(note);
+}
+static double parseMidiNote(const juce::String& text) {
+    return std::clamp(parseNumberSafe(text, 36.0) / 127.0, 0.0, 1.0);
+}
+
+static juce::String formatSemi(double val) {
+    float semi = static_cast<float>((val - 0.5) * 48.0);
+    return juce::String(semi, 1) + " st";
+}
+static double parseSemi(const juce::String& text) {
+    double semi = parseNumberSafe(text, 0.0);
+    return std::clamp((semi / 48.0) + 0.5, 0.0, 1.0);
+}
+
+static juce::String formatRatio(double val) {
+    float r = static_cast<float>(val) * 16.0f;
+    return juce::String(r, 2) + "x";
+}
+static double parseRatio(const juce::String& text) {
+    double r = parseNumberSafe(text, 1.0);
+    return std::clamp(r / 16.0, 0.0, 1.0);
+}
+
+static juce::String formatPercent(double val) {
+    return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
+}
+static double parsePercent(const juce::String& text) {
+    return std::clamp(parseNumberSafe(text, 50.0) / 100.0, 0.0, 1.0);
+}
+
+static juce::String formatBipolarPercent(double val) {
+    int p = static_cast<int>(std::round((val - 0.5) * 200.0));
+    return (p > 0 ? "+" : "") + juce::String(p) + "%";
+}
+static double parseBipolarPercent(const juce::String& text) {
+    double p = parseNumberSafe(text, 0.0);
+    return std::clamp((p / 200.0) + 0.5, 0.0, 1.0);
+}
+
+static juce::String formatTimeMs(double val) {
+    float ms = 5.0f * std::pow(60000.0f / 5.0f, static_cast<float>(val));
+    if (ms >= 1000.0f) return juce::String(ms / 1000.0f, 2) + " s";
+    return juce::String(static_cast<int>(std::round(ms))) + " ms";
+}
+static double parseTimeMs(const juce::String& text) {
+    double ms = parseNumberSafe(text, 333.0);
+    if (text.containsIgnoreCase("s") && !text.containsIgnoreCase("ms")) ms *= 1000.0;
+    ms = std::clamp(ms, 5.0, 60000.0);
+    return std::log(ms / 5.0) / std::log(60000.0 / 5.0);
+}
+
+static juce::String formatNoiseTimeMs(double val) {
+    float ms = 1.0f * std::pow(60000.0f / 1.0f, static_cast<float>(val));
+    if (ms >= 1000.0f) return juce::String(ms / 1000.0f, 2) + " s";
+    return juce::String(static_cast<int>(std::round(ms))) + " ms";
+}
+static double parseNoiseTimeMs(const juce::String& text) {
+    double ms = parseNumberSafe(text, 100.0);
+    if (text.containsIgnoreCase("s") && !text.containsIgnoreCase("ms")) ms *= 1000.0;
+    ms = std::clamp(ms, 1.0, 60000.0);
+    return std::log(ms / 1.0) / std::log(60000.0 / 1.0);
+}
+
+static juce::String formatFreqHz(double val) {
+    float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
+    if (hz >= 1000.0f) return juce::String(hz / 1000.0f, 2) + " kHz";
+    if (hz >= 10.0f) return juce::String(hz, 1) + " Hz";
+    return juce::String(hz, 2) + " Hz";
+}
+static double parseFreqHz(const juce::String& text) {
+    double hz = parseNumberSafe(text, 1000.0);
+    hz = std::clamp(hz, 0.1, 24000.0);
+    return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
+}
+
+static juce::String formatEqFreqHz(double val) {
+    float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val));
+    if (hz >= 1000.0f) return juce::String(hz / 1000.0f, 2) + " kHz";
+    return juce::String(static_cast<int>(std::round(hz))) + " Hz";
+}
+static double parseEqFreqHz(const juce::String& text) {
+    double hz = parseNumberSafe(text, 1000.0);
+    hz = std::clamp(hz, 20.0, 24000.0);
+    return std::log(hz / 20.0) / std::log(24000.0 / 20.0);
+}
+
+static juce::String formatDb(double val) {
+    float db = -6.0f + static_cast<float>(val) * 30.0f;
+    return (db > 0 ? "+" : "") + juce::String(db, 1) + " dB";
+}
+static double parseDb(const juce::String& text) {
+    double db = parseNumberSafe(text, 0.0);
+    return std::clamp((db + 6.0) / 30.0, 0.0, 1.0);
+}
+
+static juce::String formatBipolarDb(double val) {
+    float db = static_cast<float>((val - 0.5) * 48.0);
+    return (db > 0 ? "+" : "") + juce::String(db, 1) + " dB";
+}
+static double parseBipolarDb(const juce::String& text) {
+    double db = parseNumberSafe(text, 0.0);
+    return std::clamp((db / 48.0) + 0.5, 0.0, 1.0);
+}
+
+static juce::String formatMixerLevel(double val) {
+    float pct = (val <= 0.5) ? static_cast<float>(val * 200.0) : static_cast<float>(100.0 + (val - 0.5) * 600.0);
+    return juce::String(static_cast<int>(std::round(pct))) + "%";
+}
+static double parseMixerLevel(const juce::String& text) {
+    double pct = parseNumberSafe(text, 100.0);
+    pct = std::clamp(pct, 0.0, 400.0);
+    if (pct <= 100.0) return pct / 200.0;
+    return 0.5 + (pct - 100.0) / 600.0;
+}
+
+static juce::String formatOctaves(double val) {
+    float oct = static_cast<float>((val - 0.5) * 10.0);
+    return (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct";
+}
+static double parseOctaves(const juce::String& text) {
+    double oct = parseNumberSafe(text, 0.0);
+    return std::clamp((oct / 10.0) + 0.5, 0.0, 1.0);
+}
+
+static juce::String formatFilterOctaves(double val) {
+    float oct = static_cast<float>((val - 0.5) * 20.0);
+    return (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct";
+}
+static double parseFilterOctaves(const juce::String& text) {
+    double oct = parseNumberSafe(text, 0.0);
+    return std::clamp((oct / 20.0) + 0.5, 0.0, 1.0);
+}
+
+static juce::String formatBits(double val) {
+    float b = 1.0f + static_cast<float>(val) * 15.0f;
+    return juce::String(b, 1) + " bit";
+}
+static double parseBits(const juce::String& text) {
+    double b = parseNumberSafe(text, 16.0);
+    return std::clamp((b - 1.0) / 15.0, 0.0, 1.0);
+}
+
+static juce::String formatWavefolds(double val) {
+    float f = static_cast<float>(val) * 8.0f;
+    return juce::String(f, 2);
+}
+static double parseWavefolds(const juce::String& text) {
+    double f = parseNumberSafe(text, 0.0);
+    return std::clamp(f / 8.0, 0.0, 1.0);
+}
+
+static juce::String formatStages(double val) {
+    int s = static_cast<int>(std::round(val * 32.0));
+    return juce::String(s);
+}
+static double parseStages(const juce::String& text) {
+    double s = parseNumberSafe(text, 4.0);
+    return std::clamp(s / 32.0, 0.0, 1.0);
+}
+
+static juce::String formatClaps(double val) {
+    int c = static_cast<int>(std::round(val * 32.0));
+    return juce::String(c);
+}
+static double parseClaps(const juce::String& text) {
+    double c = parseNumberSafe(text, 0.0);
+    return std::clamp(c / 32.0, 0.0, 1.0);
+}
+
+static juce::String formatClapSpeed(double val) {
+    float ms = 1.0f + static_cast<float>(val) * 14.0f;
+    return juce::String(ms, 1) + " ms";
+}
+static double parseClapSpeed(const juce::String& text) {
+    double ms = parseNumberSafe(text, 3.0);
+    return std::clamp((ms - 1.0) / 14.0, 0.0, 1.0);
+}
+
+static juce::String formatLimiterGain(double val) {
+    float db = -12.0f + static_cast<float>(val) * 36.0f;
+    return (db > 0 ? "+" : "") + juce::String(db, 1) + " dB";
+}
+static double parseLimiterGain(const juce::String& text) {
+    double db = parseNumberSafe(text, 0.0);
+    return std::clamp((db + 12.0) / 36.0, 0.0, 1.0);
+}
+
+static juce::String formatLimiterThresh(double val) {
+    float db = -24.0f + static_cast<float>(val) * 24.0f;
+    return juce::String(db, 1) + " dB";
+}
+static double parseLimiterThresh(const juce::String& text) {
+    double db = parseNumberSafe(text, 0.0);
+    return std::clamp((db + 24.0) / 24.0, 0.0, 1.0);
+}
+
+static juce::String formatLimiterRelease(double val) {
+    float ms = 1.0f * std::pow(500.0f / 1.0f, static_cast<float>(val));
+    return juce::String(static_cast<int>(std::round(ms))) + " ms";
+}
+static double parseLimiterRelease(const juce::String& text) {
+    double ms = parseNumberSafe(text, 50.0);
+    ms = std::clamp(ms, 1.0, 500.0);
+    return std::log(ms / 1.0) / std::log(500.0 / 1.0);
+}
+
+static juce::String formatSlop(double val) {
+    return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
+}
+static double parseSlop(const juce::String& text) {
+    return std::clamp(parseNumberSafe(text, 0.0) / 100.0, 0.0, 1.0);
+}
+
+static juce::String formatVelocitySlope(double val) {
+    if (val < 0.45) return "EXP";
+    if (val > 0.55) return "LOG";
+    return "LIN";
+}
+static double parseVelocitySlope(const juce::String& text) {
+    if (text.containsIgnoreCase("exp")) return 0.0;
+    if (text.containsIgnoreCase("log")) return 1.0;
+    return 0.5;
+}
+
+static juce::String formatSlope(double val) {
+    if (val < 0.45) return "EXP";
+    if (val > 0.55) return "LOG";
+    return "LIN";
+}
+static double parseSlope(const juce::String& text) {
+    if (text.containsIgnoreCase("exp")) return 0.0;
+    if (text.containsIgnoreCase("log")) return 1.0;
+    return 0.5;
+}
+
+
 // --- ROTARY KNOB LOOK AND FEEL ---
 
 RotaryKnobLookAndFeel::RotaryKnobLookAndFeel() {
@@ -115,20 +355,17 @@ void RotaryKnobLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, in
         isBipolar = rks->isBipolar;
     }
 
-    // Outer track bounds
     float trackHeight = 6.0f;
     float trackY = static_cast<float>(y) + (static_cast<float>(height) - trackHeight) * 0.5f;
     float trackX = static_cast<float>(x) + 2.0f;
     float trackW = static_cast<float>(width) - 4.0f;
     juce::Rectangle<float> trackRect(trackX, trackY, trackW, trackHeight);
 
-    // 1. Draw recessed track background
     g.setColour(juce::Colour(0xff161922));
     g.fillRoundedRectangle(trackRect, 3.0f);
     g.setColour(juce::Colour(0xff2a3040));
     g.drawRoundedRectangle(trackRect, 3.0f, 1.0f);
 
-    // 2. Draw active value fill
     if (slider.isEnabled() && trackW > 2.0f) {
         float minX = trackX;
         float maxX = trackX + trackW;
@@ -145,8 +382,6 @@ void RotaryKnobLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, in
                 g.setColour(fillColour.withAlpha(0.85f));
                 g.fillRoundedRectangle(fillRect, 2.0f);
             }
-
-            // Center zero tick mark
             g.setColour(juce::Colour(0xff5a667d));
             g.drawVerticalLine(static_cast<int>(midX), trackY - 2.0f, trackY + trackHeight + 2.0f);
         } else {
@@ -159,7 +394,6 @@ void RotaryKnobLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, in
         }
     }
 
-    // 3. Draw modern hardware fader thumb / handle
     float thumbW = 7.0f;
     float thumbH = std::min(static_cast<float>(height) - 2.0f, 16.0f);
     float thumbY = static_cast<float>(y) + (static_cast<float>(height) - thumbH) * 0.5f;
@@ -167,23 +401,17 @@ void RotaryKnobLookAndFeel::drawLinearSlider(juce::Graphics& g, int x, int y, in
 
     juce::Rectangle<float> thumbRect(thumbX, thumbY, thumbW, thumbH);
 
-    // Subtle glow if mouse is over or dragging
     if (slider.isMouseOverOrDragging()) {
         g.setColour(fillColour.withAlpha(0.35f));
         g.drawRoundedRectangle(thumbRect.expanded(1.5f), 2.5f, 1.5f);
     }
 
-    // Metallic thumb gradient
     juce::ColourGradient thumbGrad(juce::Colour(0xffeff3fa), thumbX, thumbY,
                                   juce::Colour(0xffb0bac9), thumbX, thumbY + thumbH, false);
     g.setGradientFill(thumbGrad);
     g.fillRoundedRectangle(thumbRect, 2.0f);
-
-    // Thumb border
     g.setColour(juce::Colour(0xff12151c));
     g.drawRoundedRectangle(thumbRect, 2.0f, 1.0f);
-
-    // Thumb center indicator line
     g.setColour(fillColour);
     g.drawVerticalLine(static_cast<int>(thumbRect.getCentreX()), thumbY + 2.5f, thumbY + thumbH - 2.5f);
 }
@@ -193,21 +421,18 @@ void RotaryKnobLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
                                              float rotaryEndAngle, juce::Slider& slider)
 {
     auto bounds = juce::Rectangle<int>(x, y, width, height).toFloat().reduced(2.0f);
-    // Well-proportioned dial radius for small knob footprint
-    auto radius = juce::jlimit(11.0f, 22.0f, juce::jmin(bounds.getWidth() * 0.46f, bounds.getHeight() * 0.46f));
+    auto radius = juce::jlimit(11.0f, 24.0f, juce::jmin(bounds.getWidth() * 0.46f, bounds.getHeight() * 0.46f));
     auto toAngle = rotaryStartAngle + sliderPosProportional * (rotaryEndAngle - rotaryStartAngle);
     auto centre = bounds.getCentre();
     auto lineW = juce::jmax(2.4f, radius * 0.18f);
-    auto arcRadius = radius - lineW * 0.5f;
 
-    // Track background
+    auto arcRadius = radius - lineW * 0.5f;
     juce::Path backgroundArc;
     backgroundArc.addCentredArc(centre.x, centre.y, arcRadius, arcRadius,
                                 0.0f, rotaryStartAngle, rotaryEndAngle, true);
     g.setColour(slider.findColour(juce::Slider::rotarySliderOutlineColourId));
     g.strokePath(backgroundArc, juce::PathStrokeType(lineW, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 
-    // Value Arc: Bipolar draws from center (12 o'clock); Unipolar draws from minimum (7 o'clock)
     bool isBipolar = false;
     if (auto* rks = dynamic_cast<RotaryKnobSlider*>(&slider)) {
         isBipolar = rks->isBipolar;
@@ -238,7 +463,6 @@ void RotaryKnobLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
         }
     }
 
-    // Inner dial disc
     auto innerRadius = arcRadius - lineW * 0.85f;
     if (innerRadius > 3.0f) {
         auto knobBounds = juce::Rectangle<float>(centre.x - innerRadius, centre.y - innerRadius,
@@ -250,14 +474,12 @@ void RotaryKnobLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
         g.setColour(juce::Colour(0xff3b4354));
         g.drawEllipse(knobBounds, 1.0f);
 
-        // Subtle glow when hovering or dragging
         if (slider.isMouseOverOrDragging()) {
             auto fillCol = slider.findColour(juce::Slider::rotarySliderFillColourId);
             g.setColour(fillCol.withAlpha(0.30f));
             g.drawEllipse(knobBounds.expanded(1.5f), 1.0f);
         }
 
-        // Pointer indicator
         juce::Path p;
         auto pointerLength = innerRadius * 0.68f;
         auto pointerThickness = juce::jmax(1.8f, innerRadius * 0.16f);
@@ -312,23 +534,18 @@ void MiniOscilloscopeComponent::updateEqParams(float freqHz, float widthOct, flo
 void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds().toFloat();
 
-    // Dark background display
     g.setColour(juce::Colour(0xff0e1017));
     g.fillRoundedRectangle(bounds, 4.0f);
-
-    // Subtle outline
     g.setColour(juce::Colour(0xff1d222e));
     g.drawRoundedRectangle(bounds.reduced(0.5f), 4.0f, 1.0f);
 
     if (plotMode == PlotMode::Oscilloscope) {
-        // Centerline grid
         float midY = bounds.getCentreY();
         g.setColour(juce::Colour(0xff1b202c));
         g.drawHorizontalLine(static_cast<int>(midY), bounds.getX() + 3.0f, bounds.getRight() - 3.0f);
 
         if (points.empty()) return;
 
-        // Draw waveform path
         juce::Path p;
         float dx = bounds.getWidth() / static_cast<float>(points.size() - 1);
         float halfH = (bounds.getHeight() - 4.0f) * 0.5f;
@@ -343,17 +560,13 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
             else p.lineTo(x, y);
         }
 
-        // Glow line
         g.setColour(traceCol.withAlpha(0.25f));
         g.strokePath(p, juce::PathStrokeType(3.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-
-        // Crisp trace line
         g.setColour(traceCol);
         g.strokePath(p, juce::PathStrokeType(1.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
         return;
     }
 
-    // --- X-Y PLOT: AFFECTED FREQUENCIES (X, log) vs GAIN dB (Y) ---
     float width = bounds.getWidth();
     float height = bounds.getHeight();
     float left = bounds.getX();
@@ -361,7 +574,6 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
     float right = bounds.getRight();
     float bottom = bounds.getBottom();
 
-    // Log frequency scale: 20 Hz to 24000 Hz
     constexpr float minFreq = 20.0f;
     constexpr float maxFreq = 24000.0f;
     float logRange = std::log(maxFreq / minFreq);
@@ -371,7 +583,6 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
         return left + norm * width;
     };
 
-    // Draw subtle frequency grid lines at 100 Hz, 1 kHz, 10 kHz
     g.setColour(juce::Colour(0xff181c26));
     float x100 = freqToX(100.0f);
     float x1k  = freqToX(1000.0f);
@@ -380,24 +591,20 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
     g.drawVerticalLine(static_cast<int>(x1k),  top + 2.0f, bottom - 2.0f);
     g.drawVerticalLine(static_cast<int>(x10k), top + 2.0f, bottom - 2.0f);
 
-    // Subtle frequency axis markings
     g.setColour(juce::Colour(0xff333a4d));
-    g.setFont(juce::FontOptions(7.5f));
-    g.drawText("100", static_cast<int>(x100) - 10, static_cast<int>(bottom) - 10, 20, 9, juce::Justification::centred);
-    g.drawText("1k",  static_cast<int>(x1k) - 8,   static_cast<int>(bottom) - 10, 16, 9, juce::Justification::centred);
-    g.drawText("10k", static_cast<int>(x10k) - 10, static_cast<int>(bottom) - 10, 20, 9, juce::Justification::centred);
+    g.setFont(juce::FontOptions(8.5f));
+    g.drawText("100", static_cast<int>(x100) - 12, static_cast<int>(bottom) - 12, 24, 10, juce::Justification::centred);
+    g.drawText("1k",  static_cast<int>(x1k) - 10,   static_cast<int>(bottom) - 12, 20, 10, juce::Justification::centred);
+    g.drawText("10k", static_cast<int>(x10k) - 12, static_cast<int>(bottom) - 12, 24, 10, juce::Justification::centred);
 
-    // Compute Y mapping and curve path
     juce::Path curvePath;
     float yZero = top + height * 0.5f;
 
     if (plotMode == PlotMode::FilterXY) {
-        // Filter: 0 dB line positioned at 35% height so negative dB roll-off has ample vertical room
         yZero = top + height * 0.35f;
         g.setColour(juce::Colour(0xff222838));
         g.drawHorizontalLine(static_cast<int>(yZero), left + 2.0f, right - 2.0f);
 
-        // Faint +12 dB line
         float yPlus12 = yZero - (12.0f / 36.0f) * (height * 0.55f);
         g.setColour(juce::Colour(0xff161a24));
         g.drawHorizontalLine(static_cast<int>(yPlus12), left + 2.0f, right - 2.0f);
@@ -414,7 +621,6 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
 
             float gainDb = 0.0f;
             if (filterType == 0) {
-                // Off: flat 0 dB
                 gainDb = 0.0f;
             } else {
                 float r = f / fc;
@@ -450,19 +656,16 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
             else curvePath.lineTo(px, py);
         }
 
-        // Draw Cutoff indicator pip on the curve if active
         if (filterType != 0) {
             float xCutoff = freqToX(fc);
             g.setColour(traceCol.withAlpha(0.2f));
             g.drawVerticalLine(static_cast<int>(xCutoff), top + 2.0f, bottom - 2.0f);
         }
     } else if (plotMode == PlotMode::EqXY) {
-        // Bell EQ: 0 dB line positioned at center
         yZero = top + height * 0.5f;
         g.setColour(juce::Colour(0xff222838));
         g.drawHorizontalLine(static_cast<int>(yZero), left + 2.0f, right - 2.0f);
 
-        // Faint +12 dB and -12 dB lines
         float yPlus12  = yZero - (12.0f / 24.0f) * (height * 0.42f);
         float yMinus12 = yZero + (12.0f / 24.0f) * (height * 0.42f);
         g.setColour(juce::Colour(0xff161a24));
@@ -478,12 +681,10 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
             float f = minFreq * std::pow(maxFreq / minFreq, u);
             float px = left + u * width;
 
-            // 1. Peaking Bell Response
             float octDist = std::log2(f / f0);
             float term = (2.0f * octDist) / bw;
             float bellDb = eqGain * (1.0f / (1.0f + term * term));
 
-            // 2. DJ Filter Tilt Response
             float djDb = 0.0f;
             if (eqDJ < 0.49f) {
                 float fCut = minFreq * std::pow(maxFreq / minFreq, eqDJ * 2.0f);
@@ -501,7 +702,6 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
             else curvePath.lineTo(px, py);
         }
 
-        // Draw EQ Bell center frequency marker dot
         float xPeak = freqToX(f0);
         float yPeak = yZero - (eqGain / 24.0f) * (height * 0.42f);
         yPeak = std::clamp(yPeak, top + 2.0f, bottom - 2.0f);
@@ -511,7 +711,6 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
         g.fillEllipse(xPeak - 2.5f, yPeak - 2.5f, 5.0f, 5.0f);
     }
 
-    // Fill area between curve and 0 dB baseline
     juce::Path fillPath(curvePath);
     fillPath.lineTo(right, yZero);
     fillPath.lineTo(left, yZero);
@@ -519,11 +718,8 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
     g.setColour(traceCol.withAlpha(0.12f));
     g.fillPath(fillPath);
 
-    // Glow stroke
     g.setColour(traceCol.withAlpha(0.25f));
     g.strokePath(curvePath, juce::PathStrokeType(2.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-
-    // Crisp trace stroke
     g.setColour(traceCol);
     g.strokePath(curvePath, juce::PathStrokeType(1.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
@@ -675,7 +871,7 @@ void DiagramSliderLabel::mouseWheelMove(const juce::MouseEvent& e, const juce::M
     slider.mouseWheelMove(e.getEventRelativeTo(&slider), wheel);
 }
 
-// --- ROTARY KNOB / HORIZONTAL SLIDER WITH RIGHT CLICK EDITING ---
+// --- ROTARY KNOB SLIDER ---
 
 RotaryKnobSlider::RotaryKnobSlider() {
     setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
@@ -821,7 +1017,6 @@ void LedSelectorComponent::paint(juce::Graphics& g) {
             g.fillRoundedRectangle(r, 3.0f);
         }
 
-        // Draw LED dot
         float ledSize = 6.0f;
         float ledX = r.getX() + 4.5f;
         float ledY = r.getCentreY() - ledSize * 0.5f;
@@ -841,7 +1036,6 @@ void LedSelectorComponent::paint(juce::Graphics& g) {
             g.drawEllipse(ledBounds, 0.8f);
         }
 
-        // Draw Item Text
         auto textBounds = r.withTrimmedLeft(14.0f).withTrimmedRight(2.0f);
         g.setFont(juce::FontOptions(isSel ? 12.0f : 11.5f, juce::Font::bold));
         g.setColour(isSel ? juce::Colours::white : (isHov ? juce::Colour(0xffe6edf8) : juce::Colour(0xffb8c4d8)));
@@ -934,62 +1128,57 @@ void ModuleCardComponent::updateEqParams(float freqHz, float widthOct, float gai
 void ModuleCardComponent::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds().toFloat();
 
-    // Dark sleek card backdrop
     g.setColour(juce::Colour(0xff151821));
     g.fillRoundedRectangle(bounds, 6.0f);
-
-    // Subtle outline
     g.setColour(juce::Colour(0xff222736));
     g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
 
-    // Header color strip
     auto headerStrip = bounds.removeFromTop(3.0f);
     g.setColour(accent);
     g.fillRoundedRectangle(headerStrip, 2.0f);
 
-    // Title label
     g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
     g.setColour(accent);
-    g.drawText(moduleTitle.toUpperCase(), 8, 4, getWidth() - 16, 16, juce::Justification::left, true);
+    g.drawText(moduleTitle.toUpperCase(), 10, 4, getWidth() - 20, 18, juce::Justification::left, true);
 }
 
 void ModuleCardComponent::resized() {
-    auto area = getLocalBounds().reduced(5);
-    area.removeFromTop(18); // Header title
+    oscilloscope.setVisible(false); // Visualization is hosted in Slot 8
 
-    oscilloscope.setBounds(area.removeFromTop(28).reduced(2, 0));
+    auto area = getLocalBounds().reduced(8);
+    area.removeFromTop(22); // Title header
     area.removeFromTop(4);
 
     int count = 4;
     if (ledSelector != nullptr && secondLedSelector != nullptr) {
-        int selH1 = (ledSelector->getNumItems() > 4) ? 26 : 20;
-        int selH2 = (secondLedSelector->getNumItems() > 4) ? 26 : 20;
+        int selH1 = (ledSelector->getNumItems() > 4) ? 28 : 22;
+        int selH2 = (secondLedSelector->getNumItems() > 4) ? 28 : 22;
         ledSelector->setBounds(area.removeFromTop(selH1));
-        area.removeFromTop(2);
-        secondLedSelector->setBounds(area.removeFromTop(selH2));
         area.removeFromTop(4);
+        secondLedSelector->setBounds(area.removeFromTop(selH2));
+        area.removeFromTop(6);
         count = 2;
         labels[2].setVisible(false);
         labels[3].setVisible(false);
         if (knobs[2]) knobs[2]->setVisible(false);
         if (knobs[3]) knobs[3]->setVisible(false);
     } else if (ledSelector != nullptr) {
-        int selH = (ledSelector->getNumItems() > 4) ? 32 : 22;
+        int selH = (ledSelector->getNumItems() > 4) ? 36 : 24;
         ledSelector->setBounds(area.removeFromTop(selH));
-        area.removeFromTop(4);
+        area.removeFromTop(6);
         count = 3;
         labels[3].setVisible(false);
         if (knobs[3]) knobs[3]->setVisible(false);
     }
 
     int rowH = area.getHeight() / count;
-    int labelW = 64;
+    int labelW = 66;
 
     for (int i = 0; i < count; ++i) {
-        auto row = area.removeFromTop(rowH).reduced(0, 1);
+        auto row = area.removeFromTop(rowH).reduced(0, 2);
         labels[i].setVisible(true);
         labels[i].setBounds(row.removeFromLeft(labelW));
-        row.removeFromLeft(2);
+        row.removeFromLeft(4);
         if (knobs[i]) {
             knobs[i]->setVisible(true);
             knobs[i]->setBounds(row);
@@ -997,8 +1186,269 @@ void ModuleCardComponent::resized() {
     }
 }
 
+// --- BLANK PLATE COMPONENT ---
 
-// --- THE KLANG FARMER EDITOR ---
+void BlankPlateComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+    juce::ColourGradient grad(juce::Colour(0xff161920), bounds.getX(), bounds.getY(),
+                              juce::Colour(0xff0d0f14), bounds.getX(), bounds.getBottom(), false);
+    g.setGradientFill(grad);
+    g.fillRoundedRectangle(bounds, 6.0f);
+    g.setColour(juce::Colour(0xff222736));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
+
+    auto drawScrew = [&](float cx, float cy) {
+        g.setColour(juce::Colour(0xff1f2430));
+        g.fillEllipse(cx - 5.0f, cy - 5.0f, 10.0f, 10.0f);
+        g.setColour(juce::Colour(0xff384254));
+        g.drawEllipse(cx - 5.0f, cy - 5.0f, 10.0f, 10.0f, 1.0f);
+        g.setColour(juce::Colour(0xff101318));
+        g.drawLine(cx - 3.0f, cy, cx + 3.0f, cy, 1.2f);
+    };
+
+    drawScrew(bounds.getX() + 12.0f, bounds.getY() + 12.0f);
+    drawScrew(bounds.getRight() - 12.0f, bounds.getY() + 12.0f);
+    drawScrew(bounds.getX() + 12.0f, bounds.getBottom() - 12.0f);
+    drawScrew(bounds.getRight() - 12.0f, bounds.getBottom() - 12.0f);
+
+    g.setColour(juce::Colour(0xff1e222d));
+    g.drawHorizontalLine(static_cast<int>(bounds.getCentreY()), bounds.getX() + 24.0f, bounds.getRight() - 24.0f);
+}
+
+// --- NAVIGATION CARD COMPONENT ---
+
+NavigationCardComponent::NavigationCardComponent() {
+    for (int i = 0; i < pageNames.size(); ++i) {
+        auto btn = std::make_unique<juce::TextButton>(pageNames[i]);
+        btn->setClickingTogglesState(false);
+        int pageIdx = i;
+        btn->onClick = [this, pageIdx]() {
+            setSelectedPage(pageIdx);
+            if (onPageSelected) onPageSelected(pageIdx);
+        };
+        addAndMakeVisible(btn.get());
+        buttons.push_back(std::move(btn));
+    }
+    setSelectedPage(0);
+}
+
+void NavigationCardComponent::setSelectedPage(int pageIndex) {
+    selectedPage = std::clamp(pageIndex, 0, (int)pageNames.size() - 1);
+    for (int i = 0; i < (int)buttons.size(); ++i) {
+        if (i == selectedPage) {
+            buttons[i]->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff00d2ff));
+            buttons[i]->setColour(juce::TextButton::textColourOffId, juce::Colour(0xff0f1115));
+        } else {
+            buttons[i]->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff181c26));
+            buttons[i]->setColour(juce::TextButton::textColourOffId, juce::Colour(0xffb8c4d8));
+        }
+    }
+    repaint();
+}
+
+void NavigationCardComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+    g.setColour(juce::Colour(0xff151821));
+    g.fillRoundedRectangle(bounds, 6.0f);
+    g.setColour(juce::Colour(0xff222736));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
+
+    auto headerStrip = bounds.removeFromTop(3.0f);
+    g.setColour(juce::Colour(0xff00d2ff));
+    g.fillRoundedRectangle(headerStrip, 2.0f);
+
+    g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff00d2ff));
+    g.drawText("PAGES", 10, 4, getWidth() - 20, 18, juce::Justification::left, true);
+}
+
+void NavigationCardComponent::resized() {
+    auto area = getLocalBounds().reduced(8);
+    area.removeFromTop(22);
+    area.removeFromTop(6);
+
+    int n = static_cast<int>(buttons.size());
+    if (n == 0) return;
+    int gap = 6;
+    int btnH = (area.getHeight() - (n - 1) * gap) / n;
+
+    for (int i = 0; i < n; ++i) {
+        buttons[i]->setBounds(area.removeFromTop(btnH));
+        area.removeFromTop(gap);
+    }
+}
+
+// --- FX PICKER CARD COMPONENT ---
+
+FXPickerCardComponent::FXPickerCardComponent(const juce::String& titleText, juce::Colour accentCol)
+    : title(titleText), accent(accentCol)
+{
+    const char* slotNames[4] = { "FX SLOT 1", "FX SLOT 2", "FX SLOT 3", "FX SLOT 4" };
+    for (int i = 0; i < 4; ++i) {
+        labels[i].setText(slotNames[i], juce::dontSendNotification);
+        labels[i].setFont(juce::FontOptions(12.0f, juce::Font::bold));
+        labels[i].setColour(juce::Label::textColourId, juce::Colour(0xffc5d0e0));
+        addAndMakeVisible(labels[i]);
+
+        boxes[i].setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff14161d));
+        boxes[i].setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff2c3240));
+        boxes[i].setColour(juce::ComboBox::textColourId, juce::Colour(0xffe8edf5));
+        boxes[i].setColour(juce::ComboBox::arrowColourId, juce::Colour(0xff8b95a8));
+        addAndMakeVisible(boxes[i]);
+    }
+}
+
+void FXPickerCardComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+    g.setColour(juce::Colour(0xff151821));
+    g.fillRoundedRectangle(bounds, 6.0f);
+    g.setColour(juce::Colour(0xff222736));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
+
+    auto headerStrip = bounds.removeFromTop(3.0f);
+    g.setColour(accent);
+    g.fillRoundedRectangle(headerStrip, 2.0f);
+
+    g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+    g.setColour(accent);
+    g.drawText(title.toUpperCase(), 10, 4, getWidth() - 20, 18, juce::Justification::left, true);
+}
+
+void FXPickerCardComponent::resized() {
+    auto area = getLocalBounds().reduced(10);
+    area.removeFromTop(22);
+    area.removeFromTop(8);
+
+    int rowH = area.getHeight() / 4;
+    for (int i = 0; i < 4; ++i) {
+        auto row = area.removeFromTop(rowH).reduced(0, 4);
+        labels[i].setBounds(row.removeFromTop(20));
+        row.removeFromTop(4);
+        boxes[i].setBounds(row.removeFromTop(28));
+    }
+}
+
+// --- VISUALIZATION CARD COMPONENT ---
+
+VisualizationCardComponent::VisualizationCardComponent(juce::Colour accentColour)
+    : accent(accentColour), oscilloscope(accentColour)
+{
+    addAndMakeVisible(oscilloscope);
+}
+
+void VisualizationCardComponent::setAvailableTabs(const juce::StringArray& tabNames, const std::vector<int>& blockIndices) {
+    currentTabs = tabNames;
+    currentBlockIndices = blockIndices;
+
+    tabButtons.clear();
+    for (int i = 0; i < currentTabs.size(); ++i) {
+        auto btn = std::make_unique<juce::TextButton>(currentTabs[i]);
+        btn->setClickingTogglesState(false);
+        int tabIdx = i;
+        btn->onClick = [this, tabIdx]() {
+            selectTab(tabIdx);
+            if (onTabSelected && tabIdx < (int)currentBlockIndices.size()) {
+                onTabSelected(currentBlockIndices[tabIdx]);
+            }
+        };
+        addAndMakeVisible(btn.get());
+        tabButtons.push_back(std::move(btn));
+    }
+
+    if (selectedTab >= (int)tabButtons.size()) {
+        selectedTab = 0;
+    }
+    updateButtonStyles();
+    resized();
+}
+
+void VisualizationCardComponent::selectTab(int tabIndex) {
+    if (tabIndex >= 0 && tabIndex < (int)tabButtons.size()) {
+        selectedTab = tabIndex;
+        updateButtonStyles();
+    }
+}
+
+void VisualizationCardComponent::selectBlock(int blockIndex) {
+    for (int i = 0; i < (int)currentBlockIndices.size(); ++i) {
+        if (currentBlockIndices[i] == blockIndex) {
+            selectTab(i);
+            break;
+        }
+    }
+}
+
+int VisualizationCardComponent::getCurrentBlockIndex() const {
+    if (selectedTab >= 0 && selectedTab < (int)currentBlockIndices.size()) {
+        return currentBlockIndices[selectedTab];
+    }
+    return -1;
+}
+
+juce::String VisualizationCardComponent::getCurrentTabName() const {
+    if (selectedTab >= 0 && selectedTab < (int)currentTabs.size()) {
+        return currentTabs[selectedTab];
+    }
+    return {};
+}
+
+void VisualizationCardComponent::updateButtonStyles() {
+    for (int i = 0; i < (int)tabButtons.size(); ++i) {
+        if (i == selectedTab) {
+            tabButtons[i]->setColour(juce::TextButton::buttonColourId, accent);
+            tabButtons[i]->setColour(juce::TextButton::textColourOffId, juce::Colour(0xff0f1115));
+        } else {
+            tabButtons[i]->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1a1e28));
+            tabButtons[i]->setColour(juce::TextButton::textColourOffId, juce::Colour(0xffc5d1e8));
+        }
+    }
+    repaint();
+}
+
+void VisualizationCardComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+    g.setColour(juce::Colour(0xff151821));
+    g.fillRoundedRectangle(bounds, 6.0f);
+    g.setColour(juce::Colour(0xff222736));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
+
+    auto headerStrip = bounds.removeFromTop(3.0f);
+    g.setColour(accent);
+    g.fillRoundedRectangle(headerStrip, 2.0f);
+
+    g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+    g.setColour(accent);
+    g.drawText("VISUALIZER", 10, 4, getWidth() - 20, 18, juce::Justification::left, true);
+}
+
+void VisualizationCardComponent::resized() {
+    auto area = getLocalBounds().reduced(8);
+    area.removeFromTop(22);
+    area.removeFromTop(4);
+
+    int numTabs = static_cast<int>(tabButtons.size());
+    if (numTabs > 0) {
+        int cols = (numTabs <= 4) ? 2 : 3;
+        int rows = (numTabs + cols - 1) / cols;
+        int tabGridH = rows * 24 + (rows - 1) * 3;
+        auto tabArea = area.removeFromTop(tabGridH);
+        area.removeFromTop(6);
+
+        float colW = static_cast<float>(tabArea.getWidth() - (cols - 1) * 3) / static_cast<float>(cols);
+        for (int i = 0; i < numTabs; ++i) {
+            int c = i % cols;
+            int r = i / cols;
+            int x = tabArea.getX() + static_cast<int>(c * (colW + 3));
+            int y = tabArea.getY() + r * 27;
+            tabButtons[i]->setBounds(x, y, static_cast<int>(colW), 24);
+        }
+    }
+
+    oscilloscope.setBounds(area);
+}
+
+
+// --- THE KLANG FARMER AUDIO PROCESSOR EDITOR CONSTRUCTOR ---
 
 TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangFarmerAudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p),
@@ -1006,17 +1456,26 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
       mod1TrackSelector(juce::Colour(0xffff7043)),
       mod1TypeSelector(juce::Colour(0xffff7043)),
       pitchEnv1TargetSelector(juce::Colour(0xffffab00)),
+      filter1TypeSelector(juce::Colour(0xff7c4dff)),
+      filter1SlopeSelector(juce::Colour(0xff7c4dff)),
       carrier2TrackingSelector(juce::Colour(0xff00d2ff)),
       mod2TrackSelector(juce::Colour(0xffff7043)),
       mod2TypeSelector(juce::Colour(0xffff7043)),
       pitchEnv2TargetSelector(juce::Colour(0xffffab00)),
+      filter2TypeSelector(juce::Colour(0xff7c4dff)),
+      filter2SlopeSelector(juce::Colour(0xff7c4dff)),
+      filter3TypeSelector(juce::Colour(0xff7c4dff)),
+      filter3SlopeSelector(juce::Colour(0xff7c4dff)),
       driveLimiterSelector(juce::Colour(0xffff4081)),
-      filterTypeSelector(juce::Colour(0xff7c4dff)),
-      filterSlopeSelector(juce::Colour(0xff7c4dff)),
+      fxFilterTypeSelector(juce::Colour(0xff7c4dff)),
+      fxFilterSlopeSelector(juce::Colour(0xff7c4dff)),
       waveFolderTypeSelector(juce::Colour(0xffff5252)),
       combTypeSelector(juce::Colour(0xff26a69a)),
       disperserTypeSelector(juce::Colour(0xffec407a)),
-      ampLimiterSelector(juce::Colour(0xff00e5ff))
+      ampLimiterSelector(juce::Colour(0xff00e5ff)),
+      preLimiterEnableSelector(juce::Colour(0xffffab00)),
+      postLimiterEnableSelector(juce::Colour(0xff00e5ff)),
+      vizCard(juce::Colour(0xff00d2ff))
 {
     setLookAndFeel(&knobLookAndFeel);
 
@@ -1048,905 +1507,781 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     };
     addAndMakeVisible(triggerButton);
 
-    auto makeShapeFormat = [](double val) {
-        float f = static_cast<float>(val);
-        if (f <= 0.20f) return "Sine (" + juce::String(static_cast<int>(f * 500.0f)) + "%)";
-        if (f <= 0.40f) return "Tri (" + juce::String(static_cast<int>((f - 0.20f) * 500.0f)) + "%)";
-        if (f <= 0.60f) return "Saw (" + juce::String(static_cast<int>((f - 0.40f) * 500.0f)) + "%)";
-        return "PWM (" + juce::String(static_cast<int>((f - 0.60f) * 250.0f)) + "%)";
+    // Permanent Slot 1 and Slot 8
+    navCard.onPageSelected = [this](int pageIndex) {
+        setPage(pageIndex);
     };
-    auto makeShapeParse = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(p / 100.0, 0.0, 1.0);
+    addAndMakeVisible(navCard);
+
+    vizCard.onTabSelected = [this](int /*blockIndex*/) {
+        repaint();
+    };
+    addAndMakeVisible(vizCard);
+
+    // Blank plates
+    for (int i = 0; i < 6; ++i) {
+        addChildComponent(&blankPlates[i]);
+    }
+
+    // FX Pickers
+    preFXPickerCard = std::make_unique<FXPickerCardComponent>("PRE-AMP FX PICKER", juce::Colour(0xffff7043));
+    addChildComponent(preFXPickerCard.get());
+
+    postFXPickerCard = std::make_unique<FXPickerCardComponent>("POST-AMP FX PICKER", juce::Colour(0xff00e5ff));
+    addChildComponent(postFXPickerCard.get());
+
+    // --- CREATE MODULE CARDS & CONTROLS ---
+
+    // 1. Carrier 1
+    cardCarrier1 = std::make_unique<ModuleCardComponent>("Carrier 1", juce::Colour(0xff00d2ff));
+    setupBox(carrier1TrackingBox);
+    bindSelector(carrier1TrackingSelector, carrier1TrackingBox, "carrier1_tracking", { "Midi Track", "Fixed Freq", "Fine Semi" });
+    cardCarrier1->setLedSelector(&carrier1TrackingSelector);
+
+    setupKnob(carrier1PitchSlider, juce::Colour(0xff00d2ff), false, 36.0 / 127.0);
+    carrier1PitchSlider.customFormatText = [this](double val) {
+        if (carrier1TrackingBox.getSelectedItemIndex() == 2) return formatSemi(val);
+        if (carrier1TrackingBox.getSelectedItemIndex() == 1) return formatFreqHz(val);
+        return formatMidiNote(val);
+    };
+    carrier1PitchSlider.customParseText = [this](const juce::String& text) {
+        if (carrier1TrackingBox.getSelectedItemIndex() == 2) return parseSemi(text);
+        if (carrier1TrackingBox.getSelectedItemIndex() == 1) return parseFreqHz(text);
+        return parseMidiNote(text);
     };
 
-    auto makeDriveFormat = [](double val) {
-        float db = TbdAudio::normToDriveDb(static_cast<float>(val));
-        return (db >= 0.0f ? "+" : "") + juce::String(db, 1) + " dB";
-    };
-    auto makeDriveParse = [](const juce::String& text) {
-        double db = parseNumberSafe(text, 0.0);
-        return TbdAudio::driveDbToNorm(static_cast<float>(db));
-    };
-
-    auto makeCarrierPitchFormat = [](LedSelectorComponent& sel, double val) -> juce::String {
-        int track = sel.getSelectedIndex();
-        if (track == 0) {
-            float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val));
-            return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
-        } else if (track == 1) {
-            int note = static_cast<int>(std::round(val * 127.0));
-            return getMidiNoteName(note);
-        } else {
-            int offset = static_cast<int>(std::round((val - 0.5) * 120.0));
-            return (offset >= 0 ? "+" : "") + juce::String(offset) + " st";
-        }
-    };
-    auto makeCarrierPitchParse = [](LedSelectorComponent& sel, RotaryKnobSlider& s, const juce::String& text) -> double {
-        int track = sel.getSelectedIndex();
-        double parsed = parseNumberSafe(text, s.getValue());
-        if (track == 0) {
-            double hz = std::clamp(parsed, 20.0, 24000.0);
-            return std::log(hz / 20.0) / std::log(24000.0 / 20.0);
-        } else if (track == 1) {
-            return std::clamp(parsed / 127.0, 0.0, 1.0);
-        } else {
-            return std::clamp(0.5 + parsed / 120.0, 0.0, 1.0);
-        }
-    };
-
-    // 1. CARRIER 1 CARD
-    auto cardCarrier1 = std::make_unique<ModuleCardComponent>("Carrier 1", juce::Colour(0xff00d2ff));
-    bindSelector(carrier1TrackingSelector, carrier1TrackingBox, "carrier1_tracking", { "Fixed Freq", "Fixed Pitch", "MIDI Pitch" }, 3);
-    setupKnob(carrier1PitchSlider, juce::Colour(0xff00d2ff), false, 0.5);
     setupKnob(carrier1ShapeSlider, juce::Colour(0xff00d2ff), false, 0.0);
     carrier1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
-    setupKnob(carrier1DepthSlider, juce::Colour(0xff00d2ff), true, 0.5); // Bipolar, def 0.5
 
-    carrier1PitchSlider.getDefaultValue = [this]() -> double {
-        int track = carrier1TrackingSelector.getSelectedIndex();
-        if (track == 0) return std::log(55.0 / 20.0) / std::log(24000.0 / 20.0);
-        if (track == 1) return 33.0 / 127.0;
-        return 0.5;
-    };
-    carrier1PitchSlider.customFormatText = [this, makeCarrierPitchFormat](double val) {
-        return makeCarrierPitchFormat(carrier1TrackingSelector, val);
-    };
-    carrier1PitchSlider.customParseText = [this, makeCarrierPitchParse](const juce::String& text) {
-        return makeCarrierPitchParse(carrier1TrackingSelector, carrier1PitchSlider, text);
-    };
-    carrier1ShapeSlider.customFormatText = makeShapeFormat;
-    carrier1ShapeSlider.customParseText  = makeShapeParse;
-    carrier1DepthSlider.customFormatText = [](double val) {
-        int pct = static_cast<int>(std::round((val - 0.5) * 400.0));
-        return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
-    };
-    carrier1DepthSlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + p / 400.0, 0.0, 1.0);
-    };
+    setupKnob(carrier1DepthSlider, juce::Colour(0xff00d2ff), false, 0.5);
+    carrier1DepthSlider.customFormatText = formatPercent;
+    carrier1DepthSlider.customParseText  = parsePercent;
 
-    cardCarrier1->setLedSelector(&carrier1TrackingSelector);
     cardCarrier1->setKnob(0, "Pitch", &carrier1PitchSlider);
     cardCarrier1->setKnob(1, "Shape", &carrier1ShapeSlider);
     cardCarrier1->setKnob(2, "Mod Depth", &carrier1DepthSlider);
-    cards.push_back(std::move(cardCarrier1));
+    addChildComponent(cardCarrier1.get());
 
-    // Modulator helper lambdas
-    auto makeModSpeedFormat = [](LedSelectorComponent& trackSel, LedSelectorComponent& typeSel, double val) -> juce::String {
-        int type = typeSel.getSelectedIndex();
-        int track = trackSel.getSelectedIndex();
-        if (type == 1) { // Cyclic sine freq: 0.1 Hz to 24 kHz
-            float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
-            return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
-        }
-        if (track == 0) { // Fixed
-            float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
-            return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
-        } else if (track == 1) { // Following
-            int st = static_cast<int>(std::round((val - 0.5) * 128.0));
-            return (st >= 0 ? "+" : "") + juce::String(st) + " st";
-        } else { // FM Operator
-            if (val <= 0.5) {
-                float denom = 32.0f - static_cast<float>(val * 2.0 * 31.0);
-                return "1:" + juce::String(denom, 1);
-            } else {
-                float num = 1.0f + static_cast<float>((val - 0.5) * 2.0 * 31.0);
-                return juce::String(num, 1) + ":1";
-            }
-        }
-    };
-    auto makeModSpeedParse = [](LedSelectorComponent& trackSel, LedSelectorComponent& typeSel, const juce::String& text) -> double {
-        int type = typeSel.getSelectedIndex();
-        int track = trackSel.getSelectedIndex();
-        if (type == 1 || track == 0) {
-            double p = parseNumberSafe(text, 55.0);
-            double hz = std::clamp(p, 0.1, 24000.0);
-            return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
-        } else if (track == 1) {
-            double p = parseNumberSafe(text, 0.0);
-            return std::clamp(0.5 + p / 128.0, 0.0, 1.0);
-        } else {
-            auto trimmed = text.trim();
-            int colon = trimmed.indexOfChar(':');
-            if (colon > 0) {
-                double left = parseNumberSafe(trimmed.substring(0, colon), 1.0);
-                double right = parseNumberSafe(trimmed.substring(colon + 1), 1.0);
-                if (left > 1.01) {
-                    return std::clamp(0.5 + (left - 1.0) / 62.0, 0.5, 1.0);
-                } else if (right > 1.01) {
-                    return std::clamp((32.0 - right) / 62.0, 0.0, 0.5);
-                }
-            }
-            return 0.5;
-        }
-    };
-
-    // 2. MODULATOR 1 CARD
-    auto cardMod1 = std::make_unique<ModuleCardComponent>("Modulator 1", juce::Colour(0xffff7043));
-    bindSelector(mod1TrackSelector, mod1TrackBox, "mod1_track", { "Fixed", "Following", "FM Operator" }, 3);
-    bindSelector(mod1TypeSelector, mod1TypeBox, "mod1_type", { "Oscillator", "Cyclic", "Noise" }, 3);
-    setupKnob(mod1ShapeSlider, juce::Colour(0xffff7043), false, 0.0);
-    mod1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
-    setupKnob(mod1SpeedSlider, juce::Colour(0xffff7043), false, 0.50934);
-
-    mod1SpeedSlider.getDefaultValue = [this]() -> double {
-        int type = mod1TypeSelector.getSelectedIndex();
-        int track = mod1TrackSelector.getSelectedIndex();
-        if (type == 1) return 1.0; // Cyclic sine freq default 24 kHz
-        if (track == 0) return std::log(55.0 / 0.1) / std::log(24000.0 / 0.1);
-        if (track == 1) return 0.5;
-        return 0.5;
-    };
-    mod1SpeedSlider.customFormatText = [this, makeModSpeedFormat](double val) {
-        return makeModSpeedFormat(mod1TrackSelector, mod1TypeSelector, val);
-    };
-    mod1SpeedSlider.customParseText = [this, makeModSpeedParse](const juce::String& text) {
-        return makeModSpeedParse(mod1TrackSelector, mod1TypeSelector, text);
-    };
-    mod1ShapeSlider.customFormatText = [this, makeShapeFormat](double val) {
-        int type = mod1TypeSelector.getSelectedIndex();
-        if (type == 0) return makeShapeFormat(val);
-        if (type == 1) {
-            if (val >= 0.49 && val <= 0.51) return juce::String("Flat (50%)");
-            if (val < 0.49) {
-                float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val / 0.49));
-                return "LP " + ((hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k" : juce::String(hz, 0));
-            }
-            float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>((val - 0.51) / 0.49));
-            return "HP " + ((hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k" : juce::String(hz, 0));
-        }
-        float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
-        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
-    };
-    mod1ShapeSlider.customParseText = [this, makeShapeParse](const juce::String& text) {
-        int type = mod1TypeSelector.getSelectedIndex();
-        if (type == 0) return makeShapeParse(text);
-        if (type == 1) return 0.5;
-        double hz = std::clamp(parseNumberSafe(text, 24000.0), 0.1, 24000.0);
-        return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
-    };
-
+    // 2. Modulator 1
+    cardMod1 = std::make_unique<ModuleCardComponent>("Modulator 1", juce::Colour(0xffff7043));
+    setupBox(mod1TrackBox);
+    bindSelector(mod1TrackSelector, mod1TrackBox, "mod1_track", { "Fixed", "Follow", "FM Op" });
+    setupBox(mod1TypeBox);
+    bindSelector(mod1TypeSelector, mod1TypeBox, "mod1_type", { "Osc", "Cyclic", "Noise" });
     cardMod1->setLedSelector(&mod1TrackSelector);
     cardMod1->setSecondLedSelector(&mod1TypeSelector);
+
+    setupKnob(mod1ShapeSlider, juce::Colour(0xffff7043), false, 0.0);
+    mod1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
+    mod1ShapeSlider.customFormatText = [this](double val) {
+        if (mod1TypeBox.getSelectedItemIndex() == 1) return formatBipolarPercent(val);
+        if (mod1TypeBox.getSelectedItemIndex() == 2) return formatFreqHz(val);
+        return formatPercent(val);
+    };
+    mod1ShapeSlider.customParseText = [this](const juce::String& text) {
+        if (mod1TypeBox.getSelectedItemIndex() == 1) return parseBipolarPercent(text);
+        if (mod1TypeBox.getSelectedItemIndex() == 2) return parseFreqHz(text);
+        return parsePercent(text);
+    };
+
+    setupKnob(mod1SpeedSlider, juce::Colour(0xffff7043), false, 0.50934);
+    mod1SpeedSlider.customFormatText = [this](double val) {
+        if (mod1TrackBox.getSelectedItemIndex() == 2) return formatRatio(val);
+        if (mod1TrackBox.getSelectedItemIndex() == 1) return formatSemi(val);
+        return formatFreqHz(val);
+    };
+    mod1SpeedSlider.customParseText = [this](const juce::String& text) {
+        if (mod1TrackBox.getSelectedItemIndex() == 2) return parseRatio(text);
+        if (mod1TrackBox.getSelectedItemIndex() == 1) return parseSemi(text);
+        return parseFreqHz(text);
+    };
+
     cardMod1->setKnob(0, "Shape", &mod1ShapeSlider);
     cardMod1->setKnob(1, "Speed", &mod1SpeedSlider);
-    cards.push_back(std::move(cardMod1));
+    addChildComponent(cardMod1.get());
 
-    // Pitch Env helpers
-    auto makePitchEnvSlopeFormat = [](double val) {
-        if (val < 0.33) return "Exp (" + juce::String(static_cast<int>(val * 300.0)) + "%)";
-        if (val < 0.67) return "Lin (" + juce::String(static_cast<int>((val - 0.33) * 300.0)) + "%)";
-        return "Log (" + juce::String(static_cast<int>((val - 0.67) * 300.0)) + "%)";
-    };
-    auto makePitchEnvDepthFormat = [](double val) {
-        float oct = static_cast<float>((val - 0.5) * 10.0);
-        return (oct >= 0.0f ? "+" : "") + juce::String(oct, 1) + " Oct";
-    };
-    auto makePitchEnvDepthParse = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + p / 10.0, 0.0, 1.0);
-    };
-    auto makePitchEnvDecayFormat = [](double val) {
-        float sec = TbdAudio::warp5PointTime(static_cast<float>(val));
-        return (sec < 1.0f) ? juce::String(static_cast<int>(std::round(sec * 1000.0f))) + " ms" : juce::String(sec, 2) + " s";
-    };
-    auto makePitchEnvDecayParse = [](const juce::String& text) {
-        double v = parseNumberSafe(text, 333.0);
-        double sec = (text.containsIgnoreCase("ms")) ? (v / 1000.0) : ((v > 60.0) ? (v / 1000.0) : v);
-        return TbdAudio::unwarp5PointTime(static_cast<float>(sec));
-    };
+    // 3. Pitch Envelope 1
+    cardPitchEnv1 = std::make_unique<ModuleCardComponent>("Pitch Env 1", juce::Colour(0xffffab00));
+    setupBox(pitchEnv1TargetBox);
+    bindSelector(pitchEnv1TargetSelector, pitchEnv1TargetBox, "pitchenv1_target", { "Off", "Carrier", "Mod", "Both" }, 2);
+    cardPitchEnv1->setLedSelector(&pitchEnv1TargetSelector);
 
-    // 3. PITCH ENVELOPE 1 CARD
-    auto cardPitchEnv1 = std::make_unique<ModuleCardComponent>("Pitch Env 1", juce::Colour(0xffffab00));
-    bindSelector(pitchEnv1TargetSelector, pitchEnv1TargetBox, "pitchenv1_target",
-                 { "Off", "Carrier", "Mod", "Both" }, 4);
     setupKnob(pitchEnv1SlopeSlider, juce::Colour(0xffffab00), false, 0.0);
     pitchEnv1SlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
-    setupKnob(pitchEnv1DepthSlider, juce::Colour(0xffffab00), true, 0.5); // Bipolar
+    pitchEnv1SlopeSlider.customFormatText = formatSlope;
+    pitchEnv1SlopeSlider.customParseText  = parseSlope;
+
+    setupKnob(pitchEnv1DepthSlider, juce::Colour(0xffffab00), true, 0.5);
+    pitchEnv1DepthSlider.customFormatText = formatOctaves;
+    pitchEnv1DepthSlider.customParseText  = parseOctaves;
+
     setupKnob(pitchEnv1DecaySlider, juce::Colour(0xffffab00), false, 0.3806);
+    pitchEnv1DecaySlider.customFormatText = formatTimeMs;
+    pitchEnv1DecaySlider.customParseText  = parseTimeMs;
 
-    pitchEnv1SlopeSlider.customFormatText = makePitchEnvSlopeFormat;
-    pitchEnv1DepthSlider.customFormatText = makePitchEnvDepthFormat;
-    pitchEnv1DepthSlider.customParseText  = makePitchEnvDepthParse;
-    pitchEnv1DecaySlider.customFormatText = makePitchEnvDecayFormat;
-    pitchEnv1DecaySlider.customParseText  = makePitchEnvDecayParse;
-
-    cardPitchEnv1->setLedSelector(&pitchEnv1TargetSelector);
     cardPitchEnv1->setKnob(0, "Slope", &pitchEnv1SlopeSlider);
     cardPitchEnv1->setKnob(1, "Depth", &pitchEnv1DepthSlider);
     cardPitchEnv1->setKnob(2, "Decay", &pitchEnv1DecaySlider);
-    cards.push_back(std::move(cardPitchEnv1));
+    addChildComponent(cardPitchEnv1.get());
 
-    // 4. CARRIER 2 CARD
-    auto cardCarrier2 = std::make_unique<ModuleCardComponent>("Carrier 2", juce::Colour(0xff00d2ff));
-    bindSelector(carrier2TrackingSelector, carrier2TrackingBox, "carrier2_tracking", { "Fixed Freq", "Fixed Pitch", "MIDI Pitch" }, 3);
-    setupKnob(carrier2PitchSlider, juce::Colour(0xff00d2ff), false, 0.5);
+    // 4. Filter 1
+    cardFilter1 = std::make_unique<ModuleCardComponent>("Filter 1", juce::Colour(0xff7c4dff));
+    setupBox(filter1TypeBox);
+    bindSelector(filter1TypeSelector, filter1TypeBox, "filter1_type", { "Off", "LPF", "BPF", "HPF", "BRF" }, 3);
+    setupBox(filter1SlopeBox);
+    bindSelector(filter1SlopeSelector, filter1SlopeBox, "filter1_slope", { "-6dB", "-12dB", "-18dB", "-24dB", "-36dB" }, 3);
+    cardFilter1->setLedSelector(&filter1TypeSelector);
+    cardFilter1->setSecondLedSelector(&filter1SlopeSelector);
+
+    setupKnob(filter1CutoffSlider, juce::Colour(0xff7c4dff), false, 1.0);
+    filter1CutoffSlider.customFormatText = formatFreqHz;
+    filter1CutoffSlider.customParseText  = parseFreqHz;
+
+    setupKnob(filter1ResonanceSlider, juce::Colour(0xff7c4dff), false, 0.0);
+    filter1ResonanceSlider.customFormatText = formatPercent;
+    filter1ResonanceSlider.customParseText  = parsePercent;
+
+    cardFilter1->setKnob(0, "Cutoff", &filter1CutoffSlider);
+    cardFilter1->setKnob(1, "Resonance", &filter1ResonanceSlider);
+    addChildComponent(cardFilter1.get());
+
+    // 5. Filter Envelope 1
+    cardFilterEnv1 = std::make_unique<ModuleCardComponent>("Filter Env 1", juce::Colour(0xff7c4dff));
+    setupKnob(filterEnv1SlopeSlider, juce::Colour(0xff7c4dff), false, 0.0);
+    filterEnv1SlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
+    filterEnv1SlopeSlider.customFormatText = formatSlope;
+    filterEnv1SlopeSlider.customParseText  = parseSlope;
+
+    setupKnob(filterEnv1DepthSlider, juce::Colour(0xff7c4dff), true, 0.5);
+    filterEnv1DepthSlider.customFormatText = formatFilterOctaves;
+    filterEnv1DepthSlider.customParseText  = parseFilterOctaves;
+
+    setupKnob(filterEnv1DecaySlider, juce::Colour(0xff7c4dff), false, 0.3806);
+    filterEnv1DecaySlider.customFormatText = formatTimeMs;
+    filterEnv1DecaySlider.customParseText  = parseTimeMs;
+
+    setupKnob(filterEnv1PostDriveSlider, juce::Colour(0xff7c4dff), false, 0.5);
+    filterEnv1PostDriveSlider.customFormatText = formatDb;
+    filterEnv1PostDriveSlider.customParseText  = parseDb;
+
+    cardFilterEnv1->setKnob(0, "Slope", &filterEnv1SlopeSlider);
+    cardFilterEnv1->setKnob(1, "Depth", &filterEnv1DepthSlider);
+    cardFilterEnv1->setKnob(2, "Decay", &filterEnv1DecaySlider);
+    cardFilterEnv1->setKnob(3, "Post-Drive", &filterEnv1PostDriveSlider);
+    addChildComponent(cardFilterEnv1.get());
+
+    // 6. Carrier 2
+    cardCarrier2 = std::make_unique<ModuleCardComponent>("Carrier 2", juce::Colour(0xff00d2ff));
+    setupBox(carrier2TrackingBox);
+    bindSelector(carrier2TrackingSelector, carrier2TrackingBox, "carrier2_tracking", { "Midi Track", "Fixed Freq", "Fine Semi" });
+    cardCarrier2->setLedSelector(&carrier2TrackingSelector);
+
+    setupKnob(carrier2PitchSlider, juce::Colour(0xff00d2ff), false, 36.0 / 127.0);
+    carrier2PitchSlider.customFormatText = [this](double val) {
+        if (carrier2TrackingBox.getSelectedItemIndex() == 2) return formatSemi(val);
+        if (carrier2TrackingBox.getSelectedItemIndex() == 1) return formatFreqHz(val);
+        return formatMidiNote(val);
+    };
+    carrier2PitchSlider.customParseText = [this](const juce::String& text) {
+        if (carrier2TrackingBox.getSelectedItemIndex() == 2) return parseSemi(text);
+        if (carrier2TrackingBox.getSelectedItemIndex() == 1) return parseFreqHz(text);
+        return parseMidiNote(text);
+    };
+
     setupKnob(carrier2ShapeSlider, juce::Colour(0xff00d2ff), false, 0.0);
     carrier2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
-    setupKnob(carrier2DepthSlider, juce::Colour(0xff00d2ff), true, 0.5);
 
-    carrier2PitchSlider.getDefaultValue = [this]() -> double {
-        int track = carrier2TrackingSelector.getSelectedIndex();
-        if (track == 0) return std::log(55.0 / 20.0) / std::log(24000.0 / 20.0);
-        if (track == 1) return 33.0 / 127.0;
-        return 0.5;
-    };
-    carrier2PitchSlider.customFormatText = [this, makeCarrierPitchFormat](double val) {
-        return makeCarrierPitchFormat(carrier2TrackingSelector, val);
-    };
-    carrier2PitchSlider.customParseText = [this, makeCarrierPitchParse](const juce::String& text) {
-        return makeCarrierPitchParse(carrier2TrackingSelector, carrier2PitchSlider, text);
-    };
-    carrier2ShapeSlider.customFormatText = makeShapeFormat;
-    carrier2ShapeSlider.customParseText  = makeShapeParse;
-    carrier2DepthSlider.customFormatText = carrier1DepthSlider.customFormatText;
-    carrier2DepthSlider.customParseText  = carrier1DepthSlider.customParseText;
+    setupKnob(carrier2DepthSlider, juce::Colour(0xff00d2ff), false, 0.5);
+    carrier2DepthSlider.customFormatText = formatPercent;
+    carrier2DepthSlider.customParseText  = parsePercent;
 
-    cardCarrier2->setLedSelector(&carrier2TrackingSelector);
     cardCarrier2->setKnob(0, "Pitch", &carrier2PitchSlider);
     cardCarrier2->setKnob(1, "Shape", &carrier2ShapeSlider);
     cardCarrier2->setKnob(2, "Mod Depth", &carrier2DepthSlider);
-    cards.push_back(std::move(cardCarrier2));
+    addChildComponent(cardCarrier2.get());
 
-    // 5. MODULATOR 2 CARD
-    auto cardMod2 = std::make_unique<ModuleCardComponent>("Modulator 2", juce::Colour(0xffff7043));
-    bindSelector(mod2TrackSelector, mod2TrackBox, "mod2_track", { "Fixed", "Following", "FM Operator" }, 3);
-    bindSelector(mod2TypeSelector, mod2TypeBox, "mod2_type", { "Oscillator", "Cyclic", "Noise" }, 3);
-    setupKnob(mod2ShapeSlider, juce::Colour(0xffff7043), false, 0.0);
-    mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
-    setupKnob(mod2SpeedSlider, juce::Colour(0xffff7043), false, 0.50934);
-
-    mod2SpeedSlider.getDefaultValue = [this]() -> double {
-        int type = mod2TypeSelector.getSelectedIndex();
-        int track = mod2TrackSelector.getSelectedIndex();
-        if (type == 1) return 1.0; // Cyclic sine freq default 24 kHz
-        if (track == 0) return std::log(55.0 / 0.1) / std::log(24000.0 / 0.1);
-        if (track == 1) return 0.5;
-        return 0.5;
-    };
-    mod2SpeedSlider.customFormatText = [this, makeModSpeedFormat](double val) {
-        return makeModSpeedFormat(mod2TrackSelector, mod2TypeSelector, val);
-    };
-    mod2SpeedSlider.customParseText = [this, makeModSpeedParse](const juce::String& text) {
-        return makeModSpeedParse(mod2TrackSelector, mod2TypeSelector, text);
-    };
-    mod2ShapeSlider.customFormatText = [this, makeShapeFormat](double val) {
-        int type = mod2TypeSelector.getSelectedIndex();
-        if (type == 0) return makeShapeFormat(val);
-        if (type == 1) {
-            if (val >= 0.49 && val <= 0.51) return juce::String("Flat (50%)");
-            if (val < 0.49) {
-                float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val / 0.49));
-                return "LP " + ((hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k" : juce::String(hz, 0));
-            }
-            float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>((val - 0.51) / 0.49));
-            return "HP " + ((hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k" : juce::String(hz, 0));
-        }
-        float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
-        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
-    };
-    mod2ShapeSlider.customParseText = [this, makeShapeParse](const juce::String& text) {
-        int type = mod2TypeSelector.getSelectedIndex();
-        if (type == 0) return makeShapeParse(text);
-        if (type == 1) return 0.5;
-        double hz = std::clamp(parseNumberSafe(text, 24000.0), 0.1, 24000.0);
-        return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
-    };
-
+    // 7. Modulator 2
+    cardMod2 = std::make_unique<ModuleCardComponent>("Modulator 2", juce::Colour(0xffff7043));
+    setupBox(mod2TrackBox);
+    bindSelector(mod2TrackSelector, mod2TrackBox, "mod2_track", { "Fixed", "Follow", "FM Op" });
+    setupBox(mod2TypeBox);
+    bindSelector(mod2TypeSelector, mod2TypeBox, "mod2_type", { "Osc", "Cyclic", "Noise" });
     cardMod2->setLedSelector(&mod2TrackSelector);
     cardMod2->setSecondLedSelector(&mod2TypeSelector);
+
+    setupKnob(mod2ShapeSlider, juce::Colour(0xffff7043), false, 0.0);
+    mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
+    mod2ShapeSlider.customFormatText = [this](double val) {
+        if (mod2TypeBox.getSelectedItemIndex() == 1) return formatBipolarPercent(val);
+        if (mod2TypeBox.getSelectedItemIndex() == 2) return formatFreqHz(val);
+        return formatPercent(val);
+    };
+    mod2ShapeSlider.customParseText = [this](const juce::String& text) {
+        if (mod2TypeBox.getSelectedItemIndex() == 1) return parseBipolarPercent(text);
+        if (mod2TypeBox.getSelectedItemIndex() == 2) return parseFreqHz(text);
+        return parsePercent(text);
+    };
+
+    setupKnob(mod2SpeedSlider, juce::Colour(0xffff7043), false, 0.50934);
+    mod2SpeedSlider.customFormatText = [this](double val) {
+        if (mod2TrackBox.getSelectedItemIndex() == 2) return formatRatio(val);
+        if (mod2TrackBox.getSelectedItemIndex() == 1) return formatSemi(val);
+        return formatFreqHz(val);
+    };
+    mod2SpeedSlider.customParseText = [this](const juce::String& text) {
+        if (mod2TrackBox.getSelectedItemIndex() == 2) return parseRatio(text);
+        if (mod2TrackBox.getSelectedItemIndex() == 1) return parseSemi(text);
+        return parseFreqHz(text);
+    };
+
     cardMod2->setKnob(0, "Shape", &mod2ShapeSlider);
     cardMod2->setKnob(1, "Speed", &mod2SpeedSlider);
-    cards.push_back(std::move(cardMod2));
+    addChildComponent(cardMod2.get());
 
-    // 6. PITCH ENVELOPE 2 CARD
-    auto cardPitchEnv2 = std::make_unique<ModuleCardComponent>("Pitch Env 2", juce::Colour(0xffffab00));
-    bindSelector(pitchEnv2TargetSelector, pitchEnv2TargetBox, "pitchenv2_target",
-                 { "Off", "Carrier", "Mod", "Both" }, 4);
+    // 8. Pitch Envelope 2
+    cardPitchEnv2 = std::make_unique<ModuleCardComponent>("Pitch Env 2", juce::Colour(0xffffab00));
+    setupBox(pitchEnv2TargetBox);
+    bindSelector(pitchEnv2TargetSelector, pitchEnv2TargetBox, "pitchenv2_target", { "Off", "Carrier", "Mod", "Both" }, 2);
+    cardPitchEnv2->setLedSelector(&pitchEnv2TargetSelector);
+
     setupKnob(pitchEnv2SlopeSlider, juce::Colour(0xffffab00), false, 0.0);
     pitchEnv2SlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
-    setupKnob(pitchEnv2DepthSlider, juce::Colour(0xffffab00), true, 0.5); // Bipolar
+    pitchEnv2SlopeSlider.customFormatText = formatSlope;
+    pitchEnv2SlopeSlider.customParseText  = parseSlope;
+
+    setupKnob(pitchEnv2DepthSlider, juce::Colour(0xffffab00), true, 0.5);
+    pitchEnv2DepthSlider.customFormatText = formatOctaves;
+    pitchEnv2DepthSlider.customParseText  = parseOctaves;
+
     setupKnob(pitchEnv2DecaySlider, juce::Colour(0xffffab00), false, 0.3806);
+    pitchEnv2DecaySlider.customFormatText = formatTimeMs;
+    pitchEnv2DecaySlider.customParseText  = parseTimeMs;
 
-    pitchEnv2SlopeSlider.customFormatText = makePitchEnvSlopeFormat;
-    pitchEnv2DepthSlider.customFormatText = makePitchEnvDepthFormat;
-    pitchEnv2DepthSlider.customParseText  = makePitchEnvDepthParse;
-    pitchEnv2DecaySlider.customFormatText = makePitchEnvDecayFormat;
-    pitchEnv2DecaySlider.customParseText  = makePitchEnvDecayParse;
-
-    cardPitchEnv2->setLedSelector(&pitchEnv2TargetSelector);
     cardPitchEnv2->setKnob(0, "Slope", &pitchEnv2SlopeSlider);
     cardPitchEnv2->setKnob(1, "Depth", &pitchEnv2DepthSlider);
     cardPitchEnv2->setKnob(2, "Decay", &pitchEnv2DecaySlider);
-    cards.push_back(std::move(cardPitchEnv2));
+    addChildComponent(cardPitchEnv2.get());
 
-    // 7. NOISE TRANSIENT CARD (4 Knobs)
-    auto cardNoise = std::make_unique<ModuleCardComponent>("Noise Transient", juce::Colour(0xff00e676));
-    setupKnob(noiseShRateSlider, juce::Colour(0xff00e676), false, 1.0);
-    setupKnob(noiseFilterSlider, juce::Colour(0xff00e676), true, 0.5); // Bipolar
-    setupKnob(noiseDriveSlider, juce::Colour(0xff00e676), false, 0.5);
-    setupKnob(noiseDecaySlider, juce::Colour(0xff00e676), false, 0.3078);
+    // 9. Filter 2
+    cardFilter2 = std::make_unique<ModuleCardComponent>("Filter 2", juce::Colour(0xff7c4dff));
+    setupBox(filter2TypeBox);
+    bindSelector(filter2TypeSelector, filter2TypeBox, "filter2_type", { "Off", "LPF", "BPF", "HPF", "BRF" }, 3);
+    setupBox(filter2SlopeBox);
+    bindSelector(filter2SlopeSelector, filter2SlopeBox, "filter2_slope", { "-6dB", "-12dB", "-18dB", "-24dB", "-36dB" }, 3);
+    cardFilter2->setLedSelector(&filter2TypeSelector);
+    cardFilter2->setSecondLedSelector(&filter2SlopeSelector);
 
-    noiseShRateSlider.customFormatText = [](double val) {
-        float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
-        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
-    };
-    noiseShRateSlider.customParseText = [](const juce::String& text) {
-        double hz = std::clamp(parseNumberSafe(text, 24000.0), 0.1, 24000.0);
-        return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
-    };
-    auto makeDjFilterFormat = [](double val) {
-        if (val >= 0.49 && val <= 0.51) return juce::String("Flat (50%)");
-        if (val < 0.49) {
-            float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val / 0.49));
-            return "LP " + ((hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k" : juce::String(hz, 0));
-        }
-        float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>((val - 0.51) / 0.49));
-        return "HP " + ((hz >= 1000.0f) ? juce::String(hz / 1000.0f, 1) + "k" : juce::String(hz, 0));
-    };
-    noiseFilterSlider.customFormatText = makeDjFilterFormat;
-    noiseDriveSlider.customFormatText  = makeDriveFormat;
-    noiseDriveSlider.customParseText   = makeDriveParse;
-    noiseDecaySlider.customFormatText = [](double val) {
-        float sec = TbdAudio::warpNoiseDecayTime(static_cast<float>(val));
-        return (sec < 1.0f) ? juce::String(static_cast<int>(std::round(sec * 1000.0f))) + " ms" : juce::String(sec, 2) + " s";
-    };
-    noiseDecaySlider.customParseText = [](const juce::String& text) {
-        double v = parseNumberSafe(text, 100.0);
-        double sec = (text.containsIgnoreCase("ms")) ? (v / 1000.0) : ((v > 60.0) ? (v / 1000.0) : v);
-        return TbdAudio::unwarpNoiseDecayTime(static_cast<float>(sec));
-    };
+    setupKnob(filter2CutoffSlider, juce::Colour(0xff7c4dff), false, 1.0);
+    filter2CutoffSlider.customFormatText = formatFreqHz;
+    filter2CutoffSlider.customParseText  = parseFreqHz;
+
+    setupKnob(filter2ResonanceSlider, juce::Colour(0xff7c4dff), false, 0.0);
+    filter2ResonanceSlider.customFormatText = formatPercent;
+    filter2ResonanceSlider.customParseText  = parsePercent;
+
+    cardFilter2->setKnob(0, "Cutoff", &filter2CutoffSlider);
+    cardFilter2->setKnob(1, "Resonance", &filter2ResonanceSlider);
+    addChildComponent(cardFilter2.get());
+
+    // 10. Filter Envelope 2
+    cardFilterEnv2 = std::make_unique<ModuleCardComponent>("Filter Env 2", juce::Colour(0xff7c4dff));
+    setupKnob(filterEnv2SlopeSlider, juce::Colour(0xff7c4dff), false, 0.0);
+    filterEnv2SlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
+    filterEnv2SlopeSlider.customFormatText = formatSlope;
+    filterEnv2SlopeSlider.customParseText  = parseSlope;
+
+    setupKnob(filterEnv2DepthSlider, juce::Colour(0xff7c4dff), true, 0.5);
+    filterEnv2DepthSlider.customFormatText = formatFilterOctaves;
+    filterEnv2DepthSlider.customParseText  = parseFilterOctaves;
+
+    setupKnob(filterEnv2DecaySlider, juce::Colour(0xff7c4dff), false, 0.3806);
+    filterEnv2DecaySlider.customFormatText = formatTimeMs;
+    filterEnv2DecaySlider.customParseText  = parseTimeMs;
+
+    setupKnob(filterEnv2PostDriveSlider, juce::Colour(0xff7c4dff), false, 0.5);
+    filterEnv2PostDriveSlider.customFormatText = formatDb;
+    filterEnv2PostDriveSlider.customParseText  = parseDb;
+
+    cardFilterEnv2->setKnob(0, "Slope", &filterEnv2SlopeSlider);
+    cardFilterEnv2->setKnob(1, "Depth", &filterEnv2DepthSlider);
+    cardFilterEnv2->setKnob(2, "Decay", &filterEnv2DecaySlider);
+    cardFilterEnv2->setKnob(3, "Post-Drive", &filterEnv2PostDriveSlider);
+    addChildComponent(cardFilterEnv2.get());
+
+    // 11. Noise Transient
+    cardNoise = std::make_unique<ModuleCardComponent>("Noise Transient", juce::Colour(0xff90a4ae));
+    setupKnob(noiseShRateSlider, juce::Colour(0xff90a4ae), false, 1.0);
+    noiseShRateSlider.customFormatText = formatFreqHz;
+    noiseShRateSlider.customParseText  = parseFreqHz;
+
+    setupKnob(noiseFilterSlider, juce::Colour(0xff90a4ae), true, 0.5);
+    noiseFilterSlider.customFormatText = formatBipolarPercent;
+    noiseFilterSlider.customParseText  = parseBipolarPercent;
+
+    setupKnob(noiseDriveSlider, juce::Colour(0xff90a4ae), false, 0.5);
+    noiseDriveSlider.customFormatText = formatDb;
+    noiseDriveSlider.customParseText  = parseDb;
+
+    setupKnob(noiseDecaySlider, juce::Colour(0xff90a4ae), false, 0.3078);
+    noiseDecaySlider.customFormatText = formatNoiseTimeMs;
+    noiseDecaySlider.customParseText  = parseNoiseTimeMs;
 
     cardNoise->setKnob(0, "S&H Rate", &noiseShRateSlider);
     cardNoise->setKnob(1, "Filter", &noiseFilterSlider);
     cardNoise->setKnob(2, "Drive", &noiseDriveSlider);
     cardNoise->setKnob(3, "Decay", &noiseDecaySlider);
-    cards.push_back(std::move(cardNoise));
+    addChildComponent(cardNoise.get());
 
-    // 8. MIXER CARD (4 Knobs)
-    auto cardMixer = std::make_unique<ModuleCardComponent>("Mixer", juce::Colour(0xff40c4ff));
-    setupKnob(mixerCarrier1LevelSlider, juce::Colour(0xff40c4ff), false, 0.5);
-    setupKnob(mixerCarrier2LevelSlider, juce::Colour(0xff40c4ff), false, 0.0); // 0% default
-    setupKnob(mixerRingModSlider, juce::Colour(0xff40c4ff), false, 0.0);       // 0% default
-    setupKnob(mixerNoiseLevelSlider, juce::Colour(0xff40c4ff), false, 0.0);     // 0% default
+    // 12. Filter 3 (Transients Filter)
+    cardFilter3 = std::make_unique<ModuleCardComponent>("Filter 3", juce::Colour(0xff7c4dff));
+    setupBox(filter3TypeBox);
+    bindSelector(filter3TypeSelector, filter3TypeBox, "filter3_type", { "Off", "LPF", "BPF", "HPF", "BRF" }, 3);
+    setupBox(filter3SlopeBox);
+    bindSelector(filter3SlopeSelector, filter3SlopeBox, "filter3_slope", { "-6dB", "-12dB", "-18dB", "-24dB", "-36dB" }, 3);
+    cardFilter3->setLedSelector(&filter3TypeSelector);
+    cardFilter3->setSecondLedSelector(&filter3SlopeSelector);
 
-    mixerCarrier2LevelSlider.getDefaultValue = []() { return 0.5; };
+    setupKnob(filter3CutoffSlider, juce::Colour(0xff7c4dff), false, 1.0);
+    filter3CutoffSlider.customFormatText = formatFreqHz;
+    filter3CutoffSlider.customParseText  = parseFreqHz;
+
+    setupKnob(filter3ResonanceSlider, juce::Colour(0xff7c4dff), false, 0.0);
+    filter3ResonanceSlider.customFormatText = formatPercent;
+    filter3ResonanceSlider.customParseText  = parsePercent;
+
+    cardFilter3->setKnob(0, "Cutoff", &filter3CutoffSlider);
+    cardFilter3->setKnob(1, "Resonance", &filter3ResonanceSlider);
+    addChildComponent(cardFilter3.get());
+
+    // 13. Filter Envelope 3 (Transients Filter Env)
+    cardFilterEnv3 = std::make_unique<ModuleCardComponent>("Filter Env 3", juce::Colour(0xff7c4dff));
+    setupKnob(filterEnv3SlopeSlider, juce::Colour(0xff7c4dff), false, 0.0);
+    filterEnv3SlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
+    filterEnv3SlopeSlider.customFormatText = formatSlope;
+    filterEnv3SlopeSlider.customParseText  = parseSlope;
+
+    setupKnob(filterEnv3DepthSlider, juce::Colour(0xff7c4dff), true, 0.5);
+    filterEnv3DepthSlider.customFormatText = formatFilterOctaves;
+    filterEnv3DepthSlider.customParseText  = parseFilterOctaves;
+
+    setupKnob(filterEnv3DecaySlider, juce::Colour(0xff7c4dff), false, 0.3078);
+    filterEnv3DecaySlider.customFormatText = formatNoiseTimeMs;
+    filterEnv3DecaySlider.customParseText  = parseNoiseTimeMs;
+
+    setupKnob(filterEnv3PostDriveSlider, juce::Colour(0xff7c4dff), false, 0.5);
+    filterEnv3PostDriveSlider.customFormatText = formatDb;
+    filterEnv3PostDriveSlider.customParseText  = parseDb;
+
+    cardFilterEnv3->setKnob(0, "Slope", &filterEnv3SlopeSlider);
+    cardFilterEnv3->setKnob(1, "Depth", &filterEnv3DepthSlider);
+    cardFilterEnv3->setKnob(2, "Decay", &filterEnv3DecaySlider);
+    cardFilterEnv3->setKnob(3, "Post-Drive", &filterEnv3PostDriveSlider);
+    addChildComponent(cardFilterEnv3.get());
+
+    // 14. Mixer
+    cardMixer = std::make_unique<ModuleCardComponent>("Mixer", juce::Colour(0xff26a69a));
+    setupKnob(mixerCarrier1LevelSlider, juce::Colour(0xff26a69a), false, 0.5);
+    mixerCarrier1LevelSlider.customFormatText = formatMixerLevel;
+    mixerCarrier1LevelSlider.customParseText  = parseMixerLevel;
+
+    setupKnob(mixerCarrier2LevelSlider, juce::Colour(0xff26a69a), false, 0.0);
     mixerCarrier2LevelSlider.setDoubleClickReturnValue(true, 0.5);
-    mixerRingModSlider.getDefaultValue = []() { return 0.5; };
+    mixerCarrier2LevelSlider.customFormatText = formatMixerLevel;
+    mixerCarrier2LevelSlider.customParseText  = parseMixerLevel;
+
+    setupKnob(mixerRingModSlider, juce::Colour(0xff26a69a), false, 0.0);
     mixerRingModSlider.setDoubleClickReturnValue(true, 0.5);
-    mixerNoiseLevelSlider.getDefaultValue = []() { return 0.5; };
+    mixerRingModSlider.customFormatText = formatMixerLevel;
+    mixerRingModSlider.customParseText  = parseMixerLevel;
+
+    setupKnob(mixerNoiseLevelSlider, juce::Colour(0xff26a69a), false, 0.0);
     mixerNoiseLevelSlider.setDoubleClickReturnValue(true, 0.5);
-
-    auto format0to400Pct = [](double val) {
-        float pct = (val <= 0.5) ? static_cast<float>(val * 200.0) : static_cast<float>(100.0 + (val - 0.5) * 600.0);
-        return juce::String(static_cast<int>(std::round(pct))) + "%";
-    };
-    auto parse0to400Pct = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 100.0);
-        return (p <= 100.0) ? std::clamp(p / 200.0, 0.0, 0.5) : std::clamp(0.5 + (p - 100.0) / 600.0, 0.5, 1.0);
-    };
-
-    mixerCarrier1LevelSlider.customFormatText = format0to400Pct;
-    mixerCarrier1LevelSlider.customParseText  = parse0to400Pct;
-    mixerCarrier2LevelSlider.customFormatText = format0to400Pct;
-    mixerCarrier2LevelSlider.customParseText  = parse0to400Pct;
-    mixerRingModSlider.customFormatText       = format0to400Pct;
-    mixerRingModSlider.customParseText        = parse0to400Pct;
-    mixerNoiseLevelSlider.customFormatText    = format0to400Pct;
-    mixerNoiseLevelSlider.customParseText     = parse0to400Pct;
+    mixerNoiseLevelSlider.customFormatText = formatMixerLevel;
+    mixerNoiseLevelSlider.customParseText  = parseMixerLevel;
 
     cardMixer->setKnob(0, "Carrier 1", &mixerCarrier1LevelSlider);
     cardMixer->setKnob(1, "Carrier 2", &mixerCarrier2LevelSlider);
-    cardMixer->setKnob(2, "RingMod",   &mixerRingModSlider);
-    cardMixer->setKnob(3, "Noise Lvl", &mixerNoiseLevelSlider);
-    cards.push_back(std::move(cardMixer));
+    cardMixer->setKnob(2, "RingMod", &mixerRingModSlider);
+    cardMixer->setKnob(3, "Noise", &mixerNoiseLevelSlider);
+    addChildComponent(cardMixer.get());
 
-    // 9. DRIVE CARD (Limiter selector + 3 Knobs)
-    auto cardDrive = std::make_unique<ModuleCardComponent>("Drive", juce::Colour(0xffff4081));
-    bindSelector(driveLimiterSelector, driveLimiterBox, "drive_limiter", { "Off", "On" }, 2);
-    setupKnob(driveAmountSlider, juce::Colour(0xffff4081), false, 0.5);
-    setupKnob(driveBiasSlider, juce::Colour(0xffff4081), true, 0.5); // Bipolar
-    setupKnob(driveFilterSlider, juce::Colour(0xffff4081), true, 0.5); // Bipolar
-
-    driveAmountSlider.customFormatText = [](double val) {
-        float db = (val <= 0.5) ? static_cast<float>(-6.0 + val * 12.0) : static_cast<float>((val - 0.5) * 48.0);
-        return (db >= 0 ? "+" : "") + juce::String(db, 1) + " dB";
-    };
-    driveAmountSlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return (p <= 0.0) ? std::clamp((p + 6.0) / 12.0, 0.0, 0.5) : std::clamp(0.5 + p / 48.0, 0.5, 1.0);
-    };
-    driveBiasSlider.customFormatText = [](double val) {
-        float b = static_cast<float>((val - 0.5) * 2.0);
-        return (b >= 0 ? "+" : "") + juce::String(b, 2);
-    };
-    driveBiasSlider.customParseText = [](const juce::String& text) {
-        double b = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + b * 0.5, 0.0, 1.0);
-    };
-    driveFilterSlider.customFormatText = makeDjFilterFormat;
-
+    // 15. Drive
+    cardDrive = std::make_unique<ModuleCardComponent>("Drive", juce::Colour(0xffff4081));
+    setupBox(driveLimiterBox);
+    bindSelector(driveLimiterSelector, driveLimiterBox, "drive_limiter", { "Off", "On" });
     cardDrive->setLedSelector(&driveLimiterSelector);
+
+    setupKnob(driveAmountSlider, juce::Colour(0xffff4081), false, 0.5);
+    driveAmountSlider.customFormatText = formatDb;
+    driveAmountSlider.customParseText  = parseDb;
+
+    setupKnob(driveBiasSlider, juce::Colour(0xffff4081), true, 0.5);
+    driveBiasSlider.customFormatText = formatBipolarPercent;
+    driveBiasSlider.customParseText  = parseBipolarPercent;
+
+    setupKnob(driveFilterSlider, juce::Colour(0xffff4081), true, 0.5);
+    driveFilterSlider.customFormatText = formatBipolarPercent;
+    driveFilterSlider.customParseText  = parseBipolarPercent;
+
     cardDrive->setKnob(0, "Drive", &driveAmountSlider);
     cardDrive->setKnob(1, "Bias", &driveBiasSlider);
-    cardDrive->setKnob(2, "Post-Filter", &driveFilterSlider);
-    cards.push_back(std::move(cardDrive));
+    cardDrive->setKnob(2, "Filter", &driveFilterSlider);
+    addChildComponent(cardDrive.get());
 
-    // 10. FILTER CARD
-    auto cardFilter = std::make_unique<ModuleCardComponent>("Filter", juce::Colour(0xff7c4dff));
-    bindSelector(filterTypeSelector, filterTypeBox, "filter_type",
-                 { "Off", "LPF", "BPF", "HPF", "BRF" }, 5);
-    bindSelector(filterSlopeSelector, filterSlopeBox, "filter_slope",
-                 { "-6dB", "-12dB", "-18dB", "-24dB", "-36dB" }, 5);
-    setupKnob(filterCutoffSlider, juce::Colour(0xff7c4dff), false, 1.0);
-    setupKnob(filterResonanceSlider, juce::Colour(0xff7c4dff), false, 0.0); // 0% unipolar
+    // 16. Standalone FX Filter
+    cardFXFilter = std::make_unique<ModuleCardComponent>("FX Filter", juce::Colour(0xff7c4dff));
+    setupBox(fxFilterTypeBox);
+    bindSelector(fxFilterTypeSelector, fxFilterTypeBox, "fxfilter_type", { "Off", "LPF", "BPF", "HPF", "BRF" }, 3);
+    setupBox(fxFilterSlopeBox);
+    bindSelector(fxFilterSlopeSelector, fxFilterSlopeBox, "fxfilter_slope", { "-6dB", "-12dB", "-18dB", "-24dB", "-36dB" }, 3);
+    cardFXFilter->setLedSelector(&fxFilterTypeSelector);
+    cardFXFilter->setSecondLedSelector(&fxFilterSlopeSelector);
 
-    filterCutoffSlider.customFormatText = [](double val) {
-        float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
-        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
-    };
-    filterCutoffSlider.customParseText = [](const juce::String& text) {
-        double hz = std::clamp(parseNumberSafe(text, 24000.0), 0.1, 24000.0);
-        return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
-    };
-    filterResonanceSlider.customFormatText = [](double val) {
-        return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
-    };
-    filterResonanceSlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(p / 100.0, 0.0, 1.0);
-    };
+    setupKnob(fxFilterCutoffSlider, juce::Colour(0xff7c4dff), false, 1.0);
+    fxFilterCutoffSlider.customFormatText = formatFreqHz;
+    fxFilterCutoffSlider.customParseText  = parseFreqHz;
 
-    cardFilter->setPlotMode(MiniOscilloscopeComponent::PlotMode::FilterXY);
-    cardFilter->setLedSelector(&filterTypeSelector);
-    cardFilter->setSecondLedSelector(&filterSlopeSelector);
-    cardFilter->setKnob(0, "Cutoff", &filterCutoffSlider);
-    cardFilter->setKnob(1, "Resonance", &filterResonanceSlider);
-    cards.push_back(std::move(cardFilter));
+    setupKnob(fxFilterResonanceSlider, juce::Colour(0xff7c4dff), false, 0.0);
+    fxFilterResonanceSlider.customFormatText = formatPercent;
+    fxFilterResonanceSlider.customParseText  = parsePercent;
 
-    // 11. FILTER ENVELOPE CARD (4 Knobs)
-    auto cardFilterEnv = std::make_unique<ModuleCardComponent>("Filter Env", juce::Colour(0xffb388ff));
-    setupKnob(filterEnvSlopeSlider, juce::Colour(0xffb388ff), false, 0.0);
-    filterEnvSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
-    setupKnob(filterEnvDepthSlider, juce::Colour(0xffb388ff), true, 0.5); // Bipolar, def 0 octaves
-    setupKnob(filterEnvDecaySlider, juce::Colour(0xffb388ff), false, 0.3806);
-    setupKnob(filterEnvPostDriveSlider, juce::Colour(0xffb388ff), false, 0.5);
+    cardFXFilter->setKnob(0, "Cutoff", &fxFilterCutoffSlider);
+    cardFXFilter->setKnob(1, "Resonance", &fxFilterResonanceSlider);
+    addChildComponent(cardFXFilter.get());
 
-    filterEnvSlopeSlider.customFormatText = makePitchEnvSlopeFormat;
-    filterEnvDepthSlider.customFormatText = [](double val) {
-        float oct = static_cast<float>((val - 0.5) * 20.0);
-        return (oct >= 0.0f ? "+" : "") + juce::String(oct, 1) + " Oct";
-    };
-    filterEnvDepthSlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + p / 20.0, 0.0, 1.0);
-    };
-    filterEnvDecaySlider.customFormatText = makePitchEnvDecayFormat;
-    filterEnvDecaySlider.customParseText = makePitchEnvDecayParse;
-    filterEnvPostDriveSlider.customFormatText = makeDriveFormat;
-    filterEnvPostDriveSlider.customParseText = makeDriveParse;
-
-    cardFilterEnv->setKnob(0, "Slope", &filterEnvSlopeSlider);
-    cardFilterEnv->setKnob(1, "Depth", &filterEnvDepthSlider);
-    cardFilterEnv->setKnob(2, "Decay", &filterEnvDecaySlider);
-    cardFilterEnv->setKnob(3, "Post-Drive", &filterEnvPostDriveSlider);
-    cards.push_back(std::move(cardFilterEnv));
-
-    // 12. WAVE FOLDER CARD (Type selector + 3 Knobs)
-    auto cardWaveFolder = std::make_unique<ModuleCardComponent>("Wave Folder", juce::Colour(0xffff5252));
-    bindSelector(waveFolderTypeSelector, waveFolderTypeBox, "wavefolder_type", { "Off", "On" }, 2);
-    setupKnob(waveFolderFoldSlider, juce::Colour(0xffff5252), false, 0.0);
-    setupKnob(waveFolderBiasSlider, juce::Colour(0xffff5252), true, 0.5); // Bipolar
-    setupKnob(waveFolderFilterSlider, juce::Colour(0xffff5252), true, 0.5); // Bipolar
-
-    waveFolderFoldSlider.customFormatText = [](double val) {
-        return juce::String(val * 8.0, 1) + " folds";
-    };
-    waveFolderFoldSlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(p / 8.0, 0.0, 1.0);
-    };
-    waveFolderBiasSlider.customFormatText = [](double val) {
-        float b = static_cast<float>((val - 0.5) * 2.0);
-        return (b >= 0 ? "+" : "") + juce::String(b, 2);
-    };
-    waveFolderBiasSlider.customParseText = [](const juce::String& text) {
-        double b = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + b * 0.5, 0.0, 1.0);
-    };
-    waveFolderFilterSlider.customFormatText = makeDjFilterFormat;
-
+    // 17. Wave Folder
+    cardWaveFolder = std::make_unique<ModuleCardComponent>("Wave Folder", juce::Colour(0xffff5252));
+    setupBox(waveFolderTypeBox);
+    bindSelector(waveFolderTypeSelector, waveFolderTypeBox, "wavefolder_type", { "Off", "On" });
     cardWaveFolder->setLedSelector(&waveFolderTypeSelector);
+
+    setupKnob(waveFolderFoldSlider, juce::Colour(0xffff5252), false, 0.0);
+    waveFolderFoldSlider.customFormatText = formatWavefolds;
+    waveFolderFoldSlider.customParseText  = parseWavefolds;
+
+    setupKnob(waveFolderBiasSlider, juce::Colour(0xffff5252), true, 0.5);
+    waveFolderBiasSlider.customFormatText = formatBipolarPercent;
+    waveFolderBiasSlider.customParseText  = parseBipolarPercent;
+
+    setupKnob(waveFolderFilterSlider, juce::Colour(0xffff5252), true, 0.5);
+    waveFolderFilterSlider.customFormatText = formatBipolarPercent;
+    waveFolderFilterSlider.customParseText  = parseBipolarPercent;
+
     cardWaveFolder->setKnob(0, "Fold", &waveFolderFoldSlider);
     cardWaveFolder->setKnob(1, "Bias", &waveFolderBiasSlider);
-    cardWaveFolder->setKnob(2, "Post-Filter", &waveFolderFilterSlider);
-    cards.push_back(std::move(cardWaveFolder));
+    cardWaveFolder->setKnob(2, "Filter", &waveFolderFilterSlider);
+    addChildComponent(cardWaveFolder.get());
 
-    // 13. RINGMOD CARD (4 Knobs)
-    auto cardRingMod = std::make_unique<ModuleCardComponent>("RingMod", juce::Colour(0xffff4081));
-    setupKnob(ringModShapeSlider, juce::Colour(0xffff4081), false, 0.0);
+    // 18. RingMod
+    cardRingMod = std::make_unique<ModuleCardComponent>("RingMod FX", juce::Colour(0xffff7043));
+    setupKnob(ringModShapeSlider, juce::Colour(0xffff7043), false, 0.0);
     ringModShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
-    setupKnob(ringModRateSlider, juce::Colour(0xffff4081), false, 0.50934);
-    setupKnob(ringModAmountSlider, juce::Colour(0xffff4081), false, 0.0);
-    setupKnob(ringModWidthSlider, juce::Colour(0xffff4081), true, 0.5); // Bipolar
+    ringModShapeSlider.customFormatText = formatPercent;
+    ringModShapeSlider.customParseText  = parsePercent;
 
-    ringModShapeSlider.customFormatText = makeShapeFormat;
-    ringModShapeSlider.customParseText  = makeShapeParse;
-    ringModRateSlider.customFormatText = [](double val) {
-        float hz = 0.1f * std::pow(24000.0f / 0.1f, static_cast<float>(val));
-        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
-    };
-    ringModRateSlider.customParseText = [](const juce::String& text) {
-        double hz = std::clamp(parseNumberSafe(text, 55.0), 0.1, 24000.0);
-        return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
-    };
-    ringModAmountSlider.customFormatText = [](double val) {
-        return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
-    };
-    ringModAmountSlider.customParseText = [](const juce::String& text) {
-        return std::clamp(parseNumberSafe(text, 0.0) / 100.0, 0.0, 1.0);
-    };
-    ringModWidthSlider.customFormatText = [](double val) {
-        int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
-        return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
-    };
-    ringModWidthSlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
-    };
+    setupKnob(ringModRateSlider, juce::Colour(0xffff7043), false, 0.50934);
+    ringModRateSlider.customFormatText = formatFreqHz;
+    ringModRateSlider.customParseText  = parseFreqHz;
 
-    cardRingMod->setKnob(0, "Shape", &ringModShapeSlider);
+    setupKnob(ringModAmountSlider, juce::Colour(0xffff7043), false, 0.0);
+    ringModAmountSlider.customFormatText = formatPercent;
+    ringModAmountSlider.customParseText  = parsePercent;
+
+    setupKnob(ringModWidthSlider, juce::Colour(0xffff7043), true, 0.5);
+    ringModWidthSlider.customFormatText = formatBipolarPercent;
+    ringModWidthSlider.customParseText  = parseBipolarPercent;
+
+    cardRingMod->setKnob(0, "Waveform", &ringModShapeSlider);
     cardRingMod->setKnob(1, "Rate", &ringModRateSlider);
     cardRingMod->setKnob(2, "Amount", &ringModAmountSlider);
     cardRingMod->setKnob(3, "Width", &ringModWidthSlider);
-    cards.push_back(std::move(cardRingMod));
+    addChildComponent(cardRingMod.get());
 
-    // 14. FREQUENCY SHIFTER CARD (4 Knobs)
-    auto cardFreqShift = std::make_unique<ModuleCardComponent>("Freq Shifter", juce::Colour(0xff69f0ae));
-    setupKnob(freqShiftShiftSlider, juce::Colour(0xff69f0ae), true, 0.5); // Bipolar
-    setupKnob(freqShiftRangeSlider, juce::Colour(0xff69f0ae), false, TbdAudio::rangeHzToNorm(3.0f));
-    setupKnob(freqShiftBlendSlider, juce::Colour(0xff69f0ae), true, 0.5); // Bipolar
-    setupKnob(freqShiftWidthSlider, juce::Colour(0xff69f0ae), true, 0.5); // Bipolar
-
-    freqShiftRangeSlider.customFormatText = [](double val) {
-        float hz = TbdAudio::normToRangeHz(static_cast<float>(val));
-        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 1) + " Hz";
-    };
-    freqShiftRangeSlider.customParseText = [](const juce::String& text) {
-        double hz = std::clamp(parseNumberSafe(text, 3.0), 0.0, 5000.0);
-        return TbdAudio::rangeHzToNorm(static_cast<float>(hz));
-    };
+    // 19. Frequency Shifter
+    cardFreqShift = std::make_unique<ModuleCardComponent>("Freq Shifter", juce::Colour(0xff00e676));
+    setupKnob(freqShiftShiftSlider, juce::Colour(0xff00e676), true, 0.5);
     freqShiftShiftSlider.customFormatText = [this](double val) {
-        float r = TbdAudio::normToRangeHz(static_cast<float>(freqShiftRangeSlider.getValue()));
-        float shiftHz = static_cast<float>((val - 0.5) * 2.0) * r;
-        return (shiftHz >= 0 ? "+" : "") + juce::String(shiftHz, 1) + " Hz";
+        float maxRange = TbdAudio::normToRangeHz(static_cast<float>(freqShiftRangeSlider.getValue()));
+        float hz = static_cast<float>((val - 0.5) * 2.0 * maxRange);
+        return (hz > 0 ? "+" : "") + juce::String(hz, 1) + " Hz";
     };
     freqShiftShiftSlider.customParseText = [this](const juce::String& text) {
-        float r = TbdAudio::normToRangeHz(static_cast<float>(freqShiftRangeSlider.getValue()));
-        if (r < 0.0001f) return 0.5;
-        double s = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + (s / r) * 0.5, 0.0, 1.0);
+        float maxRange = TbdAudio::normToRangeHz(static_cast<float>(freqShiftRangeSlider.getValue()));
+        double hz = parseNumberSafe(text, 0.0);
+        return std::clamp((hz / (2.0 * maxRange)) + 0.5, 0.0, 1.0);
     };
-    freqShiftRangeSlider.onValueChange = [this]() {
-        freqShiftShiftSlider.updateText();
+
+    setupKnob(freqShiftRangeSlider, juce::Colour(0xff00e676), false, TbdAudio::rangeHzToNorm(3.0f));
+    freqShiftRangeSlider.customFormatText = [](double val) {
+        float hz = TbdAudio::normToRangeHz(static_cast<float>(val));
+        if (hz >= 1000.0f) return juce::String(hz / 1000.0f, 2) + " kHz";
+        return juce::String(hz, 1) + " Hz";
     };
+    freqShiftRangeSlider.customParseText = [](const juce::String& text) {
+        double hz = parseNumberSafe(text, 3.0);
+        return static_cast<double>(TbdAudio::rangeHzToNorm(static_cast<float>(hz)));
+    };
+
+    setupKnob(freqShiftBlendSlider, juce::Colour(0xff00e676), true, 0.5);
     freqShiftBlendSlider.customFormatText = [](double val) {
-        int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
-        if (pct == 0) return juce::String("Dry (0%)");
-        if (pct < 0) return juce::String(pct) + "% (Inv)";
-        return "+" + juce::String(pct) + "%";
+        int b = static_cast<int>(std::round((val - 0.5) * 200.0));
+        if (b == 0) return juce::String("Dry");
+        return (b > 0 ? "+" : "") + juce::String(b) + "%";
     };
-    freqShiftBlendSlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
-    };
-    freqShiftWidthSlider.customFormatText = ringModWidthSlider.customFormatText;
-    freqShiftWidthSlider.customParseText = ringModWidthSlider.customParseText;
+    freqShiftBlendSlider.customParseText = parseBipolarPercent;
+
+    setupKnob(freqShiftWidthSlider, juce::Colour(0xff00e676), true, 0.5);
+    freqShiftWidthSlider.customFormatText = formatBipolarPercent;
+    freqShiftWidthSlider.customParseText  = parseBipolarPercent;
 
     cardFreqShift->setKnob(0, "Shift", &freqShiftShiftSlider);
     cardFreqShift->setKnob(1, "Range", &freqShiftRangeSlider);
     cardFreqShift->setKnob(2, "Blend", &freqShiftBlendSlider);
     cardFreqShift->setKnob(3, "Width", &freqShiftWidthSlider);
-    cards.push_back(std::move(cardFreqShift));
+    addChildComponent(cardFreqShift.get());
 
-    // 15. GRIT FX CARD (4 Knobs)
-    auto cardGrit = std::make_unique<ModuleCardComponent>("Grit FX", juce::Colour(0xffffd740));
-    setupKnob(gritBitsSlider, juce::Colour(0xffffd740), false, 1.0);
-    setupKnob(gritRateSlider, juce::Colour(0xffffd740), false, 1.0);
-    setupKnob(gritLowSlider, juce::Colour(0xffffd740), true, 0.5); // Bipolar, def 0 dB
-    setupKnob(gritHighSlider, juce::Colour(0xffffd740), true, 0.5); // Bipolar, def 0 dB
+    // 20. Grit FX
+    cardGrit = std::make_unique<ModuleCardComponent>("Grit FX", juce::Colour(0xffff9100));
+    setupKnob(gritBitsSlider, juce::Colour(0xffff9100), false, 1.0);
+    gritBitsSlider.customFormatText = formatBits;
+    gritBitsSlider.customParseText  = parseBits;
 
-    gritBitsSlider.customFormatText = [](double val) {
-        return juce::String(1.0 + val * 15.0, 1) + " Bits";
-    };
-    gritBitsSlider.customParseText = [](const juce::String& text) {
-        double b = std::clamp(parseNumberSafe(text, 16.0), 1.0, 16.0);
-        return (b - 1.0) / 15.0;
-    };
-    gritRateSlider.customFormatText = [](double val) {
-        float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val));
-        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 0) + " Hz";
-    };
-    gritRateSlider.customParseText = [](const juce::String& text) {
-        double hz = std::clamp(parseNumberSafe(text, 24000.0), 20.0, 24000.0);
-        return std::log(hz / 20.0) / std::log(24000.0 / 20.0);
-    };
-    auto formatShelfDb = [](double val) {
-        double db = (val - 0.5) * 48.0;
-        return (db >= 0.0 ? "+" : "") + juce::String(db, 1) + " dB";
-    };
-    auto parseShelfDb = [](const juce::String& text) {
-        double db = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + db / 48.0, 0.0, 1.0);
-    };
-    gritLowSlider.customFormatText = formatShelfDb;
-    gritLowSlider.customParseText  = parseShelfDb;
-    gritHighSlider.customFormatText = formatShelfDb;
-    gritHighSlider.customParseText  = parseShelfDb;
+    setupKnob(gritRateSlider, juce::Colour(0xffff9100), false, 1.0);
+    gritRateSlider.customFormatText = formatFreqHz;
+    gritRateSlider.customParseText  = parseFreqHz;
 
-    cardGrit->setKnob(0, "Bit Crush", &gritBitsSlider);
-    cardGrit->setKnob(1, "Downsample", &gritRateSlider);
-    cardGrit->setKnob(2, "Low Shelf", &gritLowSlider);
-    cardGrit->setKnob(3, "High Shelf", &gritHighSlider);
-    cards.push_back(std::move(cardGrit));
+    setupKnob(gritLowSlider, juce::Colour(0xffff9100), true, 0.5);
+    gritLowSlider.customFormatText = formatBipolarDb;
+    gritLowSlider.customParseText  = parseBipolarDb;
 
-    // 16. COMB FILTER CARD
-    auto cardComb = std::make_unique<ModuleCardComponent>("Comb Filter", juce::Colour(0xff26a69a));
-    bindSelector(combTypeSelector, combTypeBox, "comb_type", { "Off", "On" }, 2);
-    setupKnob(combDampeningSlider, juce::Colour(0xff26a69a), false, 1.0);
-    setupKnob(combCutoffSlider, juce::Colour(0xff26a69a), false, 1.0);
-    setupKnob(combResonanceSlider, juce::Colour(0xff26a69a), true, 0.5); // Bipolar, 0% default
+    setupKnob(gritHighSlider, juce::Colour(0xffff9100), true, 0.5);
+    gritHighSlider.customFormatText = formatBipolarDb;
+    gritHighSlider.customParseText  = parseBipolarDb;
 
-    combDampeningSlider.customFormatText = filterCutoffSlider.customFormatText;
-    combDampeningSlider.customParseText  = filterCutoffSlider.customParseText;
-    combCutoffSlider.customFormatText    = filterCutoffSlider.customFormatText;
-    combCutoffSlider.customParseText     = filterCutoffSlider.customParseText;
+    cardGrit->setKnob(0, "Bit Rate", &gritBitsSlider);
+    cardGrit->setKnob(1, "Sample Rate", &gritRateSlider);
+    cardGrit->setKnob(2, "Low", &gritLowSlider);
+    cardGrit->setKnob(3, "High", &gritHighSlider);
+    addChildComponent(cardGrit.get());
 
-    combResonanceSlider.customFormatText = [](double val) {
-        int pct = static_cast<int>(std::round((val - 0.5) * 200.0));
-        return (pct >= 0 ? "+" : "") + juce::String(pct) + "%";
-    };
-    combResonanceSlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0);
-        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
-    };
-
+    // 21. Comb Filter
+    cardComb = std::make_unique<ModuleCardComponent>("Comb Filter", juce::Colour(0xff26a69a));
+    setupBox(combTypeBox);
+    bindSelector(combTypeSelector, combTypeBox, "comb_type", { "Off", "On" });
     cardComb->setLedSelector(&combTypeSelector);
+
+    setupKnob(combDampeningSlider, juce::Colour(0xff26a69a), false, 1.0);
+    combDampeningSlider.customFormatText = formatFreqHz;
+    combDampeningSlider.customParseText  = parseFreqHz;
+
+    setupKnob(combCutoffSlider, juce::Colour(0xff26a69a), false, 1.0);
+    combCutoffSlider.customFormatText = formatFreqHz;
+    combCutoffSlider.customParseText  = parseFreqHz;
+
+    setupKnob(combResonanceSlider, juce::Colour(0xff26a69a), true, 0.5);
+    combResonanceSlider.customFormatText = formatBipolarPercent;
+    combResonanceSlider.customParseText  = parseBipolarPercent;
+
     cardComb->setKnob(0, "Dampening", &combDampeningSlider);
     cardComb->setKnob(1, "Cutoff", &combCutoffSlider);
     cardComb->setKnob(2, "Resonance", &combResonanceSlider);
-    cards.push_back(std::move(cardComb));
+    addChildComponent(cardComb.get());
 
-    // 17. DISPERSER CARD
-    auto cardDisperser = std::make_unique<ModuleCardComponent>("Disperser", juce::Colour(0xffec407a));
-    bindSelector(disperserTypeSelector, disperserTypeBox, "disperser_type", { "Off", "On" }, 2);
-    setupKnob(disperserAmountSlider, juce::Colour(0xffec407a), false, 4.0 / 32.0); // 4 APFs default
-    setupKnob(disperserCutoffSlider, juce::Colour(0xffec407a), false, 0.62124); // 220 Hz default!
-    setupKnob(disperserResonanceSlider, juce::Colour(0xffec407a), true, 0.5); // Bipolar, 0% default
-    disperserCutoffSlider.getDefaultValue = []() { return 0.62124; };
-
-    disperserAmountSlider.customFormatText = [](double val) {
-        int stages = static_cast<int>(std::round(val * 32.0));
-        return juce::String(stages) + " APFs";
-    };
-    disperserAmountSlider.customParseText = [](const juce::String& text) {
-        double s = parseNumberSafe(text, 4.0);
-        return std::clamp(s / 32.0, 0.0, 1.0);
-    };
-    disperserCutoffSlider.customFormatText = filterCutoffSlider.customFormatText;
-    disperserCutoffSlider.customParseText  = filterCutoffSlider.customParseText;
-    disperserResonanceSlider.customFormatText = combResonanceSlider.customFormatText;
-    disperserResonanceSlider.customParseText  = combResonanceSlider.customParseText;
-
+    // 22. Disperser
+    cardDisperser = std::make_unique<ModuleCardComponent>("Disperser", juce::Colour(0xffec407a));
+    setupBox(disperserTypeBox);
+    bindSelector(disperserTypeSelector, disperserTypeBox, "disperser_type", { "Off", "On" });
     cardDisperser->setLedSelector(&disperserTypeSelector);
+
+    setupKnob(disperserAmountSlider, juce::Colour(0xffec407a), false, 4.0 / 32.0);
+    disperserAmountSlider.customFormatText = formatStages;
+    disperserAmountSlider.customParseText  = parseStages;
+
+    setupKnob(disperserCutoffSlider, juce::Colour(0xffec407a), false, 0.62124);
+    disperserCutoffSlider.customFormatText = formatFreqHz;
+    disperserCutoffSlider.customParseText  = parseFreqHz;
+
+    setupKnob(disperserResonanceSlider, juce::Colour(0xffec407a), true, 0.5);
+    disperserResonanceSlider.customFormatText = formatBipolarPercent;
+    disperserResonanceSlider.customParseText  = parseBipolarPercent;
+
     cardDisperser->setKnob(0, "Amount", &disperserAmountSlider);
     cardDisperser->setKnob(1, "Cutoff", &disperserCutoffSlider);
     cardDisperser->setKnob(2, "Resonance", &disperserResonanceSlider);
-    cards.push_back(std::move(cardDisperser));
+    addChildComponent(cardDisperser.get());
 
-    // 18. EQ CARD (4 Knobs)
-    auto cardEQ = std::make_unique<ModuleCardComponent>("Bell EQ", juce::Colour(0xff40c4ff));
-    setupKnob(eqFreqSlider, juce::Colour(0xff40c4ff), false, 1.0);
-    setupKnob(eqWidthSlider, juce::Colour(0xff40c4ff), false, 0.0);
-    setupKnob(eqGainSlider, juce::Colour(0xff40c4ff), true, 0.5);
-    setupKnob(eqFilterSlider, juce::Colour(0xff40c4ff), true, 0.5);
+    // 23. Bell EQ
+    cardEQ = std::make_unique<ModuleCardComponent>("Bell EQ", juce::Colour(0xff29b6f6));
+    setupKnob(eqFreqSlider, juce::Colour(0xff29b6f6), false, 1.0);
+    eqFreqSlider.customFormatText = formatEqFreqHz;
+    eqFreqSlider.customParseText  = parseEqFreqHz;
 
-    eqFreqSlider.customFormatText = [](double val) {
-        float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val));
-        return (hz >= 1000.0f) ? juce::String(hz / 1000.0f, 2) + " kHz" : juce::String(hz, 0) + " Hz";
-    };
-    eqFreqSlider.customParseText = [](const juce::String& text) {
-        double hz = std::clamp(parseNumberSafe(text, 24000.0), 20.0, 24000.0);
-        return std::log(hz / 20.0) / std::log(24000.0 / 20.0);
-    };
+    setupKnob(eqWidthSlider, juce::Colour(0xff29b6f6), false, 0.0);
     eqWidthSlider.customFormatText = [](double val) {
-        float oct = 0.1f * std::pow(10.0f / 0.1f, static_cast<float>(val));
+        float oct = 0.1f * std::pow(100.0f, static_cast<float>(val));
         return juce::String(oct, 2) + " oct";
     };
     eqWidthSlider.customParseText = [](const juce::String& text) {
-        double oct = std::clamp(parseNumberSafe(text, 0.1), 0.1, 10.0);
-        return std::log(oct / 0.1) / std::log(10.0 / 0.1);
+        double oct = parseNumberSafe(text, 0.1);
+        oct = std::clamp(oct, 0.1, 10.0);
+        return std::log(oct / 0.1) / std::log(100.0);
     };
-    eqGainSlider.customFormatText = formatShelfDb;
-    eqGainSlider.customParseText  = parseShelfDb;
-    eqFilterSlider.customFormatText = makeDjFilterFormat;
 
-    cardEQ->setPlotMode(MiniOscilloscopeComponent::PlotMode::EqXY);
-    cardEQ->setKnob(0, "Frequency", &eqFreqSlider);
-    cardEQ->setKnob(1, "Width",     &eqWidthSlider);
-    cardEQ->setKnob(2, "Gain",      &eqGainSlider);
+    setupKnob(eqGainSlider, juce::Colour(0xff29b6f6), true, 0.5);
+    eqGainSlider.customFormatText = formatBipolarDb;
+    eqGainSlider.customParseText  = parseBipolarDb;
+
+    setupKnob(eqFilterSlider, juce::Colour(0xff29b6f6), true, 0.5);
+    eqFilterSlider.customFormatText = formatBipolarPercent;
+    eqFilterSlider.customParseText  = parseBipolarPercent;
+
+    cardEQ->setKnob(0, "Freq", &eqFreqSlider);
+    cardEQ->setKnob(1, "Width", &eqWidthSlider);
+    cardEQ->setKnob(2, "Gain", &eqGainSlider);
     cardEQ->setKnob(3, "DJ Filter", &eqFilterSlider);
-    cards.push_back(std::move(cardEQ));
+    addChildComponent(cardEQ.get());
 
-    // 19. AMP CARD
-    auto cardAmp = std::make_unique<ModuleCardComponent>("Amp", juce::Colour(0xff00e5ff));
-    bindSelector(ampLimiterSelector, ampLimiterBox, "amp_limiter", { "Off", "On" }, 2);
+    // 24. Amp
+    cardAmp = std::make_unique<ModuleCardComponent>("Amplifier", juce::Colour(0xff00e5ff));
+    setupBox(ampLimiterBox);
+    bindSelector(ampLimiterSelector, ampLimiterBox, "amp_limiter", { "Off", "On" });
+    cardAmp->setLedSelector(&ampLimiterSelector);
+
     setupKnob(ampLevelSlider, juce::Colour(0xff00e5ff), false, 1.0);
-    setupKnob(ampPanSlider, juce::Colour(0xff00e5ff), true, 0.5); // Bipolar
-    setupKnob(ampDriveSlider, juce::Colour(0xff00e5ff), false, 0.5);
+    ampLevelSlider.customFormatText = formatPercent;
+    ampLevelSlider.customParseText  = parsePercent;
 
-    ampLevelSlider.customFormatText = [](double val) {
-        return juce::String(static_cast<int>(std::round(val * 100.0))) + "%";
-    };
-    ampLevelSlider.customParseText = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 100.0);
-        return std::clamp(p / 100.0, 0.0, 1.0);
-    };
+    setupKnob(ampPanSlider, juce::Colour(0xff00e5ff), true, 0.5);
     ampPanSlider.customFormatText = [](double val) {
         int p = static_cast<int>(std::round((val - 0.5) * 200.0));
         if (p == 0) return juce::String("Center");
-        if (p < 0) return juce::String(-p) + "% L";
-        return juce::String(p) + "% R";
+        return (p < 0 ? juce::String(-p) + "% L" : juce::String(p) + "% R");
     };
-    ampPanSlider.customParseText = [](const juce::String& text) {
-        if (text.containsIgnoreCase("c")) return 0.5;
-        double p = parseNumberSafe(text, 0.0);
-        if (text.containsIgnoreCase("l")) p = -std::abs(p);
-        return std::clamp(0.5 + p / 200.0, 0.0, 1.0);
-    };
-    ampDriveSlider.customFormatText = makeDriveFormat;
-    ampDriveSlider.customParseText  = makeDriveParse;
+    ampPanSlider.customParseText = parseBipolarPercent;
 
-    cardAmp->setLedSelector(&ampLimiterSelector);
+    setupKnob(ampDriveSlider, juce::Colour(0xff00e5ff), false, 0.5);
+    ampDriveSlider.customFormatText = formatDb;
+    ampDriveSlider.customParseText  = parseDb;
+
     cardAmp->setKnob(0, "Level", &ampLevelSlider);
-    cardAmp->setKnob(1, "Pan",   &ampPanSlider);
+    cardAmp->setKnob(1, "Pan", &ampPanSlider);
     cardAmp->setKnob(2, "Drive", &ampDriveSlider);
-    cards.push_back(std::move(cardAmp));
+    addChildComponent(cardAmp.get());
 
-    // 20. AMP ENVELOPE CARD (4 Knobs)
-    auto cardAmpEnv = std::make_unique<ModuleCardComponent>("Amp Env", juce::Colour(0xff64ffda));
-    setupKnob(ampEnvClapsSlider, juce::Colour(0xff64ffda), false, 0.0);
-    setupKnob(ampEnvClapSpeedSlider, juce::Colour(0xff64ffda), false, 0.1429);
-    setupKnob(ampEnvSlopeSlider, juce::Colour(0xff64ffda), false, 0.0);
+    // 25. Amp Envelope
+    cardAmpEnv = std::make_unique<ModuleCardComponent>("Amp Envelope", juce::Colour(0xff00e5ff));
+    setupKnob(ampEnvClapsSlider, juce::Colour(0xff00e5ff), false, 0.0);
+    ampEnvClapsSlider.customFormatText = formatClaps;
+    ampEnvClapsSlider.customParseText  = parseClaps;
+
+    setupKnob(ampEnvClapSpeedSlider, juce::Colour(0xff00e5ff), false, 2.0 / 14.0);
+    ampEnvClapSpeedSlider.customFormatText = formatClapSpeed;
+    ampEnvClapSpeedSlider.customParseText  = parseClapSpeed;
+
+    setupKnob(ampEnvSlopeSlider, juce::Colour(0xff00e5ff), false, 0.0);
     ampEnvSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
-    setupKnob(ampEnvDecaySlider, juce::Colour(0xff64ffda), false, 0.3806);
+    ampEnvSlopeSlider.customFormatText = formatSlope;
+    ampEnvSlopeSlider.customParseText  = parseSlope;
 
-    ampEnvClapsSlider.customFormatText = [](double val) {
-        int c = static_cast<int>(std::round(val * 32.0));
-        return juce::String(c) + " claps";
-    };
-    ampEnvClapsSlider.customParseText = [](const juce::String& text) {
-        return std::clamp(parseNumberSafe(text, 0.0) / 32.0, 0.0, 1.0);
-    };
-    ampEnvClapSpeedSlider.customFormatText = [](double val) {
-        return juce::String(1.0 + val * 14.0, 1) + " ms";
-    };
-    ampEnvClapSpeedSlider.customParseText = [](const juce::String& text) {
-        double v = std::clamp(parseNumberSafe(text, 3.0), 1.0, 15.0);
-        return (v - 1.0) / 14.0;
-    };
-    ampEnvSlopeSlider.customFormatText = makePitchEnvSlopeFormat;
-    ampEnvDecaySlider.customFormatText = makePitchEnvDecayFormat;
-    ampEnvDecaySlider.customParseText  = makePitchEnvDecayParse;
+    setupKnob(ampEnvDecaySlider, juce::Colour(0xff00e5ff), false, 0.3806);
+    ampEnvDecaySlider.customFormatText = formatTimeMs;
+    ampEnvDecaySlider.customParseText  = parseTimeMs;
 
     cardAmpEnv->setKnob(0, "Claps", &ampEnvClapsSlider);
     cardAmpEnv->setKnob(1, "Clap Speed", &ampEnvClapSpeedSlider);
     cardAmpEnv->setKnob(2, "Slope", &ampEnvSlopeSlider);
     cardAmpEnv->setKnob(3, "Decay", &ampEnvDecaySlider);
-    cards.push_back(std::move(cardAmpEnv));
+    addChildComponent(cardAmpEnv.get());
 
-    // 21. VELOCITY CARD (4 Knobs)
-    auto cardVel = std::make_unique<ModuleCardComponent>("Velocity", juce::Colour(0xff80cbc4));
-    setupKnob(velSlopeSlider, juce::Colour(0xff80cbc4), false, 0.0); // Exponential default
+    // 26. Pre-Amp Limiter
+    cardPreLimiter = std::make_unique<ModuleCardComponent>("Pre Limiter", juce::Colour(0xffffab00));
+    setupBox(preLimiterEnableBox);
+    bindSelector(preLimiterEnableSelector, preLimiterEnableBox, "pre_limiter_enable", { "Off", "On" });
+    cardPreLimiter->setLedSelector(&preLimiterEnableSelector);
+
+    setupKnob(preLimiterGainSlider, juce::Colour(0xffffab00), false, 12.0 / 36.0);
+    preLimiterGainSlider.customFormatText = formatLimiterGain;
+    preLimiterGainSlider.customParseText  = parseLimiterGain;
+
+    setupKnob(preLimiterThreshSlider, juce::Colour(0xffffab00), false, 1.0);
+    preLimiterThreshSlider.customFormatText = formatLimiterThresh;
+    preLimiterThreshSlider.customParseText  = parseLimiterThresh;
+
+    setupKnob(preLimiterReleaseSlider, juce::Colour(0xffffab00), false, 0.6296);
+    preLimiterReleaseSlider.customFormatText = formatLimiterRelease;
+    preLimiterReleaseSlider.customParseText  = parseLimiterRelease;
+
+    cardPreLimiter->setKnob(0, "In Gain", &preLimiterGainSlider);
+    cardPreLimiter->setKnob(1, "Thresh", &preLimiterThreshSlider);
+    cardPreLimiter->setKnob(2, "Release", &preLimiterReleaseSlider);
+    addChildComponent(cardPreLimiter.get());
+
+    // 27. Post-Amp Limiter
+    cardPostLimiter = std::make_unique<ModuleCardComponent>("Post Limiter", juce::Colour(0xff00e5ff));
+    setupBox(postLimiterEnableBox);
+    bindSelector(postLimiterEnableSelector, postLimiterEnableBox, "post_limiter_enable", { "Off", "On" });
+    cardPostLimiter->setLedSelector(&postLimiterEnableSelector);
+
+    setupKnob(postLimiterGainSlider, juce::Colour(0xff00e5ff), false, 12.0 / 36.0);
+    postLimiterGainSlider.customFormatText = formatLimiterGain;
+    postLimiterGainSlider.customParseText  = parseLimiterGain;
+
+    setupKnob(postLimiterThreshSlider, juce::Colour(0xff00e5ff), false, 1.0);
+    postLimiterThreshSlider.customFormatText = formatLimiterThresh;
+    postLimiterThreshSlider.customParseText  = parseLimiterThresh;
+
+    setupKnob(postLimiterReleaseSlider, juce::Colour(0xff00e5ff), false, 0.6296);
+    postLimiterReleaseSlider.customFormatText = formatLimiterRelease;
+    postLimiterReleaseSlider.customParseText  = parseLimiterRelease;
+
+    cardPostLimiter->setKnob(0, "In Gain", &postLimiterGainSlider);
+    cardPostLimiter->setKnob(1, "Thresh", &postLimiterThreshSlider);
+    cardPostLimiter->setKnob(2, "Release", &postLimiterReleaseSlider);
+    addChildComponent(cardPostLimiter.get());
+
+    // 28. Velocity
+    cardVelocity = std::make_unique<ModuleCardComponent>("Velocity", juce::Colour(0xff29b6f6));
+    setupKnob(velSlopeSlider, juce::Colour(0xff29b6f6), false, 0.0);
     velSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::VelocitySlope;
-    setupKnob(velDecaySlider, juce::Colour(0xff80cbc4), true, 0.5);  // 0% default (bipolar)
-    setupKnob(velDepthSlider, juce::Colour(0xff80cbc4), true, 0.5);  // 0% default (bipolar)
-    setupKnob(velVolumeSlider, juce::Colour(0xff80cbc4), false, 0.0); // 0% default (unipolar)
+    velSlopeSlider.customFormatText = formatVelocitySlope;
+    velSlopeSlider.customParseText  = parseVelocitySlope;
 
-    velSlopeSlider.customFormatText = [](double val) {
-        if (val < 0.33) return "Exp (" + juce::String(static_cast<int>(val * 300.0)) + "%)";
-        if (val < 0.67) return "Lin (" + juce::String(static_cast<int>((val - 0.33) * 300.0)) + "%)";
-        return "Log (" + juce::String(static_cast<int>((val - 0.67) * 300.0)) + "%)";
-    };
-    auto formatBipolarVel = [](double val) {
-        float eff = TbdAudio::warpBipolarExp(static_cast<float>(val));
-        if (std::abs(eff) <= 0.0001f) return juce::String("0%");
-        float pct = eff * 100.0f;
-        juce::String sign = (pct >= 0.0f) ? "+" : "";
-        if (std::abs(eff) < 0.0999f) {
-            return sign + juce::String(pct, 1) + "%";
-        }
-        return sign + juce::String(static_cast<int>(std::round(pct))) + "%";
-    };
-    auto parseBipolarVel = [](const juce::String& text) {
-        double p = parseNumberSafe(text, 0.0) / 100.0;
-        return static_cast<double>(TbdAudio::unwarpBipolarExp(static_cast<float>(p)));
-    };
+    setupKnob(velDecaySlider, juce::Colour(0xff29b6f6), true, 0.5);
+    velDecaySlider.customFormatText = formatBipolarPercent;
+    velDecaySlider.customParseText  = parseBipolarPercent;
 
-    velDecaySlider.customFormatText = formatBipolarVel;
-    velDecaySlider.customParseText  = parseBipolarVel;
-    velDepthSlider.customFormatText = formatBipolarVel;
-    velDepthSlider.customParseText  = parseBipolarVel;
+    setupKnob(velDepthSlider, juce::Colour(0xff29b6f6), true, 0.5);
+    velDepthSlider.customFormatText = formatBipolarPercent;
+    velDepthSlider.customParseText  = parseBipolarPercent;
 
+    setupKnob(velVolumeSlider, juce::Colour(0xff29b6f6), false, 0.0);
     velVolumeSlider.customFormatText = [](double val) {
-        float eff = TbdAudio::warpUnipolarExp(static_cast<float>(val));
-        if (eff <= 0.0001f) return juce::String("0%");
-        if (eff < 0.0999f) {
-            return "-" + juce::String(eff * 100.0f, 1) + "%";
-        }
-        return "-" + juce::String(static_cast<int>(std::round(eff * 100.0f))) + "%";
+        int v = static_cast<int>(std::round(val * 100.0));
+        return "-" + juce::String(v) + "%";
     };
-    velVolumeSlider.customParseText = [](const juce::String& text) {
-        double p = std::clamp(std::abs(parseNumberSafe(text, 0.0)) / 100.0, 0.0, 1.0);
-        return static_cast<double>(TbdAudio::unwarpUnipolarExp(static_cast<float>(p)));
-    };
+    velVolumeSlider.customParseText = parsePercent;
 
-    cardVel->setKnob(0, "Slope", &velSlopeSlider);
-    cardVel->setKnob(1, "Decay", &velDecaySlider);
-    cardVel->setKnob(2, "Depth", &velDepthSlider);
-    cardVel->setKnob(3, "Volume", &velVolumeSlider);
-    cards.push_back(std::move(cardVel));
+    cardVelocity->setKnob(0, "Slope", &velSlopeSlider);
+    cardVelocity->setKnob(1, "Decay", &velDecaySlider);
+    cardVelocity->setKnob(2, "Depth", &velDepthSlider);
+    cardVelocity->setKnob(3, "Volume", &velVolumeSlider);
+    addChildComponent(cardVelocity.get());
 
-    // 22. SLOP CARD (4 Knobs)
-    auto cardSlop = std::make_unique<ModuleCardComponent>("Slop", juce::Colour(0xffffa726));
-    setupKnob(slopFreqSlider, juce::Colour(0xffffa726), false, 0.0); // 0% default (unipolar)
-    setupKnob(slopDepthSlider, juce::Colour(0xffffa726), false, 0.0); // 0% default (unipolar)
-    setupKnob(slopDecaySlider, juce::Colour(0xffffa726), false, 0.0); // 0% default (unipolar)
-    setupKnob(slopPanSlider, juce::Colour(0xffffa726), false, 0.0);   // 0% default (unipolar)
-
-    auto formatSlop = [](double val) {
-        float eff = TbdAudio::warpUnipolarExp(static_cast<float>(val));
-        if (eff <= 0.0001f) return juce::String("0%");
-        if (eff < 0.0999f) {
-            return "+/-" + juce::String(eff * 100.0f, 1) + "%";
-        }
-        return "+/-" + juce::String(static_cast<int>(std::round(eff * 100.0f))) + "%";
-    };
-    auto parseSlop = [](const juce::String& text) {
-        double p = std::clamp(std::abs(parseNumberSafe(text, 0.0)) / 100.0, 0.0, 1.0);
-        return static_cast<double>(TbdAudio::unwarpUnipolarExp(static_cast<float>(p)));
-    };
-
+    // 29. Slop
+    cardSlop = std::make_unique<ModuleCardComponent>("Slop", juce::Colour(0xffab47bc));
+    setupKnob(slopFreqSlider, juce::Colour(0xffab47bc), false, 0.0);
     slopFreqSlider.customFormatText = formatSlop;
     slopFreqSlider.customParseText  = parseSlop;
 
+    setupKnob(slopDepthSlider, juce::Colour(0xffab47bc), false, 0.0);
     slopDepthSlider.customFormatText = formatSlop;
     slopDepthSlider.customParseText  = parseSlop;
 
+    setupKnob(slopDecaySlider, juce::Colour(0xffab47bc), false, 0.0);
     slopDecaySlider.customFormatText = formatSlop;
     slopDecaySlider.customParseText  = parseSlop;
 
+    setupKnob(slopPanSlider, juce::Colour(0xffab47bc), false, 0.0);
     slopPanSlider.customFormatText = formatSlop;
     slopPanSlider.customParseText  = parseSlop;
 
@@ -1954,14 +2289,10 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     cardSlop->setKnob(1, "Depth", &slopDepthSlider);
     cardSlop->setKnob(2, "Decay", &slopDecaySlider);
     cardSlop->setKnob(3, "Pan", &slopPanSlider);
-    cards.push_back(std::move(cardSlop));
+    addChildComponent(cardSlop.get());
 
-    // Add all 22 cards to editor
-    for (auto& c : cards) {
-        addAndMakeVisible(c.get());
-    }
+    // --- APVTS PARAMETER ATTACHMENTS ---
 
-    // Attach all APVTS parameters
     // 1. Carrier 1
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "carrier1_tracking", carrier1TrackingBox));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier1_pitch", carrier1PitchSlider));
@@ -1980,126 +2311,200 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv1_depth", pitchEnv1DepthSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv1_decay", pitchEnv1DecaySlider));
 
-    // 4. Carrier 2
+    // 4. Filter 1
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter1_type", filter1TypeBox));
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter1_slope", filter1SlopeBox));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter1_cutoff", filter1CutoffSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter1_resonance", filter1ResonanceSlider));
+
+    // 5. Filter Envelope 1
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv1_slope", filterEnv1SlopeSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv1_depth", filterEnv1DepthSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv1_decay", filterEnv1DecaySlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv1_postdrive", filterEnv1PostDriveSlider));
+
+    // 6. Carrier 2
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "carrier2_tracking", carrier2TrackingBox));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier2_pitch", carrier2PitchSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier2_shape", carrier2ShapeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier2_depth", carrier2DepthSlider));
 
-    // 5. Modulator 2
+    // 7. Modulator 2
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "mod2_track", mod2TrackBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "mod2_type", mod2TypeBox));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mod2_shape", mod2ShapeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mod2_speed", mod2SpeedSlider));
 
-    // 6. Pitch Envelope 2
+    // 8. Pitch Envelope 2
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "pitchenv2_target", pitchEnv2TargetBox));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv2_slope", pitchEnv2SlopeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv2_depth", pitchEnv2DepthSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv2_decay", pitchEnv2DecaySlider));
 
-    // 7. Noise Transient
+    // 9. Filter 2
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter2_type", filter2TypeBox));
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter2_slope", filter2SlopeBox));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter2_cutoff", filter2CutoffSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter2_resonance", filter2ResonanceSlider));
+
+    // 10. Filter Envelope 2
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv2_slope", filterEnv2SlopeSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv2_depth", filterEnv2DepthSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv2_decay", filterEnv2DecaySlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv2_postdrive", filterEnv2PostDriveSlider));
+
+    // 11. Noise Transient
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "noise_sh_rate", noiseShRateSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "noise_filter", noiseFilterSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "noise_drive", noiseDriveSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "noise_decay", noiseDecaySlider));
 
-    // 8. Mixer
+    // 12. Filter 3 (Transients Filter)
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter3_type", filter3TypeBox));
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter3_slope", filter3SlopeBox));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter3_cutoff", filter3CutoffSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter3_resonance", filter3ResonanceSlider));
+
+    // 13. Filter Envelope 3 (Transients Filter Env)
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv3_slope", filterEnv3SlopeSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv3_depth", filterEnv3DepthSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv3_decay", filterEnv3DecaySlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv3_postdrive", filterEnv3PostDriveSlider));
+
+    // 14. Mixer
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_carrier1_level", mixerCarrier1LevelSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_carrier2_level", mixerCarrier2LevelSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_ringmod", mixerRingModSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_noise_level", mixerNoiseLevelSlider));
 
-    // 9. Drive
+    // 15. Drive
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "drive_amount", driveAmountSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "drive_bias", driveBiasSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "drive_filter", driveFilterSlider));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "drive_limiter", driveLimiterBox));
 
-    // 10. Filter
-    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter_type", filterTypeBox));
-    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter_slope", filterSlopeBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_cutoff", filterCutoffSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter_resonance", filterResonanceSlider));
+    // 16. Standalone FX Filter
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "fxfilter_type", fxFilterTypeBox));
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "fxfilter_slope", fxFilterSlopeBox));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "fxfilter_cutoff", fxFilterCutoffSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "fxfilter_resonance", fxFilterResonanceSlider));
 
-    // 11. Filter Envelope
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv_slope", filterEnvSlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv_depth", filterEnvDepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv_decay", filterEnvDecaySlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv_postdrive", filterEnvPostDriveSlider));
-
-    // 12. Wave Folder
+    // 17. Wave Folder
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "wavefolder_type", waveFolderTypeBox));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "wavefolder_fold", waveFolderFoldSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "wavefolder_bias", waveFolderBiasSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "wavefolder_filter", waveFolderFilterSlider));
 
-    // 13. RingMod
+    // 18. RingMod
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ringmod_shape", ringModShapeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ringmod_rate", ringModRateSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ringmod_amount", ringModAmountSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ringmod_width", ringModWidthSlider));
 
-    // 14. Frequency Shifter
+    // 19. Frequency Shifter
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "freqshift_shift", freqShiftShiftSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "freqshift_range", freqShiftRangeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "freqshift_blend", freqShiftBlendSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "freqshift_width", freqShiftWidthSlider));
 
-    // 15. Grit FX
+    // 20. Grit FX
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_bits", gritBitsSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_rate", gritRateSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_low", gritLowSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "grit_high", gritHighSlider));
 
-    // 16. Comb Filter
+    // 21. Comb Filter
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "comb_type", combTypeBox));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "comb_dampening", combDampeningSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "comb_cutoff", combCutoffSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "comb_resonance", combResonanceSlider));
 
-    // 17. Disperser
+    // 22. Disperser
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "disperser_type", disperserTypeBox));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "disperser_amount", disperserAmountSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "disperser_cutoff", disperserCutoffSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "disperser_resonance", disperserResonanceSlider));
 
-    // 18. EQ (Bell EQ)
+    // 23. EQ (Bell EQ)
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "eq_freq", eqFreqSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "eq_width", eqWidthSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "eq_gain", eqGainSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "eq_filter", eqFilterSlider));
 
-    // 19. Amp
+    // 24. Amp
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_level", ampLevelSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_pan", ampPanSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_drive", ampDriveSlider));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "amp_limiter", ampLimiterBox));
 
-    // 20. Amp Envelope
+    // 25. Amp Envelope
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_claps", ampEnvClapsSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_clapspeed", ampEnvClapSpeedSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_slope", ampEnvSlopeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_decay", ampEnvDecaySlider));
 
-    // 21. Velocity
+    // 26. Pre-Amp Limiter
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "pre_limiter_enable", preLimiterEnableBox));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pre_limiter_gain", preLimiterGainSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pre_limiter_thresh", preLimiterThreshSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pre_limiter_release", preLimiterReleaseSlider));
+
+    // 27. Post-Amp Limiter
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "post_limiter_enable", postLimiterEnableBox));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "post_limiter_gain", postLimiterGainSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "post_limiter_thresh", postLimiterThreshSlider));
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "post_limiter_release", postLimiterReleaseSlider));
+
+    // 28. Velocity
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_slope", velSlopeSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_decay", velDecaySlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_depth", velDepthSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_volume", velVolumeSlider));
 
-    // 22. Slop
+    // 29. Slop
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_freq", slopFreqSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_depth", slopDepthSlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_decay", slopDecaySlider));
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_pan", slopPanSlider));
 
+    // --- FX PICKERS SETUP & ATTACHMENTS ---
+    const juce::StringArray fxChoices { "None", "Drive", "Filter", "Wave Folder", "RingMod", "Frequency Shifter", "Grit FX", "Comb Filter", "Disperser", "Bell EQ" };
+
+    for (int i = 0; i < 4; ++i) {
+        preFXPickerCard->getBox(i).addItemList(fxChoices, 1);
+        juce::String paramId = "pre_fx_" + juce::String(i + 1) + "_type";
+        boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, paramId, preFXPickerCard->getBox(i)));
+        preFXPickerCard->getBox(i).onChange = [this, i]() {
+            int choice = preFXPickerCard->getBox(i).getSelectedItemIndex();
+            if (choice >= 0) {
+                audioProcessor.getEngine().setPreFXType(i, choice);
+                updatePageLayout();
+            }
+        };
+
+        postFXPickerCard->getBox(i).addItemList(fxChoices, 1);
+        juce::String postParamId = "post_fx_" + juce::String(i + 1) + "_type";
+        boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, postParamId, postFXPickerCard->getBox(i)));
+        postFXPickerCard->getBox(i).onChange = [this, i]() {
+            int choice = postFXPickerCard->getBox(i).getSelectedItemIndex();
+            if (choice >= 0) {
+                audioProcessor.getEngine().setPostFXType(i, choice);
+                updatePageLayout();
+            }
+        };
+    }
+
+    scopeBuffer.resize(128, 0.0f);
     updateDynamicControls();
-    setSize(1840, 760);
+
+    setSize(1760, 440);
     setResizable(true, true);
-    setResizeLimits(1200, 520, 2880, 1600);
-    startTimerHz(30); // 30 FPS oscilloscope & GUI update
+    setResizeLimits(1200, 360, 2880, 1400);
+
+    setPage(0);
+    startTimerHz(30);
 }
+
 
 TheKlangFarmerAudioProcessorEditor::~TheKlangFarmerAudioProcessorEditor() {
     stopTimer();
@@ -2132,6 +2537,7 @@ void TheKlangFarmerAudioProcessorEditor::resetToDefaults() {
         }
     }
     updateDynamicControls();
+    updatePageLayout();
     repaint();
 }
 
@@ -2147,6 +2553,213 @@ void TheKlangFarmerAudioProcessorEditor::bindSelector(LedSelectorComponent& sele
             param->setValueNotifyingHost(param->convertTo0to1(static_cast<float>(idx)));
         }
     };
+}
+
+ModuleCardComponent* TheKlangFarmerAudioProcessorEditor::getFXCard(int fxType) {
+    switch (fxType) {
+        case 1: return cardDrive.get();
+        case 2: return cardFXFilter.get();
+        case 3: return cardWaveFolder.get();
+        case 4: return cardRingMod.get();
+        case 5: return cardFreqShift.get();
+        case 6: return cardGrit.get();
+        case 7: return cardComb.get();
+        case 8: return cardDisperser.get();
+        case 9: return cardEQ.get();
+        default: return nullptr;
+    }
+}
+
+void TheKlangFarmerAudioProcessorEditor::setPage(int pageIndex) {
+    if (pageIndex < 0 || pageIndex > 6) return;
+    currentPage = pageIndex;
+    navCard.setSelectedPage(currentPage);
+    updatePageLayout();
+    repaint();
+}
+
+void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
+    for (int i = 0; i < 6; ++i) blankPlates[i].setVisible(false);
+    if (preFXPickerCard) preFXPickerCard->setVisible(false);
+    if (postFXPickerCard) postFXPickerCard->setVisible(false);
+
+    auto hideCard = [](std::unique_ptr<ModuleCardComponent>& c) {
+        if (c) c->setVisible(false);
+    };
+
+    hideCard(cardCarrier1); hideCard(cardMod1); hideCard(cardPitchEnv1);
+    hideCard(cardFilter1); hideCard(cardFilterEnv1);
+    hideCard(cardCarrier2); hideCard(cardMod2); hideCard(cardPitchEnv2);
+    hideCard(cardFilter2); hideCard(cardFilterEnv2);
+    hideCard(cardNoise); hideCard(cardFilter3); hideCard(cardFilterEnv3);
+    hideCard(cardMixer);
+    hideCard(cardDrive); hideCard(cardFXFilter); hideCard(cardWaveFolder);
+    hideCard(cardRingMod); hideCard(cardFreqShift); hideCard(cardGrit);
+    hideCard(cardComb); hideCard(cardDisperser); hideCard(cardEQ);
+    hideCard(cardAmp); hideCard(cardAmpEnv);
+    hideCard(cardPreLimiter); hideCard(cardPostLimiter);
+    hideCard(cardVelocity); hideCard(cardSlop);
+
+    int margin = 6;
+    int topOffset = 38;
+    int totalW = getWidth() - 2 * margin;
+    int totalH = getHeight() - topOffset - margin;
+    int slotW = (totalW - 7 * margin) / 8;
+    int slotH = totalH;
+
+    navCard.setBounds(margin, topOffset, slotW, slotH);
+    navCard.setVisible(true);
+
+    juce::Component* slotComponents[6] = { nullptr };
+    juce::StringArray tabNames;
+    std::vector<int> blockIndices;
+
+    switch (currentPage) {
+        case 0: // VOICE 1
+            slotComponents[0] = cardCarrier1.get();
+            slotComponents[1] = cardMod1.get();
+            slotComponents[2] = cardPitchEnv1.get();
+            slotComponents[3] = cardFilter1.get();
+            slotComponents[4] = cardFilterEnv1.get();
+            slotComponents[5] = cardMixer.get();
+
+            tabNames = { "CARRIER 1", "MOD 1", "PITCH 1", "FILTER 1", "F-ENV 1", "MIXER" };
+            blockIndices = { TbdAudio::ModularDrumEngine::BLK_CARRIER1,
+                            TbdAudio::ModularDrumEngine::BLK_MODULATOR1,
+                            TbdAudio::ModularDrumEngine::BLK_PITCHENV1,
+                            TbdAudio::ModularDrumEngine::BLK_FILTER1,
+                            TbdAudio::ModularDrumEngine::BLK_FILTERENV1,
+                            TbdAudio::ModularDrumEngine::BLK_MIXER };
+            break;
+
+        case 1: // VOICE 2
+            slotComponents[0] = cardCarrier2.get();
+            slotComponents[1] = cardMod2.get();
+            slotComponents[2] = cardPitchEnv2.get();
+            slotComponents[3] = cardFilter2.get();
+            slotComponents[4] = cardFilterEnv2.get();
+            slotComponents[5] = cardMixer.get();
+
+            tabNames = { "CARRIER 2", "MOD 2", "PITCH 2", "FILTER 2", "F-ENV 2", "MIXER" };
+            blockIndices = { TbdAudio::ModularDrumEngine::BLK_CARRIER2,
+                            TbdAudio::ModularDrumEngine::BLK_MODULATOR2,
+                            TbdAudio::ModularDrumEngine::BLK_PITCHENV2,
+                            TbdAudio::ModularDrumEngine::BLK_FILTER2,
+                            TbdAudio::ModularDrumEngine::BLK_FILTERENV2,
+                            TbdAudio::ModularDrumEngine::BLK_MIXER };
+            break;
+
+        case 2: // TRANSIENTS
+            slotComponents[0] = cardNoise.get();
+            slotComponents[1] = &blankPlates[0];
+            slotComponents[2] = &blankPlates[1];
+            slotComponents[3] = cardFilter3.get();
+            slotComponents[4] = cardFilterEnv3.get();
+            slotComponents[5] = cardMixer.get();
+
+            tabNames = { "NOISE", "FILTER 3", "F-ENV 3", "MIXER" };
+            blockIndices = { TbdAudio::ModularDrumEngine::BLK_NOISE,
+                            TbdAudio::ModularDrumEngine::BLK_FILTER3,
+                            TbdAudio::ModularDrumEngine::BLK_FILTERENV3,
+                            TbdAudio::ModularDrumEngine::BLK_MIXER };
+            break;
+
+        case 3: // PRE-AMP FX
+            slotComponents[0] = preFXPickerCard.get();
+            for (int s = 0; s < 4; ++s) {
+                int t = audioProcessor.getEngine().getPreFXType(s);
+                auto* card = getFXCard(t);
+                slotComponents[1 + s] = card ? static_cast<juce::Component*>(card) : static_cast<juce::Component*>(&blankPlates[s]);
+                if (card) {
+                    tabNames.add(card->getTitle().toUpperCase());
+                    static const int fxBlockIds[] = {
+                        -1,
+                        TbdAudio::ModularDrumEngine::BLK_DRIVE,
+                        TbdAudio::ModularDrumEngine::BLK_FXFILTER,
+                        TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER,
+                        TbdAudio::ModularDrumEngine::BLK_RINGMOD,
+                        TbdAudio::ModularDrumEngine::BLK_FREQSHIFT,
+                        TbdAudio::ModularDrumEngine::BLK_GRIT,
+                        TbdAudio::ModularDrumEngine::BLK_COMB,
+                        TbdAudio::ModularDrumEngine::BLK_DISPERSER,
+                        TbdAudio::ModularDrumEngine::BLK_EQ
+                    };
+                    if (t >= 1 && t <= 9) blockIndices.push_back(fxBlockIds[t]);
+                }
+            }
+            slotComponents[5] = cardPreLimiter.get();
+            tabNames.add("LIMITER");
+            blockIndices.push_back(TbdAudio::ModularDrumEngine::BLK_PRE_LIMITER);
+            break;
+
+        case 4: // AMPLIFIER
+            slotComponents[0] = cardAmp.get();
+            slotComponents[1] = cardAmpEnv.get();
+            slotComponents[2] = &blankPlates[0];
+            slotComponents[3] = &blankPlates[1];
+            slotComponents[4] = cardPostLimiter.get();
+            slotComponents[5] = cardMixer.get();
+
+            tabNames = { "AMP", "AMP ENV", "LIMITER", "MIXER" };
+            blockIndices = { TbdAudio::ModularDrumEngine::BLK_AMP,
+                            TbdAudio::ModularDrumEngine::BLK_AMPENV,
+                            TbdAudio::ModularDrumEngine::BLK_POST_LIMITER,
+                            TbdAudio::ModularDrumEngine::BLK_MIXER };
+            break;
+
+        case 5: // POST-AMP FX
+            slotComponents[0] = postFXPickerCard.get();
+            for (int s = 0; s < 4; ++s) {
+                int t = audioProcessor.getEngine().getPostFXType(s);
+                auto* card = getFXCard(t);
+                slotComponents[1 + s] = card ? static_cast<juce::Component*>(card) : static_cast<juce::Component*>(&blankPlates[s]);
+                if (card) {
+                    tabNames.add(card->getTitle().toUpperCase());
+                    static const int fxBlockIds[] = {
+                        -1,
+                        TbdAudio::ModularDrumEngine::BLK_DRIVE,
+                        TbdAudio::ModularDrumEngine::BLK_FXFILTER,
+                        TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER,
+                        TbdAudio::ModularDrumEngine::BLK_RINGMOD,
+                        TbdAudio::ModularDrumEngine::BLK_FREQSHIFT,
+                        TbdAudio::ModularDrumEngine::BLK_GRIT,
+                        TbdAudio::ModularDrumEngine::BLK_COMB,
+                        TbdAudio::ModularDrumEngine::BLK_DISPERSER,
+                        TbdAudio::ModularDrumEngine::BLK_EQ
+                    };
+                    if (t >= 1 && t <= 9) blockIndices.push_back(fxBlockIds[t]);
+                }
+            }
+            slotComponents[5] = cardPostLimiter.get();
+            tabNames.add("LIMITER");
+            blockIndices.push_back(TbdAudio::ModularDrumEngine::BLK_POST_LIMITER);
+            break;
+
+        case 6: // MODULATIONS
+            slotComponents[0] = cardVelocity.get();
+            slotComponents[1] = cardSlop.get();
+            slotComponents[2] = &blankPlates[0];
+            slotComponents[3] = &blankPlates[1];
+            slotComponents[4] = &blankPlates[2];
+            slotComponents[5] = &blankPlates[3];
+
+            tabNames = { "VELOCITY", "SLOP" };
+            blockIndices = { TbdAudio::ModularDrumEngine::BLK_VELOCITY,
+                            TbdAudio::ModularDrumEngine::BLK_SLOP };
+            break;
+    }
+
+    for (int i = 0; i < 6; ++i) {
+        if (slotComponents[i]) {
+            int x = margin + (i + 1) * (slotW + margin);
+            slotComponents[i]->setBounds(x, topOffset, slotW, slotH);
+            slotComponents[i]->setVisible(true);
+        }
+    }
+
+    vizCard.setBounds(margin + 7 * (slotW + margin), topOffset, slotW, slotH);
+    vizCard.setVisible(true);
+    vizCard.setAvailableTabs(tabNames, blockIndices);
 }
 
 void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
@@ -2174,15 +2787,15 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
     int curMod1Type  = syncSelector(mod1TypeBox, mod1TypeSelector, "mod1_type", lastMod1Type);
     if (curMod1Type >= 0 || curMod1Track >= 0) {
         if (curMod1Type == 0) {
-            cards[1]->setKnobLabel(0, "Shape");
+            cardMod1->setKnobLabel(0, "Shape");
             mod1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
             mod1ShapeSlider.setBipolar(false);
         } else if (curMod1Type == 1) {
-            cards[1]->setKnobLabel(0, "DJ Filter");
+            cardMod1->setKnobLabel(0, "DJ Filter");
             mod1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::None;
             mod1ShapeSlider.setBipolar(true);
         } else {
-            cards[1]->setKnobLabel(0, "S&H Rate");
+            cardMod1->setKnobLabel(0, "S&H Rate");
             mod1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::None;
             mod1ShapeSlider.setBipolar(false);
         }
@@ -2192,6 +2805,8 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
     }
 
     syncSelector(pitchEnv1TargetBox, pitchEnv1TargetSelector, "pitchenv1_target", lastPitchEnv1Target);
+    syncSelector(filter1TypeBox, filter1TypeSelector, "filter1_type", lastFilter1Type);
+    syncSelector(filter1SlopeBox, filter1SlopeSelector, "filter1_slope", lastFilter1Slope);
 
     int curCarrier2Track = syncSelector(carrier2TrackingBox, carrier2TrackingSelector, "carrier2_tracking", lastCarrier2Track);
     if (curCarrier2Track >= 0) {
@@ -2203,15 +2818,15 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
     int curMod2Type  = syncSelector(mod2TypeBox, mod2TypeSelector, "mod2_type", lastMod2Type);
     if (curMod2Type >= 0 || curMod2Track >= 0) {
         if (curMod2Type == 0) {
-            cards[4]->setKnobLabel(0, "Shape");
+            cardMod2->setKnobLabel(0, "Shape");
             mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
             mod2ShapeSlider.setBipolar(false);
         } else if (curMod2Type == 1) {
-            cards[4]->setKnobLabel(0, "DJ Filter");
+            cardMod2->setKnobLabel(0, "DJ Filter");
             mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::None;
             mod2ShapeSlider.setBipolar(true);
         } else {
-            cards[4]->setKnobLabel(0, "S&H Rate");
+            cardMod2->setKnobLabel(0, "S&H Rate");
             mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::None;
             mod2ShapeSlider.setBipolar(false);
         }
@@ -2221,143 +2836,105 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
     }
 
     syncSelector(pitchEnv2TargetBox, pitchEnv2TargetSelector, "pitchenv2_target", lastPitchEnv2Target);
+    syncSelector(filter2TypeBox, filter2TypeSelector, "filter2_type", lastFilter2Type);
+    syncSelector(filter2SlopeBox, filter2SlopeSelector, "filter2_slope", lastFilter2Slope);
+
+    syncSelector(filter3TypeBox, filter3TypeSelector, "filter3_type", lastFilter3Type);
+    syncSelector(filter3SlopeBox, filter3SlopeSelector, "filter3_slope", lastFilter3Slope);
 
     syncSelector(driveLimiterBox, driveLimiterSelector, "drive_limiter", lastDriveLimiter);
-
-    int curFilterType  = syncSelector(filterTypeBox, filterTypeSelector, "filter_type", lastFilterType);
-    int curFilterSlope = syncSelector(filterSlopeBox, filterSlopeSelector, "filter_slope", lastFilterSlope);
-
-    // Update Filter X-Y Frequency vs Gain response plot
-    float fCutNorm = static_cast<float>(filterCutoffSlider.getValue());
-    float fCutHz = 0.1f * std::pow(24000.0f / 0.1f, fCutNorm);
-    float fRes = static_cast<float>(filterResonanceSlider.getValue());
-    cards[9]->updateFilterParams(curFilterType, curFilterSlope, fCutHz, fRes);
-
-    // Update Bell EQ X-Y Frequency vs Gain response plot
-    float eqFNorm = static_cast<float>(eqFreqSlider.getValue());
-    float eqFHz = 20.0f * std::pow(24000.0f / 20.0f, eqFNorm);
-    float eqWNorm = static_cast<float>(eqWidthSlider.getValue());
-    float eqWOct = 0.1f * std::pow(100.0f, eqWNorm);
-    float eqGNorm = static_cast<float>(eqGainSlider.getValue());
-    float eqGDb = (eqGNorm - 0.5f) * 48.0f;
-    float eqDjNorm = static_cast<float>(eqFilterSlider.getValue());
-    cards[17]->updateEqParams(eqFHz, eqWOct, eqGDb, eqDjNorm);
-
+    syncSelector(fxFilterTypeBox, fxFilterTypeSelector, "fxfilter_type", lastFXFilterType);
+    syncSelector(fxFilterSlopeBox, fxFilterSlopeSelector, "fxfilter_slope", lastFXFilterSlope);
     syncSelector(waveFolderTypeBox, waveFolderTypeSelector, "wavefolder_type", lastWaveFolderType);
-
     syncSelector(combTypeBox, combTypeSelector, "comb_type", lastCombType);
     syncSelector(disperserTypeBox, disperserTypeSelector, "disperser_type", lastDisperserType);
     syncSelector(ampLimiterBox, ampLimiterSelector, "amp_limiter", lastAmpLimiter);
+
+    syncSelector(preLimiterEnableBox, preLimiterEnableSelector, "pre_limiter_enable", lastPreLimiterEnable);
+    syncSelector(postLimiterEnableBox, postLimiterEnableSelector, "post_limiter_enable", lastPostLimiterEnable);
 }
 
 void TheKlangFarmerAudioProcessorEditor::timerCallback() {
     updateDynamicControls();
 
-    // Fetch and display synchronized oscilloscope buffers across modules (Filter & EQ use XY plots)
-    float scopeBuffer[128];
-    for (int b = 0; b < static_cast<int>(cards.size()); ++b) {
-        if (b == 9 || b == 17) continue; // 9 = BLK_FILTER, 17 = BLK_EQ
-        audioProcessor.getEngine().getScopeData(b, scopeBuffer, 128);
-        cards[b]->updateScope(scopeBuffer, 128);
+    int activeBlock = vizCard.getCurrentBlockIndex();
+    if (activeBlock < 0) return;
+
+    if (activeBlock == TbdAudio::ModularDrumEngine::BLK_FILTER1) {
+        vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::FilterXY);
+        float fCutNorm = static_cast<float>(filter1CutoffSlider.getValue());
+        float fCutHz = 0.1f * std::pow(24000.0f / 0.1f, fCutNorm);
+        float fRes = static_cast<float>(filter1ResonanceSlider.getValue());
+        int fType = filter1TypeBox.getSelectedItemIndex();
+        int fSlope = filter1SlopeBox.getSelectedItemIndex();
+        vizCard.getOscilloscope().updateFilterParams(fType, fSlope, fCutHz, fRes);
+    } else if (activeBlock == TbdAudio::ModularDrumEngine::BLK_FILTER2) {
+        vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::FilterXY);
+        float fCutNorm = static_cast<float>(filter2CutoffSlider.getValue());
+        float fCutHz = 0.1f * std::pow(24000.0f / 0.1f, fCutNorm);
+        float fRes = static_cast<float>(filter2ResonanceSlider.getValue());
+        int fType = filter2TypeBox.getSelectedItemIndex();
+        int fSlope = filter2SlopeBox.getSelectedItemIndex();
+        vizCard.getOscilloscope().updateFilterParams(fType, fSlope, fCutHz, fRes);
+    } else if (activeBlock == TbdAudio::ModularDrumEngine::BLK_FILTER3) {
+        vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::FilterXY);
+        float fCutNorm = static_cast<float>(filter3CutoffSlider.getValue());
+        float fCutHz = 0.1f * std::pow(24000.0f / 0.1f, fCutNorm);
+        float fRes = static_cast<float>(filter3ResonanceSlider.getValue());
+        int fType = filter3TypeBox.getSelectedItemIndex();
+        int fSlope = filter3SlopeBox.getSelectedItemIndex();
+        vizCard.getOscilloscope().updateFilterParams(fType, fSlope, fCutHz, fRes);
+    } else if (activeBlock == TbdAudio::ModularDrumEngine::BLK_FXFILTER) {
+        vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::FilterXY);
+        float fCutNorm = static_cast<float>(fxFilterCutoffSlider.getValue());
+        float fCutHz = 0.1f * std::pow(24000.0f / 0.1f, fCutNorm);
+        float fRes = static_cast<float>(fxFilterResonanceSlider.getValue());
+        int fType = fxFilterTypeBox.getSelectedItemIndex();
+        int fSlope = fxFilterSlopeBox.getSelectedItemIndex();
+        vizCard.getOscilloscope().updateFilterParams(fType, fSlope, fCutHz, fRes);
+    } else if (activeBlock == TbdAudio::ModularDrumEngine::BLK_EQ) {
+        vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::EqXY);
+        float eqFNorm = static_cast<float>(eqFreqSlider.getValue());
+        float eqFHz = 20.0f * std::pow(24000.0f / 20.0f, eqFNorm);
+        float eqWNorm = static_cast<float>(eqWidthSlider.getValue());
+        float eqWOct = 0.1f * std::pow(100.0f, eqWNorm);
+        float eqGNorm = static_cast<float>(eqGainSlider.getValue());
+        float eqGDb = (eqGNorm - 0.5f) * 48.0f;
+        float eqDjNorm = static_cast<float>(eqFilterSlider.getValue());
+        vizCard.getOscilloscope().updateEqParams(eqFHz, eqWOct, eqGDb, eqDjNorm);
+    } else {
+        vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::Oscilloscope);
+        audioProcessor.getEngine().getScopeData(activeBlock, scopeBuffer.data(), static_cast<int>(scopeBuffer.size()));
+        vizCard.getOscilloscope().updateData(scopeBuffer.data(), static_cast<int>(scopeBuffer.size()));
     }
 }
 
 void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
-    // Top-to-bottom subtle gradient
     juce::ColourGradient bgGrad(juce::Colour(0xff12141a), 0, 0,
                                 juce::Colour(0xff0a0b0e), 0, static_cast<float>(getHeight()), false);
     g.setGradientFill(bgGrad);
     g.fillAll();
 
-    // Header bar
     g.setColour(juce::Colour(0xff171a22));
     g.fillRect(0, 0, getWidth(), 36);
 
     g.setColour(juce::Colour(0xff222736));
     g.drawHorizontalLine(36, 0.0f, static_cast<float>(getWidth()));
 
-    // Title branding
     g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
     g.setColour(juce::Colours::white);
     g.drawText("THE KLANG FARMER", 14, 0, 165, 36, juce::Justification::centredLeft);
 
     g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("22-MODULE DUAL FM HARDWARE SYNTHESIS DRUM VOICE", 182, 0, 480, 36, juce::Justification::centredLeft);
-
-    // Subtle rack-mount placeholder frames for the 2 blank slots
-    int margin = 6;
-    int topOffset = 38;
-    int totalW = getWidth() - 2 * margin;
-    int totalH = getHeight() - topOffset - margin;
-    int numCols = 8;
-    int numRows = 3;
-    int cardW = (totalW - (numCols - 1) * margin) / numCols;
-    int rowH  = (totalH - (numRows - 1) * margin) / numRows;
-
-    static const std::pair<int, int> blankSlots[2] = { { 2, 6 }, { 2, 7 } };
-    for (const auto& slot : blankSlots) {
-        int x = margin + slot.second * (cardW + margin);
-        int y = topOffset + slot.first * (rowH + margin);
-        auto bounds = juce::Rectangle<float>(static_cast<float>(x), static_cast<float>(y),
-                                            static_cast<float>(cardW), static_cast<float>(rowH));
-        g.setColour(juce::Colour(0xff12141a));
-        g.fillRoundedRectangle(bounds, 6.0f);
-        g.setColour(juce::Colour(0xff1a1e28));
-        g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
-    }
+    g.drawText("PAGED MODULAR DUAL FM SYNTHESIS DRUM VOICE", 182, 0, 480, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangFarmerAudioProcessorEditor::resized() {
     initButton.setBounds(getWidth() - 232, 5, 84, 26);
     triggerButton.setBounds(getWidth() - 138, 5, 124, 26);
 
-    int margin = 6;
-    int topOffset = 38;
-    int totalW = getWidth() - 2 * margin;
-    int totalH = getHeight() - topOffset - margin;
-
-    int numCols = 8;
-    int numRows = 3;
-    int cardW = (totalW - (numCols - 1) * margin) / numCols;
-    int rowH  = (totalH - (numRows - 1) * margin) / numRows;
-
-    // 3 Rows x 8 Columns Grid Layout (22 modules + 2 blank slots):
-    // Row 0: Carrier 1 (0), Mod 1 (1), Pitch Env 1 (2), Carrier 2 (3), Mod 2 (4), Pitch Env 2 (5), Noise Transient (6), Mixer (7)
-    // Row 1: Drive (8), Filter (9), Filter Env (10), Wave Folder (11), RingMod (12), Freq Shift (13), Grit FX (14), Comb Filter (15)
-    // Row 2: Disperser (16), Bell EQ (17), Amp (18), Amp Env (19), Velocity (20), Slop (21), [Blank] (22), [Blank] (23)
-
-    static const std::pair<int, int> cardGridPositions[22] = {
-        { 0, 0 }, // 0: Carrier 1
-        { 0, 1 }, // 1: Modulator 1
-        { 0, 2 }, // 2: Pitch Env 1
-        { 0, 3 }, // 3: Carrier 2
-        { 0, 4 }, // 4: Modulator 2
-        { 0, 5 }, // 5: Pitch Env 2
-        { 0, 6 }, // 6: Noise Transient
-        { 0, 7 }, // 7: Mixer
-        { 1, 0 }, // 8: Drive
-        { 1, 1 }, // 9: Filter
-        { 1, 2 }, // 10: Filter Env
-        { 1, 3 }, // 11: Wave Folder
-        { 1, 4 }, // 12: RingMod
-        { 1, 5 }, // 13: Freq Shifter
-        { 1, 6 }, // 14: Grit FX
-        { 1, 7 }, // 15: Comb Filter
-        { 2, 0 }, // 16: Disperser
-        { 2, 1 }, // 17: Bell EQ
-        { 2, 2 }, // 18: Amp
-        { 2, 3 }, // 19: Amp Env
-        { 2, 4 }, // 20: Velocity
-        { 2, 5 }  // 21: Slop
-    };
-
-    for (int i = 0; i < static_cast<int>(cards.size()) && i < 22; ++i) {
-        int row = cardGridPositions[i].first;
-        int col = cardGridPositions[i].second;
-        int x = margin + col * (cardW + margin);
-        int y = topOffset + row * (rowH + margin);
-        cards[i]->setBounds(x, y, cardW, rowH);
-    }
+    updatePageLayout();
 }
+
 

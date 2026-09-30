@@ -27,7 +27,9 @@ struct BlockContext {
     std::vector<float> mod2Signal;
     std::vector<float> pitchEnv1Signal;
     std::vector<float> pitchEnv2Signal;
-    std::vector<float> filterEnvSignal;
+    std::vector<float> filterEnv1Signal;
+    std::vector<float> filterEnv2Signal;
+    std::vector<float> filterEnv3Signal;
     std::vector<float> ampEnvSignal;
 
     // Velocity modulation state
@@ -48,7 +50,10 @@ struct BlockContext {
     float slopWaveFolderFilter = 0.0f;
     float slopNoiseShRate = 0.0f;
     float slopNoiseFilter = 0.0f;
-    float slopFilterCutoff = 0.0f;
+    float slopFilter1Cutoff = 0.0f;
+    float slopFilter2Cutoff = 0.0f;
+    float slopFilter3Cutoff = 0.0f;
+    float slopFXFilterCutoff = 0.0f;
     float slopRingModRate = 0.0f;
     float slopCombDamp = 0.0f;
     float slopCombCutoff = 0.0f;
@@ -59,13 +64,17 @@ struct BlockContext {
     // 2. Envelope Depths
     float slopPitchEnv1Depth = 0.0f;
     float slopPitchEnv2Depth = 0.0f;
-    float slopFilterEnvDepth = 0.0f;
+    float slopFilterEnv1Depth = 0.0f;
+    float slopFilterEnv2Depth = 0.0f;
+    float slopFilterEnv3Depth = 0.0f;
 
     // 3. Envelope Decays
     float slopPitchEnv1Decay = 0.0f;
     float slopPitchEnv2Decay = 0.0f;
     float slopNoiseDecay = 0.0f;
-    float slopFilterEnvDecay = 0.0f;
+    float slopFilterEnv1Decay = 0.0f;
+    float slopFilterEnv2Decay = 0.0f;
+    float slopFilterEnv3Decay = 0.0f;
     float slopAmpEnvDecay = 0.0f;
 
     // 4. Pan

@@ -98,17 +98,66 @@ private:
     juce::AudioParameterFloat*  driveFilterParam     = nullptr;
     juce::AudioParameterChoice* driveLimiterParam    = nullptr;
 
-    // 10. Filter
-    juce::AudioParameterChoice* filterTypeParam      = nullptr;
-    juce::AudioParameterChoice* filterSlopeParam     = nullptr;
-    juce::AudioParameterFloat*  filterCutoffParam    = nullptr;
-    juce::AudioParameterFloat*  filterResonanceParam = nullptr;
+    // Voice 1 Filter & Env
+    juce::AudioParameterChoice* filter1TypeParam      = nullptr;
+    juce::AudioParameterChoice* filter1SlopeParam     = nullptr;
+    juce::AudioParameterFloat*  filter1CutoffParam    = nullptr;
+    juce::AudioParameterFloat*  filter1ResonanceParam = nullptr;
 
-    // 11. Filter Envelope
-    juce::AudioParameterFloat*  filterEnvSlopeParam     = nullptr;
-    juce::AudioParameterFloat*  filterEnvDepthParam     = nullptr;
-    juce::AudioParameterFloat*  filterEnvDecayParam     = nullptr;
-    juce::AudioParameterFloat*  filterEnvPostDriveParam = nullptr;
+    juce::AudioParameterFloat*  filterEnv1SlopeParam     = nullptr;
+    juce::AudioParameterFloat*  filterEnv1DepthParam     = nullptr;
+    juce::AudioParameterFloat*  filterEnv1DecayParam     = nullptr;
+    juce::AudioParameterFloat*  filterEnv1PostDriveParam = nullptr;
+
+    // Voice 2 Filter & Env
+    juce::AudioParameterChoice* filter2TypeParam      = nullptr;
+    juce::AudioParameterChoice* filter2SlopeParam     = nullptr;
+    juce::AudioParameterFloat*  filter2CutoffParam    = nullptr;
+    juce::AudioParameterFloat*  filter2ResonanceParam = nullptr;
+
+    juce::AudioParameterFloat*  filterEnv2SlopeParam     = nullptr;
+    juce::AudioParameterFloat*  filterEnv2DepthParam     = nullptr;
+    juce::AudioParameterFloat*  filterEnv2DecayParam     = nullptr;
+    juce::AudioParameterFloat*  filterEnv2PostDriveParam = nullptr;
+
+    // Transients Filter & Env
+    juce::AudioParameterChoice* filter3TypeParam      = nullptr;
+    juce::AudioParameterChoice* filter3SlopeParam     = nullptr;
+    juce::AudioParameterFloat*  filter3CutoffParam    = nullptr;
+    juce::AudioParameterFloat*  filter3ResonanceParam = nullptr;
+
+    juce::AudioParameterFloat*  filterEnv3SlopeParam     = nullptr;
+    juce::AudioParameterFloat*  filterEnv3DepthParam     = nullptr;
+    juce::AudioParameterFloat*  filterEnv3DecayParam     = nullptr;
+    juce::AudioParameterFloat*  filterEnv3PostDriveParam = nullptr;
+
+    // Standalone FX Filter
+    juce::AudioParameterChoice* fxFilterTypeParam      = nullptr;
+    juce::AudioParameterChoice* fxFilterSlopeParam     = nullptr;
+    juce::AudioParameterFloat*  fxFilterCutoffParam    = nullptr;
+    juce::AudioParameterFloat*  fxFilterResonanceParam = nullptr;
+
+    // Limiters
+    juce::AudioParameterChoice* preLimiterEnableParam   = nullptr;
+    juce::AudioParameterFloat*  preLimiterGainParam     = nullptr;
+    juce::AudioParameterFloat*  preLimiterThreshParam   = nullptr;
+    juce::AudioParameterFloat*  preLimiterReleaseParam  = nullptr;
+
+    juce::AudioParameterChoice* postLimiterEnableParam  = nullptr;
+    juce::AudioParameterFloat*  postLimiterGainParam    = nullptr;
+    juce::AudioParameterFloat*  postLimiterThreshParam  = nullptr;
+    juce::AudioParameterFloat*  postLimiterReleaseParam = nullptr;
+
+    // FX Pickers (Pre-Amp & Post-Amp)
+    juce::AudioParameterChoice* preFX1TypeParam  = nullptr;
+    juce::AudioParameterChoice* preFX2TypeParam  = nullptr;
+    juce::AudioParameterChoice* preFX3TypeParam  = nullptr;
+    juce::AudioParameterChoice* preFX4TypeParam  = nullptr;
+
+    juce::AudioParameterChoice* postFX1TypeParam = nullptr;
+    juce::AudioParameterChoice* postFX2TypeParam = nullptr;
+    juce::AudioParameterChoice* postFX3TypeParam = nullptr;
+    juce::AudioParameterChoice* postFX4TypeParam = nullptr;
 
     // 12. Wave Folder
     juce::AudioParameterChoice* waveFolderTypeParam   = nullptr;

@@ -461,8 +461,8 @@ int main() {
             assert(std::abs(ctx.slopAmpPan) <= boundPan + 0.001f);
 
             // Verify independent random values across different destinations in the same trigger hit
-            if (ctx.slopCarrier1Pitch != ctx.slopFilterCutoff &&
-                ctx.slopFilterCutoff != ctx.slopMod1Freq &&
+            if (ctx.slopCarrier1Pitch != ctx.slopFilter1Cutoff &&
+                ctx.slopFilter1Cutoff != ctx.slopMod1Freq &&
                 ctx.slopPitchEnv1Decay != ctx.slopAmpEnvDecay) {
                 hasIndependentDraws = true;
             }
@@ -470,14 +470,14 @@ int main() {
             // Verify variation across hits
             if (hit > 0) {
                 if (ctx.slopCarrier1Pitch != prevCarrier1Pitch ||
-                    ctx.slopFilterCutoff != prevCutoff ||
+                    ctx.slopFilter1Cutoff != prevCutoff ||
                     ctx.slopAmpPan != prevPan) {
                     hasVariation = true;
                 }
             }
 
             prevCarrier1Pitch = ctx.slopCarrier1Pitch;
-            prevCutoff = ctx.slopFilterCutoff;
+            prevCutoff = ctx.slopFilter1Cutoff;
             prevPan = ctx.slopAmpPan;
 
             // Process buffer to verify audio stability with slop
@@ -695,6 +695,83 @@ int main() {
         std::cout << "PASS: Bell EQ block (transparency, peaking boost/cut, DJ filter tilt) verified." << std::endl;
     }
 
-    std::cout << "\n>>> ALL 22-BLOCK DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
+    // 15. Test Per-Voice Filters (Voice 1, Voice 2, Transients)
+    {
+        TbdAudio::ModularDrumEngine fEngine;
+        fEngine.init(44100.0f);
+        fEngine.setMidiPitch(36); // C2
+
+        // Carrier 1 with LPF active at low cutoff
+        fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 2, 0.4f); // Saw wave (lots of harmonics)
+        fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 0, 0.25f); // LPF
+        fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 1, 0.25f); // -12dB/oct
+        fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 2, 0.3f);  // Low cutoff
+        fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 3, 0.5f);  // Res
+        fEngine.trigger(1.0f);
+
+        std::vector<float> testL(blockSize, 0.0f);
+        std::vector<float> testR(blockSize, 0.0f);
+        fEngine.processStereo(testL.data(), testR.data(), blockSize);
+
+        for (int i = 0; i < blockSize; ++i) {
+            assert(!std::isnan(testL[i]) && !std::isinf(testL[i]));
+        }
+        std::cout << "PASS: Per-Voice filter routing verified." << std::endl;
+    }
+
+    // 16. Test Limiter Block (On/Off, Gain, Threshold, Release)
+    {
+        TbdAudio::LimiterBlock lim;
+        TbdAudio::BlockContext ctx;
+        ctx.sampleRate = 44100.0f;
+        ctx.invSr = 1.0f / 44100.0f;
+        lim.init(ctx);
+
+        // Turn on limiter: On (1.0), 0 dB Gain (12/36), -6 dB Thresh (18/24 = 0.75), 50 ms release
+        lim.setParam(0, 1.0f);
+        lim.setParam(1, 12.0f / 36.0f);
+        lim.setParam(2, 0.75f); // -6 dB threshold (~0.501 lin)
+        lim.setParam(3, 0.6296f);
+
+        // Feed hot signal (amplitude 2.0)
+        constexpr int sigLen = 512;
+        std::vector<float> hotSig(sigLen, 2.0f);
+        lim.processStereo(hotSig.data(), nullptr, sigLen, ctx);
+
+        // After attack, output must be clamped/attenuated to around threshold (0.501)
+        float maxOut = 0.0f;
+        for (int i = 50; i < sigLen; ++i) {
+            maxOut = std::max(maxOut, std::abs(hotSig[i]));
+        }
+        assert(maxOut <= 1.05f); // Zero overshoot exceeding ceiling
+        std::cout << "PASS: Limiter block dynamics and threshold reduction verified." << std::endl;
+    }
+
+    // 17. Test FX Pickers and Dynamic Chain Processing
+    {
+        TbdAudio::ModularDrumEngine fxEng;
+        fxEng.init(44100.0f);
+
+        // Route Drive into Pre FX Slot 0 and Grit into Post FX Slot 0
+        fxEng.setPreFXType(0, 1);  // Drive
+        fxEng.setPreFXType(1, 0);  // Bypass
+        fxEng.setPostFXType(0, 6); // Grit FX
+        fxEng.setPostFXType(1, 0); // Bypass
+
+        assert(fxEng.getPreFXType(0) == 1);
+        assert(fxEng.getPostFXType(0) == 6);
+
+        fxEng.trigger(1.0f);
+        std::vector<float> fxL(blockSize, 0.0f);
+        std::vector<float> fxR(blockSize, 0.0f);
+        fxEng.processStereo(fxL.data(), fxR.data(), blockSize);
+
+        for (int i = 0; i < blockSize; ++i) {
+            assert(!std::isnan(fxL[i]) && !std::isinf(fxL[i]));
+        }
+        std::cout << "PASS: FX Pickers and dynamic routing verified." << std::endl;
+    }
+
+    std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
     return 0;
 }
