@@ -19,16 +19,38 @@ public:
     juce::Label* createSliderTextBox(juce::Slider& slider) override;
 };
 
-// Mini Oscilloscope widget inside each card
+// Mini Oscilloscope or Frequency-Gain Plot widget inside each card
 class MiniOscilloscopeComponent : public juce::Component {
 public:
+    enum class PlotMode {
+        Oscilloscope,
+        FilterXY,
+        EqXY
+    };
+
     MiniOscilloscopeComponent(juce::Colour traceColour);
     void updateData(const float* data, int numPoints);
+    void setPlotMode(PlotMode mode);
+    void updateFilterParams(int type, int slope, float cutoffHz, float resonance);
+    void updateEqParams(float freqHz, float widthOct, float gainDb, float djFilter);
     void paint(juce::Graphics& g) override;
 
 private:
     juce::Colour traceCol;
+    PlotMode plotMode = PlotMode::Oscilloscope;
     std::vector<float> points;
+
+    // Filter plot params
+    int filterType = 0;
+    int filterSlope = 1;
+    float filterCutoff = 24000.0f;
+    float filterResonance = 0.0f;
+
+    // EQ plot params
+    float eqFreq = 24000.0f;
+    float eqWidth = 0.1f;
+    float eqGain = 0.0f;
+    float eqDJ = 0.5f;
 };
 
 // Rotary knob / horizontal slider with right-click hovering text box editor, bipolar arc/bar, and waveform/slope diagram support
@@ -114,7 +136,11 @@ public:
     void resized() override;
 
     void updateScope(const float* data, int numSamples);
+    void setPlotMode(MiniOscilloscopeComponent::PlotMode mode);
+    void updateFilterParams(int type, int slope, float cutoffHz, float resonance);
+    void updateEqParams(float freqHz, float widthOct, float gainDb, float djFilter);
     void setLedSelector(LedSelectorComponent* selector);
+    void setSecondLedSelector(LedSelectorComponent* selector);
     void setSelector(juce::ComboBox* box);
     void setKnob(int slotIndex, const juce::String& label, RotaryKnobSlider* slider);
     void setKnobLabel(int slotIndex, const juce::String& label);
@@ -126,30 +152,13 @@ private:
     MiniOscilloscopeComponent oscilloscope;
 
     LedSelectorComponent* ledSelector = nullptr;
+    LedSelectorComponent* secondLedSelector = nullptr;
     juce::ComboBox* selectorBox = nullptr;
     juce::Label labels[4];
     RotaryKnobSlider* knobs[4] = {};
     int numActiveKnobs = 4;
 };
 
-// Card component representing the master output / control station (Slot 18)
-class MasterCardComponent : public juce::Component {
-public:
-    MasterCardComponent(juce::Colour accentColour);
-    void paint(juce::Graphics& g) override;
-    void resized() override;
-    void updateScope(const float* data, int numSamples);
-
-    std::function<void()> onTrigger;
-    std::function<void()> onReset;
-
-private:
-    juce::Colour accent;
-    MiniOscilloscopeComponent oscilloscope;
-    juce::TextButton triggerButton { "AUDITION HIT" };
-    juce::TextButton initButton { "RESET DEFAULTS" };
-    juce::Label infoLabel;
-};
 
 class TheKlangFarmerAudioProcessorEditor : public juce::AudioProcessorEditor, private juce::Timer {
 public:
@@ -172,122 +181,155 @@ private:
     juce::TextButton triggerButton { "AUDITION HIT" };
     void resetToDefaults();
 
-    // 15 Module Cards
+    // 22 Module Cards
     std::vector<std::unique_ptr<ModuleCardComponent>> cards;
 
-    // Block 1: Carrier
-    juce::ComboBox carrierTrackingBox;
-    LedSelectorComponent carrierTrackingSelector;
-    RotaryKnobSlider carrierPitchSlider;
-    RotaryKnobSlider carrierShapeSlider;
-    RotaryKnobSlider carrierDriveSlider;
+    // Block 1: Carrier 1
+    juce::ComboBox carrier1TrackingBox;
+    LedSelectorComponent carrier1TrackingSelector;
+    RotaryKnobSlider carrier1PitchSlider;
+    RotaryKnobSlider carrier1ShapeSlider;
+    RotaryKnobSlider carrier1DepthSlider;
 
-    // Block 2: Modulator
-    juce::ComboBox modTypeBox;
-    LedSelectorComponent modTypeSelector;
-    RotaryKnobSlider modShapeSlider;
-    RotaryKnobSlider modDepthSlider;
-    RotaryKnobSlider modSpeedSlider;
+    // Block 2: Modulator 1
+    juce::ComboBox mod1TrackBox;
+    LedSelectorComponent mod1TrackSelector;
+    juce::ComboBox mod1TypeBox;
+    LedSelectorComponent mod1TypeSelector;
+    RotaryKnobSlider mod1ShapeSlider;
+    RotaryKnobSlider mod1SpeedSlider;
 
-    // Block 3: Pitch Envelope
-    juce::ComboBox pitchEnvTargetBox;
-    LedSelectorComponent pitchEnvTargetSelector;
-    RotaryKnobSlider pitchEnvSlopeSlider;
-    RotaryKnobSlider pitchEnvDepthSlider;
-    RotaryKnobSlider pitchEnvDecaySlider;
+    // Block 3: Pitch Envelope 1
+    juce::ComboBox pitchEnv1TargetBox;
+    LedSelectorComponent pitchEnv1TargetSelector;
+    RotaryKnobSlider pitchEnv1SlopeSlider;
+    RotaryKnobSlider pitchEnv1DepthSlider;
+    RotaryKnobSlider pitchEnv1DecaySlider;
 
-    // Block 4: Drive
-    juce::ComboBox driveTypeBox;
-    LedSelectorComponent driveTypeSelector;
-    RotaryKnobSlider driveAmountSlider;
-    RotaryKnobSlider driveBiasSlider;
-    RotaryKnobSlider driveFilterSlider;
+    // Block 4: Carrier 2
+    juce::ComboBox carrier2TrackingBox;
+    LedSelectorComponent carrier2TrackingSelector;
+    RotaryKnobSlider carrier2PitchSlider;
+    RotaryKnobSlider carrier2ShapeSlider;
+    RotaryKnobSlider carrier2DepthSlider;
 
-    // Block 5: Noise Transient
+    // Block 5: Modulator 2
+    juce::ComboBox mod2TrackBox;
+    LedSelectorComponent mod2TrackSelector;
+    juce::ComboBox mod2TypeBox;
+    LedSelectorComponent mod2TypeSelector;
+    RotaryKnobSlider mod2ShapeSlider;
+    RotaryKnobSlider mod2SpeedSlider;
+
+    // Block 6: Pitch Envelope 2
+    juce::ComboBox pitchEnv2TargetBox;
+    LedSelectorComponent pitchEnv2TargetSelector;
+    RotaryKnobSlider pitchEnv2SlopeSlider;
+    RotaryKnobSlider pitchEnv2DepthSlider;
+    RotaryKnobSlider pitchEnv2DecaySlider;
+
+    // Block 7: Noise Transient
     RotaryKnobSlider noiseShRateSlider;
     RotaryKnobSlider noiseFilterSlider;
     RotaryKnobSlider noiseDriveSlider;
     RotaryKnobSlider noiseDecaySlider;
 
-    // Block 6: Mixer
-    RotaryKnobSlider mixerCarrierLevelSlider;
+    // Block 8: Mixer
+    RotaryKnobSlider mixerCarrier1LevelSlider;
+    RotaryKnobSlider mixerCarrier2LevelSlider;
+    RotaryKnobSlider mixerRingModSlider;
     RotaryKnobSlider mixerNoiseLevelSlider;
-    RotaryKnobSlider mixerDriveSlider;
-    juce::ComboBox mixerLimiterBox;
-    LedSelectorComponent mixerLimiterSelector;
 
-    // Block 7: Filter
+    // Block 9: Drive
+    juce::ComboBox driveLimiterBox;
+    LedSelectorComponent driveLimiterSelector;
+    RotaryKnobSlider driveAmountSlider;
+    RotaryKnobSlider driveBiasSlider;
+    RotaryKnobSlider driveFilterSlider;
+
+    // Block 10: Filter
     juce::ComboBox filterTypeBox;
     LedSelectorComponent filterTypeSelector;
-    RotaryKnobSlider filterSlopeSlider;
+    juce::ComboBox filterSlopeBox;
+    LedSelectorComponent filterSlopeSelector;
     RotaryKnobSlider filterCutoffSlider;
     RotaryKnobSlider filterResonanceSlider;
 
-    // Block 8: Filter Envelope
+    // Block 11: Filter Envelope
     RotaryKnobSlider filterEnvSlopeSlider;
     RotaryKnobSlider filterEnvDepthSlider;
     RotaryKnobSlider filterEnvDecaySlider;
-    RotaryKnobSlider filterEnvPreDriveSlider;
+    RotaryKnobSlider filterEnvPostDriveSlider;
 
-    // Block 9: RingMod
+    // Block 12: Wave Folder
+    juce::ComboBox waveFolderTypeBox;
+    LedSelectorComponent waveFolderTypeSelector;
+    RotaryKnobSlider waveFolderFoldSlider;
+    RotaryKnobSlider waveFolderBiasSlider;
+    RotaryKnobSlider waveFolderFilterSlider;
+
+    // Block 13: RingMod
     RotaryKnobSlider ringModShapeSlider;
     RotaryKnobSlider ringModRateSlider;
     RotaryKnobSlider ringModAmountSlider;
     RotaryKnobSlider ringModWidthSlider;
 
-    // Block 10: Frequency Shifter
+    // Block 14: Frequency Shifter
     RotaryKnobSlider freqShiftShiftSlider;
     RotaryKnobSlider freqShiftRangeSlider;
     RotaryKnobSlider freqShiftBlendSlider;
     RotaryKnobSlider freqShiftWidthSlider;
 
-    // Block 11: Grit FX
+    // Block 15: Grit FX
     RotaryKnobSlider gritBitsSlider;
     RotaryKnobSlider gritRateSlider;
-    RotaryKnobSlider gritLowBoostSlider;
-    RotaryKnobSlider gritHighBoostSlider;
+    RotaryKnobSlider gritLowSlider;
+    RotaryKnobSlider gritHighSlider;
 
-    // Block 12: Comb Filter
+    // Block 16: Comb Filter
     juce::ComboBox combTypeBox;
     LedSelectorComponent combTypeSelector;
     RotaryKnobSlider combDampeningSlider;
     RotaryKnobSlider combCutoffSlider;
     RotaryKnobSlider combResonanceSlider;
 
-    // Block 13: Disperser
+    // Block 17: Disperser
     juce::ComboBox disperserTypeBox;
     LedSelectorComponent disperserTypeSelector;
     RotaryKnobSlider disperserAmountSlider;
     RotaryKnobSlider disperserCutoffSlider;
     RotaryKnobSlider disperserResonanceSlider;
 
-    // Block 14: Amp
+    // Block 18: EQ (Bell EQ)
+    RotaryKnobSlider eqFreqSlider;
+    RotaryKnobSlider eqWidthSlider;
+    RotaryKnobSlider eqGainSlider;
+    RotaryKnobSlider eqFilterSlider;
+
+    // Block 19: Amp
     RotaryKnobSlider ampPanSlider;
     RotaryKnobSlider ampLevelSlider;
     RotaryKnobSlider ampDriveSlider;
     juce::ComboBox ampLimiterBox;
     LedSelectorComponent ampLimiterSelector;
 
-    // Block 15: Amp Envelope
+    // Block 20: Amp Envelope
     RotaryKnobSlider ampEnvClapsSlider;
     RotaryKnobSlider ampEnvClapSpeedSlider;
     RotaryKnobSlider ampEnvSlopeSlider;
     RotaryKnobSlider ampEnvDecaySlider;
 
-    // Block 16: Velocity
+    // Block 21: Velocity
     RotaryKnobSlider velSlopeSlider;
     RotaryKnobSlider velDecaySlider;
     RotaryKnobSlider velDepthSlider;
     RotaryKnobSlider velVolumeSlider;
 
-    // Block 17: Slop
+    // Block 22: Slop
     RotaryKnobSlider slopFreqSlider;
     RotaryKnobSlider slopDepthSlider;
     RotaryKnobSlider slopDecaySlider;
     RotaryKnobSlider slopPanSlider;
-
-    // Slot 18: Output / Master Card
-    std::unique_ptr<MasterCardComponent> masterCard;
 
     // APVTS Attachments
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
@@ -299,12 +341,18 @@ private:
     void setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar = false, double defaultVal = 0.5);
     void setupBox(juce::ComboBox& box);
 
-    int lastCarrierTrack = -1;
-    int lastModType = -1;
-    int lastPitchEnvTarget = -1;
-    int lastDriveType = -1;
-    int lastMixerLimiter = -1;
+    int lastCarrier1Track = -1;
+    int lastMod1Track = -1;
+    int lastMod1Type = -1;
+    int lastPitchEnv1Target = -1;
+    int lastCarrier2Track = -1;
+    int lastMod2Track = -1;
+    int lastMod2Type = -1;
+    int lastPitchEnv2Target = -1;
+    int lastDriveLimiter = -1;
     int lastFilterType = -1;
+    int lastFilterSlope = -1;
+    int lastWaveFolderType = -1;
     int lastCombType = -1;
     int lastDisperserType = -1;
     int lastAmpLimiter = -1;

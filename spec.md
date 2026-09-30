@@ -1,634 +1,293 @@
-\# Idea for a Drum VST3
-
-
-
-\- modulator osc frequency modulates carrier osc
-
-\- carrier osc into drive
-
-\- drive output and noise transient into mixer
-
-\- mixer into filter
-
-\- filter into ring mod
-
-\- ring mod into frequency shifter
-
-\- frequency shifter into grit fx
-
-\- grit fx into comb filter
-
-\- comb filter into disperser
-
-\- disperser into amp
-
-
-
-Please give little oscilloscopes in each block to see what's happening.
-
-
-
-\## Controls
-
-
-
-all continuously variable controls should be able to be right clicked to edit the value in a little hovering text box
-
-
-
-for bipolar controls, have the UI show the fill on the knob starting from the default center position
-
-
-
-for unipolar controls, have the UI show the fill on the knob starting from minimum
-
-
-
-for all slope controls, show a little diagram of the current slope instead of the value (but can still be right clocked to edit the value)
-
-
-
-for all waveform controls, show a little diagram of the current wave shape instead of the value (but can still be right clocked to edit the value)
-
-
-
-1\. Carrier Controls
-
-&#x20;   1. pitch tracking style, selector
-
-&#x20;       - fixed frequency
-
-&#x20;       - fixed pitch
-
-&#x20;       - midi pitch (default)
-
-&#x20;   1. pitch / frequency value, continuously variable
-
-&#x20;       - fixed frequency: 20 Hz to 24 kHz (default 55 Hz)
-
-&#x20;       - fixed pitch: midi note 0 to 127 (default "A1 \[33]")
-
-&#x20;           - show notes names as well as midi note number: "C4 \[60]"
-
-&#x20;       - midi pitch: note offset from -60 to +60 (default 0)
-
-&#x20;   1. shape, continuously variable
-
-&#x20;       - waveform (this should crossfade between the shapes)
-
-&#x20;           - sine (at 0% knob range, the default)
-
-&#x20;           - triangle (at 20% knob range)
-
-&#x20;           - saw (at 40% knob range)
-
-&#x20;           - square (at 60% knob range)
-
-&#x20;           - pwm 0% (at 100% knob range)
-
-&#x20;   1. drive, continuously variable
-
-&#x20;       - -6dB to 0dB (at 50% knob) to +24dB
-
-&#x20;       - default: 0dB
-
-1\. Modulator Controls
-
-&#x20;   1. type, selector
-
-&#x20;       - fixed oscillator
-
-&#x20;       - following oscillator
-
-&#x20;       - fm operator (linear FM)
-
-&#x20;       - fixed sine \* white noise (sine and noise ring mod'd together)
-
-&#x20;       - following sine \* white noise (sine and noise ring mod'd together)
-
-&#x20;       - fm operator sine \* white noise (sine and noise ring mod'd together, linear fm)
-
-&#x20;       - sample and hold noise
-
-&#x20;   1. shape, continuously variable
-
-&#x20;       - oscillator waveform (this should crossfade between the shapes)
-
-&#x20;           - sine (at 0% knob range, the default)
-
-&#x20;           - triangle (at 20% knob range)
-
-&#x20;           - saw (at 40% knob range)
-
-&#x20;           - square (at 60% knob range)
-
-&#x20;           - pwm 0% (at 100% knob range)
-
-&#x20;       - white noise filter
-
-&#x20;           - dj style filter
-
-&#x20;               - 0% to 49%
-
-&#x20;                   - LPF: 20 Hz to 24 kHz
-
-&#x20;                   - slope: steep to flat
-
-&#x20;               - 50%: no filter (the default)
-
-&#x20;               - 51% to 100%
-
-&#x20;                   - HPF: 20 Hz to 24 kHz
-
-&#x20;                   - slope: flat to steep
-
-&#x20;       - sample and hold noise rate
-
-&#x20;           - 0.1 Hz to 24 kHz
-
-&#x20;           - default: 24 kHz
-
-&#x20;   1. depth, continuously variable
-
-&#x20;       - -200% to 0% to +200%
-
-&#x20;       - default; 0%
-
-&#x20;   1. speed, continuously variable
-
-&#x20;       - fixed frequency: 0.1 Hz to 24 kHz (default 55 Hz)
-
-&#x20;       - following offset: -64 to 0 to +64 midi notes (default 0)
-
-&#x20;       - fm ratio: 1:32.0 to 1.0:1.0 to 32.0:1 (default 1.0:1.0)
-
-&#x20;       - sine \* white noise, the sine frequency: 0.1 Hz to 24 kHz (default: 24 kHz)
-
-1\. Pitch Envelope Controls
-
-&#x20;   1. oscillator, selector
-
-&#x20;       - off (default)
-
-&#x20;       - carrier
-
-&#x20;       - modulator
-
-&#x20;       - both
-
-&#x20;   1. slope, continuously variable
-
-&#x20;       - exponential to linear to logarithmic
-
-&#x20;       - default: exponential
-
-&#x20;   1. depth, continuously variable
-
-&#x20;       - -5 Octaves to 0 to +5 Octaves
-
-&#x20;       - default: 0
-
-&#x20;   1. decay, continuously variable
-
-&#x20;       - 5 ms (at 0%)
-
-&#x20;       - 100 ms (at 25%)
-
-&#x20;       - 1 second (at 50%)
-
-&#x20;       - 5 seconds (at 75%)
-
-&#x20;       - 60 seconds (at 100%)
-
-&#x20;       - default: 333 ms
-
-1\. Drive Controls
-
-&#x20;   1. type, selector
-
-&#x20;       - off (default)
-
-&#x20;       - saturation
-
-&#x20;       - wave folder
-
-&#x20;   1. drive, continuously variable
-
-&#x20;       - saturation: -6dB to 0dB to +24dB (default: 0dB)
-
-&#x20;       - folder: 0 folds to 8 folds (default: 0)
-
-&#x20;   1. bias, continuously variable
-
-&#x20;       - dc offset: -1 to 0 to +1
-
-&#x20;       - default: 0
-
-&#x20;   1. post-filter, continuously variable
-
-&#x20;       - dj style filter
-
-&#x20;           - 0% to 49%
-
-&#x20;               - LPF: 20 Hz to 24 kHz
-
-&#x20;               - slope: -24dB/oct to -6dB/oct
-
-&#x20;           - 50%: no filter (the default)
-
-&#x20;           - 51% to 100%
-
-&#x20;               - HPF: 20 Hz to 24 kHz
-
-&#x20;               - slope: -6dB/oct to -24dB/oct
-
-1\. Noise Transient Controls
-
-&#x20;   1. sample and hold rate, continuously variable
-
-&#x20;       - 0.1 Hz to 24 kHz
-
-&#x20;       - default: 24 kHz
-
-&#x20;   1. filter, continuously variable
-
-&#x20;       - dj style filter
-
-&#x20;           - 0% to 49%
-
-&#x20;               - LPF: 20 Hz to 24 kHz
-
-&#x20;               - slope: -24dB/oct to -6dB/oct
-
-&#x20;           - 50%: no filter (the default)
-
-&#x20;           - 51% to 100%
-
-&#x20;               - HPF: 20 Hz to 24 kHz
-
-&#x20;               - slope: -6dB/oct to -24dB/oct
-
-&#x20;   1. drive, continuously variable
-
-&#x20;       - -6dB to 0dB (at 50% knob) to +24dB
-
-&#x20;       - default: 0dB
-
-&#x20;   1. decay, continuously variable
-
-&#x20;       - 1 ms (at 0%)
-
-&#x20;       - 50 ms (at 25%)
-
-&#x20;       - 1 second (at 50%)
-
-&#x20;       - 5 seconds (at 75%)
-
-&#x20;       - 60 seconds (at 100%)
-
-&#x20;       - default: 100 ms
-
-1\. Mixer Controls
-
-&#x20;   1. limiter, selector
-
-&#x20;       - off
-
-&#x20;       - on (default)
-
-&#x20;   1. carrier level (this is after the drive block), continuously variable
-
-&#x20;       - 0% to 100%  (at 50% knob range) to 400%
-
-&#x20;       - default: 100%
-
-&#x20;   1. noise level, continuously variable
-
-&#x20;       - 0% to 100%  (at 50% knob range) to 400%
-
-&#x20;       - default: 0%
-
-&#x20;   1. drive, continuously variable
-
-&#x20;       - -6dB to 0dB (at 50% knob) to +24dB
-
-&#x20;       - default: 0dB
-
-1\. Filter Controls
-
-&#x20;   1. type, selector
-
-&#x20;       - off (default)
-
-&#x20;       - LPF
-
-&#x20;       - BPF
-
-&#x20;       - HPF
-
-&#x20;       - Notch
-
-&#x20;   1. slope, continuously variable
-
-&#x20;       - -6dB/oct to -24dB/oct (at 50%) to -96dB/oct
-
-&#x20;       - default: -12dB/oct
-
-&#x20;   1. cutoff, continuously variable
-
-&#x20;       - 0.1 Hz to 24 kHz
-
-&#x20;       - defaul: 24 kHz
-
-&#x20;   1. resonance, continuously variable
-
-&#x20;       - resonance on filter: 0% to 100%
-
-&#x20;       - default: 0%
-
-1\. Filter Envelope Controls
-
-&#x20;   1. slope, continuously variable
-
-&#x20;       - exponential to linear to logarithmic
-
-&#x20;       - default: exponential
-
-&#x20;   1. depth, continuously variable
-
-&#x20;       - -100% to 0% to 100%
-
-&#x20;       - default: 0%
-
-&#x20;   1. decay, continuously variable
-
-&#x20;       - 5 ms (at 0%)
-
-&#x20;       - 100 ms (at 25%)
-
-&#x20;       - 1 second (at 50%)
-
-&#x20;       - 5 seconds (at 75%)
-
-&#x20;       - 60 seconds (at 100%)
-
-&#x20;       - default: 333 ms
-
-&#x20;   1. pre-drive (for the filter, not the envelope), continuously variable
-
-&#x20;       - -6dB to 0dB (at 50% knob) to +24dB
-
-&#x20;       - default: 0dB
-
-1\. RingMod Controls
-
-&#x20;   1. waveform, continuously variable (this should crossfade between the shapes)
-
-&#x20;       - sine (at 0% knob range, the default)
-
-&#x20;       - triangle (at 20% knob range)
-
-&#x20;       - saw (at 40% knob range)
-
-&#x20;       - square (at 60% knob range)
-
-&#x20;       - pwm 0% (at 100% knob range)
-
-&#x20;   1. rate, continuously variable
-
-&#x20;       - 0.1 Hz to 24 kHz
-
-&#x20;       - default: 55 Hz
-
-&#x20;   1. amount, continuously variable
-
-&#x20;       - 0% to 100%
-
-&#x20;       - default: 0%
-
-&#x20;   1. width, continuously variable
-
-&#x20;       - -100% to 0% to +100%
-
-&#x20;       - default: 0%
-
-1\. Frequency Shifter Controls
-
-&#x20;   1. shift, continuously variable (the range of shift should go from negative X Hz to 0 Hz to postive X Hz, where X is the value of the range control)
-
-&#x20;       - -X Hz to 0 Hz to +X Hz
-
-&#x20;       - default: 0 Hz
-
-&#x20;   1. range, continuously variable
-
-&#x20;       - 0 Hz to 5 kHz
-
-&#x20;       - default: 3 Hz
-
-&#x20;   1. blend, continuously variable (-100% and +100% should both be fully frequency shifter; -50% and +50% should be 50% frequency shifter and 50% dry signal; 0% should be fully dry signal)
-
-&#x20;       - -100% to -50% to 0% to +50% to +100%
-
-&#x20;       - default: 0%
-
-&#x20;   1. width, continuously variable
-
-&#x20;       - -100% to 0% to +100%
-
-&#x20;       - default: 0%
-
-1\. Grit FX Controls
-
-&#x20;   1. bit rate reduction, continuously variable
-
-&#x20;       - 1.0 bit to 16.0 bit
-
-&#x20;       - default: 16.0 Bit
-
-&#x20;   1. sampe rate reduction, continuously variable
-
-&#x20;       - 20 Hz to 24 kHz
-
-&#x20;       - default: 24 kHz
-
-&#x20;   1. low boost, continuously variable
-
-&#x20;       - 0dB to +24dB
-
-&#x20;       - default: 0dB
-
-&#x20;   1. high boost, continuously variable
-
-&#x20;       - 0dB to +24dB
-
-&#x20;       - default: 0dB
-
-1\. Disperser Controls
-
-&#x20;   1. type, selector
-
-&#x20;       - off (default)
-
-&#x20;       - on
-
-&#x20;   1. amount, continuously variable
-
-&#x20;       - series of all-pass filters
-
-&#x20;           - 0 to 32
-
-&#x20;           - default: 4
-
-&#x20;   1. cutoff, continuously variable
-
-&#x20;       - 0.1 Hz to 24 kHz
-
-&#x20;       - defaul: 24 kHz
-
-&#x20;   1. resonance, continuously variable
-
-&#x20;       - -100% to 0% to +100%
-
-&#x20;       - default: 0%
-
-1\. Comb Filter Controls
-
-&#x20;   1. type, selector
-
-&#x20;       - off (default)
-
-&#x20;       - on
-
-&#x20;   1. dampening, continuously variable
-
-&#x20;       - 0.1 Hz to 24 kHz
-
-&#x20;       - default: 24 kHz
-
-&#x20;   1. cutoff, continuously variable
-
-&#x20;       - 0.1 Hz to 24 kHz
-
-&#x20;       - defaul: 24 kHz
-
-&#x20;   1. resonance, continuously variable
-
-&#x20;       - -100% to 0% to +100%
-
-&#x20;       - default: 0%
-
-1\. Amp Controls
-
-&#x20;   1. limiter, selector
-
-&#x20;       - off
-
-&#x20;       - on (default)
-
-&#x20;   1. pan, continuously variable
-
-&#x20;       - 100% left to center to 100% right
-
-&#x20;       - default: center
-
-&#x20;   1. level, continuously variable
-
-&#x20;       - 0% to 100%
-
-&#x20;       - default: 100%
-
-&#x20;   1. drive, continuously variable
-
-&#x20;       - -6dB to 0dB (at 50% knob) to +24dB
-
-&#x20;       - default: 0dB
-
-1\. Amp Envelope Controls
-
-&#x20;   1. claps, continuously variable
-
-&#x20;       - claps: 0 to 32
-
-&#x20;       - default: 0
-
-&#x20;   1. clap speed, continuously variable
-
-&#x20;       - decay time per clap: 1 ms to 15 ms
-
-&#x20;       - default: 3ms
-
-&#x20;   1. slope, continuously variable
-
-&#x20;       - exponential to linear to logarithmic
-
-&#x20;       - default: exponential
-
-&#x20;   1. decay, continuously variable
-
-&#x20;       - 5 ms (at 0%)
-
-&#x20;       - 100 ms (at 25%)
-
-&#x20;       - 1 second (at 50%)
-
-&#x20;       - 5 seconds (at 75%)
-
-&#x20;       - 60 seconds (at 100%)
-
-&#x20;       - default: 333 ms
-
-1\. Velocity Controls
-
-&#x20;   1. slope, continuously variable (sets the slope of the velocity curve)
-
-&#x20;       - exponential to linear to logarithmic
-
-&#x20;       - default: linear
-
-&#x20;   1. decay, continuously variable (adds to all decay times; bipolar exponential taper where +/-25% knob displacement gives +/-5% value)
-
-&#x20;       - -100% to 0% to +100%
-
-&#x20;       - default: 0%
-
-&#x20;   1. depth, continuously variable (adds to all envelope depths; bipolar exponential taper where +/-25% knob displacement gives +/-5% value)
-
-&#x20;       - -100% to 0% to +100%
-
-&#x20;       - default: 0%
-
-&#x20;   1. volume, continuously variable (sets the minimum output volume for lowest velocity; unipolar exponential taper where 50% knob travel gives -10% volume attenuation)
-
-&#x20;       - 0% (no change to volume) to -100% (lowest velocity is quietest)
-
-&#x20;       - default: 0%
-
-1\. Slop Controls
-
-&#x20;   this should randomly change values (all random, not the same random per altered control) on each new trigger; all slop controls use a unipolar exponential taper where 50% knob travel gives 10% value (+/-10%)
-
-&#x20;   1. frequency (both pitch and filters), continuously variable
-
-&#x20;       - 0% to +/-100%
-
-&#x20;       - default: 0%
-
-&#x20;   1. envelope depths, continuously variable
-
-&#x20;       - 0% to +/-100%
-
-&#x20;       - default: 0%
-
-&#x20;   1. envelope decays, continuously variable
-
-&#x20;       - 0% to +/-100%
-
-&#x20;       - default: 0%
-
-&#x20;   1. pan, continuously variable
-
-&#x20;       - 0% to +/-100%
-
-&#x20;       - default: 0%
-
+# The Klang Farmer — Modular Drum Synthesizer Specification
+
+## 1. Architectural & Implementation Highlights
+
+"The Klang Farmer" is a 22-module dual-FM synthesizer drum voice engineered in modern C++20 / JUCE 8. It replicates the tactile immediacy of a boutique modular hardware drum rack within a single 3-row by 8-column Eurorack-style chassis (1840 × 760 px).
+
+### Built Engine & System Capabilities
+- **Dual FM Voice Architecture**: Two fully featured carrier/modulator pairs (`Carrier 1` & `Modulator 1`, `Carrier 2` & `Modulator 2`) with dynamic frequency modulation depth ($\pm 200\%$) and cross-voice ring modulation.
+- **Renoise & DAW Offline Bounce Stability**:
+  - Zero dynamic heap memory allocations (`malloc`/`new`) on the audio rendering thread.
+  - Multi-clap burst buffers, envelope signal arrays, and internal voice sub-buffers are pre-allocated with sample-accurate rendering.
+  - Guaranteed stability with arbitrary and varying buffer sizes (from 64 up to 2048+ samples) during offline audio rendering.
+- **Advanced Real-Time Visualizations**:
+  - **Self-Locked Oscilloscopes**: Modulators and Carriers dynamically phase-lock to their own internal fundamental frequency and rising zero-crossings, preventing visual drift or "wibbly wobbly" phase jitter even during detuning, audio-rate FM, or variable pitch envelopes.
+  - **X-Y Frequency vs. Gain Response Plots**: Dedicated real-time magnitude response graphs for both the **Filter** and **Bell EQ** blocks. Plotted on a logarithmic frequency axis ($20\,\text{Hz} - 24\,\text{kHz}$) with grid reference marks ($100\,\text{Hz}$, $1\,\text{kHz}$, $10\,\text{kHz}$), a $0\,\text{dB}$ center line, area fill, glowing response trace, and active frequency cutoff/peak marker dots.
+  - **Dynamic Curve Graphs**: Velocity displays its live transfer curve; Slop displays its stepped random distribution.
+- **Hardware-Style Interaction & Tactile Feel**:
+  - Small rotary knobs with right-aligned text readouts across all continuous parameters.
+  - Inline diagrams rendered directly inside text boxes (waveform morphing crossfades, envelope decay curves, velocity response shapes, and filter slope steps).
+  - Hovering pop-up numerical entry upon right-clicking any continuous control.
+  - Mouse-wheel support across all knobs and diagram readouts.
+  - Double-click default return (including Mixer secondary sources snapping immediately to 100%).
+  - Exponential tactile scaling on Slop and Velocity controls: the first 50% of knob travel controls the first 10% of modulation depth (and $\pm 25\%$ knob travel covers $\pm 5\%$).
+  - Independent stepped random Slop offsets computed per trigger across 24 separate parameters.
+
+---
+
+## 2. Signal Routing Pipeline
+
+```
+[Modulator 1] ──(FM Depth)──> [Carrier 1] ──┐
+                                             │
+[Modulator 2] ──(FM Depth)──> [Carrier 2] ──┼──> [Mixer] ──> [Drive] ──> [Filter] ──> [Wave Folder]
+                                             │       │
+[Carrier 1 x Carrier 2] ──────(RingMod)─────┼───────┤
+                                             │
+[Noise Transient] ───────────────────────────┘
+
+      ──> [RingMod FX] ──> [Frequency Shifter] ──> [Grit FX] ──> [Comb Filter]
+      ──> [Disperser] ──> [Bell EQ] ──> [Amp] ──> Stereo Audio Output
+```
+
+### Modulation Signals
+- **Pitch Envelope 1**: Modulates Carrier 1, Modulator 1, or Both.
+- **Pitch Envelope 2**: Modulates Carrier 2, Modulator 2, or Both.
+- **Filter Envelope**: Modulates Filter Cutoff frequency + Filter Post-Drive.
+- **Amp Envelope**: Modulates Master Output Level (with multi-burst clap generator).
+- **Velocity**: Modulates volume attenuation, all envelope decays, and all envelope depths via selectable slope curves.
+- **Slop**: Injects independent stepped random offsets per trigger into 24 distinct engine parameters.
+
+---
+
+## 3. Shared & Standardized Parameter Definitions
+
+To keep module controls clean and consistent across the synth, the following standard parameter paradigms are shared across multiple blocks:
+
+### 3.1. Waveform Morphing
+*Used in: `Carrier 1`, `Modulator 1` (Oscillator mode), `Carrier 2`, `Modulator 2` (Oscillator mode), `RingMod FX`*
+- Continuously crossfades across five analog-style core shapes:
+  - **0%**: Sine (Default)
+  - **20%**: Triangle
+  - **40%**: Sawtooth
+  - **60%**: Square
+  - **100%**: Pulse-Width Modulation (PWM 0% / narrow impulse)
+- Renders an interactive live waveform diagram inside its value readout box.
+
+### 3.2. DJ-Style Bipolar Filters
+*Used in: `Modulator 1 & 2` (Cyclic mode), `Drive` (Post-Filter), `Wave Folder` (Post-Filter), `Noise Transient` (Filter), `Bell EQ` (DJ Filter)*
+- A single center-detented knob providing low-pass and high-pass filtering without dead zones:
+  - **0% to 49%**: Low-Pass Filter ($20\,\text{Hz} - 24\,\text{kHz}$, steep to gentle slope).
+  - **50%**: Flat / Completely Bypassed (Default).
+  - **51% to 100%**: High-Pass Filter ($20\,\text{Hz} - 24\,\text{kHz}$, gentle to steep slope).
+
+### 3.3. Musical Envelope Decay Times
+*Used in: `Pitch Env 1`, `Pitch Env 2`, `Filter Env`, `Amp Env`*
+- Five-point piecewise logarithmic / exponential decay curve tailored for percussive punch and long sub sustain:
+  - **0%**: $5\,\text{ms}$
+  - **25%**: $100\,\text{ms}$
+  - **50%**: $1.0\,\text{second}$
+  - **75%**: $5.0\,\text{seconds}$
+  - **100%**: $60.0\,\text{seconds}$
+  - **Default**: $333\,\text{ms}$ ($0.3806$ normalized knob position).
+*(Note: Noise Transient uses a tighter percussive range: $1\,\text{ms}$ at 0%, $50\,\text{ms}$ at 25%, $1\,\text{s}$ at 50%, $60\,\text{s}$ at 100%, default $100\,\text{ms}$).*
+
+### 3.4. Envelope & Velocity Slope Curves
+*Used in: `Pitch Env 1`, `Pitch Env 2`, `Filter Env`, `Amp Env`, `Velocity`*
+- Continuously blends between response contours:
+  - **0.0 (0%)**: Exponential (Default for snappy drum envelopes).
+  - **0.5 (50%)**: Linear.
+  - **1.0 (100%)**: Logarithmic.
+- Renders a live curvature diagram inside the readout box.
+
+### 3.5. Frequency Ranges
+- **Full Audio Spectrum**: $20\,\text{Hz} - 24\,\text{kHz}$ (logarithmic scale, used in Carriers, Grit, Bell EQ, DJ Filters).
+- **Wide Modular / LFO Spectrum**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (logarithmic scale, used in Modulators, Filter Cutoff, Comb Filter, Disperser, RingMod).
+
+### 3.6. Bipolar Modulations & Gains
+- **EQ & Shelf Gains**: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, $0\,\text{dB} = 0.5$ default).
+- **Drive / Saturation**: $-6\,\text{dB}$ to $+24\,\text{dB}$ ($0\,\text{dB} = 0.2$ default).
+- **Stereo Width**: $-100\%$ (inverted phase/swap) to $0\%$ (center mono) to $+100\%$ (extra wide).
+
+### 3.7. Tactile Exponential Curve for Slop & Velocity
+- To prevent fiddly calibration, modulation depth knobs are warped with an exponential response:
+  - **Unipolar**: At 50% controller travel, the modulation value is at 10%.
+  - **Bipolar**: At $\pm 25\%$ controller travel, the modulation value is at $\pm 5\%$.
+
+---
+
+## 4. Hardware Rack Module Specifications (3 × 8 Layout)
+
+### Row 1: Voice Generation & Primary Mixing
+
+#### Module 1: Carrier 1
+- **Tracking (Selector)**: `Fixed Frequency` (0), `Fixed Pitch` (1), `MIDI Pitch` (2, default).
+- **Pitch / Freq (Continuous)**:
+  - Fixed Frequency: $20\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
+  - Fixed Pitch: MIDI note 0 to 127 (default `A1 [33]`, shows note name and number).
+  - MIDI Pitch: Note offset $-60$ to $+60$ semitones (default $0$).
+- **Shape (Continuous)**: Waveform Morph (Sine $\to$ Tri $\to$ Saw $\to$ Square $\to$ PWM).
+- **Depth (Continuous)**: FM Depth from Modulator 1: $-200\%$ to $+200\%$ (default $0\% = 0.5$).
+- **Display**: Self-locked oscilloscope triggered to Carrier 1 fundamental.
+
+#### Module 2: Modulator 1
+- **Pitch Tracking (Selector)**: `Fixed` (0), `Following` (1), `FM Operator` (2).
+- **Type (Selector)**: `Oscillator` (0), `Cyclic` (1, Sine $\times$ Noise), `Noise` (2, S&H).
+- **Shape (Continuous)**: Dynamic context-dependent control:
+  - Oscillator: Waveform Morph (Sine $\to$ PWM).
+  - Cyclic: White noise DJ-style filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
+  - Noise: Sample & Hold noise clock rate ($0.1\,\text{Hz} - 24\,\text{kHz}$, default $24\,\text{kHz}$).
+- **Speed (Continuous)**: Context-dependent frequency:
+  - Fixed: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
+  - Following: Pitch offset $-64$ to $+64$ semitones (default $0$).
+  - FM Operator: Ratio 1:32.0 to 1.0:1.0 to 32.0:1 (default 1.0:1.0).
+  - Cyclic Sine: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Display**: Self-locked oscilloscope phase-locked to Modulator 1's own internal frequency and zero crossings.
+
+#### Module 3: Pitch Envelope 1
+- **Target (Selector)**: `Off` (0, default), `Carrier` (1), `Modulator` (2), `Both` (3).
+- **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
+- **Depth (Continuous)**: $-5$ to $+5$ octaves (default $0$).
+- **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
+- **Display**: Real-time decaying envelope oscilloscope trace.
+
+#### Module 4: Carrier 2
+- **Tracking (Selector)**: `Fixed Frequency` (0), `Fixed Pitch` (1), `MIDI Pitch` (2, default).
+- **Pitch / Freq (Continuous)**: Same range as Carrier 1.
+- **Shape (Continuous)**: Waveform Morph (Sine $\to$ PWM).
+- **Depth (Continuous)**: FM Depth from Modulator 2: $-200\%$ to $+200\%$ (default $0\% = 0.5$).
+- **Display**: Self-locked oscilloscope triggered to Carrier 2 fundamental.
+
+#### Module 5: Modulator 2
+- **Pitch Tracking (Selector)**: `Fixed` (0), `Following` (1), `FM Operator` (2).
+- **Type (Selector)**: `Oscillator` (0), `Cyclic` (1), `Noise` (2).
+- **Shape (Continuous)**: Waveform Morph / DJ Filter / S&H Clock Rate.
+- **Speed (Continuous)**: Frequency / Offset / FM Ratio.
+- **Display**: Self-locked oscilloscope phase-locked to Modulator 2's own internal frequency and zero crossings.
+
+#### Module 6: Pitch Envelope 2
+- **Target (Selector)**: `Off` (0, default), `Carrier` (1), `Modulator` (2), `Both` (3).
+- **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
+- **Depth (Continuous)**: $-5$ to $+5$ octaves (default $0$).
+- **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
+- **Display**: Real-time decaying envelope oscilloscope trace.
+
+#### Module 7: Noise Transient
+- **S&H Rate (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Filter (Continuous)**: DJ-style filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
+- **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+- **Decay (Continuous)**: Percussive decay ($1\,\text{ms} - 60\,\text{s}$, default $100\,\text{ms}$).
+- **Display**: Noise burst oscilloscope trace.
+
+#### Module 8: Mixer
+- **Carrier 1 Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $100\%$).
+- **Carrier 2 Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
+- **RingMod Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
+- **Noise Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
+- **Display**: Mixed voice summing oscilloscope trace.
+
+---
+
+### Row 2: Tone Shaping & Color FX
+
+#### Module 9: Drive
+- **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+- **Bias (Continuous)**: DC offset $-1.0$ to $+1.0$ (default $0.0$).
+- **Post-Filter (Continuous)**: DJ-style filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
+- **Limiter (Selector)**: `Off` (0), `On` (1, default, safety hard clipper after saturation).
+- **Display**: Saturated output oscilloscope trace.
+
+#### Module 10: Filter
+- **Type (Selector)**: `Off` (0, default), `LPF` (1), `BPF` (2), `HPF` (3), `BRF / Notch` (4).
+- **Slope (Selector)**: `-6dB/oct` (0), `-12dB/oct` (1, default), `-18dB/oct` (2), `-24dB/oct` (3), `-36dB/oct` (4).
+- **Cutoff (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Resonance (Continuous)**: $0\% - 100\%$ ($Q \approx 0.707 - 18.7$).
+- **Display**: **Real-Time X-Y Magnitude Response Plot**:
+  - Logarithmic frequency axis ($20\,\text{Hz} - 24\,\text{kHz}$) vs Gain (dB).
+  - Accurate multi-pole curves for all 5 filter types and 5 slope orders.
+  - Interactive Cutoff frequency marker line.
+
+#### Module 11: Filter Envelope
+- **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
+- **Depth (Continuous)**: $-10$ to $+10$ octaves (default $0$ oct).
+- **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
+- **Post-Drive (Continuous)**: Filter post-saturation gain: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+- **Display**: Real-time decaying filter envelope trace.
+
+#### Module 12: Wave Folder
+- **Type (Selector)**: `Off` (0, default), `On` (1).
+- **Fold (Continuous)**: 0 to 8 wavefolds (default 0).
+- **Bias (Continuous)**: DC offset $-1.0$ to $+1.0$ (default $0.0$).
+- **Post-Filter (Continuous)**: DJ-style filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
+- **Display**: Wavefolded output oscilloscope trace.
+
+#### Module 13: RingMod FX
+- **Waveform (Continuous)**: Waveform Morph (Sine $\to$ PWM).
+- **Rate (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
+- **Amount (Continuous)**: Dry/Wet $0\% - 100\%$ (default $0\%$).
+- **Width (Continuous)**: Stereo phase width $-100\% - +100\%$ (default $0\%$).
+- **Display**: Ring-modulated audio oscilloscope trace.
+
+#### Module 14: Frequency Shifter
+- **Shift (Continuous)**: Bipolar shift $-X\,\text{Hz}$ to $0\,\text{Hz}$ to $+X\,\text{Hz}$ (default $0\,\text{Hz}$).
+- **Range (Continuous)**: Maximum shift range $0\,\text{Hz} - 5\,\text{kHz}$ (default $3\,\text{Hz}$).
+- **Blend (Continuous)**: $-100\%$ (wet negative sideband) $\to 0\%$ (dry) $\to +100\%$ (wet positive sideband).
+- **Width (Continuous)**: Stereo quadrature phase width $-100\% - +100\%$ (default $0\%$).
+- **Display**: Frequency-shifted audio oscilloscope trace.
+
+#### Module 15: Grit FX
+- **Bit Rate (Continuous)**: $1.0\,\text{bit} - 16.0\,\text{bit}$ (default $16.0\,\text{bit}$).
+- **Sample Rate (Continuous)**: $20\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Low (Continuous)**: Low shelf filter: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, default $0\,\text{dB}$).
+- **High (Continuous)**: High shelf filter: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, default $0\,\text{dB}$).
+- **Display**: Decimated lo-fi audio oscilloscope trace.
+
+#### Module 16: Comb Filter
+- **Type (Selector)**: `Off` (0, default), `On` (1).
+- **Dampening (Continuous)**: Internal feedback damping $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Cutoff (Continuous)**: Comb fundamental frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Resonance (Continuous)**: Feedback $-100\%$ to $+100\%$ (default $0\%$).
+- **Display**: Comb-filtered resonant oscilloscope trace.
+
+---
+
+### Row 3: Spatial, Output & Master Modulation
+
+#### Module 17: Disperser
+- **Type (Selector)**: `Off` (0, default), `On` (1).
+- **Amount (Continuous)**: Cascaded 2nd-order all-pass filter stages: 0 to 32 stages (default 4).
+- **Cutoff (Continuous)**: APF center frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $220\,\text{Hz}$).
+- **Resonance (Continuous)**: APF Q factor $-100\%$ to $+100\%$ (default $0\%$).
+- **Display**: Phase-smeared / zapped audio oscilloscope trace.
+
+#### Module 18: Bell EQ
+- **Frequency (Continuous)**: $20\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Width (Continuous)**: $0.1 - 10$ octaves (default $0.1$ octaves).
+- **Gain (Continuous)**: $-24\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$, transparent passthrough).
+- **DJ Filter (Continuous)**: DJ-style tilt filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
+- **Display**: **Real-Time X-Y Magnitude Response Plot**:
+  - Logarithmic frequency axis ($20\,\text{Hz} - 24\,\text{kHz}$) vs Gain (dB).
+  - RBJ peaking/dipping bell curve combined with DJ filter tilt.
+  - Interactive Center Frequency / Gain handle marker dot.
+
+#### Module 19: Amp
+- **Level (Continuous)**: Master level $0\% - 100\%$ (default $100\%$).
+- **Pan (Continuous)**: Stereo pan 100% Left $\leftrightarrow$ Center $\leftrightarrow$ 100% Right (default Center).
+- **Drive (Continuous)**: Output saturation $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+- **Limiter (Selector)**: `Off` (0), `On` (1, default, post-drive safety limiter).
+- **Display**: Master output stereo waveform oscilloscope trace.
+
+#### Module 20: Amp Envelope
+- **Claps (Continuous)**: Multi-burst clap triggers: 0 to 32 claps (default 0).
+- **Clap Speed (Continuous)**: Decay time per clap: $1\,\text{ms} - 15\,\text{ms}$ (default $3\,\text{ms}$).
+- **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
+- **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
+- **Display**: Multi-burst clap & main decay amplitude envelope trace.
+
+#### Module 21: Velocity
+- **Slope (Continuous)**: Velocity response curve: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
+- **Decay (Continuous)**: Velocity-to-decay scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
+- **Depth (Continuous)**: Velocity-to-envelope depth scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
+- **Volume (Continuous)**: Velocity-to-output volume attenuation: $0\%$ (full volume) to $-100\%$ (min velocity is silent) (default $0\%$).
+- **Display**: Dynamic velocity input-to-output transfer curve visualization.
+
+#### Module 22: Slop
+- Injects independent, stepped random values per trigger hit across 24 engine parameters.
+- **Frequency (Continuous)**: $0\%$ to $\pm 100\%$ (controls pitch and filter frequencies).
+- **Envelope Depths (Continuous)**: $0\%$ to $\pm 100\%$ (controls all envelope depths).
+- **Envelope Decays (Continuous)**: $0\%$ to $\pm 100\%$ (controls all envelope decay times).
+- **Pan (Continuous)**: $0\%$ to $\pm 100\%$ (controls output stereo panning).
+- **Display**: Stepped random distribution visualization.
+
+#### Slots 23 & 24: Blank Rack Plates
+- Brushed anodized dark faceplates with hardware rack corner screws, preserving modular rack aesthetics.

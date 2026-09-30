@@ -250,8 +250,18 @@ struct DJFilter {
 // --- VISUAL OSCILLOSCOPE BUFFER ---
 struct VisualScope {
     static constexpr int RING_SIZE = 4096;
-    float buffer[RING_SIZE] = { 0.0f };
+    std::vector<float> buffer;
     std::atomic<int> writeIndex{ 0 };
+
+    VisualScope() : buffer(RING_SIZE, 0.0f) {}
+    VisualScope(const VisualScope&) = delete;
+    VisualScope& operator=(const VisualScope&) = delete;
+    VisualScope(VisualScope&& other) noexcept : buffer(std::move(other.buffer)), writeIndex(other.writeIndex.load()) {}
+    VisualScope& operator=(VisualScope&& other) noexcept {
+        buffer = std::move(other.buffer);
+        writeIndex.store(other.writeIndex.load());
+        return *this;
+    }
 
     void pushBlock(const float* data, int numSamples) {
         if (!data || numSamples <= 0) return;
@@ -287,9 +297,11 @@ struct VisualScope {
     }
 };
 
-// --- BLOCK 1: CARRIER ---
+// --- BLOCK 1 & 4: CARRIER ---
 class CarrierBlock : public DSPBlock {
 public:
+    explicit CarrierBlock(int voice = 1) : voiceIndex(voice) {}
+
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
         sampleRate = ctx.sampleRate;
@@ -302,7 +314,8 @@ public:
 
     float getBasePitch(const BlockContext& ctx) const {
         int style = std::clamp(static_cast<int>(std::round(params[0] * 2.0f)), 0, 2);
-        float pitchParam = std::clamp(params[1] + ctx.slopCarrierPitch, 0.0f, 1.0f);
+        float slop = (voiceIndex == 1) ? ctx.slopCarrier1Pitch : ctx.slopCarrier2Pitch;
+        float pitchParam = std::clamp(params[1] + slop, 0.0f, 1.0f);
         if (style == 0) {
             // Fixed freq: 20 Hz to 24 kHz (def 55 Hz)
             return 20.0f * std::pow(24000.0f / 20.0f, pitchParam);
@@ -322,31 +335,28 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. tracking style: 0=Fixed Freq, 1=Fixed Pitch, 2=MIDI Pitch (def)
-        // 2. pitch / freq value
         float baseFreq = getBasePitch(ctx);
-
-        // 3. shape: waveform morph (Sine 0% -> Tri 20% -> Saw 40% -> Square 60% -> PWM 0% 100%)
         float shape = params[2];
+        float modDepth = (params[3] - 0.5f) * 4.0f; // -200% to +200% (default 0% = 0.5)
 
-        // 4. drive: -6dB to 0dB (at 0.5) to +24dB (def: 0dB)
-        float gain = normToDriveGain(params[3]);
-
-        bool applyPitchEnv = (ctx.pitchEnvTarget == 1 || ctx.pitchEnvTarget == 3);
+        int target = (voiceIndex == 1) ? ctx.pitchEnv1Target : ctx.pitchEnv2Target;
+        bool applyPitchEnv = (target == 1 || target == 3);
+        const auto& modSig = (voiceIndex == 1) ? ctx.mod1Signal : ctx.mod2Signal;
+        const auto& peSig  = (voiceIndex == 1) ? ctx.pitchEnv1Signal : ctx.pitchEnv2Signal;
 
         for (int i = 0; i < numSamples; ++i) {
-            float fmMod = (i < static_cast<int>(ctx.modSignal.size())) ? ctx.modSignal[i] : 0.0f;
-            float pitchEnv = (applyPitchEnv && i < static_cast<int>(ctx.pitchEnvSignal.size())) ? ctx.pitchEnvSignal[i] : 0.0f;
+            float fmMod = (i < static_cast<int>(modSig.size())) ? modSig[i] : 0.0f;
+            float pitchEnv = (applyPitchEnv && i < static_cast<int>(peSig.size())) ? peSig[i] : 0.0f;
 
             // Pitch Envelope modulates carrier pitch: 5 octaves sweep up/down
-            float instFreq = baseFreq * std::pow(2.0f, pitchEnv * 5.0f) * std::pow(2.0f, fmMod * 4.0f);
+            // Modulator frequency modulates carrier scaled by modDepth (-200% to +200%)
+            float instFreq = baseFreq * std::pow(2.0f, pitchEnv * 5.0f) * std::pow(2.0f, fmMod * modDepth * 4.0f);
             instFreq = std::clamp(instFreq, 1.0f, sampleRate * 0.48f);
 
             phase += instFreq * invSr;
             if (phase >= 1.0f) phase -= std::floor(phase);
 
-            float raw = evaluateWaveform(phase, shape) * gain;
-            float oscOut = (gain > 1.0f) ? std::tanh(raw) : raw;
+            float oscOut = evaluateWaveform(phase, shape);
             currentFreq = instFreq;
 
             if (left) left[i] = oscOut;
@@ -357,15 +367,18 @@ public:
     float getCurrentFreq() const { return currentFreq; }
 
 private:
+    int voiceIndex = 1;
     float invSr = 1.0f / 44100.0f;
     float sampleRate = 44100.0f;
     float phase = 0.0f;
     float currentFreq = 55.0f;
 };
 
-// --- BLOCK 2: MODULATOR ---
+// --- BLOCK 2 & 5: MODULATOR ---
 class ModulatorBlock : public DSPBlock {
 public:
+    explicit ModulatorBlock(int voice = 1) : voiceIndex(voice) {}
+
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
         sampleRate = ctx.sampleRate;
@@ -385,50 +398,47 @@ public:
     }
 
     void processStereo(float* /*left*/, float* /*right*/, int numSamples, BlockContext& ctx) override {
-        // 1. type: 0..6
-        // 0: Fixed Osc, 1: Follow Osc, 2: FM Operator (linear FM)
-        // 3: Fixed Sine*Noise, 4: Follow Sine*Noise, 5: FM Op Sine*Noise, 6: S&H Noise
-        int type = std::clamp(static_cast<int>(std::round(params[0] * 6.0f)), 0, 6);
-
-        // 2. shape:
-        // Types 0..2: waveform morph
-        // Types 3..5: noise DJ filter
-        // Type 6: S&H rate 0.1Hz..24kHz
-        float shape = (type >= 3) ? std::clamp(params[1] + ctx.slopModFilter, 0.0f, 1.0f) : params[1];
-
-        // 3. depth: -200% to 0% to +200%
-        float depth = (params[2] - 0.5f) * 4.0f;
-
-        // 4. speed:
-        float speed = std::clamp(params[3] + ctx.slopModFreq, 0.0f, 1.0f);
-        float carrierPitch = std::max(ctx.carrierPitchHz, 10.0f);
+        int tracking = std::clamp(static_cast<int>(std::round(params[0] * 2.0f)), 0, 2); // 0=Fixed, 1=Following, 2=FM Operator
+        int type = std::clamp(static_cast<int>(std::round(params[1] * 2.0f)), 0, 2);     // 0=Oscillator, 1=Cyclic, 2=Noise
+        float slopFilt = (voiceIndex == 1) ? ctx.slopMod1Filter : ctx.slopMod2Filter;
+        float slopFrq  = (voiceIndex == 1) ? ctx.slopMod1Freq : ctx.slopMod2Freq;
+        float shape = std::clamp(params[2] + slopFilt, 0.0f, 1.0f);
+        float speed = std::clamp(params[3] + slopFrq, 0.0f, 1.0f);
+        float carrierPitch = std::max((voiceIndex == 1) ? ctx.carrier1PitchHz : ctx.carrier2PitchHz, 10.0f);
         float oscFreq = 55.0f;
         float shRate = 24000.0f;
 
-        if (type == 0 || type == 3) {
-            // Fixed frequency: 0.1 Hz to 24 kHz (def 55 Hz)
-            oscFreq = 0.1f * std::pow(24000.0f / 0.1f, speed);
-        } else if (type == 1 || type == 4) {
-            // Following offset: -64 to +64 semitones (def 0)
-            float noteOffset = (speed - 0.5f) * 128.0f;
-            oscFreq = carrierPitch * std::pow(2.0f, noteOffset / 12.0f);
-        } else if (type == 2 || type == 5) {
-            // FM ratio: 1:32 to 1:1 to 32:1 (def 1:1)
-            float ratio = (speed <= 0.5f) ? (1.0f / (32.0f - (speed * 2.0f) * 31.0f))
-                                          : (1.0f + ((speed - 0.5f) * 2.0f) * 31.0f);
-            oscFreq = carrierPitch * ratio;
+        if (type == 2) {
+            // Noise: Shape controls S&H noise rate: 0.1 Hz to 24 kHz (def 24 kHz)
+            shRate = 0.1f * std::pow(24000.0f / 0.1f, shape);
         } else {
-            // S&H Noise rate: 0.1 Hz to 24 kHz (def 24 kHz)
-            shRate = 0.1f * std::pow(24000.0f / 0.1f, speed);
+            // Oscillator (0) or Cyclic (1)
+            if (tracking == 0) {
+                // Fixed:
+                // Cyclic default sine freq 24 kHz; Osc default 55 Hz
+                oscFreq = 0.1f * std::pow(24000.0f / 0.1f, speed);
+            } else if (tracking == 1) {
+                // Following offset: -64 to +64 semitones (def 0)
+                float noteOffset = (speed - 0.5f) * 128.0f;
+                oscFreq = carrierPitch * std::pow(2.0f, noteOffset / 12.0f);
+            } else {
+                // FM ratio: 1:32 to 1:1 to 32:1 (def 1:1)
+                float ratio = (speed <= 0.5f) ? (1.0f / (32.0f - (speed * 2.0f) * 31.0f))
+                                              : (1.0f + ((speed - 0.5f) * 2.0f) * 31.0f);
+                oscFreq = carrierPitch * ratio;
+            }
         }
 
         oscFreq = std::clamp(oscFreq, 0.05f, sampleRate * 0.485f);
 
-        ctx.modSignal.resize(numSamples);
-        bool applyPitchEnv = (ctx.pitchEnvTarget == 2 || ctx.pitchEnvTarget == 3);
+        auto& modSig = (voiceIndex == 1) ? ctx.mod1Signal : ctx.mod2Signal;
+        const auto& peSig = (voiceIndex == 1) ? ctx.pitchEnv1Signal : ctx.pitchEnv2Signal;
+        modSig.resize(numSamples);
+        int target = (voiceIndex == 1) ? ctx.pitchEnv1Target : ctx.pitchEnv2Target;
+        bool applyPitchEnv = (target == 2 || target == 3);
 
         for (int i = 0; i < numSamples; ++i) {
-            float pitchEnv = (applyPitchEnv && i < static_cast<int>(ctx.pitchEnvSignal.size())) ? ctx.pitchEnvSignal[i] : 0.0f;
+            float pitchEnv = (applyPitchEnv && i < static_cast<int>(peSig.size())) ? peSig[i] : 0.0f;
             float instFreq = oscFreq * std::pow(2.0f, pitchEnv * 5.0f);
             instFreq = std::clamp(instFreq, 0.05f, sampleRate * 0.48f);
 
@@ -436,18 +446,18 @@ public:
             if (phase >= 1.0f) phase -= std::floor(phase);
 
             float val = 0.0f;
-            if (type <= 2) {
-                // Waveform morph
+            if (type == 0) {
+                // Oscillator: Waveform morph
                 val = evaluateWaveform(phase, shape);
-            } else if (type <= 5) {
-                // Sine * Noise ring-mod
+            } else if (type == 1) {
+                // Cyclic: Sine * Noise ring-mod with white noise DJ filter
                 float sinVal = std::sin(phase * TWO_PI);
                 float rawNoise = fastRng(rngState);
                 float dummyR = rawNoise;
                 djFilter.process(rawNoise, dummyR, shape, sampleRate);
                 val = sinVal * rawNoise;
             } else {
-                // S&H Noise clocked at shRate
+                // Noise: S&H Noise clocked at shRate
                 noisePhase += shRate * invSr;
                 if (noisePhase >= 1.0f) {
                     noisePhase -= 1.0f;
@@ -456,23 +466,31 @@ public:
                 val = noiseVal;
             }
 
-            ctx.modSignal[i] = val * depth;
+            modSig[i] = val;
         }
+
+        currentFreq = (type == 2) ? shRate : oscFreq;
     }
 
+    float getCurrentFreq() const { return currentFreq; }
+
 private:
+    int voiceIndex = 1;
     float invSr = 1.0f / 44100.0f;
     float sampleRate = 44100.0f;
     float phase = 0.0f;
     float noisePhase = 0.0f;
     float noiseVal = 0.0f;
+    float currentFreq = 55.0f;
     DJFilter djFilter;
     uint32_t rngState = 0x98765432;
 };
 
-// --- BLOCK 3: PITCH ENVELOPE (Target, Slope, Depth, Decay) ---
+// --- BLOCK 3 & 6: PITCH ENVELOPE (Target, Slope, Depth, Decay) ---
 class PitchEnvelopeBlock : public DSPBlock {
 public:
+    explicit PitchEnvelopeBlock(int voice = 1) : voiceIndex(voice) {}
+
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
         timeSinceTrigger = 1000.0f;
@@ -487,24 +505,24 @@ public:
     }
 
     void processStereo(float* /*left*/, float* /*right*/, int numSamples, BlockContext& ctx) override {
-        // 1. Target: 0=Off (def), 1=Carrier, 2=Modulator, 3=Both
         int target = std::clamp(static_cast<int>(std::round(params[0] * 3.0f)), 0, 3);
-        ctx.pitchEnvTarget = target;
+        if (voiceIndex == 1) ctx.pitchEnv1Target = target;
+        else ctx.pitchEnv2Target = target;
 
-        // 2. Slope: Exp (0.0) -> Lin (0.5) -> Log (1.0)
         float slope = params[1];
 
-        // 3. Depth: -100% to 0% to +100% (bipolar, def 0%) + slop + velocity modulation
-        float effDepthParam = std::clamp(params[2] + ctx.slopPitchEnvDepth, 0.0f, 1.0f);
+        float slopDepth = (voiceIndex == 1) ? ctx.slopPitchEnv1Depth : ctx.slopPitchEnv2Depth;
+        float effDepthParam = std::clamp(params[2] + slopDepth, 0.0f, 1.0f);
         float baseDepth = (effDepthParam - 0.5f) * 2.0f;
         float depth = std::clamp(baseDepth + ctx.velDepthMod, -1.0f, 1.0f);
 
-        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + slop + velocity modulation
-        float decayParam = std::clamp(params[3] + ctx.slopPitchEnvDecay + ctx.velDecayMod, 0.0f, 1.0f);
+        float slopDecay = (voiceIndex == 1) ? ctx.slopPitchEnv1Decay : ctx.slopPitchEnv2Decay;
+        float decayParam = std::clamp(params[3] + slopDecay + ctx.velDecayMod, 0.0f, 1.0f);
         float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
 
-        ctx.pitchEnvSignal.resize(numSamples);
+        auto& peSig = (voiceIndex == 1) ? ctx.pitchEnv1Signal : ctx.pitchEnv2Signal;
+        peSig.resize(numSamples);
 
         for (int i = 0; i < numSamples; ++i) {
             float envVal = 0.0f;
@@ -514,7 +532,7 @@ public:
                 envVal = applyEnvelopeSlope(envLinear, slope) * depth;
             }
             timeSinceTrigger += invSr;
-            ctx.pitchEnvSignal[i] = envVal;
+            peSig[i] = envVal;
         }
     }
 
@@ -523,11 +541,12 @@ public:
     }
 
 private:
+    int voiceIndex = 1;
     float invSr = 1.0f / 44100.0f;
     float timeSinceTrigger = 1000.0f;
 };
 
-// --- BLOCK 4: DRIVE ---
+// --- BLOCK: DRIVE (Drive, Bias, Post-Filter, Limiter) ---
 class DriveBlock : public DSPBlock {
 public:
     void init(const BlockContext& ctx) override {
@@ -540,22 +559,18 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. type: 0=Off (def), 1=Saturation, 2=Wave Folder
-        int type = std::clamp(static_cast<int>(std::round(params[0] * 2.0f)), 0, 2);
-        if (type == 0) return; // bypass
-
-        // 2. drive:
-        // Saturation: -6dB to 0dB (at 0.5) to +24dB
-        // Folder: 0 folds to 8 folds
-        float driveDb = (params[1] <= 0.5f) ? (-6.0f + params[1] * 12.0f) : ((params[1] - 0.5f) * 48.0f);
+        // 1. Drive: -6dB to 0dB to +24dB (def: 0dB = 0.5)
+        float driveDb = (params[0] <= 0.5f) ? (-6.0f + params[0] * 12.0f) : ((params[0] - 0.5f) * 48.0f);
         float satGain = std::pow(10.0f, driveDb / 20.0f);
-        float numFolds = params[1] * 8.0f;
 
-        // 3. bias: -1.0 to 0 to +1.0
-        float bias = (params[2] - 0.5f) * 2.0f;
+        // 2. Bias: DC offset -1 to +1 (def: 0 = 0.5)
+        float bias = (params[1] - 0.5f) * 2.0f;
 
-        // 4. DJ Filter
-        float filterKnob = std::clamp(params[3] + ctx.slopDriveFilter, 0.0f, 1.0f);
+        // 3. Post-Filter: DJ style filter (def: 50% flat = 0.5)
+        float filterKnob = std::clamp(params[2] + ctx.slopDriveFilter, 0.0f, 1.0f);
+
+        // 4. Limiter: Off (0), On (1, def) - comes after drive and filter
+        bool hasLimiter = (params[3] >= 0.5f);
 
         for (int i = 0; i < numSamples; ++i) {
             float inL = left ? left[i] : 0.0f;
@@ -564,21 +579,20 @@ public:
             inL += bias;
             inR += bias;
 
-            if (type == 1) {
-                // Soft saturation tanh
-                inL = std::tanh(inL * satGain);
-                inR = std::tanh(inR * satGain);
-            } else {
-                // Wave folder (0 to 8 folds)
-                float driveFactor = 1.0f + numFolds * 2.0f;
-                inL = std::sin(inL * driveFactor * (PI * 0.5f));
-                inR = std::sin(inR * driveFactor * (PI * 0.5f));
-            }
+            inL = std::tanh(inL * satGain);
+            inR = std::tanh(inR * satGain);
 
             inL -= bias * 0.5f;
             inR -= bias * 0.5f;
 
+            // DJ filter before limiter
             djFilter.process(inL, inR, filterKnob, sampleRate);
+
+            // Limiter after drive and filter
+            if (hasLimiter) {
+                inL = std::tanh(inL);
+                inR = std::tanh(inR);
+            }
 
             if (left) left[i] = inL;
             if (right) right[i] = inR;
@@ -590,7 +604,7 @@ private:
     DJFilter djFilter;
 };
 
-// --- BLOCK 5: NOISE TRANSIENT ---
+// --- BLOCK 7: NOISE TRANSIENT ---
 class NoiseTransientBlock : public DSPBlock {
 public:
     void init(const BlockContext& ctx) override {
@@ -661,7 +675,7 @@ private:
     uint32_t rngState = 0x55AA55AA;
 };
 
-// --- BLOCK 6: MIXER (Carrier Level, Noise Level, Drive, Limiter) ---
+// --- BLOCK 8: MIXER (Carrier 1, Carrier 2, RingMod, Noise) ---
 class MixerBlock : public DSPBlock {
 public:
     void init(const BlockContext& /*ctx*/) override {}
@@ -671,49 +685,51 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
-        // 1. Carrier level: 0% to 100% (at 0.5) to 400% (at 1.0)
-        float carrierGain = (params[0] <= 0.5f) ? (params[0] * 2.0f) : (1.0f + (params[0] - 0.5f) * 6.0f);
-
-        // 2. Noise level: 0% to 100% (at 0.5) to 400% (at 1.0)
-        float noiseGain = (params[1] <= 0.5f) ? (params[1] * 2.0f) : (1.0f + (params[1] - 0.5f) * 6.0f);
-
-        // 3. Drive: -6dB to 0dB (at 0.5) to +24dB
-        float driveDb = (params[2] <= 0.5f) ? (-6.0f + params[2] * 12.0f) : ((params[2] - 0.5f) * 48.0f);
-        float driveGain = std::pow(10.0f, driveDb / 20.0f);
-
-        // 4. Limiter: 0=Off, 1=On (def On)
-        bool hasLimiter = (params[3] >= 0.5f);
+        // 1. Carrier 1 level: 0% to 100% (at 0.5) to 400% (at 1.0)
+        float c1Gain = (params[0] <= 0.5f) ? (params[0] * 2.0f) : (1.0f + (params[0] - 0.5f) * 6.0f);
+        // 2. Carrier 2 level: 0% to 100% (at 0.5) to 400% (at 1.0)
+        float c2Gain = (params[1] <= 0.5f) ? (params[1] * 2.0f) : (1.0f + (params[1] - 0.5f) * 6.0f);
+        // 3. Ring Mod level: 0% to 100% (at 0.5) to 400% (at 1.0) - carrier 1 * carrier 2
+        float rmGain = (params[2] <= 0.5f) ? (params[2] * 2.0f) : (1.0f + (params[2] - 0.5f) * 6.0f);
+        // 4. Noise level: 0% to 100% (at 0.5) to 400% (at 1.0)
+        float noiseGain = (params[3] <= 0.5f) ? (params[3] * 2.0f) : (1.0f + (params[3] - 0.5f) * 6.0f);
 
         for (int i = 0; i < numSamples; ++i) {
-            float inL = left ? left[i] * carrierGain : 0.0f;
-            float inR = right ? right[i] * carrierGain : inL;
+            float c1L = (tempC1L && i < sampleCount) ? tempC1L[i] : 0.0f;
+            float c1R = (tempC1R && i < sampleCount) ? tempC1R[i] : c1L;
+            float c2L = (tempC2L && i < sampleCount) ? tempC2L[i] : 0.0f;
+            float c2R = (tempC2R && i < sampleCount) ? tempC2R[i] : c2L;
+            float nL  = (tempNoiseBufL && i < sampleCount) ? tempNoiseBufL[i] : 0.0f;
+            float nR  = (tempNoiseBufR && i < sampleCount) ? tempNoiseBufR[i] : nL;
 
-            if (tempNoiseBufL && i < tempNoiseCount) inL += tempNoiseBufL[i] * noiseGain;
-            if (tempNoiseBufR && i < tempNoiseCount) inR += tempNoiseBufR[i] * noiseGain;
+            float rmL = c1L * c2L;
+            float rmR = c1R * c2R;
 
-            inL *= driveGain;
-            inR *= driveGain;
+            float outL = c1L * c1Gain + c2L * c2Gain + rmL * rmGain + nL * noiseGain;
+            float outR = c1R * c1Gain + c2R * c2Gain + rmR * rmGain + nR * noiseGain;
 
-            if (hasLimiter) {
-                inL = std::tanh(inL);
-                inR = std::tanh(inR);
-            }
-
-            if (left) left[i] = inL;
-            if (right) right[i] = inR;
+            if (left) left[i] = outL;
+            if (right) right[i] = outR;
         }
     }
 
-    void setNoiseSource(const float* nL, const float* nR, int count) {
-        tempNoiseBufL = nL;
-        tempNoiseBufR = nR;
-        tempNoiseCount = count;
+    void setSources(const float* c1L, const float* c1R,
+                    const float* c2L, const float* c2R,
+                    const float* nL, const float* nR, int count) {
+        tempC1L = c1L; tempC1R = c1R;
+        tempC2L = c2L; tempC2R = c2R;
+        tempNoiseBufL = nL; tempNoiseBufR = nR;
+        sampleCount = count;
     }
 
 private:
+    const float* tempC1L = nullptr;
+    const float* tempC1R = nullptr;
+    const float* tempC2L = nullptr;
+    const float* tempC2R = nullptr;
     const float* tempNoiseBufL = nullptr;
     const float* tempNoiseBufR = nullptr;
-    int tempNoiseCount = 0;
+    int sampleCount = 0;
 };
 
 // --- BLOCK 7: FILTER (Type, Slope, Cutoff, Resonance) ---
@@ -722,9 +738,10 @@ public:
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
         sampleRate = ctx.sampleRate;
-        for (int s = 0; s < 8; ++s) {
+        for (int s = 0; s < 4; ++s) {
             s1L[s] = s2L[s] = s1R[s] = s2R[s] = 0.0f;
         }
+        rc1L = rc1R = 0.0f;
     }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
@@ -732,12 +749,12 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. Type: 0=Off (def), 1=LPF, 2=BPF, 3=HPF, 4=Notch
+        // 1. Type: 0=Off (def), 1=LPF, 2=BPF, 3=HPF, 4=BRF (Notch)
         int type = std::clamp(static_cast<int>(std::round(params[0] * 4.0f)), 0, 4);
         if (type == 0) return; // bypass
 
-        // 2. Slope: slope -6dB/oct to -24dB/oct (at 0.5) to -96dB/oct (def -12dB/oct)
-        float slope = params[1];
+        // 2. Slope: 0=-6dB/oct, 1=-12dB/oct (def), 2=-18dB/oct, 3=-24dB/oct, 4=-36dB/oct
+        int slopeIdx = std::clamp(static_cast<int>(std::round(params[1] * 4.0f)), 0, 4);
 
         // 3. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
         float cutoffParam = std::clamp(params[2] + ctx.slopFilterCutoff, 0.0f, 1.0f);
@@ -747,40 +764,41 @@ public:
         float rawRes = params[3];
         float filterQ = 0.707f + rawRes * 18.0f;
 
-        // Slope mapping: 0.0 -> 1 pole (6dB), 0.1667 -> 2 poles (12dB), 0.5 -> 4 poles (24dB), 1.0 -> 16 poles (96dB)
-        int filterStages = 1;
-        if (slope <= 0.5f) {
-            filterStages = 1 + static_cast<int>(std::round(slope * 2.0f)); // 1 to 2 SVF stages (12 to 24 dB)
-        } else {
-            filterStages = 2 + static_cast<int>(std::round((slope - 0.5f) * 12.0f)); // 2 to 8 SVF stages (24 to 96 dB)
+        // Number of 2-pole SVF stages:
+        int svfStages = 1;
+        bool hasExtraPole = false;
+        if (slopeIdx == 0) {
+            svfStages = 1;
+            filterQ = 0.5f + rawRes * 5.0f; // Softened Q for 6dB slope
+        } else if (slopeIdx == 1) {
+            svfStages = 1; // 12 dB/oct (2 poles)
+        } else if (slopeIdx == 2) {
+            svfStages = 1; // 18 dB/oct (3 poles: 2 SVF + 1 RC)
+            hasExtraPole = true;
+        } else if (slopeIdx == 3) {
+            svfStages = 2; // 24 dB/oct (4 poles)
+        } else if (slopeIdx == 4) {
+            svfStages = 3; // 36 dB/oct (6 poles)
         }
-        filterStages = std::clamp(filterStages, 1, 8);
 
-        // Pre-Drive gain from Filter Envelope
-        float preDriveGain = predriveGain;
+        float postDrive = postdriveGain;
 
         for (int i = 0; i < numSamples; ++i) {
             float inL = left ? left[i] : 0.0f;
             float inR = right ? right[i] : inL;
 
-            // Apply pre-drive
-            if (std::abs(preDriveGain - 1.0f) > 0.01f) {
-                inL = std::tanh(inL * preDriveGain);
-                inR = std::tanh(inR * preDriveGain);
-            }
-
-            // Cutoff modulated by Filter Envelope
+            // Cutoff modulated by Filter Envelope: depth is +/- 10 octaves
             float fEnv = (i < static_cast<int>(ctx.filterEnvSignal.size())) ? ctx.filterEnvSignal[i] : 0.0f;
-            float cutoff = baseCutoff * std::pow(2.0f, fEnv * 5.0f);
+            float cutoff = baseCutoff * std::pow(2.0f, fEnv * 10.0f);
             cutoff = std::clamp(cutoff, 0.1f, sampleRate * 0.485f);
 
             // SVF filter cascade
             float g = std::tan(PI * cutoff * invSr);
             float k = 1.0f / filterQ;
             float a1 = 1.0f / (1.0f + g * (g + k));
-            int svfMode = type - 1; // 0=LP, 1=BP, 2=HP, 3=Notch
+            int svfMode = type - 1; // 0=LP, 1=BP, 2=HP, 3=BRF (Notch)
 
-            for (int s = 0; s < filterStages; ++s) {
+            for (int s = 0; s < svfStages; ++s) {
                 float hpL = (inL - (g + k) * s1L[s] - s2L[s]) * a1;
                 float bpL = g * hpL + s1L[s];
                 s1L[s] = g * hpL + bpL;
@@ -799,20 +817,40 @@ public:
                 else                   { inL = hpL + lpL; inR = hpR + lpR; }
             }
 
+            if (hasExtraPole) {
+                float rcAlpha = g / (1.0f + g);
+                if (svfMode == 0) {
+                    rc1L += rcAlpha * (inL - rc1L);
+                    rc1R += rcAlpha * (inR - rc1R);
+                    inL = rc1L; inR = rc1R;
+                } else if (svfMode == 2) {
+                    rc1L += rcAlpha * (inL - rc1L);
+                    rc1R += rcAlpha * (inR - rc1R);
+                    inL = inL - rc1L; inR = inR - rc1R;
+                }
+            }
+
+            // Post-drive: drives the filter output
+            if (std::abs(postDrive - 1.0f) > 0.01f) {
+                inL = std::tanh(inL * postDrive);
+                inR = std::tanh(inR * postDrive);
+            }
+
             if (left) left[i] = inL;
             if (right) right[i] = inR;
         }
     }
 
-    void setPreDriveGain(float g) { predriveGain = g; }
+    void setPostDriveGain(float g) { postdriveGain = g; }
 
 private:
     float invSr = 1.0f / 44100.0f;
     float sampleRate = 44100.0f;
-    float predriveGain = 1.0f;
+    float postdriveGain = 1.0f;
 
-    float s1L[8] = { 0.0f }, s2L[8] = { 0.0f };
-    float s1R[8] = { 0.0f }, s2R[8] = { 0.0f };
+    float s1L[4] = { 0.0f }, s2L[4] = { 0.0f };
+    float s1R[4] = { 0.0f }, s2R[4] = { 0.0f };
+    float rc1L = 0.0f, rc1R = 0.0f;
 };
 
 // --- BLOCK: COMB FILTER (Type, Dampening, Cutoff, Resonance) ---
@@ -987,7 +1025,94 @@ private:
     float apfS2R[32] = { 0.0f };
 };
 
-// --- BLOCK 8: FILTER ENVELOPE (Slope, Depth, Decay, Pre-Drive) ---
+// --- BLOCK: EQ (Bell EQ + DJ Filter) ---
+class EQBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        invSr = ctx.invSr;
+        sampleRate = ctx.sampleRate;
+        s1L = s2L = s1R = s2R = 0.0f;
+        djFilter.reset();
+    }
+
+    void trigger(float) override {}
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
+        // 1. Frequency: 20 Hz to 24 kHz (def 24 kHz = 1.0)
+        float freqParam = std::clamp(params[0] + ctx.slopEQFreq, 0.0f, 1.0f);
+        float freq = 20.0f * std::pow(24000.0f / 20.0f, freqParam);
+        freq = std::clamp(freq, 20.0f, sampleRate * 0.485f);
+
+        // 2. Width: 0.1 to 10 octaves (def 0.1 octaves = 0.0)
+        float width = 0.1f * std::pow(100.0f, params[1]);
+        width = std::clamp(width, 0.05f, 10.0f);
+
+        // 3. Gain: -24 dB to 0 dB to +24 dB (def 0 dB = 0.5)
+        float gainDb = (params[2] - 0.5f) * 48.0f;
+        bool hasBell = (std::abs(gainDb) > 0.05f);
+
+        // 4. DJ Filter: (def 50% Flat = 0.5)
+        float filterKnob = std::clamp(params[3] + ctx.slopEQFilter, 0.0f, 1.0f);
+
+        // RBJ Peaking EQ Biquad coefficients
+        float b0 = 1.0f, b1 = 0.0f, b2 = 0.0f, a1 = 0.0f, a2 = 0.0f;
+        if (hasBell) {
+            float w0 = TWO_PI * freq * invSr;
+            float cosw0 = std::cos(w0);
+            float sinw0 = std::sin(w0);
+            float A = std::pow(10.0f, gainDb / 40.0f);
+            float alpha = sinw0 * std::sinh(0.34657359f * width * (w0 / (sinw0 > 1e-6f ? sinw0 : 1e-6f)));
+            alpha = std::clamp(alpha, 1e-6f, 10.0f);
+
+            float a0 = 1.0f + alpha / A;
+            b0 = (1.0f + alpha * A) / a0;
+            b1 = (-2.0f * cosw0) / a0;
+            b2 = (1.0f - alpha * A) / a0;
+            a1 = (-2.0f * cosw0) / a0;
+            a2 = (1.0f - alpha / A) / a0;
+        }
+
+        for (int i = 0; i < numSamples; ++i) {
+            float inL = left ? left[i] : 0.0f;
+            float inR = right ? right[i] : inL;
+
+            if (hasBell) {
+                float yL = b0 * inL + s1L;
+                s1L = b1 * inL - a1 * yL + s2L;
+                s2L = b2 * inL - a2 * yL;
+                inL = yL;
+
+                float yR = b0 * inR + s1R;
+                s1R = b1 * inR - a1 * yR + s2R;
+                s2R = b2 * inR - a2 * yR;
+                inR = yR;
+
+                if (std::abs(s1L) < 1e-15f) s1L = 0.0f;
+                if (std::abs(s2L) < 1e-15f) s2L = 0.0f;
+                if (std::abs(s1R) < 1e-15f) s1R = 0.0f;
+                if (std::abs(s2R) < 1e-15f) s2R = 0.0f;
+            }
+
+            djFilter.process(inL, inR, filterKnob, sampleRate);
+
+            if (left) left[i] = inL;
+            if (right) right[i] = inR;
+        }
+    }
+
+private:
+    float invSr = 1.0f / 44100.0f;
+    float sampleRate = 44100.0f;
+    float s1L = 0.0f, s2L = 0.0f;
+    float s1R = 0.0f, s2R = 0.0f;
+    DJFilter djFilter;
+};
+
+// --- BLOCK 11: FILTER ENVELOPE (Slope, Depth, Decay, Post-Drive) ---
 class FilterEnvelopeBlock : public DSPBlock {
 public:
     void init(const BlockContext& ctx) override {
@@ -1007,7 +1132,7 @@ public:
         // 1. Slope: Exp (0.0, def) -> Lin (0.5) -> Log (1.0)
         float slope = params[0];
 
-        // 2. Depth: -100% to 0% to +100% (bipolar, def 0%) + slop + velocity modulation
+        // 2. Depth: -10 octaves to 0 to +10 octaves (bipolar, def 0 octaves = 0.5) + slop + velocity modulation
         float effDepthParam = std::clamp(params[1] + ctx.slopFilterEnvDepth, 0.0f, 1.0f);
         float baseDepth = (effDepthParam - 0.5f) * 2.0f;
         float depth = std::clamp(baseDepth + ctx.velDepthMod, -1.0f, 1.0f);
@@ -1017,9 +1142,9 @@ public:
         float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
 
-        // 4. Pre-drive: -6dB to 0dB (at 0.5) to +24dB
-        float preDriveDb = (params[3] <= 0.5f) ? (-6.0f + params[3] * 12.0f) : ((params[3] - 0.5f) * 48.0f);
-        preDriveGain = std::pow(10.0f, preDriveDb / 20.0f);
+        // 4. Post-drive (for the filter, not the envelope): -6dB to 0dB (at 0.5) to +24dB (def 0dB = 0.5)
+        float postDriveDb = (params[3] <= 0.5f) ? (-6.0f + params[3] * 12.0f) : ((params[3] - 0.5f) * 48.0f);
+        postDriveGain = std::pow(10.0f, postDriveDb / 20.0f);
 
         ctx.filterEnvSignal.resize(numSamples);
 
@@ -1032,12 +1157,59 @@ public:
         }
     }
 
-    float getPreDriveGain() const { return preDriveGain; }
+    float getPostDriveGain() const { return postDriveGain; }
 
 private:
     float invSr = 1.0f / 44100.0f;
     float timeSinceTrigger = 1000.0f;
-    float preDriveGain = 1.0f;
+    float postDriveGain = 1.0f;
+};
+
+// --- BLOCK: WAVE FOLDER (Type, Fold, Bias, Post-Filter) ---
+class WaveFolderBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        sampleRate = ctx.sampleRate;
+        djFilter.reset();
+    }
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
+        bool enabled = (params[0] >= 0.5f);
+        if (!enabled) return; // bypass
+
+        float numFolds = params[1] * 8.0f;
+        float bias = (params[2] - 0.5f) * 2.0f;
+        float filterKnob = std::clamp(params[3] + ctx.slopWaveFolderFilter, 0.0f, 1.0f);
+
+        float driveFactor = 1.0f + numFolds * 2.0f;
+
+        for (int i = 0; i < numSamples; ++i) {
+            float inL = left ? left[i] : 0.0f;
+            float inR = right ? right[i] : inL;
+
+            inL += bias;
+            inR += bias;
+
+            inL = std::sin(inL * driveFactor * (PI * 0.5f));
+            inR = std::sin(inR * driveFactor * (PI * 0.5f));
+
+            inL -= bias * 0.5f;
+            inR -= bias * 0.5f;
+
+            djFilter.process(inL, inR, filterKnob, sampleRate);
+
+            if (left) left[i] = inL;
+            if (right) right[i] = inR;
+        }
+    }
+
+private:
+    float sampleRate = 44100.0f;
+    DJFilter djFilter;
 };
 
 // --- BLOCK 9: RING MODULATOR ---
@@ -1243,17 +1415,17 @@ public:
         float phaseInc = targetSr / sampleRate;
         bool hasDownsample = (params[1] < 0.999f && targetSr < sampleRate * 0.495f);
 
-        // 3. Low Boost: 0 dB to +24 dB (def 0 dB) at 120 Hz
-        float lowDb = params[2] * 24.0f;
-        bool hasLowBoost = (lowDb > 0.05f);
+        // 3. Low Shelf: -24 dB to 0 dB to +24 dB (def 0 dB = 0.5) at 120 Hz
+        float lowDb = (params[2] - 0.5f) * 48.0f;
+        bool hasLowShelf = (std::abs(lowDb) > 0.05f);
 
-        // 4. High Boost: 0 dB to +24 dB (def 0 dB) at 8 kHz
-        float highDb = params[3] * 24.0f;
-        bool hasHighBoost = (highDb > 0.05f);
+        // 4. High Shelf: -24 dB to 0 dB to +24 dB (def 0 dB = 0.5) at 8 kHz
+        float highDb = (params[3] - 0.5f) * 48.0f;
+        bool hasHighShelf = (std::abs(highDb) > 0.05f);
 
         // Low Shelf Biquad (120 Hz)
         float lb0 = 1.0f, lb1 = 0.0f, lb2 = 0.0f, la1 = 0.0f, la2 = 0.0f;
-        if (hasLowBoost) {
+        if (hasLowShelf) {
             float w0 = TWO_PI * 120.0f * invSr;
             float cosw0 = std::cos(w0);
             float sinw0 = std::sin(w0);
@@ -1269,7 +1441,7 @@ public:
 
         // High Shelf Biquad (8 kHz)
         float hb0 = 1.0f, hb1 = 0.0f, hb2 = 0.0f, ha1 = 0.0f, ha2 = 0.0f;
-        if (hasHighBoost) {
+        if (hasHighShelf) {
             float w0 = TWO_PI * 8000.0f * invSr;
             float cosw0 = std::cos(w0);
             float sinw0 = std::sin(w0);
@@ -1307,7 +1479,7 @@ public:
                 curR = std::round(curR * steps) / steps;
             }
 
-            if (hasLowBoost) {
+            if (hasLowShelf) {
                 float yL = lb0 * curL + lowS1L;
                 lowS1L = lb1 * curL - la1 * yL + lowS2L;
                 lowS2L = lb2 * curL - la2 * yL;
@@ -1319,7 +1491,7 @@ public:
                 curR = yR;
             }
 
-            if (hasHighBoost) {
+            if (hasHighShelf) {
                 float yL = hb0 * curL + highS1L;
                 highS1L = hb1 * curL - ha1 * yL + highS2L;
                 highS2L = hb2 * curL - ha2 * yL;
@@ -1361,20 +1533,20 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. Pan: 100% L to Center to 100% R (def Center)
-        float pan = std::clamp(params[0] + ctx.slopAmpPan, 0.0f, 1.0f);
+        // 1. Level: 0% to 100% (def 100% = 1.0)
+        float level = params[0];
+
+        // 2. Pan: 100% L to Center to 100% R (def Center = 0.5)
+        float pan = std::clamp(params[1] + ctx.slopAmpPan, 0.0f, 1.0f);
         float gainL = std::cos(pan * 1.57079632679f);
         float gainR = std::sin(pan * 1.57079632679f);
 
-        // 2. Level: 0% to 100% (def 100%)
-        float level = params[1];
-
-        // 3. Drive: -6dB to 0dB (at 0.5) to +24dB (def 0dB)
+        // 3. Drive: -6dB to 0dB (at 0.5) to +24dB (def 0dB) - comes before limiter
         float driveDb = (params[2] <= 0.5f) ? (-6.0f + params[2] * 12.0f) : ((params[2] - 0.5f) * 48.0f);
         float driveGain = std::pow(10.0f, driveDb / 20.0f);
         bool hasDrive = (std::abs(driveDb) > 0.05f);
 
-        // 4. Limiter: 0=Off, 1=On (def On)
+        // 4. Limiter: 0=Off, 1=On (def On) - comes after drive
         bool hasLimiter = (params[3] >= 0.5f);
 
         for (int i = 0; i < numSamples; ++i) {
@@ -1540,7 +1712,7 @@ public:
         // Category 3 (96..127): Pan slop
         float currentOffsets[4] = {
             ctx.slopFilterCutoff,
-            ctx.slopPitchEnvDepth,
+            ctx.slopPitchEnv1Depth,
             ctx.slopAmpEnvDecay,
             ctx.slopAmpPan
         };
@@ -1582,158 +1754,204 @@ private:
 class ModularDrumEngine {
 public:
     enum BlockID {
-        BLK_CARRIER = 0,
-        BLK_MODULATOR,
-        BLK_PITCHENV,
-        BLK_DRIVE,
+        BLK_CARRIER1 = 0,
+        BLK_MODULATOR1,
+        BLK_PITCHENV1,
+        BLK_CARRIER2,
+        BLK_MODULATOR2,
+        BLK_PITCHENV2,
         BLK_NOISE,
         BLK_MIXER,
+        BLK_DRIVE,
         BLK_FILTER,
         BLK_FILTERENV,
+        BLK_WAVEFOLDER,
         BLK_RINGMOD,
         BLK_FREQSHIFT,
         BLK_GRIT,
         BLK_COMB,
         BLK_DISPERSER,
+        BLK_EQ,
         BLK_AMP,
         BLK_AMPENV,
         BLK_VELOCITY,
         BLK_SLOP,
-        NUM_BLOCKS = 17
+        NUM_BLOCKS = 22
     };
 
     void init(float sampleRate) {
         ctx.sampleRate = sampleRate;
         ctx.invSr = 1.0f / sampleRate;
 
-        // Instantiate all 17 blocks
+        // Instantiate all 22 blocks
         allBlocks.resize(NUM_BLOCKS);
-        allBlocks[BLK_CARRIER]   = std::make_unique<CarrierBlock>();
-        allBlocks[BLK_MODULATOR] = std::make_unique<ModulatorBlock>();
-        allBlocks[BLK_PITCHENV]  = std::make_unique<PitchEnvelopeBlock>();
-        allBlocks[BLK_DRIVE]     = std::make_unique<DriveBlock>();
-        allBlocks[BLK_NOISE]     = std::make_unique<NoiseTransientBlock>();
-        allBlocks[BLK_MIXER]     = std::make_unique<MixerBlock>();
-        allBlocks[BLK_FILTER]    = std::make_unique<FilterBlock>();
-        allBlocks[BLK_FILTERENV] = std::make_unique<FilterEnvelopeBlock>();
-        allBlocks[BLK_RINGMOD]   = std::make_unique<RingModBlock>();
-        allBlocks[BLK_FREQSHIFT] = std::make_unique<FrequencyShifterBlock>();
-        allBlocks[BLK_GRIT]      = std::make_unique<GritBlock>();
-        allBlocks[BLK_COMB]      = std::make_unique<CombFilterBlock>();
-        allBlocks[BLK_DISPERSER] = std::make_unique<DisperserBlock>();
-        allBlocks[BLK_AMP]       = std::make_unique<AmpBlock>();
-        allBlocks[BLK_AMPENV]    = std::make_unique<AmpEnvelopeBlock>();
-        allBlocks[BLK_VELOCITY]  = std::make_unique<VelocityBlock>();
-        allBlocks[BLK_SLOP]      = std::make_unique<SlopBlock>();
+        allBlocks[BLK_CARRIER1]   = std::make_unique<CarrierBlock>(1);
+        allBlocks[BLK_MODULATOR1] = std::make_unique<ModulatorBlock>(1);
+        allBlocks[BLK_PITCHENV1]  = std::make_unique<PitchEnvelopeBlock>(1);
+        allBlocks[BLK_CARRIER2]   = std::make_unique<CarrierBlock>(2);
+        allBlocks[BLK_MODULATOR2] = std::make_unique<ModulatorBlock>(2);
+        allBlocks[BLK_PITCHENV2]  = std::make_unique<PitchEnvelopeBlock>(2);
+        allBlocks[BLK_NOISE]      = std::make_unique<NoiseTransientBlock>();
+        allBlocks[BLK_MIXER]      = std::make_unique<MixerBlock>();
+        allBlocks[BLK_DRIVE]      = std::make_unique<DriveBlock>();
+        allBlocks[BLK_FILTER]     = std::make_unique<FilterBlock>();
+        allBlocks[BLK_FILTERENV]  = std::make_unique<FilterEnvelopeBlock>();
+        allBlocks[BLK_WAVEFOLDER] = std::make_unique<WaveFolderBlock>();
+        allBlocks[BLK_RINGMOD]    = std::make_unique<RingModBlock>();
+        allBlocks[BLK_FREQSHIFT]  = std::make_unique<FrequencyShifterBlock>();
+        allBlocks[BLK_GRIT]       = std::make_unique<GritBlock>();
+        allBlocks[BLK_COMB]       = std::make_unique<CombFilterBlock>();
+        allBlocks[BLK_DISPERSER]  = std::make_unique<DisperserBlock>();
+        allBlocks[BLK_EQ]         = std::make_unique<EQBlock>();
+        allBlocks[BLK_AMP]        = std::make_unique<AmpBlock>();
+        allBlocks[BLK_AMPENV]     = std::make_unique<AmpEnvelopeBlock>();
+        allBlocks[BLK_VELOCITY]   = std::make_unique<VelocityBlock>();
+        allBlocks[BLK_SLOP]       = std::make_unique<SlopBlock>();
 
         for (auto& b : allBlocks) b->init(ctx);
 
         // Pre-allocate realtime working buffers
         tempNoiseL.assign(1024, 0.0f);
         tempNoiseR.assign(1024, 0.0f);
-        ctx.modSignal.assign(1024, 0.0f);
-        ctx.pitchEnvSignal.assign(1024, 0.0f);
+        tempCarrier1L.assign(1024, 0.0f);
+        tempCarrier1R.assign(1024, 0.0f);
+        tempCarrier2L.assign(1024, 0.0f);
+        tempCarrier2R.assign(1024, 0.0f);
+        ctx.mod1Signal.assign(1024, 0.0f);
+        ctx.mod2Signal.assign(1024, 0.0f);
+        ctx.pitchEnv1Signal.assign(1024, 0.0f);
+        ctx.pitchEnv2Signal.assign(1024, 0.0f);
         ctx.filterEnvSignal.assign(1024, 0.0f);
         ctx.ampEnvSignal.assign(1024, 1.0f);
 
         // Exact musical defaults per spec.md
-        // 1. Carrier: MIDI Pitch (def index 2 = 1.0), 0 offset (0.5), Sine (0.0), 100% Level (0.5)
-        setPageParameter(BLK_CARRIER, 0, 1.0f);
-        setPageParameter(BLK_CARRIER, 1, 0.5f);
-        setPageParameter(BLK_CARRIER, 2, 0.0f);
-        setPageParameter(BLK_CARRIER, 3, 0.5f);
+        // 1. Carrier 1: MIDI Pitch (1.0), 0 offset (0.5), Sine (0.0), 0% Depth (0.5)
+        setPageParameter(BLK_CARRIER1, 0, 1.0f);
+        setPageParameter(BLK_CARRIER1, 1, 0.5f);
+        setPageParameter(BLK_CARRIER1, 2, 0.0f);
+        setPageParameter(BLK_CARRIER1, 3, 0.5f);
 
-        // 2. Modulator: Fixed Osc (0.0), Sine (0.0), 0% Depth (0.5), 55 Hz Speed (~0.5286)
-        setPageParameter(BLK_MODULATOR, 0, 0.0f);
-        setPageParameter(BLK_MODULATOR, 1, 0.0f);
-        setPageParameter(BLK_MODULATOR, 2, 0.5f);
-        setPageParameter(BLK_MODULATOR, 3, 0.5286f);
+        // 2. Modulator 1: Fixed (0.0), Oscillator (0.0), Sine (0.0), 55 Hz Speed (0.50934)
+        setPageParameter(BLK_MODULATOR1, 0, 0.0f);
+        setPageParameter(BLK_MODULATOR1, 1, 0.0f);
+        setPageParameter(BLK_MODULATOR1, 2, 0.0f);
+        setPageParameter(BLK_MODULATOR1, 3, 0.50934f);
 
-        // 3. Pitch Envelope: Off (0.0), Exponential (0.0), 0% Depth (0.5), 333 ms Decay (0.3806)
-        setPageParameter(BLK_PITCHENV, 0, 0.0f);
-        setPageParameter(BLK_PITCHENV, 1, 0.0f);
-        setPageParameter(BLK_PITCHENV, 2, 0.5f);
-        setPageParameter(BLK_PITCHENV, 3, 0.3806f);
+        // 3. Pitch Envelope 1: Off (0.0), Exponential (0.0), 0% Depth (0.5), 333 ms Decay (0.3806)
+        setPageParameter(BLK_PITCHENV1, 0, 0.0f);
+        setPageParameter(BLK_PITCHENV1, 1, 0.0f);
+        setPageParameter(BLK_PITCHENV1, 2, 0.5f);
+        setPageParameter(BLK_PITCHENV1, 3, 0.3806f);
 
-        // 4. Drive: Off (0.0), 0 dB (0.5), 0 Bias (0.5), Flat Filter (0.5)
-        setPageParameter(BLK_DRIVE, 0, 0.0f);
-        setPageParameter(BLK_DRIVE, 1, 0.5f);
-        setPageParameter(BLK_DRIVE, 2, 0.5f);
-        setPageParameter(BLK_DRIVE, 3, 0.5f);
+        // 4. Carrier 2: MIDI Pitch (1.0), 0 offset (0.5), Sine (0.0), 0% Depth (0.5)
+        setPageParameter(BLK_CARRIER2, 0, 1.0f);
+        setPageParameter(BLK_CARRIER2, 1, 0.5f);
+        setPageParameter(BLK_CARRIER2, 2, 0.0f);
+        setPageParameter(BLK_CARRIER2, 3, 0.5f);
 
-        // 5. Noise Transient: 20 kHz (1.0), Flat Filter (0.5), 0 dB Drive (0.5), 100 ms Decay (0.3078)
+        // 5. Modulator 2: Fixed (0.0), Oscillator (0.0), Sine (0.0), 55 Hz Speed (0.50934)
+        setPageParameter(BLK_MODULATOR2, 0, 0.0f);
+        setPageParameter(BLK_MODULATOR2, 1, 0.0f);
+        setPageParameter(BLK_MODULATOR2, 2, 0.0f);
+        setPageParameter(BLK_MODULATOR2, 3, 0.50934f);
+
+        // 6. Pitch Envelope 2: Off (0.0), Exponential (0.0), 0% Depth (0.5), 333 ms Decay (0.3806)
+        setPageParameter(BLK_PITCHENV2, 0, 0.0f);
+        setPageParameter(BLK_PITCHENV2, 1, 0.0f);
+        setPageParameter(BLK_PITCHENV2, 2, 0.5f);
+        setPageParameter(BLK_PITCHENV2, 3, 0.3806f);
+
+        // 7. Noise Transient: 24 kHz (1.0), Flat Filter (0.5), 0 dB Drive (0.5), 100 ms Decay (0.3078)
         setPageParameter(BLK_NOISE, 0, 1.0f);
         setPageParameter(BLK_NOISE, 1, 0.5f);
         setPageParameter(BLK_NOISE, 2, 0.5f);
         setPageParameter(BLK_NOISE, 3, 0.3078f);
 
-        // 6. Mixer: Carrier 100% (0.5), Noise 0% (0.0), Drive 0 dB (0.5), Limiter On (1.0)
+        // 8. Mixer: Carrier 1 100% (0.5), Carrier 2 0% (0.0), RingMod 0% (0.0), Noise 0% (0.0)
         setPageParameter(BLK_MIXER, 0, 0.5f);
         setPageParameter(BLK_MIXER, 1, 0.0f);
-        setPageParameter(BLK_MIXER, 2, 0.5f);
-        setPageParameter(BLK_MIXER, 3, 1.0f);
+        setPageParameter(BLK_MIXER, 2, 0.0f);
+        setPageParameter(BLK_MIXER, 3, 0.0f);
 
-        // 7. Filter: Off (0.0), -12dB/oct (0.1667), 20 kHz Cutoff (1.0), 0% Res (0.0)
+        // 9. Drive: 0 dB (0.5), 0 Bias (0.5), Flat Filter (0.5), Limiter On (1.0)
+        setPageParameter(BLK_DRIVE, 0, 0.5f);
+        setPageParameter(BLK_DRIVE, 1, 0.5f);
+        setPageParameter(BLK_DRIVE, 2, 0.5f);
+        setPageParameter(BLK_DRIVE, 3, 1.0f);
+
+        // 10. Filter: Off (0.0), -12dB/oct (0.25), 24 kHz Cutoff (1.0), 0% Res (0.0)
         setPageParameter(BLK_FILTER, 0, 0.0f);
-        setPageParameter(BLK_FILTER, 1, 0.1667f);
+        setPageParameter(BLK_FILTER, 1, 0.25f);
         setPageParameter(BLK_FILTER, 2, 1.0f);
         setPageParameter(BLK_FILTER, 3, 0.0f);
 
-        // 8. Filter Envelope: Exponential (0.0), 0% Depth (0.5), 333 ms Decay (0.3806), 0 dB Pre-Drive (0.5)
+        // 11. Filter Envelope: Exponential (0.0), 0 oct Depth (0.5), 333 ms Decay (0.3806), 0 dB Post-Drive (0.5)
         setPageParameter(BLK_FILTERENV, 0, 0.0f);
         setPageParameter(BLK_FILTERENV, 1, 0.5f);
         setPageParameter(BLK_FILTERENV, 2, 0.3806f);
         setPageParameter(BLK_FILTERENV, 3, 0.5f);
 
-        // 9. RingMod: Sine (0.0), 55 Hz (0.5286), 0% Amount (0.0), 0% Width (0.5)
+        // 12. Wave Folder: Off (0.0), 0 folds (0.0), 0 Bias (0.5), Flat Filter (0.5)
+        setPageParameter(BLK_WAVEFOLDER, 0, 0.0f);
+        setPageParameter(BLK_WAVEFOLDER, 1, 0.0f);
+        setPageParameter(BLK_WAVEFOLDER, 2, 0.5f);
+        setPageParameter(BLK_WAVEFOLDER, 3, 0.5f);
+
+        // 13. RingMod: Sine (0.0), 55 Hz (0.50934), 0% Amount (0.0), 0% Width (0.5)
         setPageParameter(BLK_RINGMOD, 0, 0.0f);
-        setPageParameter(BLK_RINGMOD, 1, 0.5286f);
+        setPageParameter(BLK_RINGMOD, 1, 0.50934f);
         setPageParameter(BLK_RINGMOD, 2, 0.0f);
         setPageParameter(BLK_RINGMOD, 3, 0.5f);
 
-        // 10. Frequency Shifter: 0 Hz Shift (0.5), 3 Hz Range (rangeHzToNorm(3.0f)), 0% Blend (0.5), 0% Width (0.5)
+        // 14. Frequency Shifter: 0 Hz Shift (0.5), 3 Hz Range (rangeHzToNorm(3.0f)), 0% Blend (0.5), 0% Width (0.5)
         setPageParameter(BLK_FREQSHIFT, 0, 0.5f);
         setPageParameter(BLK_FREQSHIFT, 1, rangeHzToNorm(3.0f));
         setPageParameter(BLK_FREQSHIFT, 2, 0.5f);
         setPageParameter(BLK_FREQSHIFT, 3, 0.5f);
 
-        // 11. Grit FX: 16.0 Bits (1.0), 20 kHz (1.0), 0 dB Low Boost (0.0), 0 dB High Boost (0.0)
+        // 15. Grit FX: 16.0 Bits (1.0), 24 kHz (1.0), 0 dB Low (0.5), 0 dB High (0.5)
         setPageParameter(BLK_GRIT, 0, 1.0f);
         setPageParameter(BLK_GRIT, 1, 1.0f);
-        setPageParameter(BLK_GRIT, 2, 0.0f);
-        setPageParameter(BLK_GRIT, 3, 0.0f);
+        setPageParameter(BLK_GRIT, 2, 0.5f);
+        setPageParameter(BLK_GRIT, 3, 0.5f);
 
-        // 12. Comb Filter: Off (0.0), Dampening 20 kHz (1.0), Cutoff 20 kHz (1.0), Resonance 0% (0.5)
+        // 16. Comb Filter: Off (0.0), Dampening 24 kHz (1.0), Cutoff 24 kHz (1.0), Resonance 0% (0.5)
         setPageParameter(BLK_COMB, 0, 0.0f);
         setPageParameter(BLK_COMB, 1, 1.0f);
         setPageParameter(BLK_COMB, 2, 1.0f);
         setPageParameter(BLK_COMB, 3, 0.5f);
 
-        // 13. Disperser: Off (0.0), Amount 4 APFs (4.0f / 32.0f), Cutoff 20 kHz (1.0), Resonance 0% (0.5)
+        // 17. Disperser: Off (0.0), Amount 4 APFs (4.0f / 32.0f), Cutoff 220 Hz (0.62124f), Resonance 0% (0.5)
         setPageParameter(BLK_DISPERSER, 0, 0.0f);
         setPageParameter(BLK_DISPERSER, 1, 4.0f / 32.0f);
-        setPageParameter(BLK_DISPERSER, 2, 1.0f);
+        setPageParameter(BLK_DISPERSER, 2, 0.62124f);
         setPageParameter(BLK_DISPERSER, 3, 0.5f);
 
-        // 14. Amp: Center Pan (0.5), 100% Level (1.0), 0 dB Drive (0.5), Limiter On (1.0)
-        setPageParameter(BLK_AMP, 0, 0.5f);
-        setPageParameter(BLK_AMP, 1, 1.0f);
+        // 18. EQ: 24 kHz Freq (1.0), 0.1 oct Width (0.0), 0 dB Gain (0.5), Flat DJ Filter (0.5)
+        setPageParameter(BLK_EQ, 0, 1.0f);
+        setPageParameter(BLK_EQ, 1, 0.0f);
+        setPageParameter(BLK_EQ, 2, 0.5f);
+        setPageParameter(BLK_EQ, 3, 0.5f);
+
+        // 19. Amp: 100% Level (1.0), Center Pan (0.5), 0 dB Drive (0.5), Limiter On (1.0)
+        setPageParameter(BLK_AMP, 0, 1.0f);
+        setPageParameter(BLK_AMP, 1, 0.5f);
         setPageParameter(BLK_AMP, 2, 0.5f);
         setPageParameter(BLK_AMP, 3, 1.0f);
 
-        // 15. Amp Envelope: 0 Claps (0.0), 3 ms Speed (0.1429), Exponential (0.0), 333 ms Decay (0.3806)
+        // 20. Amp Envelope: 0 Claps (0.0), 3 ms Speed (0.1429), Exponential (0.0), 333 ms Decay (0.3806)
         setPageParameter(BLK_AMPENV, 0, 0.0f);
         setPageParameter(BLK_AMPENV, 1, 0.1429f);
         setPageParameter(BLK_AMPENV, 2, 0.0f);
         setPageParameter(BLK_AMPENV, 3, 0.3806f);
 
-        // 16. Velocity: Linear (0.5), 0% Decay (0.5), 0% Depth (0.5), 0% Volume (0.0)
-        setPageParameter(BLK_VELOCITY, 0, 0.5f);
+        // 21. Velocity: Exponential (0.0), 0% Decay (0.5), 0% Depth (0.5), 0% Volume (0.0)
+        setPageParameter(BLK_VELOCITY, 0, 0.0f);
         setPageParameter(BLK_VELOCITY, 1, 0.5f);
         setPageParameter(BLK_VELOCITY, 2, 0.5f);
         setPageParameter(BLK_VELOCITY, 3, 0.0f);
 
-        // 17. Slop: 0% Freq, 0% Depth, 0% Decay, 0% Pan
+        // 22. Slop: 0% Freq, 0% Depth, 0% Decay, 0% Pan
         setPageParameter(BLK_SLOP, 0, 0.0f);
         setPageParameter(BLK_SLOP, 1, 0.0f);
         setPageParameter(BLK_SLOP, 2, 0.0f);
@@ -1745,7 +1963,7 @@ public:
         ctx.triggerVelocity = velocity;
         ctx.isTriggered = true;
 
-        float velSlope  = allBlocks[BLK_VELOCITY] ? allBlocks[BLK_VELOCITY]->getParam(0) : 0.5f;
+        float velSlope  = allBlocks[BLK_VELOCITY] ? allBlocks[BLK_VELOCITY]->getParam(0) : 0.0f;
         float velDecay  = allBlocks[BLK_VELOCITY] ? warpBipolarExp(allBlocks[BLK_VELOCITY]->getParam(1)) : 0.0f; // -1 to +1
         float velDepth  = allBlocks[BLK_VELOCITY] ? warpBipolarExp(allBlocks[BLK_VELOCITY]->getParam(2)) : 0.0f; // -1 to +1
         float velVolume = allBlocks[BLK_VELOCITY] ? warpUnipolarExp(allBlocks[BLK_VELOCITY]->getParam(3)) : 0.0f; // 0 to 1
@@ -1757,7 +1975,6 @@ public:
         ctx.velVolumeGain = 1.0f - (1.0f - curvedVel) * velVolume;
 
         // Bipolar velocity factor: -1.0 at min velocity, 0.0 at mid, +1.0 at max velocity
-        // For higher velocities: positive values increase controls, negative values decrease controls
         float velModFactor = curvedVel * 2.0f - 1.0f;
         ctx.velDecayMod   = velModFactor * velDecay;
         ctx.velDepthMod   = velModFactor * velDepth;
@@ -1768,10 +1985,14 @@ public:
         float slopDecay = allBlocks[BLK_SLOP] ? warpUnipolarExp(allBlocks[BLK_SLOP]->getParam(2)) : 0.0f;
         float slopPan   = allBlocks[BLK_SLOP] ? warpUnipolarExp(allBlocks[BLK_SLOP]->getParam(3)) : 0.0f;
 
-        ctx.slopCarrierPitch    = slopFreq  * fastRng(slopRngState);
-        ctx.slopModFreq         = slopFreq  * fastRng(slopRngState);
-        ctx.slopModFilter       = slopFreq  * fastRng(slopRngState);
+        ctx.slopCarrier1Pitch   = slopFreq  * fastRng(slopRngState);
+        ctx.slopCarrier2Pitch   = slopFreq  * fastRng(slopRngState);
+        ctx.slopMod1Freq        = slopFreq  * fastRng(slopRngState);
+        ctx.slopMod1Filter      = slopFreq  * fastRng(slopRngState);
+        ctx.slopMod2Freq        = slopFreq  * fastRng(slopRngState);
+        ctx.slopMod2Filter      = slopFreq  * fastRng(slopRngState);
         ctx.slopDriveFilter     = slopFreq  * fastRng(slopRngState);
+        ctx.slopWaveFolderFilter= slopFreq  * fastRng(slopRngState);
         ctx.slopNoiseShRate     = slopFreq  * fastRng(slopRngState);
         ctx.slopNoiseFilter     = slopFreq  * fastRng(slopRngState);
         ctx.slopFilterCutoff    = slopFreq  * fastRng(slopRngState);
@@ -1779,11 +2000,15 @@ public:
         ctx.slopCombDamp        = slopFreq  * fastRng(slopRngState);
         ctx.slopCombCutoff      = slopFreq  * fastRng(slopRngState);
         ctx.slopDisperserCutoff = slopFreq  * fastRng(slopRngState);
+        ctx.slopEQFreq          = slopFreq  * fastRng(slopRngState);
+        ctx.slopEQFilter        = slopFreq  * fastRng(slopRngState);
 
-        ctx.slopPitchEnvDepth   = slopDepth * fastRng(slopRngState);
+        ctx.slopPitchEnv1Depth  = slopDepth * fastRng(slopRngState);
+        ctx.slopPitchEnv2Depth  = slopDepth * fastRng(slopRngState);
         ctx.slopFilterEnvDepth  = slopDepth * fastRng(slopRngState);
 
-        ctx.slopPitchEnvDecay   = slopDecay * fastRng(slopRngState);
+        ctx.slopPitchEnv1Decay  = slopDecay * fastRng(slopRngState);
+        ctx.slopPitchEnv2Decay  = slopDecay * fastRng(slopRngState);
         ctx.slopNoiseDecay      = slopDecay * fastRng(slopRngState);
         ctx.slopFilterEnvDecay  = slopDecay * fastRng(slopRngState);
         ctx.slopAmpEnvDecay     = slopDecay * fastRng(slopRngState);
@@ -1829,27 +2054,40 @@ public:
             }
         }
 
+        // Determine which scope buffer and fundamental frequency to lock to:
+        int triggerBlock = BLK_CARRIER1;
         float f0 = lastCarrierFreq.load(std::memory_order_relaxed);
+
+        if (blockIndex == BLK_MODULATOR1) {
+            triggerBlock = BLK_MODULATOR1;
+            f0 = lastMod1Freq.load(std::memory_order_relaxed);
+        } else if (blockIndex == BLK_MODULATOR2) {
+            triggerBlock = BLK_MODULATOR2;
+            f0 = lastMod2Freq.load(std::memory_order_relaxed);
+        } else if (blockIndex == BLK_CARRIER2) {
+            triggerBlock = BLK_CARRIER2;
+            f0 = lastCarrier2Freq.load(std::memory_order_relaxed);
+        }
+
         if (!std::isfinite(f0) || f0 < 20.0f) f0 = 55.0f;
         if (f0 > 4000.0f) f0 = 4000.0f;
 
         float period = ctx.sampleRate / f0;
-        // Lock oscilloscope to 2 complete cycles of the carrier wave for a static view
         float totalSpan = 2.0f * period;
         totalSpan = std::clamp(totalSpan, 8.0f, static_cast<float>(VisualScope::RING_SIZE / 2));
         float step = totalSpan / static_cast<float>(count - 1);
 
-        int head = scopes[BLK_CARRIER].writeIndex.load(std::memory_order_acquire);
+        int head = scopes[triggerBlock].writeIndex.load(std::memory_order_acquire);
         int searchStart = (head - static_cast<int>(totalSpan) - 4 + VisualScope::RING_SIZE * 4) & (VisualScope::RING_SIZE - 1);
         int triggerPos = searchStart;
 
-        // Search backward for a rising zero crossing in Carrier
+        // Search backward in triggerBlock's own buffer for a rising zero crossing
         int maxSearch = std::min(static_cast<int>(period * 1.5f) + 16, VisualScope::RING_SIZE / 4);
         for (int s = 0; s < maxSearch; ++s) {
             int idx = (searchStart - s + VisualScope::RING_SIZE * 4) & (VisualScope::RING_SIZE - 1);
             int prevIdx = (idx - 1 + VisualScope::RING_SIZE * 4) & (VisualScope::RING_SIZE - 1);
-            float curVal = scopes[BLK_CARRIER].buffer[idx];
-            float prevVal = scopes[BLK_CARRIER].buffer[prevIdx];
+            float curVal = scopes[triggerBlock].buffer[idx];
+            float prevVal = scopes[triggerBlock].buffer[prevIdx];
             if (prevVal <= 0.0f && curVal > 0.0f) {
                 triggerPos = idx;
                 break;
@@ -1868,98 +2106,142 @@ public:
         if (static_cast<int>(tempNoiseL.size()) < numSamples) {
             tempNoiseL.assign(numSamples, 0.0f);
             tempNoiseR.assign(numSamples, 0.0f);
-            ctx.modSignal.assign(numSamples, 0.0f);
-            ctx.pitchEnvSignal.assign(numSamples, 0.0f);
+            tempCarrier1L.assign(numSamples, 0.0f);
+            tempCarrier1R.assign(numSamples, 0.0f);
+            tempCarrier2L.assign(numSamples, 0.0f);
+            tempCarrier2R.assign(numSamples, 0.0f);
+            ctx.mod1Signal.assign(numSamples, 0.0f);
+            ctx.mod2Signal.assign(numSamples, 0.0f);
+            ctx.pitchEnv1Signal.assign(numSamples, 0.0f);
+            ctx.pitchEnv2Signal.assign(numSamples, 0.0f);
             ctx.filterEnvSignal.assign(numSamples, 0.0f);
             ctx.ampEnvSignal.assign(numSamples, 1.0f);
         }
 
-        // 1. Pitch Envelope
-        allBlocks[BLK_PITCHENV]->processStereo(nullptr, nullptr, numSamples, ctx);
-        scopes[BLK_PITCHENV].pushBlock(ctx.pitchEnvSignal.data(), numSamples);
+        // 1. Pitch Envelope 1
+        allBlocks[BLK_PITCHENV1]->processStereo(nullptr, nullptr, numSamples, ctx);
+        scopes[BLK_PITCHENV1].pushBlock(ctx.pitchEnv1Signal.data(), numSamples);
 
-        // Update carrier pitch for modulator tracking
-        if (auto* carrier = dynamic_cast<CarrierBlock*>(allBlocks[BLK_CARRIER].get())) {
-            ctx.carrierPitchHz = carrier->getBasePitch(ctx);
+        // Update carrier 1 pitch for modulator 1 tracking
+        if (auto* carrier1 = dynamic_cast<CarrierBlock*>(allBlocks[BLK_CARRIER1].get())) {
+            ctx.carrier1PitchHz = carrier1->getBasePitch(ctx);
         }
 
-        // 2. Modulator
-        allBlocks[BLK_MODULATOR]->processStereo(nullptr, nullptr, numSamples, ctx);
-        scopes[BLK_MODULATOR].pushBlock(ctx.modSignal.data(), numSamples);
+        // 2. Modulator 1
+        allBlocks[BLK_MODULATOR1]->processStereo(nullptr, nullptr, numSamples, ctx);
+        scopes[BLK_MODULATOR1].pushBlock(ctx.mod1Signal.data(), numSamples);
+        if (auto* mod1 = dynamic_cast<ModulatorBlock*>(allBlocks[BLK_MODULATOR1].get())) {
+            lastMod1Freq.store(mod1->getCurrentFreq(), std::memory_order_relaxed);
+        }
 
-        // 3. Filter Envelope
+        // 3. Pitch Envelope 2
+        allBlocks[BLK_PITCHENV2]->processStereo(nullptr, nullptr, numSamples, ctx);
+        scopes[BLK_PITCHENV2].pushBlock(ctx.pitchEnv2Signal.data(), numSamples);
+
+        // Update carrier 2 pitch for modulator 2 tracking
+        if (auto* carrier2 = dynamic_cast<CarrierBlock*>(allBlocks[BLK_CARRIER2].get())) {
+            ctx.carrier2PitchHz = carrier2->getBasePitch(ctx);
+        }
+
+        // 4. Modulator 2
+        allBlocks[BLK_MODULATOR2]->processStereo(nullptr, nullptr, numSamples, ctx);
+        scopes[BLK_MODULATOR2].pushBlock(ctx.mod2Signal.data(), numSamples);
+        if (auto* mod2 = dynamic_cast<ModulatorBlock*>(allBlocks[BLK_MODULATOR2].get())) {
+            lastMod2Freq.store(mod2->getCurrentFreq(), std::memory_order_relaxed);
+        }
+
+        // 5. Filter Envelope (computed before filter for preDrive)
         allBlocks[BLK_FILTERENV]->processStereo(nullptr, nullptr, numSamples, ctx);
         scopes[BLK_FILTERENV].pushBlock(ctx.filterEnvSignal.data(), numSamples);
 
-        // 4. Amp Envelope
+        // 6. Amp Envelope (computed before amp)
         allBlocks[BLK_AMPENV]->processStereo(nullptr, nullptr, numSamples, ctx);
         scopes[BLK_AMPENV].pushBlock(ctx.ampEnvSignal.data(), numSamples);
 
-        // Clear audio buffers
-        if (left) std::fill(left, left + numSamples, 0.0f);
-        if (right) std::fill(right, right + numSamples, 0.0f);
-
-        // 5. Carrier Oscillator
-        allBlocks[BLK_CARRIER]->processStereo(left, right, numSamples, ctx);
-        scopes[BLK_CARRIER].pushBlock(left, numSamples);
-        if (auto* carrier = dynamic_cast<CarrierBlock*>(allBlocks[BLK_CARRIER].get())) {
-            lastCarrierFreq.store(carrier->getCurrentFreq(), std::memory_order_relaxed);
+        // 7. Carrier 1
+        std::fill(tempCarrier1L.begin(), tempCarrier1L.begin() + numSamples, 0.0f);
+        std::fill(tempCarrier1R.begin(), tempCarrier1R.begin() + numSamples, 0.0f);
+        allBlocks[BLK_CARRIER1]->processStereo(tempCarrier1L.data(), tempCarrier1R.data(), numSamples, ctx);
+        scopes[BLK_CARRIER1].pushBlock(tempCarrier1L.data(), numSamples);
+        if (auto* carrier1 = dynamic_cast<CarrierBlock*>(allBlocks[BLK_CARRIER1].get())) {
+            lastCarrierFreq.store(carrier1->getCurrentFreq(), std::memory_order_relaxed);
         }
 
-        // 6. Drive
-        allBlocks[BLK_DRIVE]->processStereo(left, right, numSamples, ctx);
-        scopes[BLK_DRIVE].pushBlock(left, numSamples);
+        // 8. Carrier 2
+        std::fill(tempCarrier2L.begin(), tempCarrier2L.begin() + numSamples, 0.0f);
+        std::fill(tempCarrier2R.begin(), tempCarrier2R.begin() + numSamples, 0.0f);
+        allBlocks[BLK_CARRIER2]->processStereo(tempCarrier2L.data(), tempCarrier2R.data(), numSamples, ctx);
+        scopes[BLK_CARRIER2].pushBlock(tempCarrier2L.data(), numSamples);
+        if (auto* carrier2 = dynamic_cast<CarrierBlock*>(allBlocks[BLK_CARRIER2].get())) {
+            lastCarrier2Freq.store(carrier2->getCurrentFreq(), std::memory_order_relaxed);
+        }
 
-        // 7. Noise Transient
+        // 9. Noise Transient
         std::fill(tempNoiseL.begin(), tempNoiseL.begin() + numSamples, 0.0f);
         std::fill(tempNoiseR.begin(), tempNoiseR.begin() + numSamples, 0.0f);
         allBlocks[BLK_NOISE]->processStereo(tempNoiseL.data(), tempNoiseR.data(), numSamples, ctx);
         scopes[BLK_NOISE].pushBlock(tempNoiseL.data(), numSamples);
 
-        // 8. Mixer (Drive output & Noise Transient)
+        // 10. Mixer (Carrier 1, Carrier 2, RingMod, Noise Transient)
+        if (left) std::fill(left, left + numSamples, 0.0f);
+        if (right) std::fill(right, right + numSamples, 0.0f);
         if (auto* mixer = dynamic_cast<MixerBlock*>(allBlocks[BLK_MIXER].get())) {
-            mixer->setNoiseSource(tempNoiseL.data(), tempNoiseR.data(), numSamples);
+            mixer->setSources(tempCarrier1L.data(), tempCarrier1R.data(),
+                              tempCarrier2L.data(), tempCarrier2R.data(),
+                              tempNoiseL.data(), tempNoiseR.data(), numSamples);
         }
         allBlocks[BLK_MIXER]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_MIXER].pushBlock(left, numSamples);
 
-        // 9. Filter (with Pre-Drive & Filter Envelope modulation)
+        // 11. Drive (Mixer -> Drive)
+        allBlocks[BLK_DRIVE]->processStereo(left, right, numSamples, ctx);
+        scopes[BLK_DRIVE].pushBlock(left, numSamples);
+
+        // 12. Filter (Drive -> Filter with Post-Drive & Filter Envelope modulation)
         if (auto* fEnv = dynamic_cast<FilterEnvelopeBlock*>(allBlocks[BLK_FILTERENV].get())) {
             if (auto* filter = dynamic_cast<FilterBlock*>(allBlocks[BLK_FILTER].get())) {
-                filter->setPreDriveGain(fEnv->getPreDriveGain());
+                filter->setPostDriveGain(fEnv->getPostDriveGain());
             }
         }
         allBlocks[BLK_FILTER]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_FILTER].pushBlock(left, numSamples);
 
-        // 10. RingMod
+        // 13. Wave Folder (Filter -> Wave Folder)
+        allBlocks[BLK_WAVEFOLDER]->processStereo(left, right, numSamples, ctx);
+        scopes[BLK_WAVEFOLDER].pushBlock(left, numSamples);
+
+        // 14. RingMod (Wave Folder -> RingMod)
         allBlocks[BLK_RINGMOD]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_RINGMOD].pushBlock(left, numSamples);
 
-        // 11. Frequency Shifter
+        // 15. Frequency Shifter
         allBlocks[BLK_FREQSHIFT]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_FREQSHIFT].pushBlock(left, numSamples);
 
-        // 12. Grit FX
+        // 16. Grit FX
         allBlocks[BLK_GRIT]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_GRIT].pushBlock(left, numSamples);
 
-        // 13. Comb Filter
+        // 17. Comb Filter
         allBlocks[BLK_COMB]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_COMB].pushBlock(left, numSamples);
 
-        // 14. Disperser
+        // 18. Disperser
         allBlocks[BLK_DISPERSER]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_DISPERSER].pushBlock(left, numSamples);
 
-        // 15. Amp (with Amp Envelope, Pan, Master Level, Master Drive, Limiter)
+        // 19. EQ (Disperser -> EQ)
+        allBlocks[BLK_EQ]->processStereo(left, right, numSamples, ctx);
+        scopes[BLK_EQ].pushBlock(left, numSamples);
+
+        // 20. Amp (EQ -> Amp with Amp Envelope, Pan, Master Level, Master Drive, Limiter)
         allBlocks[BLK_AMP]->processStereo(left, right, numSamples, ctx);
         scopes[BLK_AMP].pushBlock(left, numSamples);
 
-        // 16. Velocity (updates transfer curve scope visualization)
+        // 21. Velocity (updates transfer curve scope visualization)
         allBlocks[BLK_VELOCITY]->processStereo(nullptr, nullptr, numSamples, ctx);
 
-        // 17. Slop (updates stepped scope visualization)
+        // 22. Slop (updates stepped scope visualization)
         allBlocks[BLK_SLOP]->processStereo(nullptr, nullptr, numSamples, ctx);
     }
 
@@ -1968,8 +2250,15 @@ private:
     std::vector<std::unique_ptr<DSPBlock>> allBlocks;
     VisualScope scopes[NUM_BLOCKS];
     mutable std::atomic<float> lastCarrierFreq{ 55.0f };
+    mutable std::atomic<float> lastCarrier2Freq{ 55.0f };
+    mutable std::atomic<float> lastMod1Freq{ 55.0f };
+    mutable std::atomic<float> lastMod2Freq{ 55.0f };
     std::vector<float> tempNoiseL;
     std::vector<float> tempNoiseR;
+    std::vector<float> tempCarrier1L;
+    std::vector<float> tempCarrier1R;
+    std::vector<float> tempCarrier2L;
+    std::vector<float> tempCarrier2R;
     uint32_t slopRngState = 0x13579bdf;
 };
 

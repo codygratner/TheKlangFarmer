@@ -5,7 +5,7 @@
 #include "ModularBlocks.h"
 
 int main() {
-    std::cout << "Starting DSP Verification Tests for 16-Block Modular Drum Synth..." << std::endl;
+    std::cout << "Starting DSP Verification Tests for 22-Block Modular Drum Synth..." << std::endl;
 
     TbdAudio::ModularDrumEngine engine;
     engine.init(44100.0f);
@@ -37,7 +37,7 @@ int main() {
     }
     std::cout << "PASS: Basic trigger and audio generation." << std::endl;
 
-    // 2. Test Parameter Sweeps across all 15 blocks (0.0, 0.25, 0.5, 0.75, 1.0)
+    // 2. Test Parameter Sweeps across all 22 blocks (0.0, 0.25, 0.5, 0.75, 1.0)
     constexpr float testVals[] = { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f };
     for (int b = 0; b < TbdAudio::ModularDrumEngine::NUM_BLOCKS; ++b) {
         auto blockId = static_cast<TbdAudio::ModularDrumEngine::BlockID>(b);
@@ -60,7 +60,7 @@ int main() {
             }
         }
     }
-    std::cout << "PASS: 16-block parameter sweep stability test." << std::endl;
+    std::cout << "PASS: 22-block parameter sweep stability test." << std::endl;
 
     // 3. Test Comb filter and APF disperser
     // Comb filter (Block BLK_COMB, Type = 1.0f On)
@@ -135,11 +135,11 @@ int main() {
     }
     std::cout << "PASS: 2nd-order APF Disperser smearing, zapping, and energy conservation verified." << std::endl;
 
-    // 4. Test Pitch Envelope Modulation
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 0, 1.0f); // Both
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 1, 0.0f); // Exp
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 2, 1.0f); // Max depth
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 3, 0.3806f); // 333 ms
+    // 4. Test Pitch Envelope 1 Modulation
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 0, 1.0f); // Both
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 1, 0.0f); // Exp
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 2, 1.0f); // Max depth
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 3, 0.3806f); // 333 ms
     engine.trigger(1.0f);
     for (int block = 0; block < 50; ++block) {
         engine.processStereo(left.data(), right.data(), blockSize);
@@ -219,11 +219,17 @@ int main() {
             TbdAudio::ModularDrumEngine eng;
             eng.init(44100.0f);
             eng.setMidiPitch(36); // C2 = 65.4 Hz
-            // Turn off pitch envelope to have stable carrier
-            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV, 0, 0.0f); // Off
-            // Frequency shifter: Range = rangeHz / 5000, Blend = 1.0 (100% wet), Shift = shiftNorm
+            // Turn off pitch envelopes to have stable carrier
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 0, 0.0f); // Off
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 0, 0.0f); // Off
+            // Isolate Carrier 1 in mixer (C1 = 100%, C2 = 0%, RingMod = 0%, Noise = 0%)
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 0, 0.5f);
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 1, 0.0f);
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 2, 0.0f);
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 3, 0.0f);
+            // Frequency shifter: Range = rangeHzToNorm(rangeHz), Blend = 1.0 (100% wet), Shift = shiftNorm
             eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 0, shiftNorm);
-            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 1, rangeHz / 5000.0f);
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 1, TbdAudio::rangeHzToNorm(rangeHz));
             eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 2, 1.0f); // 100% wet
             eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 3, 0.5f); // center width
             // Set amp env decay long so signal persists
@@ -263,7 +269,7 @@ int main() {
 
     }
 
-    // 7. Test VisualScope Buffer Capture for all 16 blocks
+    // 7. Test VisualScope Buffer Capture for all 22 blocks
     {
         float scopeData[128] = { 0.0f };
         for (int b = 0; b < TbdAudio::ModularDrumEngine::NUM_BLOCKS; ++b) {
@@ -275,7 +281,7 @@ int main() {
                 }
             }
         }
-        std::cout << "PASS: All 16 VisualScope buffers populated with valid finite samples." << std::endl;
+        std::cout << "PASS: All 22 VisualScope buffers populated with valid finite samples." << std::endl;
     }
 
     // 8. Test Velocity Modulation
@@ -381,7 +387,7 @@ int main() {
         std::cout << "PASS: Velocity modulation (volume, decay, depth polarity, exponential curves) verified." << std::endl;
     }
 
-    // 9. Test Slop Modulation (Block 17)
+    // 9. Test Slop Modulation (Block 21: BLK_SLOP)
     {
         TbdAudio::ModularDrumEngine slopEngine;
         slopEngine.init(44100.0f);
@@ -390,10 +396,14 @@ int main() {
         // A. At default 0% Slop, all offsets MUST be strictly 0.0f
         slopEngine.trigger(1.0f);
         const auto& ctxDef = slopEngine.getContext();
-        assert(ctxDef.slopCarrierPitch == 0.0f);
-        assert(ctxDef.slopModFreq == 0.0f);
-        assert(ctxDef.slopModFilter == 0.0f);
+        assert(ctxDef.slopCarrier1Pitch == 0.0f);
+        assert(ctxDef.slopCarrier2Pitch == 0.0f);
+        assert(ctxDef.slopMod1Freq == 0.0f);
+        assert(ctxDef.slopMod1Filter == 0.0f);
+        assert(ctxDef.slopMod2Freq == 0.0f);
+        assert(ctxDef.slopMod2Filter == 0.0f);
         assert(ctxDef.slopDriveFilter == 0.0f);
+        assert(ctxDef.slopWaveFolderFilter == 0.0f);
         assert(ctxDef.slopNoiseShRate == 0.0f);
         assert(ctxDef.slopNoiseFilter == 0.0f);
         assert(ctxDef.slopFilterCutoff == 0.0f);
@@ -401,13 +411,17 @@ int main() {
         assert(ctxDef.slopCombDamp == 0.0f);
         assert(ctxDef.slopCombCutoff == 0.0f);
         assert(ctxDef.slopDisperserCutoff == 0.0f);
-        assert(ctxDef.slopPitchEnvDepth == 0.0f);
+        assert(ctxDef.slopPitchEnv1Depth == 0.0f);
+        assert(ctxDef.slopPitchEnv2Depth == 0.0f);
         assert(ctxDef.slopFilterEnvDepth == 0.0f);
-        assert(ctxDef.slopPitchEnvDecay == 0.0f);
+        assert(ctxDef.slopPitchEnv1Decay == 0.0f);
+        assert(ctxDef.slopPitchEnv2Decay == 0.0f);
         assert(ctxDef.slopNoiseDecay == 0.0f);
         assert(ctxDef.slopFilterEnvDecay == 0.0f);
         assert(ctxDef.slopAmpEnvDecay == 0.0f);
         assert(ctxDef.slopAmpPan == 0.0f);
+        assert(ctxDef.slopEQFreq == 0.0f);
+        assert(ctxDef.slopEQFilter == 0.0f);
         std::cout << "PASS: Slop defaults strictly zero with zero offsets." << std::endl;
 
         // B. Enable Slop (Freq = 50%, Depth = 40%, Decay = 30%, Pan = 60%)
@@ -417,7 +431,7 @@ int main() {
         slopEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 3, 0.60f);
 
         // Trigger multiple hits and verify independent stepped randomization
-        float prevCarrierPitch = 0.0f;
+        float prevCarrier1Pitch = 0.0f;
         float prevCutoff = 0.0f;
         float prevPan = 0.0f;
         bool hasVariation = false;
@@ -428,38 +442,41 @@ int main() {
             const auto& ctx = slopEngine.getContext();
 
             // Check range bounds under exponential warp:
-            // 50% knob -> 10% max offset
             float boundFreq  = TbdAudio::warpUnipolarExp(0.50f);
             float boundDepth = TbdAudio::warpUnipolarExp(0.40f);
             float boundDecay = TbdAudio::warpUnipolarExp(0.30f);
             float boundPan   = TbdAudio::warpUnipolarExp(0.60f);
 
-            assert(std::abs(ctx.slopCarrierPitch) <= boundFreq + 0.001f);
-            assert(std::abs(ctx.slopModFreq) <= boundFreq + 0.001f);
+            assert(std::abs(ctx.slopCarrier1Pitch) <= boundFreq + 0.001f);
+            assert(std::abs(ctx.slopCarrier2Pitch) <= boundFreq + 0.001f);
+            assert(std::abs(ctx.slopMod1Freq) <= boundFreq + 0.001f);
             assert(std::abs(ctx.slopFilterCutoff) <= boundFreq + 0.001f);
-            assert(std::abs(ctx.slopPitchEnvDepth) <= boundDepth + 0.001f);
+            assert(std::abs(ctx.slopEQFreq) <= boundFreq + 0.001f);
+            assert(std::abs(ctx.slopEQFilter) <= boundFreq + 0.001f);
+            assert(std::abs(ctx.slopPitchEnv1Depth) <= boundDepth + 0.001f);
+            assert(std::abs(ctx.slopPitchEnv2Depth) <= boundDepth + 0.001f);
             assert(std::abs(ctx.slopFilterEnvDepth) <= boundDepth + 0.001f);
-            assert(std::abs(ctx.slopPitchEnvDecay) <= boundDecay + 0.001f);
+            assert(std::abs(ctx.slopPitchEnv1Decay) <= boundDecay + 0.001f);
             assert(std::abs(ctx.slopAmpEnvDecay) <= boundDecay + 0.001f);
             assert(std::abs(ctx.slopAmpPan) <= boundPan + 0.001f);
 
             // Verify independent random values across different destinations in the same trigger hit
-            if (ctx.slopCarrierPitch != ctx.slopFilterCutoff &&
-                ctx.slopFilterCutoff != ctx.slopModFreq &&
-                ctx.slopPitchEnvDecay != ctx.slopAmpEnvDecay) {
+            if (ctx.slopCarrier1Pitch != ctx.slopFilterCutoff &&
+                ctx.slopFilterCutoff != ctx.slopMod1Freq &&
+                ctx.slopPitchEnv1Decay != ctx.slopAmpEnvDecay) {
                 hasIndependentDraws = true;
             }
 
             // Verify variation across hits
             if (hit > 0) {
-                if (ctx.slopCarrierPitch != prevCarrierPitch ||
+                if (ctx.slopCarrier1Pitch != prevCarrier1Pitch ||
                     ctx.slopFilterCutoff != prevCutoff ||
                     ctx.slopAmpPan != prevPan) {
                     hasVariation = true;
                 }
             }
 
-            prevCarrierPitch = ctx.slopCarrierPitch;
+            prevCarrier1Pitch = ctx.slopCarrier1Pitch;
             prevCutoff = ctx.slopFilterCutoff;
             prevPan = ctx.slopAmpPan;
 
@@ -484,6 +501,200 @@ int main() {
         std::cout << "PASS: Independent stepped random Slop controls (frequency, depth, decay, pan) verified." << std::endl;
     }
 
-    std::cout << "\n>>> ALL 17-BLOCK DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
+    // 10. Test Dual FM Voices & Mixer Routing
+    {
+        TbdAudio::ModularDrumEngine dualEngine;
+        dualEngine.init(44100.0f);
+
+        // Turn down everything except Carrier 1 in Mixer
+        dualEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 0, 0.5f); // Carrier 1 = 100%
+        dualEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 1, 0.0f); // Carrier 2 = 0%
+        dualEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 2, 0.0f); // RingMod = 0%
+        dualEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 3, 0.0f); // Noise = 0%
+
+        dualEngine.trigger(1.0f);
+        std::vector<float> buf1(blockSize, 0.0f);
+        dualEngine.processStereo(buf1.data(), nullptr, blockSize);
+        float peakC1 = 0.0f;
+        for (float v : buf1) peakC1 = std::max(peakC1, std::abs(v));
+        assert(peakC1 > 0.05f);
+
+        // Turn down Carrier 1 and turn on Carrier 2 in Mixer
+        dualEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 0, 0.0f); // Carrier 1 = 0%
+        dualEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 1, 0.5f); // Carrier 2 = 100%
+        dualEngine.trigger(1.0f);
+        std::vector<float> buf2(blockSize, 0.0f);
+        dualEngine.processStereo(buf2.data(), nullptr, blockSize);
+        float peakC2 = 0.0f;
+        for (float v : buf2) peakC2 = std::max(peakC2, std::abs(v));
+        assert(peakC2 > 0.05f);
+
+        // Turn on RingMod in Mixer
+        dualEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 0, 0.0f); // Carrier 1 = 0%
+        dualEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 1, 0.0f); // Carrier 2 = 0%
+        dualEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 2, 0.5f); // RingMod = 100%
+        dualEngine.trigger(1.0f);
+        std::vector<float> bufRM(blockSize, 0.0f);
+        dualEngine.processStereo(bufRM.data(), nullptr, blockSize);
+        float peakRM = 0.0f;
+        for (float v : bufRM) peakRM = std::max(peakRM, std::abs(v));
+        assert(peakRM > 0.05f);
+
+        std::cout << "PASS: Dual FM voice pairs and Mixer (Carrier 1, Carrier 2, RingMod) verified." << std::endl;
+    }
+
+    // 11. Test Wave Folder
+    {
+        TbdAudio::ModularDrumEngine wfEngine;
+        wfEngine.init(44100.0f);
+
+        // Compare output without wave folding vs with 6 folds
+        wfEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER, 0, 0.0f); // Off
+        wfEngine.trigger(1.0f);
+        std::vector<float> cleanBuf(512, 0.0f);
+        wfEngine.processStereo(cleanBuf.data(), nullptr, 512);
+
+        wfEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER, 0, 1.0f); // On
+        wfEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER, 1, 6.0f / 8.0f); // 6 folds
+        wfEngine.trigger(1.0f);
+        std::vector<float> foldedBuf(512, 0.0f);
+        wfEngine.processStereo(foldedBuf.data(), nullptr, 512);
+
+        bool hasDifference = false;
+        for (size_t i = 0; i < cleanBuf.size(); ++i) {
+            assert(!std::isnan(foldedBuf[i]) && !std::isinf(foldedBuf[i]));
+            if (std::abs(cleanBuf[i] - foldedBuf[i]) > 0.01f) {
+                hasDifference = true;
+            }
+        }
+        assert(hasDifference);
+        std::cout << "PASS: Standalone Wave Folder block verified." << std::endl;
+    }
+
+    // 12. Test Renoise Offline Render Simulation (arbitrary & varying buffer sizes)
+    {
+        TbdAudio::ModularDrumEngine renoiseEngine;
+        renoiseEngine.init(48000.0f); // Common offline render sample rate
+
+        const int blockSizes[] = { 64, 128, 512, 1024, 2048, 384, 96 };
+        for (int sz : blockSizes) {
+            std::vector<float> leftR(sz, 0.0f);
+            std::vector<float> rightR(sz, 0.0f);
+            renoiseEngine.trigger(0.85f);
+            renoiseEngine.processStereo(leftR.data(), rightR.data(), sz);
+            for (int i = 0; i < sz; ++i) {
+                assert(!std::isnan(leftR[i]) && !std::isinf(leftR[i]));
+                assert(!std::isnan(rightR[i]) && !std::isinf(rightR[i]));
+            }
+        }
+        std::cout << "PASS: Renoise offline variable block sizes rendering verified." << std::endl;
+    }
+
+    // 13. Test Filter Block (Slope and Type selectors)
+    {
+        TbdAudio::FilterBlock filter;
+        TbdAudio::BlockContext ctx;
+        ctx.sampleRate = 44100.0f;
+        ctx.invSr = 1.0f / 44100.0f;
+        filter.init(ctx);
+
+        // Type 0 = Off (bypass)
+        filter.setParam(0, 0.0f); // Off
+        std::vector<float> sig(256, 1.0f);
+        filter.processStereo(sig.data(), nullptr, 256, ctx);
+        for (float s : sig) {
+            assert(std::abs(s - 1.0f) < 0.0001f);
+        }
+
+        // Test LPF at different slopes: -6dB, -12dB, -18dB, -24dB, -36dB
+        for (int slope = 0; slope < 5; ++slope) {
+            filter.init(ctx);
+            filter.setParam(0, 0.25f); // 1 = LPF (normalized: 1/4 = 0.25)
+            filter.setParam(1, slope * 0.25f); // Slope
+            filter.setParam(2, 0.5f); // ~500 Hz cutoff
+            filter.setParam(3, 0.2f); // Resonance
+
+            std::vector<float> lpfSig(256, 0.5f);
+            filter.processStereo(lpfSig.data(), nullptr, 256, ctx);
+            for (float s : lpfSig) {
+                assert(!std::isnan(s) && !std::isinf(s));
+            }
+        }
+        std::cout << "PASS: Filter block types and discrete slopes verified." << std::endl;
+    }
+
+    // 14. Test Bell EQ Block (BLK_EQ)
+    {
+        TbdAudio::EQBlock eq;
+        TbdAudio::BlockContext ctx;
+        ctx.sampleRate = 44100.0f;
+        ctx.invSr = 1.0f / 44100.0f;
+        eq.init(ctx);
+
+        // A. At default 0 dB gain (param 2 = 0.5f) and DJ filter centered (param 3 = 0.5f), EQ is transparent
+        eq.setParam(0, 1.0f); // Freq = 24 kHz
+        eq.setParam(1, 0.0f); // Width = 0.1 oct
+        eq.setParam(2, 0.5f); // Gain = 0 dB
+        eq.setParam(3, 0.5f); // DJ Filter = Flat
+
+        std::vector<float> sig(512);
+        for (int i = 0; i < 512; ++i) {
+            sig[i] = std::sin(2.0f * 3.14159265f * 1000.0f * i / 44100.0f);
+        }
+        std::vector<float> origSig = sig;
+        eq.processStereo(sig.data(), nullptr, 512, ctx);
+        for (size_t i = 0; i < sig.size(); ++i) {
+            assert(std::abs(sig[i] - origSig[i]) < 0.0001f);
+        }
+
+        // B. Test Boost vs Cut at 1 kHz center frequency
+        float freqParam1k = std::log(1000.0f / 20.0f) / std::log(24000.0f / 20.0f);
+
+        // Boost +12 dB (gainParam = 0.5 + 12/48 = 0.75)
+        eq.init(ctx);
+        eq.setParam(0, freqParam1k);
+        eq.setParam(1, 0.3f); // ~1 octave width
+        eq.setParam(2, 0.75f); // +12 dB
+        eq.setParam(3, 0.5f); // Flat DJ filter
+        std::vector<float> boostSig = origSig;
+        eq.processStereo(boostSig.data(), nullptr, 512, ctx);
+
+        // Cut -12 dB (gainParam = 0.5 - 12/48 = 0.25)
+        eq.init(ctx);
+        eq.setParam(0, freqParam1k);
+        eq.setParam(1, 0.3f); // ~1 octave width
+        eq.setParam(2, 0.25f); // -12 dB
+        eq.setParam(3, 0.5f); // Flat DJ filter
+        std::vector<float> cutSig = origSig;
+        eq.processStereo(cutSig.data(), nullptr, 512, ctx);
+
+        float peakBoost = 0.0f, peakCut = 0.0f, peakOrig = 0.0f;
+        for (int i = 100; i < 500; ++i) {
+            peakBoost = std::max(peakBoost, std::abs(boostSig[i]));
+            peakCut = std::max(peakCut, std::abs(cutSig[i]));
+            peakOrig = std::max(peakOrig, std::abs(origSig[i]));
+        }
+        assert(peakBoost > peakOrig * 1.5f);
+        assert(peakCut < peakOrig * 0.7f);
+
+        // C. Test DJ Filter in EQ block (LPF tilt vs HPF tilt)
+        eq.init(ctx);
+        eq.setParam(0, freqParam1k);
+        eq.setParam(1, 0.3f);
+        eq.setParam(2, 0.5f); // 0 dB
+        eq.setParam(3, 0.1f); // Low DJ filter -> cuts highs
+        std::vector<float> djLpfSig(512);
+        for (int i = 0; i < 512; ++i) {
+            djLpfSig[i] = std::sin(2.0f * 3.14159265f * 8000.0f * i / 44100.0f); // 8 kHz tone
+        }
+        eq.processStereo(djLpfSig.data(), nullptr, 512, ctx);
+        float peak8k = 0.0f;
+        for (int i = 100; i < 500; ++i) peak8k = std::max(peak8k, std::abs(djLpfSig[i]));
+        assert(peak8k < 0.2f); // Strongly attenuated by DJ filter LPF
+
+        std::cout << "PASS: Bell EQ block (transparency, peaking boost/cut, DJ filter tilt) verified." << std::endl;
+    }
+
+    std::cout << "\n>>> ALL 22-BLOCK DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
     return 0;
 }

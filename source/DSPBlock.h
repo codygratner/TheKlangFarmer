@@ -17,12 +17,16 @@ struct BlockContext {
     bool isTriggered = false;
     float currentPitchHz = 65.4064f; // C2 default
     int currentMidiNote = 36;
-    float carrierPitchHz = 65.4064f;
-    int pitchEnvTarget = 0; // 0=Off, 1=Carrier, 2=Modulator, 3=Both
+    float carrier1PitchHz = 65.4064f;
+    float carrier2PitchHz = 65.4064f;
+    int pitchEnv1Target = 0; // 0=Off, 1=Carrier, 2=Modulator, 3=Both
+    int pitchEnv2Target = 0; // 0=Off, 1=Carrier, 2=Modulator, 3=Both
 
     // Inter-block modulation buffers
-    std::vector<float> modSignal;
-    std::vector<float> pitchEnvSignal;
+    std::vector<float> mod1Signal;
+    std::vector<float> mod2Signal;
+    std::vector<float> pitchEnv1Signal;
+    std::vector<float> pitchEnv2Signal;
     std::vector<float> filterEnvSignal;
     std::vector<float> ampEnvSignal;
 
@@ -34,10 +38,14 @@ struct BlockContext {
 
     // Slop modulation state (independent stepped bipolar random offsets drawn on each trigger)
     // 1. Frequency (pitch and filters)
-    float slopCarrierPitch = 0.0f;
-    float slopModFreq = 0.0f;
-    float slopModFilter = 0.0f;
+    float slopCarrier1Pitch = 0.0f;
+    float slopCarrier2Pitch = 0.0f;
+    float slopMod1Freq = 0.0f;
+    float slopMod1Filter = 0.0f;
+    float slopMod2Freq = 0.0f;
+    float slopMod2Filter = 0.0f;
     float slopDriveFilter = 0.0f;
+    float slopWaveFolderFilter = 0.0f;
     float slopNoiseShRate = 0.0f;
     float slopNoiseFilter = 0.0f;
     float slopFilterCutoff = 0.0f;
@@ -45,13 +53,17 @@ struct BlockContext {
     float slopCombDamp = 0.0f;
     float slopCombCutoff = 0.0f;
     float slopDisperserCutoff = 0.0f;
+    float slopEQFreq = 0.0f;
+    float slopEQFilter = 0.0f;
 
     // 2. Envelope Depths
-    float slopPitchEnvDepth = 0.0f;
+    float slopPitchEnv1Depth = 0.0f;
+    float slopPitchEnv2Depth = 0.0f;
     float slopFilterEnvDepth = 0.0f;
 
     // 3. Envelope Decays
-    float slopPitchEnvDecay = 0.0f;
+    float slopPitchEnv1Decay = 0.0f;
+    float slopPitchEnv2Decay = 0.0f;
     float slopNoiseDecay = 0.0f;
     float slopFilterEnvDecay = 0.0f;
     float slopAmpEnvDecay = 0.0f;
