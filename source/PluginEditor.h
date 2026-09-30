@@ -152,6 +152,9 @@ public:
 
     juce::String getTitle() const { return moduleTitle; }
 
+    void mouseDown(const juce::MouseEvent& e) override;
+    std::function<void()> onCardClicked;
+
 private:
     juce::String moduleTitle;
     juce::Colour accent;
@@ -181,6 +184,9 @@ public:
     LedSelectorComponent& getSelector2() { return selector2; }
 
     void updateDynamicControls();
+
+    void mouseDown(const juce::MouseEvent& e) override;
+    std::function<void()> onCardClicked;
 
 private:
     int slotIndex = 0;
@@ -244,30 +250,51 @@ private:
     juce::ComboBox boxes[4];
 };
 
-// Permanent Slot 8: Visualizations Block with tab selector and large display
+// Permanent Slot 8: Visualizations Block with auto-switching, module title, and lock icon
 class VisualizationCardComponent : public juce::Component {
 public:
     VisualizationCardComponent(juce::Colour accentColour);
     void paint(juce::Graphics& g) override;
     void resized() override;
-    void setAvailableTabs(const juce::StringArray& tabNames, const std::vector<int>& blockIndices);
-    void selectTab(int tabIndex);
-    void selectBlock(int blockIndex);
-    int getCurrentBlockIndex() const;
-    juce::String getCurrentTabName() const;
+
+    void setVisualizedBlock(int blockIndex, const juce::String& blockName);
+    int getCurrentBlockIndex() const { return currentBlockIndex; }
+    juce::String getCurrentBlockName() const { return currentBlockName; }
+
+    void setLocked(bool locked) { isLocked = locked; repaint(); }
+    bool getIsLocked() const { return isLocked; }
+
     MiniOscilloscopeComponent& getOscilloscope() { return oscilloscope; }
 
-    std::function<void(int)> onTabSelected;
+    void mouseDown(const juce::MouseEvent& e) override;
+    void mouseMove(const juce::MouseEvent& e) override;
+    void mouseExit(const juce::MouseEvent& e) override;
+
+    juce::Rectangle<int> getLockBounds() const;
 
 private:
-    void updateButtonStyles();
-
     juce::Colour accent;
-    juce::StringArray currentTabs;
-    std::vector<int> currentBlockIndices;
-    int selectedTab = 0;
-    std::vector<std::unique_ptr<juce::TextButton>> tabButtons;
+    int currentBlockIndex = 0;
+    juce::String currentBlockName { "CARRIER 1" };
+    bool isLocked = false;
+    bool isLockHovered = false;
+
     MiniOscilloscopeComponent oscilloscope;
+};
+
+// Non-scrollable full-page quickstart reference modal dialog
+class QuickstartGuideModalComponent : public juce::Component {
+public:
+    QuickstartGuideModalComponent();
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void mouseDown(const juce::MouseEvent& e) override;
+    bool keyPressed(const juce::KeyPress& key) override;
+
+    juce::Rectangle<int> getCardBounds() const;
+
+private:
+    juce::TextButton closeButton { "✕" };
 };
 
 class TheKlangFarmerAudioProcessorEditor : public juce::AudioProcessorEditor, private juce::Timer {
@@ -285,14 +312,23 @@ public:
     void setPage(int pageIndex);
     void updatePageLayout();
 
+    void mouseDown(const juce::MouseEvent& e) override;
+    void mouseDrag(const juce::MouseEvent& e) override;
+    void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& d) override;
+    void handleCardInteraction(juce::Component* comp);
+
 private:
     TheKlangFarmerAudioProcessor& audioProcessor;
     RotaryKnobLookAndFeel knobLookAndFeel;
 
     // Header buttons
+    juce::TextButton guideButton { "GUIDE" };
     juce::TextButton initButton { "INIT" };
     juce::TextButton triggerButton { "AUDITION HIT" };
     void resetToDefaults();
+
+    // Quickstart Guide overlay
+    QuickstartGuideModalComponent quickstartGuide;
 
     // Permanent blocks (Slot 1 and Slot 8)
     NavigationCardComponent navCard;

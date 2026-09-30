@@ -190,11 +190,26 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 - Highlighted active LED indicator denoting current page.
 
 ### 4.2. Visualization Module (Slot 8 — Fixed Across All Pages)
-- Tabbed selector dynamically populated with the active modules on the current page.
-- **Oscilloscope Mode**: Real-time waveform rendering with self-locking on fundamental zero-crossings for modulators and carriers.
-- **X-Y Bode Magnitude Plot Mode**: Logarithmic frequency ($20\,\text{Hz} - 24\,\text{kHz}$) vs. gain ($\text{dB}$) magnitude plot for any Filter block or Bell EQ block, showing exact filter shapes, slopes, resonance peaks, and interactive cutoff/gain markers.
-- **Velocity Transfer Plot Mode**: Live graph of velocity response transfer curves.
-- **Slop Distribution Plot Mode**: Live visualization of stepped random parameter offsets.
+- **Automatic Context Tracking**: Buttons have been removed to maximize screen real estate for the high-resolution scope display. The visualizer automatically changes based on whatever module or parameter is being edited or clicked on (including clicking anywhere on the panel/background of a module card).
+- **Active Block Readout**: Top-left corner displays `VISUALIZER: <BLOCK NAME>` (e.g., `VISUALIZER: CARRIER 1`, `VISUALIZER: FILTER 1`, `VISUALIZER: PRE 1: WAVEFOLDER`).
+- **Interactive Padlock Icon (Top Right)**:
+  - **Grey Unlocked Icon**: Auto-tracking mode. As the user clicks or edits any module or turns any knob, the visualizer automatically follows the active block.
+  - **Yellow Locked Icon**: Locked mode. When clicked, the lock turns bright yellow and locks the visualizer to the currently displayed block. The visualizer will not auto-change, even when navigating between pages or tweaking controls on other modules.
+  - *Pro Workflow*: Lock the visualizer to a downstream effect (such as the Pre-Amp Wavefolder or Master Limiter), navigate back to Voice 1, and tweak Carrier/Modulator parameters while observing the folding waveform in real time.
+- **Display Modes**:
+  - **Oscilloscope Mode**: Real-time waveform rendering with self-locking on fundamental zero-crossings for modulators, carriers, and FX audio probes.
+  - **X-Y Bode Magnitude Plot Mode**: Logarithmic frequency ($20\,\text{Hz} - 24\,\text{kHz}$) vs. gain ($\text{dB}$) magnitude plot for any Filter block or Bell EQ block, showing exact filter shapes, slopes, resonance peaks, and interactive cutoff/gain markers.
+  - **Velocity Transfer Plot Mode**: Live graph of velocity response transfer curves.
+  - **Slop Distribution Plot Mode**: Live visualization of stepped random parameter offsets.
+
+### 4.2.1. Quickstart Guide Modal Dialog
+- **Header Button**: A dedicated `GUIDE` button is situated on the header bar directly to the left of `INIT`.
+- **Non-Scrollable One-Page Layout**: Clicking `GUIDE` opens an instantaneous, non-scrollable modal overlay covering the plugin window, presenting a structured 4-panel quick reference:
+  1. *Architecture & Signal Flow*: Dual FM voices, transient noise, 3-channel mixer, serial pre/post amp FX racks, and dual limiters.
+  2. *Navigation & Smart Auto-Visualizer*: Page tabs, automatic context-switching, Bode/oscilloscope modes, and padlock locking.
+  3. *Multi-Instance Effects Catalog*: All 13 DSP effects with 4-knob standardized tactile controls and multi-instance chaining.
+  4. *Sound Design Recipes & Pro Tips*: Quick kick, snare, velocity shaping, analog slop drift, and audition button.
+- **Dismissal**: Closes via the top-right `✕` button, clicking outside the modal dialog card, or pressing the `Escape` key.
 
 ---
 
