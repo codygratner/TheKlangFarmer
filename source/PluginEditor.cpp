@@ -3287,9 +3287,19 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
     g.setColour(juce::Colours::white);
     g.drawText("THE KLANG FARMER", 14, 0, 180, 36, juce::Justification::centredLeft);
 
+    g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff4a9eff));
+#ifdef JucePlugin_VersionString
+    juce::String verStr = "v" JucePlugin_VersionString;
+#else
+    juce::String verStr = "v0.1.1";
+#endif
+    g.drawText(verStr, 196, 0, 48, 36, juce::Justification::centredLeft);
+
+    int subtitleWidth = juce::jmax(0, getWidth() - 350 - 250);
     g.setFont(juce::FontOptions(12.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("PAGED MODULAR DUAL FM SYNTHESIS DRUM VOICE", 196, 0, 500, 36, juce::Justification::centredLeft);
+    g.drawText("PAGED MODULAR DUAL FM SYNTHESIS DRUM VOICE", 250, 0, subtitleWidth, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangFarmerAudioProcessorEditor::resized() {

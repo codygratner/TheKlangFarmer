@@ -456,3 +456,18 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 
 ### None / Bypass
 - Fully bypasses processing for that slot and renders a brushed-aluminum blank rack plate.
+
+---
+
+## 5. Versioning & Release Management
+
+- **Semantic Versioning Standard (`MAJOR.MINOR.PATCH`)**:
+  - The plugin and standalone binary adhere strictly to 3-part SemVer (e.g. `0.1.1`).
+  - Major and minor numbers are bumped for architectural milestones and major features.
+  - The patch number increments with each tagged release and distribution build.
+- **Header Display**:
+  - The active version is dynamically displayed in the top header bar next to "THE KLANG FARMER" as an accent badge (e.g. `v0.1.1`), linked directly to JUCE's `JucePlugin_VersionString`.
+- **Release Packaging**:
+  - Distributed via GitHub Releases with separate standalone zip archives:
+    - `TheKlangFarmer-v<version>-VST3.zip`: contains `The Klang Farmer.vst3` bundle
+    - `TheKlangFarmer-v<version>-Standalone.zip`: contains `The Klang Farmer.exe` standalone executable

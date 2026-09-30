@@ -2,7 +2,10 @@
 JUCE/
 
 # build
-build/
+/build/
+
+# releases
+/releases/
 
 # screenshots
 screenshots/
