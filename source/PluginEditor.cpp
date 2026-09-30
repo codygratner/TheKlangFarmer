@@ -1647,7 +1647,53 @@ void FXSlotCardComponent::configureForType(int fxType) {
     };
 
     switch (fxType) {
-        case 1: { // Drive
+        case 1: { // Bell EQ
+            title = "Bell EQ";
+            accent = juce::Colour(0xff29b6f6);
+            setupK(0, "Freq", false, formatEqFreqHz, parseEqFreqHz);
+            setupK(1, "Width", false, formatEqWidthOct, parseEqWidthOct);
+            setupK(2, "Gain", true, formatBipolarDb, parseBipolarDb);
+            setupK(3, "DJ Filter", true, formatBipolarPercent, parseBipolarPercent);
+            break;
+        }
+        case 2: { // Chorus
+            title = "Chorus";
+            accent = juce::Colour(0xff38bdf8);
+            setupK(0, "Rate", false, formatChorusRate, parseChorusRate);
+            setupK(1, "Depth", false, formatPercent, parsePercent);
+            setupK(2, "Feedback", true, formatBipolarPercent, parseBipolarPercent);
+            setupK(3, "Mix", false, formatPercent, parsePercent);
+            break;
+        }
+        case 3: { // Comb Filter
+            title = "Comb Filter";
+            accent = juce::Colour(0xff26a69a);
+            selector1.setVisible(true);
+            selector1.setAccent(accent);
+            selector1.setItems({ "Off", "On" }, 2);
+            selector1.onChange = [this](int idx) {
+                knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
+            };
+            setupK(1, "Dampening", false, formatFreqHz, parseFreqHz);
+            setupK(2, "Cutoff", false, formatFreqHz, parseFreqHz);
+            setupK(3, "Resonance", true, formatBipolarPercent, parseBipolarPercent);
+            break;
+        }
+        case 4: { // Disperser
+            title = "Disperser";
+            accent = juce::Colour(0xffec407a);
+            selector1.setVisible(true);
+            selector1.setAccent(accent);
+            selector1.setItems({ "Off", "On" }, 2);
+            selector1.onChange = [this](int idx) {
+                knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
+            };
+            setupK(1, "Amount", false, formatStages, parseStages);
+            setupK(2, "Cutoff", false, formatFreqHz, parseFreqHz);
+            setupK(3, "Resonance", true, formatBipolarPercent, parseBipolarPercent);
+            break;
+        }
+        case 5: { // Drive
             title = "Drive";
             accent = juce::Colour(0xffff4081);
             selector1.setVisible(true);
@@ -1661,7 +1707,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(2, "Filter", true, formatBipolarPercent, parseBipolarPercent);
             break;
         }
-        case 2: { // Filter
+        case 6: { // Filter
             title = "FX Filter";
             accent = juce::Colour(0xff7c4dff);
             selector1.setVisible(true);
@@ -1680,31 +1726,16 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(3, "Resonance", false, formatPercent, parsePercent);
             break;
         }
-        case 3: { // Wave Folder
-            title = "Wave Folder";
-            accent = juce::Colour(0xffff5252);
-            selector1.setVisible(true);
-            selector1.setAccent(accent);
-            selector1.setItems({ "Off", "On" }, 2);
-            selector1.onChange = [this](int idx) {
-                knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
-            };
-            setupK(1, "Fold", false, formatWavefolds, parseWavefolds);
-            setupK(2, "Bias", true, formatBipolarPercent, parseBipolarPercent);
-            setupK(3, "Filter", true, formatBipolarPercent, parseBipolarPercent);
+        case 7: { // Flanger
+            title = "Flanger";
+            accent = juce::Colour(0xffec4899);
+            setupK(0, "Rate", false, formatFlangerRate, parseFlangerRate);
+            setupK(1, "Depth", false, formatPercent, parsePercent);
+            setupK(2, "Feedback", true, formatBipolarPercent, parseBipolarPercent);
+            setupK(3, "Mix", false, formatPercent, parsePercent);
             break;
         }
-        case 4: { // RingMod
-            title = "RingMod FX";
-            accent = juce::Colour(0xffff7043);
-            setupK(0, "Waveform", false, formatPercent, parsePercent);
-            knobs[0].diagramType = RotaryKnobSlider::DiagramType::Waveform;
-            setupK(1, "Rate", false, formatFreqHz, parseFreqHz);
-            setupK(2, "Amount", false, formatPercent, parsePercent);
-            setupK(3, "Width", true, formatBipolarPercent, parseBipolarPercent);
-            break;
-        }
-        case 5: { // Frequency Shifter
+        case 8: { // Frequency Shifter
             title = "Freq Shifter";
             accent = juce::Colour(0xff00e676);
             auto fmtShift = [this](double val) {
@@ -1728,7 +1759,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(3, "Width", true, formatBipolarPercent, parseBipolarPercent);
             break;
         }
-        case 6: { // Grit FX
+        case 9: { // Grit FX
             title = "Grit FX";
             accent = juce::Colour(0xffff9100);
             setupK(0, "Bit Rate", false, formatBits, parseBits);
@@ -1737,53 +1768,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(3, "High", true, formatBipolarDb, parseBipolarDb);
             break;
         }
-        case 7: { // Comb Filter
-            title = "Comb Filter";
-            accent = juce::Colour(0xff26a69a);
-            selector1.setVisible(true);
-            selector1.setAccent(accent);
-            selector1.setItems({ "Off", "On" }, 2);
-            selector1.onChange = [this](int idx) {
-                knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
-            };
-            setupK(1, "Dampening", false, formatFreqHz, parseFreqHz);
-            setupK(2, "Cutoff", false, formatFreqHz, parseFreqHz);
-            setupK(3, "Resonance", true, formatBipolarPercent, parseBipolarPercent);
-            break;
-        }
-        case 8: { // Disperser
-            title = "Disperser";
-            accent = juce::Colour(0xffec407a);
-            selector1.setVisible(true);
-            selector1.setAccent(accent);
-            selector1.setItems({ "Off", "On" }, 2);
-            selector1.onChange = [this](int idx) {
-                knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
-            };
-            setupK(1, "Amount", false, formatStages, parseStages);
-            setupK(2, "Cutoff", false, formatFreqHz, parseFreqHz);
-            setupK(3, "Resonance", true, formatBipolarPercent, parseBipolarPercent);
-            break;
-        }
-        case 9: { // Bell EQ
-            title = "Bell EQ";
-            accent = juce::Colour(0xff29b6f6);
-            setupK(0, "Freq", false, formatEqFreqHz, parseEqFreqHz);
-            setupK(1, "Width", false, formatEqWidthOct, parseEqWidthOct);
-            setupK(2, "Gain", true, formatBipolarDb, parseBipolarDb);
-            setupK(3, "DJ Filter", true, formatBipolarPercent, parseBipolarPercent);
-            break;
-        }
-        case 10: { // Chorus
-            title = "Chorus";
-            accent = juce::Colour(0xff38bdf8);
-            setupK(0, "Rate", false, formatChorusRate, parseChorusRate);
-            setupK(1, "Depth", false, formatPercent, parsePercent);
-            setupK(2, "Feedback", true, formatBipolarPercent, parseBipolarPercent);
-            setupK(3, "Mix", false, formatPercent, parsePercent);
-            break;
-        }
-        case 11: { // Phaser
+        case 10: { // Phaser
             title = "Phaser";
             accent = juce::Colour(0xffa855f7);
             setupK(0, "Rate", false, formatPhaserRate, parsePhaserRate);
@@ -1792,22 +1777,37 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(3, "Mix", false, formatPercent, parsePercent);
             break;
         }
-        case 12: { // Flanger
-            title = "Flanger";
-            accent = juce::Colour(0xffec4899);
-            setupK(0, "Rate", false, formatFlangerRate, parseFlangerRate);
-            setupK(1, "Depth", false, formatPercent, parsePercent);
-            setupK(2, "Feedback", true, formatBipolarPercent, parseBipolarPercent);
-            setupK(3, "Mix", false, formatPercent, parsePercent);
+        case 11: { // RingMod
+            title = "RingMod FX";
+            accent = juce::Colour(0xffff7043);
+            setupK(0, "Waveform", false, formatPercent, parsePercent);
+            knobs[0].diagramType = RotaryKnobSlider::DiagramType::Waveform;
+            setupK(1, "Rate", false, formatFreqHz, parseFreqHz);
+            setupK(2, "Amount", false, formatPercent, parsePercent);
+            setupK(3, "Width", true, formatBipolarPercent, parseBipolarPercent);
             break;
         }
-        case 13: { // Tempo Delay
+        case 12: { // Tempo Delay
             title = "Tempo Delay";
             accent = juce::Colour(0xff10b981);
             setupK(0, "Division", false, formatDelayDiv, parseDelayDiv);
             setupK(1, "Feedback", false, formatPercent, parsePercent);
             setupK(2, "Tone", false, formatDelayTone, parseDelayTone);
             setupK(3, "Mix", false, formatPercent, parsePercent);
+            break;
+        }
+        case 13: { // Wave Folder
+            title = "Wave Folder";
+            accent = juce::Colour(0xffff5252);
+            selector1.setVisible(true);
+            selector1.setAccent(accent);
+            selector1.setItems({ "Off", "On" }, 2);
+            selector1.onChange = [this](int idx) {
+                knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
+            };
+            setupK(1, "Fold", false, formatWavefolds, parseWavefolds);
+            setupK(2, "Bias", true, formatBipolarPercent, parseBipolarPercent);
+            setupK(3, "Filter", true, formatBipolarPercent, parseBipolarPercent);
             break;
         }
         default: { // None
@@ -1822,13 +1822,13 @@ void FXSlotCardComponent::configureForType(int fxType) {
 }
 
 void FXSlotCardComponent::updateDynamicControls() {
-    if (currentType == 1) { // Drive: knob 3 is Limiter Off/On
+    if (currentType == 5) { // Drive: knob 3 is Limiter Off/On
         int sel = (knobs[3].getValue() >= 0.5) ? 1 : 0;
         if (sel != lastSel1) {
             selector1.setSelectedIndex(sel, juce::dontSendNotification);
             lastSel1 = sel;
         }
-    } else if (currentType == 2) { // Filter: knob 0 is Type, knob 1 is Slope
+    } else if (currentType == 6) { // Filter: knob 0 is Type, knob 1 is Slope
         int sel1 = std::clamp(static_cast<int>(std::round(knobs[0].getValue() * 3.0)), 0, 3);
         if (sel1 != lastSel1) {
             selector1.setSelectedIndex(sel1, juce::dontSendNotification);
@@ -1839,7 +1839,7 @@ void FXSlotCardComponent::updateDynamicControls() {
             selector2.setSelectedIndex(sel2, juce::dontSendNotification);
             lastSel2 = sel2;
         }
-    } else if (currentType == 3 || currentType == 7 || currentType == 8) { // WaveFolder, Comb, Disperser: knob 0 is Off/On
+    } else if (currentType == 3 || currentType == 4 || currentType == 13) { // Comb, Disperser, WaveFolder: knob 0 is Off/On
         int sel = (knobs[0].getValue() >= 0.5) ? 1 : 0;
         if (sel != lastSel1) {
             selector1.setSelectedIndex(sel, juce::dontSendNotification);
@@ -2221,7 +2221,7 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
     juce::StringArray b3 = {
         "• 8 FX SLOTS: 4 Pre-Amp slots (pre-saturation) and 4 Post-Amp slots (post-saturation / spatial).",
         "• MULTI-INSTANCE: Assign ANY of the 13 effects to ANY slot. Stack up to 8 of the same effect in series if desired (e.g. multiple Wavefolders or cascading Filters)!",
-        "• 13 DSP PROCESSORS: Drive, Filter, Wavefolder, Ring Mod, Freq Shifter, Grit, Comb Filter, Disperser, Parametric EQ, Chorus, Phaser, Flanger, Tempo Delay.",
+        "• 13 DSP PROCESSORS: Bell EQ, Chorus, Comb Filter, Disperser, Drive, Filter, Flanger, Frequency Shifter, Grit FX, Phaser, RingMod, Tempo Delay, Wave Folder.",
         "• HARDWARE CONTROL: Standardized 4-knob tactile interface with illuminated LED button switches for quick, intuitive sound design."
     };
     drawPanel(p3, "3. MULTI-INSTANCE FX (13 EFFECTS)", juce::Colour(0xffff7043), b3);
@@ -2991,7 +2991,22 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_pan", slopPanSlider));
 
     // --- FX PICKERS SETUP & ATTACHMENTS ---
-    const juce::StringArray fxChoices { "None", "Drive", "Filter", "Wave Folder", "RingMod", "Frequency Shifter", "Grit FX", "Comb Filter", "Disperser", "Bell EQ", "Chorus", "Phaser", "Flanger", "Tempo Delay" };
+    const juce::StringArray fxChoices {
+        "None",
+        "Bell EQ",
+        "Chorus",
+        "Comb Filter",
+        "Disperser",
+        "Drive",
+        "Filter",
+        "Flanger",
+        "Frequency Shifter",
+        "Grit FX",
+        "Phaser",
+        "RingMod",
+        "Tempo Delay",
+        "Wave Folder"
+    };
 
     for (int i = 0; i < 4; ++i) {
         preFXPickerCard->getBox(i).addItemList(fxChoices, 1);
@@ -3143,19 +3158,19 @@ void TheKlangFarmerAudioProcessorEditor::bindSelector(LedSelectorComponent& sele
 void TheKlangFarmerAudioProcessorEditor::setFXSlotDefaults(int slot, bool isPost, int fxType) {
     float defs[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     switch (fxType) {
-        case 1: defs[0] = 0.5f; defs[1] = 0.5f; defs[2] = 0.5f; defs[3] = 1.0f; break; // Drive: 0dB, 0 bias, 50% flat, Limiter On
-        case 2: defs[0] = 0.0f; defs[1] = 0.25f; defs[2] = 1.0f; defs[3] = 0.0f; break; // Filter: LPF, -12dB, 24kHz, 0% res
-        case 3: defs[0] = 1.0f; defs[1] = 0.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // WaveFolder: On, 0 fold, 0 bias, 50% flat
-        case 4: defs[0] = 0.0f; defs[1] = 0.50934f; defs[2] = 0.0f; defs[3] = 0.5f; break; // RingMod: sine, 1kHz, 0% amt, center
-        case 5: defs[0] = 0.5f; defs[1] = TbdAudio::rangeHzToNorm(3.0f); defs[2] = 0.5f; defs[3] = 0.5f; break; // FreqShift: 0 shift, 3Hz, dry, center
-        case 6: defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // Grit: 16 bit, 24kHz, 0dB, 0dB
-        case 7: defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 1.0f; defs[3] = 0.5f; break; // Comb: On, 24kHz, 24kHz, 0%
-        case 8: defs[0] = 1.0f; defs[1] = 4.0f / 32.0f; defs[2] = 0.62124f; defs[3] = 0.5f; break; // Disperser: On, 4 stages, 1kHz, 0%
-        case 9: defs[0] = 1.0f; defs[1] = 0.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // Bell EQ: 1kHz, 0.1 oct, 0dB, flat
-        case 10: defs[0] = 0.5398f; defs[1] = 0.60f; defs[2] = 0.60f; defs[3] = 0.50f; break; // Chorus: 1.2Hz, 60% depth, +20% fb, 50% mix
-        case 11: defs[0] = 0.4530f; defs[1] = 0.70f; defs[2] = 0.763f; defs[3] = 0.50f; break; // Phaser: 0.5Hz, 70% depth, +50% fb, 50% mix
-        case 12: defs[0] = 0.3500f; defs[1] = 0.70f; defs[2] = 0.868f; defs[3] = 0.50f; break; // Flanger: 0.25Hz, 70% depth, +70% fb, 50% mix
-        case 13: defs[0] = 5.0f / 9.0f; defs[1] = 0.40f; defs[2] = 0.70f; defs[3] = 0.35f; break; // Tempo Delay: 1/8, 40% fb, 8kHz tone, 35% mix
+        case 1:  defs[0] = 1.0f; defs[1] = 0.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // Bell EQ: 1kHz, 0.1 oct, 0dB, flat
+        case 2:  defs[0] = 0.5398f; defs[1] = 0.60f; defs[2] = 0.60f; defs[3] = 0.50f; break; // Chorus: 1.2Hz, 60% depth, +20% fb, 50% mix
+        case 3:  defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 1.0f; defs[3] = 0.5f; break; // Comb: On, 24kHz, 24kHz, 0%
+        case 4:  defs[0] = 1.0f; defs[1] = 4.0f / 32.0f; defs[2] = 0.62124f; defs[3] = 0.5f; break; // Disperser: On, 4 stages, 1kHz, 0%
+        case 5:  defs[0] = 0.5f; defs[1] = 0.5f; defs[2] = 0.5f; defs[3] = 1.0f; break; // Drive: 0dB, 0 bias, 50% flat, Limiter On
+        case 6:  defs[0] = 0.0f; defs[1] = 0.25f; defs[2] = 1.0f; defs[3] = 0.0f; break; // Filter: LPF, -12dB, 24kHz, 0% res
+        case 7:  defs[0] = 0.3500f; defs[1] = 0.70f; defs[2] = 0.868f; defs[3] = 0.50f; break; // Flanger: 0.25Hz, 70% depth, +70% fb, 50% mix
+        case 8:  defs[0] = 0.5f; defs[1] = TbdAudio::rangeHzToNorm(3.0f); defs[2] = 0.5f; defs[3] = 0.5f; break; // FreqShift: 0 shift, 3Hz, dry, center
+        case 9:  defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // Grit: 16 bit, 24kHz, 0dB, 0dB
+        case 10: defs[0] = 0.4530f; defs[1] = 0.70f; defs[2] = 0.763f; defs[3] = 0.50f; break; // Phaser: 0.5Hz, 70% depth, +50% fb, 50% mix
+        case 11: defs[0] = 0.0f; defs[1] = 0.50934f; defs[2] = 0.0f; defs[3] = 0.5f; break; // RingMod: sine, 1kHz, 0% amt, center
+        case 12: defs[0] = 5.0f / 9.0f; defs[1] = 0.40f; defs[2] = 0.70f; defs[3] = 0.35f; break; // Tempo Delay: 1/8, 40% fb, 8kHz tone, 35% mix
+        case 13: defs[0] = 1.0f; defs[1] = 0.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // WaveFolder: On, 0 fold, 0 bias, 50% flat
         default: break;
     }
     juce::String prefix = isPost ? "post_fx_" : "pre_fx_";

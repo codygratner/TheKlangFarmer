@@ -760,13 +760,13 @@ int main() {
         fxEng.init(44100.0f);
 
         // Route Drive into Pre FX Slot 0 and Grit into Post FX Slot 0
-        fxEng.setPreFXType(0, 1);  // Drive
+        fxEng.setPreFXType(0, 5);  // Drive
         fxEng.setPreFXType(1, 0);  // Bypass
-        fxEng.setPostFXType(0, 6); // Grit FX
+        fxEng.setPostFXType(0, 9); // Grit FX
         fxEng.setPostFXType(1, 0); // Bypass
 
-        assert(fxEng.getPreFXType(0) == 1);
-        assert(fxEng.getPostFXType(0) == 6);
+        assert(fxEng.getPreFXType(0) == 5);
+        assert(fxEng.getPostFXType(0) == 9);
 
         fxEng.trigger(1.0f);
         std::vector<float> fxL(blockSize, 0.0f);
@@ -784,15 +784,15 @@ int main() {
         TbdAudio::ModularDrumEngine multiFxEng;
         multiFxEng.init(44100.0f);
 
-        // Put WaveFolder (type 3) in all 4 Pre FX slots and all 4 Post FX slots
+        // Put WaveFolder (type 13) in all 4 Pre FX slots and all 4 Post FX slots
         for (int s = 0; s < 4; ++s) {
-            multiFxEng.setPreFXType(s, 3);
+            multiFxEng.setPreFXType(s, 13);
             multiFxEng.setPreFXParam(s, 0, 1.0f); // Type On
             multiFxEng.setPreFXParam(s, 1, 0.25f * (s + 1)); // Folds: 2, 4, 6, 8
             multiFxEng.setPreFXParam(s, 2, 0.5f);
             multiFxEng.setPreFXParam(s, 3, 0.5f);
 
-            multiFxEng.setPostFXType(s, 3);
+            multiFxEng.setPostFXType(s, 13);
             multiFxEng.setPostFXParam(s, 0, 1.0f); // Type On
             multiFxEng.setPostFXParam(s, 1, 0.25f * (s + 1)); // Folds: 2, 4, 6, 8
             multiFxEng.setPostFXParam(s, 2, 0.5f);
@@ -814,7 +814,7 @@ int main() {
         std::cout << "PASS: Multi-instance FX: 8 independent Wavefolders in series verified." << std::endl;
     }
 
-    // 19. Test New Effects: Chorus (10), Phaser (11), Flanger (12), and Tempo Delay (13)
+    // 19. Test New Effects: Chorus (2), Phaser (10), Flanger (7), and Tempo Delay (12)
     {
         TbdAudio::ModularDrumEngine modFxEng;
         modFxEng.init(44100.0f);
@@ -822,34 +822,34 @@ int main() {
         assert(std::abs(modFxEng.getBpm() - 135.0f) < 0.001f);
 
         // Put Chorus in Pre 0, Phaser in Pre 1, Flanger in Post 0, Tempo Delay in Post 1
-        modFxEng.setPreFXType(0, 10); // Chorus
+        modFxEng.setPreFXType(0, 2); // Chorus
         modFxEng.setPreFXParam(0, 0, 0.5f);
         modFxEng.setPreFXParam(0, 1, 0.7f);
         modFxEng.setPreFXParam(0, 2, 0.6f);
         modFxEng.setPreFXParam(0, 3, 0.5f);
 
-        modFxEng.setPreFXType(1, 11); // Phaser
+        modFxEng.setPreFXType(1, 10); // Phaser
         modFxEng.setPreFXParam(1, 0, 0.4f);
         modFxEng.setPreFXParam(1, 1, 0.8f);
         modFxEng.setPreFXParam(1, 2, 0.7f);
         modFxEng.setPreFXParam(1, 3, 0.5f);
 
-        modFxEng.setPostFXType(0, 12); // Flanger
+        modFxEng.setPostFXType(0, 7); // Flanger
         modFxEng.setPostFXParam(0, 0, 0.3f);
         modFxEng.setPostFXParam(0, 1, 0.7f);
         modFxEng.setPostFXParam(0, 2, 0.8f);
         modFxEng.setPostFXParam(0, 3, 0.5f);
 
-        modFxEng.setPostFXType(1, 13); // Tempo Delay
+        modFxEng.setPostFXType(1, 12); // Tempo Delay
         modFxEng.setPostFXParam(1, 0, 5.0f / 9.0f); // 1/8 note division
         modFxEng.setPostFXParam(1, 1, 0.5f);       // 50% feedback
         modFxEng.setPostFXParam(1, 2, 0.7f);       // Tone damping
         modFxEng.setPostFXParam(1, 3, 0.4f);       // 40% mix
 
-        assert(modFxEng.getPreFXType(0) == 10);
-        assert(modFxEng.getPreFXType(1) == 11);
-        assert(modFxEng.getPostFXType(0) == 12);
-        assert(modFxEng.getPostFXType(1) == 13);
+        assert(modFxEng.getPreFXType(0) == 2);
+        assert(modFxEng.getPreFXType(1) == 10);
+        assert(modFxEng.getPostFXType(0) == 7);
+        assert(modFxEng.getPostFXType(1) == 12);
 
         modFxEng.setMidiPitch(36);
         modFxEng.trigger(1.0f);

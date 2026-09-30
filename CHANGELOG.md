@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Changed
+- **Alphabetized Effects Catalog**: Reordered the 13 multi-instance effect processors alphabetically (`Bell EQ` through `Wave Folder`) across all FX picker dropdowns, DSP block dispatch, Quickstart modal, and documentation (`spec.md`, `README.md`).
+- **Arcade HP Meter-Style Sliders**: Upgraded parameter controls from rotary knobs and separate value boxes into fighting-game "HP meter" horizontal bar meters featuring embedded left-aligned labels, static right-aligned value readouts, bidirectional center-split fills for bipolar parameters, and 2D mouse dragging.
+- **Card Geometry & Typography Scaling**: Scaled up control heights, fonts, and spacing within the existing 1040 × 740 px chassis for improved readability and ergonomic tweaking.
+- **Visualizer Layout Reorganization**: Relocated the Real-Time Phase-Locked Visualizer from Slot 8 (bottom-right) to Slot 5 (bottom-left), anchoring both left-hand corner slots (Slot 1 Navigation and Slot 5 Visualizer) as permanent anchors across all 7 pages.
+
+---
+
 ## [0.1.1] - 2026-09-30
 
 ### Added

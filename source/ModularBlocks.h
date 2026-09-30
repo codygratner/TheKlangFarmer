@@ -2234,19 +2234,19 @@ public:
 
     static std::unique_ptr<DSPBlock> createFXBlock(int type) {
         switch (type) {
-            case 1: return std::make_unique<DriveBlock>();
-            case 2: return std::make_unique<FilterBlock>(0); // Standalone FX filter
-            case 3: return std::make_unique<WaveFolderBlock>();
-            case 4: return std::make_unique<RingModBlock>();
-            case 5: return std::make_unique<FrequencyShifterBlock>();
-            case 6: return std::make_unique<GritBlock>();
-            case 7: return std::make_unique<CombFilterBlock>();
-            case 8: return std::make_unique<DisperserBlock>();
-            case 9: return std::make_unique<EQBlock>();
-            case 10: return std::make_unique<ChorusBlock>();
-            case 11: return std::make_unique<PhaserBlock>();
-            case 12: return std::make_unique<FlangerBlock>();
-            case 13: return std::make_unique<DelayBlock>();
+            case 1:  return std::make_unique<EQBlock>();               // Bell EQ
+            case 2:  return std::make_unique<ChorusBlock>();           // Chorus
+            case 3:  return std::make_unique<CombFilterBlock>();       // Comb Filter
+            case 4:  return std::make_unique<DisperserBlock>();        // Disperser
+            case 5:  return std::make_unique<DriveBlock>();            // Drive
+            case 6:  return std::make_unique<FilterBlock>(0);          // Filter
+            case 7:  return std::make_unique<FlangerBlock>();          // Flanger
+            case 8:  return std::make_unique<FrequencyShifterBlock>(); // Frequency Shifter
+            case 9:  return std::make_unique<GritBlock>();             // Grit FX
+            case 10: return std::make_unique<PhaserBlock>();           // Phaser
+            case 11: return std::make_unique<RingModBlock>();          // RingMod
+            case 12: return std::make_unique<DelayBlock>();            // Tempo Delay
+            case 13: return std::make_unique<WaveFolderBlock>();       // Wave Folder
             default: return nullptr;
         }
     }
@@ -2468,16 +2468,16 @@ public:
         setPageParameter(BLK_SLOP, 3, 0.0f);
 
         // Pre-Amp FX defaults
-        preFXTypes[0] = 1; preFXParams[0][0] = 0.5f; preFXParams[0][1] = 0.5f; preFXParams[0][2] = 0.5f; preFXParams[0][3] = 1.0f; // Drive
-        preFXTypes[1] = 3; preFXParams[1][0] = 0.0f; preFXParams[1][1] = 0.0f; preFXParams[1][2] = 0.5f; preFXParams[1][3] = 0.5f; // WaveFolder
-        preFXTypes[2] = 4; preFXParams[2][0] = 0.0f; preFXParams[2][1] = 0.50934f; preFXParams[2][2] = 0.0f; preFXParams[2][3] = 0.5f; // RingMod
-        preFXTypes[3] = 5; preFXParams[3][0] = 0.5f; preFXParams[3][1] = rangeHzToNorm(3.0f); preFXParams[3][2] = 0.5f; preFXParams[3][3] = 0.5f; // FreqShift
+        preFXTypes[0] = 5; preFXParams[0][0] = 0.5f; preFXParams[0][1] = 0.5f; preFXParams[0][2] = 0.5f; preFXParams[0][3] = 1.0f; // Drive
+        preFXTypes[1] = 13; preFXParams[1][0] = 0.0f; preFXParams[1][1] = 0.0f; preFXParams[1][2] = 0.5f; preFXParams[1][3] = 0.5f; // WaveFolder
+        preFXTypes[2] = 11; preFXParams[2][0] = 0.0f; preFXParams[2][1] = 0.50934f; preFXParams[2][2] = 0.0f; preFXParams[2][3] = 0.5f; // RingMod
+        preFXTypes[3] = 8; preFXParams[3][0] = 0.5f; preFXParams[3][1] = rangeHzToNorm(3.0f); preFXParams[3][2] = 0.5f; preFXParams[3][3] = 0.5f; // FreqShift
 
         // Post-Amp FX defaults
-        postFXTypes[0] = 6; postFXParams[0][0] = 1.0f; postFXParams[0][1] = 1.0f; postFXParams[0][2] = 0.5f; postFXParams[0][3] = 0.5f; // Grit
-        postFXTypes[1] = 7; postFXParams[1][0] = 0.0f; postFXParams[1][1] = 1.0f; postFXParams[1][2] = 1.0f; postFXParams[1][3] = 0.5f; // Comb
-        postFXTypes[2] = 8; postFXParams[2][0] = 0.0f; postFXParams[2][1] = 4.0f / 32.0f; postFXParams[2][2] = 0.62124f; postFXParams[2][3] = 0.5f; // Disperser
-        postFXTypes[3] = 9; postFXParams[3][0] = 1.0f; postFXParams[3][1] = 0.0f; postFXParams[3][2] = 0.5f; postFXParams[3][3] = 0.5f; // Bell EQ
+        postFXTypes[0] = 9; postFXParams[0][0] = 1.0f; postFXParams[0][1] = 1.0f; postFXParams[0][2] = 0.5f; postFXParams[0][3] = 0.5f; // Grit
+        postFXTypes[1] = 3; postFXParams[1][0] = 0.0f; postFXParams[1][1] = 1.0f; postFXParams[1][2] = 1.0f; postFXParams[1][3] = 0.5f; // Comb
+        postFXTypes[2] = 4; postFXParams[2][0] = 0.0f; postFXParams[2][1] = 4.0f / 32.0f; postFXParams[2][2] = 0.62124f; postFXParams[2][3] = 0.5f; // Disperser
+        postFXTypes[3] = 1; postFXParams[3][0] = 1.0f; postFXParams[3][1] = 0.0f; postFXParams[3][2] = 0.5f; postFXParams[3][3] = 0.5f; // Bell EQ
 
         for (int s = 0; s < 4; ++s) {
             preFXBlocks[s] = createFXBlock(preFXTypes[s]);

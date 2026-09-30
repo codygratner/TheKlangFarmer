@@ -360,84 +360,78 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 
 Any of the following 13 processors (or `None / Bypass`) can be assigned to any of the 8 FX slots simultaneously. To support standard 4-knob modular hardware surfaces (e.g., TBD-16), **every single effect is standardized with exactly 4 controls**:
 
-### 1. Drive / Saturation
-- **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
-- **Bias (Continuous)**: DC offset $-1.0$ to $+1.0$ (bipolar, default $0.0$).
-- **Post-Filter (Continuous)**: DJ-style bipolar filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
-- **Limiter (Selector)**: `Off` (0), `On` (1, default, post-saturation hard clipper).
-
-### 2. Filter (Standalone Effect)
-- **Type (Selector)**: `LPF` (0, default), `BPF` (1), `HPF` (2), `BRF` (3). *(Off option removed; Filter is always active in one of 4 modes; use FX slot None to bypass).*
-- **Slope (Selector)**: `6` (0, 6 dB/oct), `12` (1, default, 12 dB/oct), `18` (2, 18 dB/oct), `24` (3, 24 dB/oct), `36` (4, 36 dB/oct).
-- **Cutoff (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
-- **Resonance (Continuous)**: $0\% - 100\%$ ($Q \approx 0.707 - 18.7$).
-- *Visualizer*: Real-time X-Y Frequency vs. Gain Bode magnitude plot.
-
-### 3. Wave Folder
-- **Type (Selector)**: `Off` (0, default), `On` (1).
-- **Fold (Continuous)**: 0 to 8 wavefolds (default 0).
-- **Bias (Continuous)**: DC offset $-1.0$ to $+1.0$ (bipolar, default $0.0$).
-- **Post-Filter (Continuous)**: DJ-style bipolar filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
-
-### 4. Ring Modulator
-- **Waveform (Continuous)**: Waveform Morph (Sine $\to$ Tri $\to$ Saw $\to$ Square $\to$ PWM).
-- **Rate (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
-- **Amount (Continuous)**: Dry/Wet $0\% - 100\%$ (default $0\%$).
-- **Width (Continuous)**: Stereo phase width $-100\% - +100\%$ (default $0\%$).
-
-### 5. Frequency Shifter
-- **Shift (Continuous)**: Bipolar shift $-X\,\text{Hz}$ to $0\,\text{Hz}$ to $+X\,\text{Hz}$ (default $0\,\text{Hz}$).
-- **Range (Continuous)**: Maximum shift range $0\,\text{Hz} - 5\,\text{kHz}$ (default $3\,\text{Hz}$).
-- **Blend (Continuous)**: $-100\%$ (wet negative sideband) $\to 0\%$ (dry) $\to +100\%$ (wet positive sideband).
-- **Width (Continuous)**: Stereo quadrature phase width $-100\% - +100\%$ (default $0\%$).
-
-### 6. BitCrusher (Grit FX)
-- **Bit Rate (Continuous)**: $1.0\,\text{bit} - 16.0\,\text{bit}$ (default $16.0\,\text{bit}$).
-- **Sample Rate (Continuous)**: $20\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
-- **Low (Continuous)**: Low shelf filter: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, default $0\,\text{dB}$).
-- **High (Continuous)**: High shelf filter: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, default $0\,\text{dB}$).
-
-### 7. Comb Filter
-- **Type (Selector)**: `Off` (0, default), `On` (1).
-- **Dampening (Continuous)**: Internal feedback damping $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
-- **Cutoff (Continuous)**: Comb fundamental frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
-- **Resonance (Continuous)**: Feedback $-100\%$ to $+100\%$ (default $0\%$).
-
-### 8. Disperser
-- **Type (Selector)**: `Off` (0, default), `On` (1).
-- **Amount (Continuous)**: Cascaded 2nd-order all-pass filter stages: 0 to 32 stages (default 4).
-- **Cutoff (Continuous)**: APF center frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $220\,\text{Hz}$).
-- **Resonance (Continuous)**: APF Q factor $-100\%$ to $+100\%$ (default $0\%$).
-
-### 9. Bell EQ
+### 1. Bell EQ
 - **Frequency (Continuous)**: $20\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Width (Continuous)**: $0.1 - 10$ octaves (default $0.1$ octaves).
 - **Gain (Continuous)**: $-24\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$, transparent passthrough).
 - **DJ Filter (Continuous)**: DJ-style tilt filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
 - *Visualizer*: Real-time X-Y Frequency vs. Gain Bode magnitude plot with peaking curve and DJ tilt.
 
-### 10. Chorus
+### 2. Chorus
 - **Rate (Continuous)**: Modulation LFO rate $0.1\,\text{Hz} - 10.0\,\text{Hz}$ (default $1.2\,\text{Hz}$).
 - **Depth (Continuous)**: Excursion depth $0\% - 100\%$ ($0$ to $8\,\text{ms}$, default $60\%$).
 - **Feedback (Continuous)**: Stereo delay feedback $-100\%$ to $+100\%$ (default $+20\%$).
 - **Mix (Continuous)**: Dry/Wet balance $0\% - 100\%$ (default $50\%$).
 - *Architecture*: Quadrature ($90^\circ$ phase-offset) dual sine LFO driving stereo fractional delay lines with soft-saturation feedback limiting.
 
-### 11. Phaser
-- **Rate (Continuous)**: LFO sweep speed $0.05\,\text{Hz} - 8.0\,\text{Hz}$ (default $0.5\,\text{Hz}$).
-- **Depth (Continuous)**: Center frequency sweep excursion $0\% - 100\%$ (default $70\%$).
-- **Feedback (Continuous)**: Notch resonance regeneration $-95\%$ to $+95\%$ (default $+50\%$).
-- **Mix (Continuous)**: Dry/Wet blend $0\% - 100\%$ (default $50\%$ for maximum notch cancellation).
-- *Architecture*: 6-stage cascaded all-pass filter ladder per channel with quadrature stereo LFO modulation and feedback soft clipping.
+### 3. Comb Filter
+- **Type (Selector)**: `Off` (0, default), `On` (1).
+- **Dampening (Continuous)**: Internal feedback damping $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Cutoff (Continuous)**: Comb fundamental frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Resonance (Continuous)**: Feedback $-100\%$ to $+100\%$ (default $0\%$).
 
-### 12. Flanger
+### 4. Disperser
+- **Type (Selector)**: `Off` (0, default), `On` (1).
+- **Amount (Continuous)**: Cascaded 2nd-order all-pass filter stages: 0 to 32 stages (default 4).
+- **Cutoff (Continuous)**: APF center frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $220\,\text{Hz}$).
+- **Resonance (Continuous)**: APF Q factor $-100\%$ to $+100\%$ (default $0\%$).
+
+### 5. Drive / Saturation
+- **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+- **Bias (Continuous)**: DC offset $-1.0$ to $+1.0$ (bipolar, default $0.0$).
+- **Post-Filter (Continuous)**: DJ-style bipolar filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
+- **Limiter (Selector)**: `Off` (0), `On` (1, default, post-saturation hard clipper).
+
+### 6. Filter (Standalone Effect)
+- **Type (Selector)**: `LPF` (0, default), `BPF` (1), `HPF` (2), `BRF` (3). *(Off option removed; Filter is always active in one of 4 modes; use FX slot None to bypass).*
+- **Slope (Selector)**: `6` (0, 6 dB/oct), `12` (1, default, 12 dB/oct), `18` (2, 18 dB/oct), `24` (3, 24 dB/oct), `36` (4, 36 dB/oct).
+- **Cutoff (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Resonance (Continuous)**: $0\% - 100\%$ ($Q \approx 0.707 - 18.7$).
+- *Visualizer*: Real-time X-Y Frequency vs. Gain Bode magnitude plot.
+
+### 7. Flanger
 - **Rate (Continuous)**: LFO rate $0.05\,\text{Hz} - 5.0\,\text{Hz}$ (default $0.25\,\text{Hz}$).
 - **Depth (Continuous)**: Delay sweep excursion $0\% - 100\%$ ($0$ to $4\,\text{ms}$, default $70\%$).
 - **Feedback (Continuous)**: Resonant comb feedback $-95\%$ to $+95\%$ (bipolar, default $+70\%$; negative values create hollow subtractive flanging, positive values create full resonant jet swoosh).
 - **Mix (Continuous)**: Dry/Wet balance $0\% - 100\%$ (default $50\%$).
 - *Architecture*: Sub-millisecond fractional delay line ($0.2\,\text{ms} - 5.0\,\text{ms}$) with saturating feedback loop.
 
-### 13. Tempo Delay
+### 8. Frequency Shifter
+- **Shift (Continuous)**: Bipolar shift $-X\,\text{Hz}$ to $0\,\text{Hz}$ to $+X\,\text{Hz}$ (default $0\,\text{Hz}$).
+- **Range (Continuous)**: Maximum shift range $0\,\text{Hz} - 5\,\text{kHz}$ (default $3\,\text{Hz}$).
+- **Blend (Continuous)**: $-100\%$ (wet negative sideband) $\to 0\%$ (dry) $\to +100\%$ (wet positive sideband).
+- **Width (Continuous)**: Stereo quadrature phase width $-100\% - +100\%$ (default $0\%$).
+
+### 9. Grit FX (BitCrusher)
+- **Bit Rate (Continuous)**: $1.0\,\text{bit} - 16.0\,\text{bit}$ (default $16.0\,\text{bit}$).
+- **Sample Rate (Continuous)**: $20\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
+- **Low (Continuous)**: Low shelf filter: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, default $0\,\text{dB}$).
+- **High (Continuous)**: High shelf filter: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, default $0\,\text{dB}$).
+
+### 10. Phaser
+- **Rate (Continuous)**: LFO sweep speed $0.05\,\text{Hz} - 8.0\,\text{Hz}$ (default $0.5\,\text{Hz}$).
+- **Depth (Continuous)**: Center frequency sweep excursion $0\% - 100\%$ (default $70\%$).
+- **Feedback (Continuous)**: Notch resonance regeneration $-95\%$ to $+95\%$ (default $+50\%$).
+- **Mix (Continuous)**: Dry/Wet blend $0\% - 100\%$ (default $50\%$ for maximum notch cancellation).
+- *Architecture*: 6-stage cascaded all-pass filter ladder per channel with quadrature stereo LFO modulation and feedback soft clipping.
+
+### 11. Ring Modulator
+- **Waveform (Continuous)**: Waveform Morph (Sine $\to$ Tri $\to$ Saw $\to$ Square $\to$ PWM).
+- **Rate (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
+- **Amount (Continuous)**: Dry/Wet $0\% - 100\%$ (default $0\%$).
+- **Width (Continuous)**: Stereo phase width $-100\% - +100\%$ (default $0\%$).
+
+### 12. Tempo Delay
 - **Division (Continuous / Stepped)**: Musical beat divisions synced to host tempo:
   - `1/32` (0.125 beats)
   - `1/16T` (0.167 beats)
@@ -453,6 +447,12 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 - **Tone (Continuous)**: Low-pass damping filter cutoff $500\,\text{Hz} - 20\,\text{kHz}$ (default $8.0\,\text{kHz}$), providing analog-style warmth as repeats decay.
 - **Mix (Continuous)**: Dry/Wet blend $0\% - 100\%$ (default $35\%$).
 - *Architecture*: Pre-allocated stereo delay lines with automatic DAW BPM synchronization (120 BPM fallback in standalone), ping-pong stereo crossfeed, and feedback saturation.
+
+### 13. Wave Folder
+- **Type (Selector)**: `Off` (0, default), `On` (1).
+- **Fold (Continuous)**: 0 to 8 wavefolds (default 0).
+- **Bias (Continuous)**: DC offset $-1.0$ to $+1.0$ (bipolar, default $0.0$).
+- **Post-Filter (Continuous)**: DJ-style bipolar filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
 
 ### None / Bypass
 - Fully bypasses processing for that slot and renders a brushed-aluminum blank rack plate.

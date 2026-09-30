@@ -667,24 +667,39 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("post_limiter_release", "Post-Limiter: Release", 0.6296f));       // 50 ms
 
     // --- FX PICKERS ---
-    const juce::StringArray fxChoices { "None", "Drive", "Filter", "Wave Folder", "RingMod", "Frequency Shifter", "Grit FX", "Comb Filter", "Disperser", "Bell EQ", "Chorus", "Phaser", "Flanger", "Tempo Delay" };
+    const juce::StringArray fxChoices {
+        "None",
+        "Bell EQ",
+        "Chorus",
+        "Comb Filter",
+        "Disperser",
+        "Drive",
+        "Filter",
+        "Flanger",
+        "Frequency Shifter",
+        "Grit FX",
+        "Phaser",
+        "RingMod",
+        "Tempo Delay",
+        "Wave Folder"
+    };
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_fx_1_type", 1), "Pre FX 1: Type", fxChoices, 1)); // Drive
+        juce::ParameterID("pre_fx_1_type", 1), "Pre FX 1: Type", fxChoices, 5)); // Drive
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_fx_2_type", 1), "Pre FX 2: Type", fxChoices, 3)); // Wave Folder
+        juce::ParameterID("pre_fx_2_type", 1), "Pre FX 2: Type", fxChoices, 13)); // Wave Folder
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_fx_3_type", 1), "Pre FX 3: Type", fxChoices, 4)); // RingMod
+        juce::ParameterID("pre_fx_3_type", 1), "Pre FX 3: Type", fxChoices, 11)); // RingMod
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_fx_4_type", 1), "Pre FX 4: Type", fxChoices, 5)); // Frequency Shifter
+        juce::ParameterID("pre_fx_4_type", 1), "Pre FX 4: Type", fxChoices, 8)); // Frequency Shifter
 
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_1_type", 1), "Post FX 1: Type", fxChoices, 6)); // Grit FX
+        juce::ParameterID("post_fx_1_type", 1), "Post FX 1: Type", fxChoices, 9)); // Grit FX
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_2_type", 1), "Post FX 2: Type", fxChoices, 7)); // Comb Filter
+        juce::ParameterID("post_fx_2_type", 1), "Post FX 2: Type", fxChoices, 3)); // Comb Filter
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_3_type", 1), "Post FX 3: Type", fxChoices, 8)); // Disperser
+        juce::ParameterID("post_fx_3_type", 1), "Post FX 3: Type", fxChoices, 4)); // Disperser
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_4_type", 1), "Post FX 4: Type", fxChoices, 9)); // Bell EQ
+        juce::ParameterID("post_fx_4_type", 1), "Post FX 4: Type", fxChoices, 1)); // Bell EQ
 
     // --- 32 MULTI-INSTANCE FX SLOT PARAMETERS ---
     for (int s = 0; s < 4; ++s) {

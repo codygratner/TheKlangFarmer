@@ -38,19 +38,20 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 - **4 Pre-Amp FX Slots** and **4 Post-Amp FX Slots**.
 - **No Slot Restrictions**: Any of the 13 effect processors can be instantiated into any slot. You can cascade up to 8 instances of the exact same effect in series (e.g., 8 wavefolders) or mix and match freely.
 - **13 Effect Processors**:
-  1. **Wavefolder / Grit**: High-gain harmonic folder with transparent unity bypass.
-  2. **Drive / Overdrive**: Soft-clipping saturation with tone tilt.
-  3. **Bitcrusher**: Word-length reduction and sample-rate reduction.
-  4. **Comb Filter**: Resonant feedback delay line for metallic/karplus-strong tones.
-  5. **Disperser**: Cascaded 2nd-order allpass filters for authentic acoustic strike "zapping" and phase smearing.
-  6. **Frequency Shifter**: True quadrature single-sideband frequency shifting (+/- 50 Hz or +/- 500 Hz).
-  7. **Bell EQ**: Peaking parametric boost/cut and DJ-style dual filter tilt.
-  8. **Chorus**: Dual quadrature sine LFOs driving stereo fractional delays.
-  9. **Phaser**: 6-stage cascaded allpass ladder with regenerative feedback.
-  10. **Flanger**: Sub-millisecond delay line (0.2 ms – 5 ms) with bipolar feedback (-95% to +95%).
-  11. **Tempo Delay**: Pre-allocated stereo delay synced to host musical divisions (1/32 to 1/2) with damping tone filter and ping-pong crossfeed.
-  12. **Brickwall Limiter**: Lookahead peak-limiting and dynamics control.
-  13. **None / Bypass**: Bypasses the slot and renders a brushed-aluminum blank rack plate.
+  1. **Bell EQ**: Peaking parametric boost/cut and DJ-style dual filter tilt with Bode magnitude visualizer.
+  2. **Chorus**: Dual quadrature sine LFOs driving stereo fractional delays with soft-saturation feedback.
+  3. **Comb Filter**: Resonant feedback delay line for metallic/karplus-strong tones.
+  4. **Disperser**: Cascaded 2nd-order allpass filters for authentic acoustic strike "zapping" and phase smearing.
+  5. **Drive**: Soft-clipping saturation with DC bias, post-filter, and hard-clipper limiter.
+  6. **Filter**: Standalone multi-mode filter (LPF, BPF, HPF, BRF) with selectable slopes (6 dB to 36 dB/oct) and Bode visualizer.
+  7. **Flanger**: Sub-millisecond delay line (0.2 ms – 5 ms) with bipolar resonant feedback (-95% to +95%).
+  8. **Frequency Shifter**: True quadrature single-sideband frequency shifting (+/- 50 Hz or +/- 500 Hz).
+  9. **Grit FX (Bitcrusher)**: Word-length reduction (1.0 to 16.0 bits), sample-rate reduction, and dual-shelf tone shaping.
+  10. **Phaser**: 6-stage cascaded allpass ladder with regenerative feedback.
+  11. **RingMod**: Morphable oscillator ring modulation with rate, amount, and stereo phase width.
+  12. **Tempo Delay**: Pre-allocated stereo delay synced to host musical divisions (1/32 to 1/2) with damping tone filter and ping-pong crossfeed.
+  13. **Wave Folder**: High-gain harmonic folder with DC bias and post-filter.
+  *(Or **None / Bypass** to bypass the slot and render a brushed-aluminum blank rack plate).*
 
 ### 3. Transients & Modulation
 - **Noise Transient Generator**: Dedicated filtered white/pink noise burst with its own filter envelope (`Filter 3 + Filter Env 3`).
