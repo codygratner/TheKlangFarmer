@@ -953,18 +953,12 @@ void DiagramSliderLabel::mouseWheelMove(const juce::MouseEvent& e, const juce::M
     slider.mouseWheelMove(e.getEventRelativeTo(&slider), wheel);
 }
 
-// --- ROTARY KNOB SLIDER ---
+// --- ROTARY KNOB SLIDER (ARCADE HP METER) ---
 
 RotaryKnobSlider::RotaryKnobSlider() {
     setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    setTextBoxStyle(juce::Slider::TextBoxRight, false, 68, 22);
+    setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     setScrollWheelEnabled(true);
-}
-
-void RotaryKnobSlider::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) {
-    if (isScrollWheelEnabled()) {
-        juce::Slider::mouseWheelMove(e, wheel);
-    }
 }
 
 void RotaryKnobSlider::mouseDown(const juce::MouseEvent& e) {
@@ -972,24 +966,54 @@ void RotaryKnobSlider::mouseDown(const juce::MouseEvent& e) {
         openHoveringEditor();
         return;
     }
-    juce::Slider::mouseDown(e);
+    dragStartPos = e.getPosition();
+    dragStartVal = getValue();
+    startedDragging();
 }
 
-void RotaryKnobSlider::mouseDoubleClick(const juce::MouseEvent& e) {
+void RotaryKnobSlider::mouseDrag(const juce::MouseEvent& e) {
+    if (e.mods.isRightButtonDown() || e.mods.isPopupMenu()) return;
+
+    int dx = e.getPosition().x - dragStartPos.x;
+    int dy = dragStartPos.y - e.getPosition().y; // Upward dragging is positive
+
+    float delta = (std::abs(dx) > std::abs(dy)) ? static_cast<float>(dx) : static_cast<float>(dy);
+    float sensitivity = e.mods.isShiftDown() ? 0.001f : 0.005f;
+    double range = getMaximum() - getMinimum();
+    double targetVal = std::clamp(dragStartVal + static_cast<double>(delta * sensitivity) * range,
+                                  getMinimum(), getMaximum());
+    setValue(targetVal, juce::sendNotificationAsync);
+}
+
+void RotaryKnobSlider::mouseUp(const juce::MouseEvent&) {
+    stoppedDragging();
+}
+
+void RotaryKnobSlider::mouseDoubleClick(const juce::MouseEvent&) {
     if (getDefaultValue) {
         setValue(getDefaultValue(), juce::sendNotificationAsync);
-        return;
+    } else {
+        setValue(getDoubleClickReturnValue(), juce::sendNotificationAsync);
     }
-    juce::Slider::mouseDoubleClick(e);
+}
+
+void RotaryKnobSlider::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) {
+    if (isScrollWheelEnabled()) {
+        double delta = (wheel.deltaY != 0.0f ? wheel.deltaY : wheel.deltaX);
+        float sensitivity = e.mods.isShiftDown() ? 0.015f : 0.05f;
+        double range = getMaximum() - getMinimum();
+        double targetVal = std::clamp(getValue() + delta * sensitivity * range, getMinimum(), getMaximum());
+        setValue(targetVal, juce::sendNotificationAsync);
+    }
 }
 
 void RotaryKnobSlider::openHoveringEditor() {
     auto editor = std::make_unique<juce::TextEditor>();
-    editor->setSize(100, 26);
+    editor->setSize(110, 28);
     editor->setFont(juce::FontOptions(14.0f, juce::Font::bold));
     editor->setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff12141a));
     editor->setColour(juce::TextEditor::textColourId, juce::Colour(0xffffffff));
-    editor->setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff00d2ff));
+    editor->setColour(juce::TextEditor::outlineColourId, accentColour);
     editor->setText(getTextFromValue(getValue()), false);
     editor->selectAll();
 
@@ -1023,6 +1047,223 @@ double RotaryKnobSlider::getValueFromText(const juce::String& text) {
         return customParseText(text);
     }
     return juce::Slider::getValueFromText(text);
+}
+
+void RotaryKnobSlider::drawDiagram(juce::Graphics& g, juce::Rectangle<float> area) {
+    if (area.getWidth() <= 4.0f || area.getHeight() <= 4.0f) return;
+
+    g.setColour(juce::Colour(0x55000000));
+    g.fillRoundedRectangle(area.expanded(2.0f, 1.0f), 2.5f);
+    g.setColour(juce::Colour(0x33ffffff));
+    g.drawRoundedRectangle(area.expanded(2.0f, 1.0f), 2.5f, 0.8f);
+
+    float val = static_cast<float>(getValue());
+
+    if (diagramType == DiagramType::Waveform) {
+        g.setColour(juce::Colour(0x30ffffff));
+        g.drawHorizontalLine(static_cast<int>(area.getCentreY()), area.getX(), area.getRight());
+
+        juce::Path p;
+        constexpr int numPts = 32;
+        for (int i = 0; i <= numPts; ++i) {
+            float phase = static_cast<float>(i) / static_cast<float>(numPts);
+            float waveY = TbdAudio::evaluateWaveform(phase, val);
+            float px = area.getX() + phase * area.getWidth();
+            float py = area.getCentreY() - waveY * (area.getHeight() * 0.44f);
+            if (i == 0) p.startNewSubPath(px, py);
+            else p.lineTo(px, py);
+        }
+        g.setColour(juce::Colours::white);
+        g.strokePath(p, juce::PathStrokeType(1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+    else if (diagramType == DiagramType::EnvelopeSlope) {
+        g.setColour(juce::Colour(0x30ffffff));
+        g.drawHorizontalLine(static_cast<int>(area.getBottom() - 1.0f), area.getX(), area.getRight());
+
+        juce::Path p;
+        constexpr int numPts = 24;
+        for (int i = 0; i <= numPts; ++i) {
+            float t = static_cast<float>(i) / static_cast<float>(numPts);
+            float y = TbdAudio::applyEnvelopeSlope(1.0f - t, val);
+            float px = area.getX() + t * area.getWidth();
+            float py = area.getBottom() - y * (area.getHeight() * 0.88f) - 1.0f;
+            if (i == 0) p.startNewSubPath(px, py);
+            else p.lineTo(px, py);
+        }
+        g.setColour(juce::Colours::white);
+        g.strokePath(p, juce::PathStrokeType(1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+    else if (diagramType == DiagramType::VelocitySlope) {
+        g.setColour(juce::Colour(0x30ffffff));
+        g.drawHorizontalLine(static_cast<int>(area.getBottom() - 1.0f), area.getX(), area.getRight());
+
+        juce::Path p;
+        constexpr int numPts = 24;
+        for (int i = 0; i <= numPts; ++i) {
+            float t = static_cast<float>(i) / static_cast<float>(numPts);
+            float y = TbdAudio::applyEnvelopeSlope(t, val);
+            float px = area.getX() + t * area.getWidth();
+            float py = area.getBottom() - y * (area.getHeight() * 0.88f) - 1.0f;
+            if (i == 0) p.startNewSubPath(px, py);
+            else p.lineTo(px, py);
+        }
+        g.setColour(juce::Colours::white);
+        g.strokePath(p, juce::PathStrokeType(1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+    else if (diagramType == DiagramType::FilterSlope) {
+        g.setColour(juce::Colour(0x30ffffff));
+        g.drawHorizontalLine(static_cast<int>(area.getBottom() - 1.0f), area.getX(), area.getRight());
+
+        juce::Path p;
+        constexpr int numPts = 24;
+        float cutoffX = 0.55f;
+        float exponent = 1.0f + val * 6.0f;
+        for (int i = 0; i <= numPts; ++i) {
+            float t = static_cast<float>(i) / static_cast<float>(numPts);
+            float mag = 1.0f;
+            if (t > cutoffX) {
+                float f = (t - cutoffX) / (1.0f - cutoffX);
+                mag = std::clamp(1.0f - std::pow(f, 1.0f / exponent), 0.0f, 1.0f);
+            }
+            float px = area.getX() + t * area.getWidth();
+            float py = area.getBottom() - mag * (area.getHeight() * 0.88f) - 1.0f;
+            if (i == 0) p.startNewSubPath(px, py);
+            else p.lineTo(px, py);
+        }
+        g.setColour(juce::Colours::white);
+        g.strokePath(p, juce::PathStrokeType(1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+}
+
+void RotaryKnobSlider::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat().reduced(0.5f);
+    float cornerRadius = 4.0f;
+
+    // 1. Recessed dark trough background
+    g.setColour(juce::Colour(0xff090c12));
+    g.fillRoundedRectangle(bounds, cornerRadius);
+
+    // Trough border
+    bool isHot = isMouseOverOrDragging();
+    g.setColour(isHot ? accentColour.withAlpha(0.65f) : juce::Colour(0xff1e2535));
+    g.drawRoundedRectangle(bounds, cornerRadius, 1.2f);
+
+    float pad = 1.5f;
+    float innerX = bounds.getX() + pad;
+    float innerY = bounds.getY() + pad;
+    float innerW = bounds.getWidth() - 2.0f * pad;
+    float innerH = bounds.getHeight() - 2.0f * pad;
+    float innerRadius = 3.0f;
+
+    // 2. Normalized fill position
+    double rng = getMaximum() - getMinimum();
+    float norm = (rng > 0.0) ? static_cast<float>((getValue() - getMinimum()) / rng) : 0.0f;
+    norm = std::clamp(norm, 0.0f, 1.0f);
+
+    if (isBipolar) {
+        float midX = innerX + innerW * 0.5f;
+
+        if (norm > 0.501f) {
+            float fillW = innerW * (norm - 0.5f);
+            juce::Rectangle<float> fillRect(midX, innerY, fillW, innerH);
+            juce::ColourGradient grad(accentColour.darker(0.45f), midX, innerY,
+                                      accentColour.brighter(0.1f), midX + fillW, innerY, false);
+            g.setGradientFill(grad);
+            g.fillRoundedRectangle(fillRect, 2.0f);
+
+            // Leading edge needle
+            float needleX = midX + fillW;
+            g.setColour(juce::Colours::white.withAlpha(0.5f));
+            g.drawVerticalLine(static_cast<int>(needleX - 1.0f), innerY, innerY + innerH);
+            g.setColour(juce::Colours::white);
+            g.drawVerticalLine(static_cast<int>(needleX), innerY, innerY + innerH);
+        } else if (norm < 0.499f) {
+            float fillW = innerW * (0.5f - norm);
+            float startX = midX - fillW;
+            juce::Rectangle<float> fillRect(startX, innerY, fillW, innerH);
+            juce::ColourGradient grad(accentColour.brighter(0.1f), startX, innerY,
+                                      accentColour.darker(0.45f), midX, innerY, false);
+            g.setGradientFill(grad);
+            g.fillRoundedRectangle(fillRect, 2.0f);
+
+            // Leading edge needle
+            float needleX = startX;
+            g.setColour(juce::Colours::white.withAlpha(0.5f));
+            g.drawVerticalLine(static_cast<int>(needleX + 1.0f), innerY, innerY + innerH);
+            g.setColour(juce::Colours::white);
+            g.drawVerticalLine(static_cast<int>(needleX), innerY, innerY + innerH);
+        }
+
+        // Center dividing needle
+        g.setColour(accentColour.withAlpha(0.85f));
+        g.drawVerticalLine(static_cast<int>(midX), innerY, innerY + innerH);
+        g.setColour(juce::Colours::white.withAlpha(0.7f));
+        g.drawVerticalLine(static_cast<int>(midX), innerY + 1.0f, innerY + innerH - 1.0f);
+    } else {
+        float fillW = innerW * norm;
+        if (fillW > 1.0f) {
+            juce::Rectangle<float> fillRect(innerX, innerY, fillW, innerH);
+            juce::ColourGradient grad(accentColour.withMultipliedSaturation(1.1f).darker(0.6f),
+                                      innerX, innerY,
+                                      accentColour.brighter(0.1f),
+                                      innerX + fillW, innerY, false);
+            g.setGradientFill(grad);
+            g.fillRoundedRectangle(fillRect, innerRadius);
+
+            // Leading edge needle with glow
+            float needleX = innerX + fillW;
+            g.setColour(juce::Colours::white.withAlpha(0.45f));
+            g.drawVerticalLine(static_cast<int>(needleX - 1.0f), innerY, innerY + innerH);
+            g.setColour(juce::Colours::white);
+            g.drawVerticalLine(static_cast<int>(needleX), innerY, innerY + innerH);
+        }
+    }
+
+    // 3. Glass sheen reflection on top 44%
+    float sheenH = innerH * 0.44f;
+    juce::ColourGradient sheen(juce::Colour(0x35ffffff), innerX, innerY,
+                               juce::Colour(0x04ffffff), innerX, innerY + sheenH, false);
+    g.setGradientFill(sheen);
+    g.fillRoundedRectangle(innerX, innerY, innerW, sheenH, 2.5f);
+
+    // 4. Fixed Right-Aligned Value Box
+    // Statically anchored so text length variations never move or push other elements!
+    constexpr float valueBoxW = 78.0f;
+    constexpr float rightMargin = 10.0f;
+    auto valueBox = juce::Rectangle<float>(bounds.getRight() - rightMargin - valueBoxW,
+                                           bounds.getY(), valueBoxW, bounds.getHeight());
+    auto valStr = getTextFromValue(getValue());
+    g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+
+    // Shadow & Value text
+    g.setColour(juce::Colour(0xd0000000));
+    g.drawText(valStr, valueBox.translated(1.0f, 1.0f), juce::Justification::centredRight, false);
+    g.setColour(juce::Colour(0xffedf2fa));
+    g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
+
+    // 5. Embedded Mini Diagram (if applicable)
+    float labelRightLimit = valueBox.getX() - 6.0f;
+    if (diagramType != DiagramType::None) {
+        float diagW = 34.0f;
+        float diagH = 16.0f;
+        float diagX = bounds.getX() + 92.0f;
+        float diagY = bounds.getCentreY() - diagH * 0.5f;
+        drawDiagram(g, juce::Rectangle<float>(diagX, diagY, diagW, diagH));
+        labelRightLimit = diagX - 6.0f;
+    }
+
+    // 6. Inside Left-Aligned Parameter Label
+    constexpr float leftMargin = 10.0f;
+    auto labelBox = juce::Rectangle<float>(bounds.getX() + leftMargin, bounds.getY(),
+                                           std::max(10.0f, labelRightLimit - (bounds.getX() + leftMargin)),
+                                           bounds.getHeight());
+    g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+
+    // Shadow & Label text
+    g.setColour(juce::Colour(0xd0000000));
+    g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
+    g.setColour(juce::Colour(0xffedf2fa));
+    g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
 }
 
 // --- LED SELECTOR COMPONENT ---
@@ -1130,7 +1371,7 @@ void LedSelectorComponent::paint(juce::Graphics& g) {
         }
 
         auto textBounds = r.withTrimmedLeft(14.0f).withTrimmedRight(2.0f);
-        g.setFont(juce::FontOptions(isSel ? 13.0f : 12.5f, juce::Font::bold));
+        g.setFont(juce::FontOptions(isSel ? 13.5f : 13.0f, juce::Font::bold));
         g.setColour(isSel ? juce::Colours::white : (isHov ? juce::Colour(0xffe6edf8) : juce::Colour(0xffb0bdd0)));
         g.drawFittedText(items[i], textBounds.toNearestInt(), juce::Justification::centredLeft, 1);
     }
@@ -1192,13 +1433,21 @@ void ModuleCardComponent::setKnob(int slotIndex, const juce::String& label, Rota
     if (slotIndex >= 0 && slotIndex < 4) {
         knobs[slotIndex] = slider;
         labels[slotIndex].setText(label, juce::dontSendNotification);
-        if (slider) addAndMakeVisible(slider);
+        labels[slotIndex].setVisible(false);
+        if (slider) {
+            slider->setLabel(label);
+            slider->setAccentColour(accent);
+            addAndMakeVisible(slider);
+        }
     }
 }
 
 void ModuleCardComponent::setKnobLabel(int slotIndex, const juce::String& label) {
     if (slotIndex >= 0 && slotIndex < 4) {
         labels[slotIndex].setText(label, juce::dontSendNotification);
+        if (knobs[slotIndex]) {
+            knobs[slotIndex]->setLabel(label);
+        }
     }
 }
 
@@ -1240,45 +1489,42 @@ void ModuleCardComponent::paint(juce::Graphics& g) {
 }
 
 void ModuleCardComponent::resized() {
-    oscilloscope.setVisible(false); // Visualization is hosted in Slot 8
+    oscilloscope.setVisible(false); // Visualization is hosted in Slot 5
+    for (int i = 0; i < 4; ++i) {
+        labels[i].setVisible(false);
+    }
 
     auto area = getLocalBounds().reduced(8);
-    area.removeFromTop(22); // Title header
-    area.removeFromTop(4);
+    area.removeFromTop(24); // Title header
+    area.removeFromTop(6);
 
     int count = 4;
     if (ledSelector != nullptr && secondLedSelector != nullptr) {
-        int selH1 = 26;
-        int selH2 = 26;
+        int selH1 = 28;
+        int selH2 = 28;
         ledSelector->setBounds(area.removeFromTop(selH1));
-        area.removeFromTop(4);
+        area.removeFromTop(5);
         secondLedSelector->setBounds(area.removeFromTop(selH2));
-        area.removeFromTop(6);
+        area.removeFromTop(8);
         count = 2;
-        labels[2].setVisible(false);
-        labels[3].setVisible(false);
         if (knobs[2]) knobs[2]->setVisible(false);
         if (knobs[3]) knobs[3]->setVisible(false);
     } else if (ledSelector != nullptr) {
-        int selH = 26;
+        int selH = 30;
         ledSelector->setBounds(area.removeFromTop(selH));
-        area.removeFromTop(6);
+        area.removeFromTop(8);
         count = 3;
-        labels[3].setVisible(false);
         if (knobs[3]) knobs[3]->setVisible(false);
     }
 
     int rowH = area.getHeight() / count;
-    int labelW = 72;
+    int sliderH = (count == 4) ? 36 : (count == 3 ? 38 : 40);
 
     for (int i = 0; i < count; ++i) {
-        auto row = area.removeFromTop(rowH).reduced(0, 2);
-        labels[i].setVisible(true);
-        labels[i].setBounds(row.removeFromLeft(labelW));
-        row.removeFromLeft(4);
+        auto row = area.removeFromTop(rowH);
         if (knobs[i]) {
             knobs[i]->setVisible(true);
-            knobs[i]->setBounds(row);
+            knobs[i]->setBounds(row.withSizeKeepingCentre(row.getWidth(), std::min(row.getHeight() - 4, sliderH)));
         }
     }
 }
@@ -1297,10 +1543,10 @@ FXSlotCardComponent::FXSlotCardComponent(int slot, bool isPostRack)
         labels[i].setFont(juce::FontOptions(13.0f, juce::Font::bold));
         labels[i].setColour(juce::Label::textColourId, juce::Colour(0xffc5d0e0));
         labels[i].setJustificationType(juce::Justification::centredLeft);
-        addAndMakeVisible(labels[i]);
+        labels[i].setVisible(false);
 
         knobs[i].setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-        knobs[i].setTextBoxStyle(juce::Slider::TextBoxRight, false, 68, 22);
+        knobs[i].setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
         knobs[i].setScrollWheelEnabled(true);
         knobs[i].setRange(0.0, 1.0, 0.0005);
         addAndMakeVisible(knobs[i]);
@@ -1330,9 +1576,13 @@ void FXSlotCardComponent::paint(juce::Graphics& g) {
 }
 
 void FXSlotCardComponent::resized() {
+    for (int i = 0; i < 4; ++i) {
+        labels[i].setVisible(false);
+    }
+
     auto area = getLocalBounds().reduced(8);
-    area.removeFromTop(22); // Title header
-    area.removeFromTop(4);
+    area.removeFromTop(24); // Title header
+    area.removeFromTop(6);
 
     std::vector<int> visibleKnobs;
     for (int i = 0; i < 4; ++i) {
@@ -1340,29 +1590,26 @@ void FXSlotCardComponent::resized() {
     }
 
     if (selector1.isVisible() && selector2.isVisible()) {
-        int selH1 = 26;
-        int selH2 = 26;
+        int selH1 = 28;
+        int selH2 = 28;
         selector1.setBounds(area.removeFromTop(selH1));
-        area.removeFromTop(4);
+        area.removeFromTop(5);
         selector2.setBounds(area.removeFromTop(selH2));
-        area.removeFromTop(6);
+        area.removeFromTop(8);
     } else if (selector1.isVisible()) {
-        int selH = 26;
+        int selH = 30;
         selector1.setBounds(area.removeFromTop(selH));
-        area.removeFromTop(6);
+        area.removeFromTop(8);
     }
 
     int count = static_cast<int>(visibleKnobs.size());
     if (count > 0) {
         int rowH = area.getHeight() / count;
-        int labelW = 72;
+        int sliderH = (count == 4) ? 36 : (count == 3 ? 38 : 40);
 
         for (int kIdx : visibleKnobs) {
-            auto row = area.removeFromTop(rowH).reduced(0, 2);
-            labels[kIdx].setVisible(true);
-            labels[kIdx].setBounds(row.removeFromLeft(labelW));
-            row.removeFromLeft(4);
-            knobs[kIdx].setBounds(row);
+            auto row = area.removeFromTop(rowH);
+            knobs[kIdx].setBounds(row.withSizeKeepingCentre(row.getWidth(), std::min(row.getHeight() - 4, sliderH)));
         }
     }
 }
@@ -1387,7 +1634,9 @@ void FXSlotCardComponent::configureForType(int fxType) {
                          std::function<double(const juce::String&)> prs) {
         knobs[kIdx].setVisible(true);
         labels[kIdx].setText(name, juce::dontSendNotification);
-        labels[kIdx].setVisible(true);
+        labels[kIdx].setVisible(false);
+        knobs[kIdx].setLabel(name);
+        knobs[kIdx].setAccentColour(accent);
         knobs[kIdx].setBipolar(bipolar);
         knobs[kIdx].setColour(juce::Slider::rotarySliderFillColourId, accent);
         knobs[kIdx].setColour(juce::Slider::trackColourId, accent);
@@ -2848,9 +3097,10 @@ TheKlangFarmerAudioProcessorEditor::~TheKlangFarmerAudioProcessorEditor() {
 
 void TheKlangFarmerAudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar, double defaultVal) {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
-    slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 68, 22);
+    slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
     slider.setScrollWheelEnabled(true);
     slider.setBipolar(isBipolar);
+    slider.setAccentColour(trackColour);
     slider.setColour(juce::Slider::rotarySliderFillColourId, trackColour);
     slider.setColour(juce::Slider::trackColourId, trackColour);
     slider.setColour(juce::Slider::rotarySliderOutlineColourId, juce::Colour(0xff232733));

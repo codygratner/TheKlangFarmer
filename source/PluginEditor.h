@@ -56,7 +56,7 @@ private:
     float eqDJ = 0.5f;
 };
 
-// Rotary knob / horizontal slider with right-click hovering text box editor, bipolar arc/bar, and waveform/slope diagram support
+// Arcade HP Meter Slider with dual-axis dragging, embedded label, static right value, and waveform/slope diagram support
 class RotaryKnobSlider : public juce::Slider {
 public:
     enum class DiagramType {
@@ -69,9 +69,19 @@ public:
 
     RotaryKnobSlider();
     void mouseDown(const juce::MouseEvent& e) override;
+    void mouseDrag(const juce::MouseEvent& e) override;
+    void mouseUp(const juce::MouseEvent& e) override;
     void mouseDoubleClick(const juce::MouseEvent& e) override;
     void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
+    void mouseEnter(const juce::MouseEvent&) override { repaint(); }
+    void mouseExit(const juce::MouseEvent&) override { repaint(); }
     void openHoveringEditor();
+
+    void setLabel(const juce::String& l) { label = l; repaint(); }
+    juce::String getLabel() const { return label; }
+
+    void setAccentColour(juce::Colour c) { accentColour = c; repaint(); }
+    juce::Colour getAccentColour() const { return accentColour; }
 
     bool isBipolar = false;
     void setBipolar(bool bipolar) { isBipolar = bipolar; repaint(); }
@@ -84,6 +94,16 @@ public:
 
     juce::String getTextFromValue(double val) override;
     double getValueFromText(const juce::String& text) override;
+
+    void paint(juce::Graphics& g) override;
+
+private:
+    juce::String label;
+    juce::Colour accentColour { 0xff00d2ff };
+    juce::Point<int> dragStartPos;
+    double dragStartVal = 0.0;
+
+    void drawDiagram(juce::Graphics& g, juce::Rectangle<float> area);
 };
 
 // Custom diagram-rendering label used as slider text box
