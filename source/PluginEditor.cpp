@@ -2497,9 +2497,9 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     scopeBuffer.resize(128, 0.0f);
     updateDynamicControls();
 
-    setSize(1760, 440);
+    setSize(1040, 740);
     setResizable(true, true);
-    setResizeLimits(1200, 360, 2880, 1400);
+    setResizeLimits(800, 560, 2400, 1600);
 
     setPage(0);
     startTimerHz(30);
@@ -2604,10 +2604,20 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
     int topOffset = 38;
     int totalW = getWidth() - 2 * margin;
     int totalH = getHeight() - topOffset - margin;
-    int slotW = (totalW - 7 * margin) / 8;
-    int slotH = totalH;
+    int numCols = 4;
+    int numRows = 2;
+    int slotW = (totalW - (numCols - 1) * margin) / numCols;
+    int slotH = (totalH - (numRows - 1) * margin) / numRows;
 
-    navCard.setBounds(margin, topOffset, slotW, slotH);
+    auto getSlotBounds = [margin, topOffset, slotW, slotH](int slotIndex) {
+        int r = slotIndex / 4;
+        int c = slotIndex % 4;
+        int x = margin + c * (slotW + margin);
+        int y = topOffset + r * (slotH + margin);
+        return juce::Rectangle<int>(x, y, slotW, slotH);
+    };
+
+    navCard.setBounds(getSlotBounds(0));
     navCard.setVisible(true);
 
     juce::Component* slotComponents[6] = { nullptr };
@@ -2751,13 +2761,12 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
 
     for (int i = 0; i < 6; ++i) {
         if (slotComponents[i]) {
-            int x = margin + (i + 1) * (slotW + margin);
-            slotComponents[i]->setBounds(x, topOffset, slotW, slotH);
+            slotComponents[i]->setBounds(getSlotBounds(i + 1));
             slotComponents[i]->setVisible(true);
         }
     }
 
-    vizCard.setBounds(margin + 7 * (slotW + margin), topOffset, slotW, slotH);
+    vizCard.setBounds(getSlotBounds(7));
     vizCard.setVisible(true);
     vizCard.setAvailableTabs(tabNames, blockIndices);
 }

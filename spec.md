@@ -296,7 +296,7 @@ To keep module controls clean and consistent across the synth, the following sta
 
 ## 4. New UI Layout
 
-The new UI will be a single row of 8 slots of blocks. Slot 1 will always be the navigation block. Slot 8 will always be the Visualizations for the preceeding blocks.
+The UI uses a 2x4 rack layout (Slots 1..4 on the top row, Slots 5..8 on the bottom row). Slot 1 will always be the navigation block. Slot 8 will always be the Visualizations for the preceding blocks.
 
 ### 4.1. Navigation Block
 
