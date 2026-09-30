@@ -337,7 +337,7 @@ public:
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
         float baseFreq = getBasePitch(ctx);
         float shape = params[2];
-        float modDepth = (params[3] - 0.5f) * 4.0f; // -200% to +200% (default 0% = 0.5)
+        float modDepth = (params[3] - 0.5f) * 2.0f; // -100% to +100% (default 0% = 0.5)
 
         int target = (voiceIndex == 1) ? ctx.pitchEnv1Target : ctx.pitchEnv2Target;
         bool applyPitchEnv = (target == 1 || target == 3);
@@ -1886,8 +1886,31 @@ public:
         BLK_POST_LIMITER,
         BLK_VELOCITY,
         BLK_SLOP,
+        BLK_PRE_FX_1,
+        BLK_PRE_FX_2,
+        BLK_PRE_FX_3,
+        BLK_PRE_FX_4,
+        BLK_POST_FX_1,
+        BLK_POST_FX_2,
+        BLK_POST_FX_3,
+        BLK_POST_FX_4,
         NUM_BLOCKS
     };
+
+    static std::unique_ptr<DSPBlock> createFXBlock(int type) {
+        switch (type) {
+            case 1: return std::make_unique<DriveBlock>();
+            case 2: return std::make_unique<FilterBlock>(0); // Standalone FX filter
+            case 3: return std::make_unique<WaveFolderBlock>();
+            case 4: return std::make_unique<RingModBlock>();
+            case 5: return std::make_unique<FrequencyShifterBlock>();
+            case 6: return std::make_unique<GritBlock>();
+            case 7: return std::make_unique<CombFilterBlock>();
+            case 8: return std::make_unique<DisperserBlock>();
+            case 9: return std::make_unique<EQBlock>();
+            default: return nullptr;
+        }
+    }
 
     void init(float sampleRate) {
         ctx.sampleRate = sampleRate;
@@ -1932,7 +1955,9 @@ public:
         allBlocks[BLK_VELOCITY]   = std::make_unique<VelocityBlock>();
         allBlocks[BLK_SLOP]       = std::make_unique<SlopBlock>();
 
-        for (auto& b : allBlocks) b->init(ctx);
+        for (auto& b : allBlocks) {
+            if (b) b->init(ctx);
+        }
 
         // Pre-allocate realtime working buffers
         tempNoiseL.assign(1024, 0.0f);
@@ -2103,16 +2128,30 @@ public:
         setPageParameter(BLK_SLOP, 2, 0.0f);
         setPageParameter(BLK_SLOP, 3, 0.0f);
 
-        // FX Pickers defaults
-        preFXTypes[0] = 1; // Drive
-        preFXTypes[1] = 3; // WaveFolder
-        preFXTypes[2] = 4; // RingMod
-        preFXTypes[3] = 5; // FreqShift
+        // Pre-Amp FX defaults
+        preFXTypes[0] = 1; preFXParams[0][0] = 0.5f; preFXParams[0][1] = 0.5f; preFXParams[0][2] = 0.5f; preFXParams[0][3] = 1.0f; // Drive
+        preFXTypes[1] = 3; preFXParams[1][0] = 0.0f; preFXParams[1][1] = 0.0f; preFXParams[1][2] = 0.5f; preFXParams[1][3] = 0.5f; // WaveFolder
+        preFXTypes[2] = 4; preFXParams[2][0] = 0.0f; preFXParams[2][1] = 0.50934f; preFXParams[2][2] = 0.0f; preFXParams[2][3] = 0.5f; // RingMod
+        preFXTypes[3] = 5; preFXParams[3][0] = 0.5f; preFXParams[3][1] = rangeHzToNorm(3.0f); preFXParams[3][2] = 0.5f; preFXParams[3][3] = 0.5f; // FreqShift
 
-        postFXTypes[0] = 6; // Grit
-        postFXTypes[1] = 7; // Comb
-        postFXTypes[2] = 8; // Disperser
-        postFXTypes[3] = 9; // Bell EQ
+        // Post-Amp FX defaults
+        postFXTypes[0] = 6; postFXParams[0][0] = 1.0f; postFXParams[0][1] = 1.0f; postFXParams[0][2] = 0.5f; postFXParams[0][3] = 0.5f; // Grit
+        postFXTypes[1] = 7; postFXParams[1][0] = 0.0f; postFXParams[1][1] = 1.0f; postFXParams[1][2] = 1.0f; postFXParams[1][3] = 0.5f; // Comb
+        postFXTypes[2] = 8; postFXParams[2][0] = 0.0f; postFXParams[2][1] = 4.0f / 32.0f; postFXParams[2][2] = 0.62124f; postFXParams[2][3] = 0.5f; // Disperser
+        postFXTypes[3] = 9; postFXParams[3][0] = 1.0f; postFXParams[3][1] = 0.0f; postFXParams[3][2] = 0.5f; postFXParams[3][3] = 0.5f; // Bell EQ
+
+        for (int s = 0; s < 4; ++s) {
+            preFXBlocks[s] = createFXBlock(preFXTypes[s]);
+            if (preFXBlocks[s]) {
+                preFXBlocks[s]->init(ctx);
+                for (int p = 0; p < 4; ++p) preFXBlocks[s]->setParam(p, preFXParams[s][p]);
+            }
+            postFXBlocks[s] = createFXBlock(postFXTypes[s]);
+            if (postFXBlocks[s]) {
+                postFXBlocks[s]->init(ctx);
+                for (int p = 0; p < 4; ++p) postFXBlocks[s]->setParam(p, postFXParams[s][p]);
+            }
+        }
     }
 
     void trigger(float velocity = 1.0f) {
@@ -2179,7 +2218,13 @@ public:
 
         ctx.slopAmpPan          = slopPan   * fastRng(slopRngState);
 
-        for (auto& b : allBlocks) b->trigger(velocity);
+        for (auto& b : allBlocks) {
+            if (b) b->trigger(velocity);
+        }
+        for (int s = 0; s < 4; ++s) {
+            if (preFXBlocks[s]) preFXBlocks[s]->trigger(velocity);
+            if (postFXBlocks[s]) postFXBlocks[s]->trigger(velocity);
+        }
     }
 
     void setMidiPitch(int noteNumber) {
@@ -2188,12 +2233,26 @@ public:
     }
 
     void setPageParameter(BlockID block, int knobIndex, float value) {
+        if (block >= BLK_PRE_FX_1 && block <= BLK_PRE_FX_4) {
+            setPreFXParam(block - BLK_PRE_FX_1, knobIndex, value);
+            return;
+        }
+        if (block >= BLK_POST_FX_1 && block <= BLK_POST_FX_4) {
+            setPostFXParam(block - BLK_POST_FX_1, knobIndex, value);
+            return;
+        }
         if (block < NUM_BLOCKS && allBlocks[block]) {
             allBlocks[block]->setParam(knobIndex, value);
         }
     }
 
     float getPageParameter(BlockID block, int knobIndex) const {
+        if (block >= BLK_PRE_FX_1 && block <= BLK_PRE_FX_4) {
+            return getPreFXParam(block - BLK_PRE_FX_1, knobIndex);
+        }
+        if (block >= BLK_POST_FX_1 && block <= BLK_POST_FX_4) {
+            return getPostFXParam(block - BLK_POST_FX_1, knobIndex);
+        }
         if (block < NUM_BLOCKS && allBlocks[block]) {
             return allBlocks[block]->getParam(knobIndex);
         }
@@ -2201,18 +2260,67 @@ public:
     }
 
     void setPreFXType(int slot, int type) {
-        if (slot >= 0 && slot < 4) preFXTypes[slot] = std::clamp(type, 0, 9);
+        if (slot >= 0 && slot < 4) {
+            type = std::clamp(type, 0, 9);
+            if (preFXTypes[slot] != type || !preFXBlocks[slot]) {
+                preFXTypes[slot] = type;
+                preFXBlocks[slot] = createFXBlock(type);
+                if (preFXBlocks[slot]) {
+                    preFXBlocks[slot]->init(ctx);
+                    for (int p = 0; p < 4; ++p) {
+                        preFXBlocks[slot]->setParam(p, preFXParams[slot][p]);
+                    }
+                }
+            }
+        }
     }
     int getPreFXType(int slot) const {
         return (slot >= 0 && slot < 4) ? preFXTypes[slot] : 0;
     }
 
     void setPostFXType(int slot, int type) {
-        if (slot >= 0 && slot < 4) postFXTypes[slot] = std::clamp(type, 0, 9);
+        if (slot >= 0 && slot < 4) {
+            type = std::clamp(type, 0, 9);
+            if (postFXTypes[slot] != type || !postFXBlocks[slot]) {
+                postFXTypes[slot] = type;
+                postFXBlocks[slot] = createFXBlock(type);
+                if (postFXBlocks[slot]) {
+                    postFXBlocks[slot]->init(ctx);
+                    for (int p = 0; p < 4; ++p) {
+                        postFXBlocks[slot]->setParam(p, postFXParams[slot][p]);
+                    }
+                }
+            }
+        }
     }
     int getPostFXType(int slot) const {
         return (slot >= 0 && slot < 4) ? postFXTypes[slot] : 0;
     }
+
+    void setPreFXParam(int slot, int knobIndex, float value) {
+        if (slot >= 0 && slot < 4 && knobIndex >= 0 && knobIndex < 4) {
+            preFXParams[slot][knobIndex] = value;
+            if (preFXBlocks[slot]) preFXBlocks[slot]->setParam(knobIndex, value);
+        }
+    }
+    float getPreFXParam(int slot, int knobIndex) const {
+        return (slot >= 0 && slot < 4 && knobIndex >= 0 && knobIndex < 4) ? preFXParams[slot][knobIndex] : 0.0f;
+    }
+
+    void setPostFXParam(int slot, int knobIndex, float value) {
+        if (slot >= 0 && slot < 4 && knobIndex >= 0 && knobIndex < 4) {
+            postFXParams[slot][knobIndex] = value;
+            if (postFXBlocks[slot]) postFXBlocks[slot]->setParam(knobIndex, value);
+        }
+    }
+    float getPostFXParam(int slot, int knobIndex) const {
+        return (slot >= 0 && slot < 4 && knobIndex >= 0 && knobIndex < 4) ? postFXParams[slot][knobIndex] : 0.0f;
+    }
+
+    DSPBlock* getPreFXBlock(int slot) { return (slot >= 0 && slot < 4) ? preFXBlocks[slot].get() : nullptr; }
+    const DSPBlock* getPreFXBlock(int slot) const { return (slot >= 0 && slot < 4) ? preFXBlocks[slot].get() : nullptr; }
+    DSPBlock* getPostFXBlock(int slot) { return (slot >= 0 && slot < 4) ? postFXBlocks[slot].get() : nullptr; }
+    const DSPBlock* getPostFXBlock(int slot) const { return (slot >= 0 && slot < 4) ? postFXBlocks[slot].get() : nullptr; }
 
     const BlockContext& getContext() const { return ctx; }
 
@@ -2255,6 +2363,15 @@ public:
         totalSpan = std::clamp(totalSpan, 8.0f, static_cast<float>(VisualScope::RING_SIZE / 2));
         float step = totalSpan / static_cast<float>(count - 1);
 
+        const VisualScope* targetScope = nullptr;
+        if (blockIndex >= BLK_PRE_FX_1 && blockIndex <= BLK_PRE_FX_4) {
+            targetScope = &preFXScopes[blockIndex - BLK_PRE_FX_1];
+        } else if (blockIndex >= BLK_POST_FX_1 && blockIndex <= BLK_POST_FX_4) {
+            targetScope = &postFXScopes[blockIndex - BLK_POST_FX_1];
+        } else {
+            targetScope = &scopes[blockIndex];
+        }
+
         int head = scopes[triggerBlock].writeIndex.load(std::memory_order_acquire);
         int searchStart = (head - static_cast<int>(totalSpan) - 4 + VisualScope::RING_SIZE * 4) & (VisualScope::RING_SIZE - 1);
         int triggerPos = searchStart;
@@ -2272,7 +2389,7 @@ public:
             }
         }
 
-        scopes[blockIndex].readTriggered(dest, count, triggerPos, step);
+        targetScope->readTriggered(dest, count, triggerPos, step);
     }
 
     void process(float* monoBuffer, int numSamples) {
@@ -2452,7 +2569,10 @@ public:
 
         // --- PRE-AMP FX CHAIN (Slots 1 to 4) ---
         for (int s = 0; s < 4; ++s) {
-            processFX(preFXTypes[s], left, right, numSamples);
+            if (preFXBlocks[s]) {
+                preFXBlocks[s]->processStereo(left, right, numSamples, ctx);
+                preFXScopes[s].pushBlock(left, numSamples);
+            }
         }
 
         // --- PRE-AMP LIMITER ---
@@ -2468,7 +2588,10 @@ public:
 
         // --- POST-AMP FX CHAIN (Slots 1 to 4) ---
         for (int s = 0; s < 4; ++s) {
-            processFX(postFXTypes[s], left, right, numSamples);
+            if (postFXBlocks[s]) {
+                postFXBlocks[s]->processStereo(left, right, numSamples, ctx);
+                postFXScopes[s].pushBlock(left, numSamples);
+            }
         }
 
         // --- POST-AMP LIMITER ---
@@ -2486,6 +2609,12 @@ private:
     VisualScope scopes[NUM_BLOCKS];
     int preFXTypes[4] = { 1, 3, 4, 5 };
     int postFXTypes[4] = { 6, 7, 8, 9 };
+    std::unique_ptr<DSPBlock> preFXBlocks[4];
+    std::unique_ptr<DSPBlock> postFXBlocks[4];
+    float preFXParams[4][4] = { {0.0f} };
+    float postFXParams[4][4] = { {0.0f} };
+    VisualScope preFXScopes[4];
+    VisualScope postFXScopes[4];
     mutable std::atomic<float> lastCarrierFreq{ 55.0f };
     mutable std::atomic<float> lastCarrier2Freq{ 55.0f };
     mutable std::atomic<float> lastMod1Freq{ 55.0f };

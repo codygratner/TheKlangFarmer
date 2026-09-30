@@ -17,6 +17,9 @@ public:
                           float sliderPosProportional, float rotaryStartAngle,
                           float rotaryEndAngle, juce::Slider&) override;
     juce::Label* createSliderTextBox(juce::Slider& slider) override;
+    juce::Font getTextButtonFont(juce::TextButton&, int buttonHeight) override;
+    juce::Font getComboBoxFont(juce::ComboBox&) override;
+    juce::Font getPopupMenuFont() override;
 };
 
 // Mini Oscilloscope or Frequency-Gain Plot widget
@@ -109,6 +112,7 @@ public:
     void setSelectedIndex(int newIndex, juce::NotificationType notification = juce::sendNotificationAsync);
     int getSelectedIndex() const { return selectedIndex; }
     int getNumItems() const { return items.size(); }
+    void setAccent(juce::Colour col) { accent = col; repaint(); }
 
     std::function<void(int)> onChange;
 
@@ -159,6 +163,39 @@ private:
     juce::Label labels[4];
     RotaryKnobSlider* knobs[4] = {};
     int numActiveKnobs = 4;
+};
+
+// Dynamic Card component representing an independent FX slot
+class FXSlotCardComponent : public juce::Component {
+public:
+    FXSlotCardComponent(int slotIndex, bool isPostRack);
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+
+    void configureForType(int fxType);
+    int getCurrentType() const { return currentType; }
+    juce::String getTitle() const { return title; }
+
+    RotaryKnobSlider& getKnob(int index) { return knobs[index]; }
+    LedSelectorComponent& getSelector1() { return selector1; }
+    LedSelectorComponent& getSelector2() { return selector2; }
+
+    void updateDynamicControls();
+
+private:
+    int slotIndex = 0;
+    bool isPost = false;
+    int currentType = 0;
+    juce::String title;
+    juce::Colour accent;
+
+    juce::Label labels[4];
+    RotaryKnobSlider knobs[4];
+    LedSelectorComponent selector1;
+    LedSelectorComponent selector2;
+    int numActiveKnobs = 4;
+    int lastSel1 = -1;
+    int lastSel2 = -1;
 };
 
 // Hardware rack blank faceplate
@@ -288,15 +325,10 @@ private:
 
     std::unique_ptr<ModuleCardComponent> cardMixer;
 
-    std::unique_ptr<ModuleCardComponent> cardDrive;
-    std::unique_ptr<ModuleCardComponent> cardFXFilter;
-    std::unique_ptr<ModuleCardComponent> cardWaveFolder;
-    std::unique_ptr<ModuleCardComponent> cardRingMod;
-    std::unique_ptr<ModuleCardComponent> cardFreqShift;
-    std::unique_ptr<ModuleCardComponent> cardGrit;
-    std::unique_ptr<ModuleCardComponent> cardComb;
-    std::unique_ptr<ModuleCardComponent> cardDisperser;
-    std::unique_ptr<ModuleCardComponent> cardEQ;
+    // Multi-Instance FX Slot Cards
+    std::unique_ptr<FXSlotCardComponent> preFXCards[4];
+    std::unique_ptr<FXSlotCardComponent> postFXCards[4];
+    void setFXSlotDefaults(int slot, bool isPost, int fxType);
 
     std::unique_ptr<ModuleCardComponent> cardAmp;
     std::unique_ptr<ModuleCardComponent> cardAmpEnv;
@@ -306,8 +338,6 @@ private:
 
     std::unique_ptr<ModuleCardComponent> cardVelocity;
     std::unique_ptr<ModuleCardComponent> cardSlop;
-
-    ModuleCardComponent* getFXCard(int fxType);
 
     // --- Controls ---
     // Voice 1
@@ -398,66 +428,6 @@ private:
     RotaryKnobSlider mixerRingModSlider;
     RotaryKnobSlider mixerNoiseLevelSlider;
 
-    // Drive
-    juce::ComboBox driveLimiterBox;
-    LedSelectorComponent driveLimiterSelector;
-    RotaryKnobSlider driveAmountSlider;
-    RotaryKnobSlider driveBiasSlider;
-    RotaryKnobSlider driveFilterSlider;
-
-    // Standalone FX Filter
-    juce::ComboBox fxFilterTypeBox;
-    LedSelectorComponent fxFilterTypeSelector;
-    juce::ComboBox fxFilterSlopeBox;
-    LedSelectorComponent fxFilterSlopeSelector;
-    RotaryKnobSlider fxFilterCutoffSlider;
-    RotaryKnobSlider fxFilterResonanceSlider;
-
-    // Wave Folder
-    juce::ComboBox waveFolderTypeBox;
-    LedSelectorComponent waveFolderTypeSelector;
-    RotaryKnobSlider waveFolderFoldSlider;
-    RotaryKnobSlider waveFolderBiasSlider;
-    RotaryKnobSlider waveFolderFilterSlider;
-
-    // RingMod
-    RotaryKnobSlider ringModShapeSlider;
-    RotaryKnobSlider ringModRateSlider;
-    RotaryKnobSlider ringModAmountSlider;
-    RotaryKnobSlider ringModWidthSlider;
-
-    // Frequency Shifter
-    RotaryKnobSlider freqShiftShiftSlider;
-    RotaryKnobSlider freqShiftRangeSlider;
-    RotaryKnobSlider freqShiftBlendSlider;
-    RotaryKnobSlider freqShiftWidthSlider;
-
-    // Grit FX
-    RotaryKnobSlider gritBitsSlider;
-    RotaryKnobSlider gritRateSlider;
-    RotaryKnobSlider gritLowSlider;
-    RotaryKnobSlider gritHighSlider;
-
-    // Comb Filter
-    juce::ComboBox combTypeBox;
-    LedSelectorComponent combTypeSelector;
-    RotaryKnobSlider combDampeningSlider;
-    RotaryKnobSlider combCutoffSlider;
-    RotaryKnobSlider combResonanceSlider;
-
-    // Disperser
-    juce::ComboBox disperserTypeBox;
-    LedSelectorComponent disperserTypeSelector;
-    RotaryKnobSlider disperserAmountSlider;
-    RotaryKnobSlider disperserCutoffSlider;
-    RotaryKnobSlider disperserResonanceSlider;
-
-    // Bell EQ
-    RotaryKnobSlider eqFreqSlider;
-    RotaryKnobSlider eqWidthSlider;
-    RotaryKnobSlider eqGainSlider;
-    RotaryKnobSlider eqFilterSlider;
-
     // Amp
     RotaryKnobSlider ampPanSlider;
     RotaryKnobSlider ampLevelSlider;
@@ -525,12 +495,6 @@ private:
     int lastFilter3Type = -1;
     int lastFilter3Slope = -1;
 
-    int lastDriveLimiter = -1;
-    int lastFXFilterType = -1;
-    int lastFXFilterSlope = -1;
-    int lastWaveFolderType = -1;
-    int lastCombType = -1;
-    int lastDisperserType = -1;
     int lastAmpLimiter = -1;
     int lastPreLimiterEnable = -1;
     int lastPostLimiterEnable = -1;

@@ -225,5 +225,9 @@ private:
     juce::AudioParameterFloat*  slopDecayParam       = nullptr;
     juce::AudioParameterFloat*  slopPanParam         = nullptr;
 
+    // 23. Multi-Instance FX Slots
+    juce::AudioParameterFloat* preFXParam[4][4]  = { {nullptr} };
+    juce::AudioParameterFloat* postFXParam[4][4] = { {nullptr} };
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangFarmerAudioProcessor)
 };

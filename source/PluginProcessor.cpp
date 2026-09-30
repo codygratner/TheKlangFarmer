@@ -188,6 +188,15 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     slopDepthParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_depth"));
     slopDecayParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_decay"));
     slopPanParam         = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_pan"));
+
+    for (int s = 0; s < 4; ++s) {
+        for (int p = 0; p < 4; ++p) {
+            preFXParam[s][p] = dynamic_cast<juce::AudioParameterFloat*>(
+                apvts.getParameter("pre_fx_" + juce::String(s + 1) + "_p" + juce::String(p + 1)));
+            postFXParam[s][p] = dynamic_cast<juce::AudioParameterFloat*>(
+                apvts.getParameter("post_fx_" + juce::String(s + 1) + "_p" + juce::String(p + 1)));
+        }
+    }
 }
 
 void TheKlangFarmerAudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
@@ -326,6 +335,13 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     if (postFX2TypeParam) engine.setPostFXType(1, postFX2TypeParam->getIndex());
     if (postFX3TypeParam) engine.setPostFXType(2, postFX3TypeParam->getIndex());
     if (postFX4TypeParam) engine.setPostFXType(3, postFX4TypeParam->getIndex());
+
+    for (int s = 0; s < 4; ++s) {
+        for (int p = 0; p < 4; ++p) {
+            if (preFXParam[s][p]) engine.setPreFXParam(s, p, getNorm(preFXParam[s][p]));
+            if (postFXParam[s][p]) engine.setPostFXParam(s, p, getNorm(postFXParam[s][p]));
+        }
+    }
 
     // 12. Wave Folder
     if (waveFolderTypeParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER, 0, static_cast<float>(waveFolderTypeParam->getIndex()));
@@ -494,7 +510,7 @@ void TheKlangFarmerAudioProcessor::setStateInformation(const void* data, int siz
 juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor::createParameterLayout() {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
-    auto makeFloatParam = [](const char* id, const char* name, float defaultVal) {
+    auto makeFloatParam = [](const juce::String& id, const juce::String& name, float defaultVal) {
         return std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID(id, 1), name,
             juce::NormalisableRange<float>(0.0f, 1.0f, 0.0005f), defaultVal);
@@ -661,6 +677,29 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
         juce::ParameterID("post_fx_3_type", 1), "Post FX 3: Type", fxChoices, 8)); // Disperser
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("post_fx_4_type", 1), "Post FX 4: Type", fxChoices, 9)); // Bell EQ
+
+    // --- 32 MULTI-INSTANCE FX SLOT PARAMETERS ---
+    for (int s = 0; s < 4; ++s) {
+        for (int p = 0; p < 4; ++p) {
+            juce::String preId = "pre_fx_" + juce::String(s + 1) + "_p" + juce::String(p + 1);
+            juce::String preName = "Pre FX " + juce::String(s + 1) + ": Param " + juce::String(p + 1);
+            float defPre = 0.5f;
+            if (s == 0) { const float d[4] = { 0.5f, 0.5f, 0.5f, 1.0f }; defPre = d[p]; }
+            else if (s == 1) { const float d[4] = { 0.0f, 0.0f, 0.5f, 0.5f }; defPre = d[p]; }
+            else if (s == 2) { const float d[4] = { 0.0f, 0.50934f, 0.0f, 0.5f }; defPre = d[p]; }
+            else if (s == 3) { const float d[4] = { 0.5f, TbdAudio::rangeHzToNorm(3.0f), 0.5f, 0.5f }; defPre = d[p]; }
+            layout.add(makeFloatParam(preId, preName, defPre));
+
+            juce::String postId = "post_fx_" + juce::String(s + 1) + "_p" + juce::String(p + 1);
+            juce::String postName = "Post FX " + juce::String(s + 1) + ": Param " + juce::String(p + 1);
+            float defPost = 0.5f;
+            if (s == 0) { const float d[4] = { 1.0f, 1.0f, 0.5f, 0.5f }; defPost = d[p]; }
+            else if (s == 1) { const float d[4] = { 0.0f, 1.0f, 1.0f, 0.5f }; defPost = d[p]; }
+            else if (s == 2) { const float d[4] = { 0.0f, 4.0f / 32.0f, 0.62124f, 0.5f }; defPost = d[p]; }
+            else if (s == 3) { const float d[4] = { 1.0f, 0.0f, 0.5f, 0.5f }; defPost = d[p]; }
+            layout.add(makeFloatParam(postId, postName, defPost));
+        }
+    }
 
     // --- 12. WAVE FOLDER ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(

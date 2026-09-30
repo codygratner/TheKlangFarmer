@@ -772,6 +772,41 @@ int main() {
         std::cout << "PASS: FX Pickers and dynamic routing verified." << std::endl;
     }
 
+    // 18. Test Multi-Instance FX Slots: 8 Wavefolders in series
+    {
+        TbdAudio::ModularDrumEngine multiFxEng;
+        multiFxEng.init(44100.0f);
+
+        // Put WaveFolder (type 3) in all 4 Pre FX slots and all 4 Post FX slots
+        for (int s = 0; s < 4; ++s) {
+            multiFxEng.setPreFXType(s, 3);
+            multiFxEng.setPreFXParam(s, 0, 1.0f); // Type On
+            multiFxEng.setPreFXParam(s, 1, 0.25f * (s + 1)); // Folds: 2, 4, 6, 8
+            multiFxEng.setPreFXParam(s, 2, 0.5f);
+            multiFxEng.setPreFXParam(s, 3, 0.5f);
+
+            multiFxEng.setPostFXType(s, 3);
+            multiFxEng.setPostFXParam(s, 0, 1.0f); // Type On
+            multiFxEng.setPostFXParam(s, 1, 0.25f * (s + 1)); // Folds: 2, 4, 6, 8
+            multiFxEng.setPostFXParam(s, 2, 0.5f);
+            multiFxEng.setPostFXParam(s, 3, 0.5f);
+        }
+
+        multiFxEng.setMidiPitch(36);
+        multiFxEng.trigger(1.0f);
+
+        std::vector<float> wfL(blockSize, 0.0f);
+        std::vector<float> wfR(blockSize, 0.0f);
+        for (int blk = 0; blk < 50; ++blk) {
+            multiFxEng.processStereo(wfL.data(), wfR.data(), blockSize);
+            for (int i = 0; i < blockSize; ++i) {
+                assert(!std::isnan(wfL[i]) && !std::isinf(wfL[i]));
+                assert(!std::isnan(wfR[i]) && !std::isinf(wfR[i]));
+            }
+        }
+        std::cout << "PASS: Multi-instance FX: 8 independent Wavefolders in series verified." << std::endl;
+    }
+
     std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
     return 0;
 }
