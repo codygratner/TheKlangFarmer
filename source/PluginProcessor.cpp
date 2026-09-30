@@ -284,7 +284,7 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     if (driveLimiterParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 3, static_cast<float>(driveLimiterParam->getIndex()));
 
     // Voice 1 Filter & Env
-    if (filter1TypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 0, static_cast<float>(filter1TypeParam->getIndex()) / 4.0f);
+    if (filter1TypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 0, static_cast<float>(filter1TypeParam->getIndex()) / 3.0f);
     if (filter1SlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 1, static_cast<float>(filter1SlopeParam->getIndex()) / 4.0f);
     if (filter1CutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 2, getNorm(filter1CutoffParam));
     if (filter1ResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 3, getNorm(filter1ResonanceParam));
@@ -295,7 +295,7 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     if (filterEnv1PostDriveParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV1, 3, getNorm(filterEnv1PostDriveParam));
 
     // Voice 2 Filter & Env
-    if (filter2TypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER2, 0, static_cast<float>(filter2TypeParam->getIndex()) / 4.0f);
+    if (filter2TypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER2, 0, static_cast<float>(filter2TypeParam->getIndex()) / 3.0f);
     if (filter2SlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER2, 1, static_cast<float>(filter2SlopeParam->getIndex()) / 4.0f);
     if (filter2CutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER2, 2, getNorm(filter2CutoffParam));
     if (filter2ResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER2, 3, getNorm(filter2ResonanceParam));
@@ -306,7 +306,7 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     if (filterEnv2PostDriveParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV2, 3, getNorm(filterEnv2PostDriveParam));
 
     // Transients Filter & Env
-    if (filter3TypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER3, 0, static_cast<float>(filter3TypeParam->getIndex()) / 4.0f);
+    if (filter3TypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER3, 0, static_cast<float>(filter3TypeParam->getIndex()) / 3.0f);
     if (filter3SlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER3, 1, static_cast<float>(filter3SlopeParam->getIndex()) / 4.0f);
     if (filter3CutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER3, 2, getNorm(filter3CutoffParam));
     if (filter3ResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER3, 3, getNorm(filter3ResonanceParam));
@@ -317,7 +317,7 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     if (filterEnv3PostDriveParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV3, 3, getNorm(filterEnv3PostDriveParam));
 
     // Standalone FX Filter
-    if (fxFilterTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 0, static_cast<float>(fxFilterTypeParam->getIndex()) / 4.0f);
+    if (fxFilterTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 0, static_cast<float>(fxFilterTypeParam->getIndex()) / 3.0f);
     if (fxFilterSlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 1, static_cast<float>(fxFilterSlopeParam->getIndex()) / 4.0f);
     if (fxFilterCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 2, getNorm(fxFilterCutoffParam));
     if (fxFilterResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 3, getNorm(fxFilterResonanceParam));
@@ -527,7 +527,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- 1. CARRIER 1 ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("carrier1_tracking", 1), "Carrier 1: Tracking",
-        juce::StringArray{ "Fixed Freq", "Fixed Pitch", "MIDI Pitch" }, 2)); // default: MIDI Pitch
+        juce::StringArray{ "MIDI", "Fixed", "Offset" }, 0));
     layout.add(makeFloatParam("carrier1_pitch", "Carrier 1: Pitch / Freq", 0.5f));
     layout.add(makeFloatParam("carrier1_shape", "Carrier 1: Shape", 0.0f));         // Sine (0%)
     layout.add(makeFloatParam("carrier1_depth", "Carrier 1: Modulation Depth", 0.5f)); // 0% Depth (-200% to +200%)
@@ -535,17 +535,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- 2. MODULATOR 1 ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("mod1_track", 1), "Modulator 1: Pitch Tracking",
-        juce::StringArray{ "Fixed", "Following", "FM Operator" }, 0));
+        juce::StringArray{ "Fixed", "Follow", "FM" }, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("mod1_type", 1), "Modulator 1: Type",
-        juce::StringArray{ "Oscillator", "Cyclic", "Noise" }, 0));
+        juce::StringArray{ "Osc", "Cyclic", "Noise" }, 0));
     layout.add(makeFloatParam("mod1_shape", "Modulator 1: Shape", 0.0f));          // Sine (0%)
     layout.add(makeFloatParam("mod1_speed", "Modulator 1: Speed", 0.50934f));      // 55 Hz (0.50934)
 
     // --- 3. PITCH ENVELOPE 1 ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("pitchenv1_target", 1), "PitchEnv 1: Target",
-        juce::StringArray{ "Off", "Carrier", "Modulator", "Both" }, 0));
+        juce::StringArray{ "Off", "Car", "Mod", "Both" }, 0));
     layout.add(makeFloatParam("pitchenv1_slope", "PitchEnv 1: Slope", 0.0f));      // Exponential
     layout.add(makeFloatParam("pitchenv1_depth", "PitchEnv 1: Depth", 0.5f));      // 0%
     layout.add(makeFloatParam("pitchenv1_decay", "PitchEnv 1: Decay", 0.3806f));   // 333 ms
@@ -553,7 +553,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- 4. CARRIER 2 ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("carrier2_tracking", 1), "Carrier 2: Tracking",
-        juce::StringArray{ "Fixed Freq", "Fixed Pitch", "MIDI Pitch" }, 2)); // default: MIDI Pitch
+        juce::StringArray{ "MIDI", "Fixed", "Offset" }, 0));
     layout.add(makeFloatParam("carrier2_pitch", "Carrier 2: Pitch / Freq", 0.5f));
     layout.add(makeFloatParam("carrier2_shape", "Carrier 2: Shape", 0.0f));         // Sine (0%)
     layout.add(makeFloatParam("carrier2_depth", "Carrier 2: Modulation Depth", 0.5f)); // 0% Depth (-200% to +200%)
@@ -561,17 +561,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- 5. MODULATOR 2 ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("mod2_track", 1), "Modulator 2: Pitch Tracking",
-        juce::StringArray{ "Fixed", "Following", "FM Operator" }, 0));
+        juce::StringArray{ "Fixed", "Follow", "FM" }, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("mod2_type", 1), "Modulator 2: Type",
-        juce::StringArray{ "Oscillator", "Cyclic", "Noise" }, 0));
+        juce::StringArray{ "Osc", "Cyclic", "Noise" }, 0));
     layout.add(makeFloatParam("mod2_shape", "Modulator 2: Shape", 0.0f));          // Sine (0%)
     layout.add(makeFloatParam("mod2_speed", "Modulator 2: Speed", 0.50934f));      // 55 Hz (0.50934)
 
     // --- 6. PITCH ENVELOPE 2 ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("pitchenv2_target", 1), "PitchEnv 2: Target",
-        juce::StringArray{ "Off", "Carrier", "Modulator", "Both" }, 0));
+        juce::StringArray{ "Off", "Car", "Mod", "Both" }, 0));
     layout.add(makeFloatParam("pitchenv2_slope", "PitchEnv 2: Slope", 0.0f));      // Exponential
     layout.add(makeFloatParam("pitchenv2_depth", "PitchEnv 2: Depth", 0.5f));      // 0%
     layout.add(makeFloatParam("pitchenv2_decay", "PitchEnv 2: Decay", 0.3806f));   // 333 ms
@@ -599,10 +599,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- VOICE 1 FILTER & FILTER ENVELOPE ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("filter1_type", 1), "Filter 1: Type",
-        juce::StringArray{ "Off", "LPF", "BPF", "HPF", "BRF" }, 0));
+        juce::StringArray{ "LPF", "BPF", "HPF", "BRF" }, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("filter1_slope", 1), "Filter 1: Slope",
-        juce::StringArray{ "-6dB/oct", "-12dB/oct", "-18dB/oct", "-24dB/oct", "-36dB/oct" }, 1));
+        juce::StringArray{ "6", "12", "18", "24", "36" }, 1));
     layout.add(makeFloatParam("filter1_cutoff", "Filter 1: Cutoff", 1.0f));
     layout.add(makeFloatParam("filter1_resonance", "Filter 1: Resonance", 0.0f));
 
@@ -614,10 +614,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- VOICE 2 FILTER & FILTER ENVELOPE ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("filter2_type", 1), "Filter 2: Type",
-        juce::StringArray{ "Off", "LPF", "BPF", "HPF", "BRF" }, 0));
+        juce::StringArray{ "LPF", "BPF", "HPF", "BRF" }, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("filter2_slope", 1), "Filter 2: Slope",
-        juce::StringArray{ "-6dB/oct", "-12dB/oct", "-18dB/oct", "-24dB/oct", "-36dB/oct" }, 1));
+        juce::StringArray{ "6", "12", "18", "24", "36" }, 1));
     layout.add(makeFloatParam("filter2_cutoff", "Filter 2: Cutoff", 1.0f));
     layout.add(makeFloatParam("filter2_resonance", "Filter 2: Resonance", 0.0f));
 
@@ -629,10 +629,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- TRANSIENTS FILTER & FILTER ENVELOPE ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("filter3_type", 1), "Filter 3: Type",
-        juce::StringArray{ "Off", "LPF", "BPF", "HPF", "BRF" }, 0));
+        juce::StringArray{ "LPF", "BPF", "HPF", "BRF" }, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("filter3_slope", 1), "Filter 3: Slope",
-        juce::StringArray{ "-6dB/oct", "-12dB/oct", "-18dB/oct", "-24dB/oct", "-36dB/oct" }, 1));
+        juce::StringArray{ "6", "12", "18", "24", "36" }, 1));
     layout.add(makeFloatParam("filter3_cutoff", "Filter 3: Cutoff", 1.0f));
     layout.add(makeFloatParam("filter3_resonance", "Filter 3: Resonance", 0.0f));
 
@@ -644,10 +644,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- STANDALONE FX FILTER ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("fxfilter_type", 1), "FX Filter: Type",
-        juce::StringArray{ "Off", "LPF", "BPF", "HPF", "BRF" }, 0));
+        juce::StringArray{ "LPF", "BPF", "HPF", "BRF" }, 0));
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("fxfilter_slope", 1), "FX Filter: Slope",
-        juce::StringArray{ "-6dB/oct", "-12dB/oct", "-18dB/oct", "-24dB/oct", "-36dB/oct" }, 1));
+        juce::StringArray{ "6", "12", "18", "24", "36" }, 1));
     layout.add(makeFloatParam("fxfilter_cutoff", "FX Filter: Cutoff", 1.0f));
     layout.add(makeFloatParam("fxfilter_resonance", "FX Filter: Resonance", 0.0f));
 

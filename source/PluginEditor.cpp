@@ -708,35 +708,30 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
             float f = minFreq * std::pow(maxFreq / minFreq, u);
             float px = left + u * width;
 
-            float gainDb = 0.0f;
-            if (filterType == 0) {
-                gainDb = 0.0f;
-            } else {
-                float r = f / fc;
-                float d = std::sqrt((1.0f - r * r) * (1.0f - r * r) + (r / qVal) * (r / qVal));
-                float mag = 1.0f;
+            float r = f / fc;
+            float d = std::sqrt((1.0f - r * r) * (1.0f - r * r) + (r / qVal) * (r / qVal));
+            float mag = 1.0f;
 
-                if (filterType == 1) { // LPF
-                    if (filterSlope == 0)      mag = 1.0f / std::sqrt(1.0f + r * r);
-                    else if (filterSlope == 1) mag = 1.0f / std::max(d, 1e-4f);
-                    else if (filterSlope == 2) mag = (1.0f / std::max(d, 1e-4f)) * (1.0f / std::sqrt(1.0f + r * r));
-                    else if (filterSlope == 3) mag = (1.0f / std::max(d, 1e-4f)) * (1.0f / std::max(d, 1e-4f));
-                    else                       mag = std::pow(1.0f / std::max(d, 1e-4f), 3.0f);
-                } else if (filterType == 2) { // BPF
-                    float bMag = (r / qVal) / std::max(d, 1e-4f);
-                    if (filterSlope <= 1) mag = bMag;
-                    else                  mag = bMag * (1.0f / std::sqrt(1.0f + r * r));
-                } else if (filterType == 3) { // HPF
-                    if (filterSlope == 0)      mag = r / std::sqrt(1.0f + r * r);
-                    else if (filterSlope == 1) mag = (r * r) / std::max(d, 1e-4f);
-                    else if (filterSlope == 2) mag = ((r * r) / std::max(d, 1e-4f)) * (r / std::sqrt(1.0f + r * r));
-                    else if (filterSlope == 3) mag = ((r * r) / std::max(d, 1e-4f)) * ((r * r) / std::max(d, 1e-4f));
-                    else                       mag = std::pow((r * r) / std::max(d, 1e-4f), 3.0f);
-                } else if (filterType == 4) { // BRF (Notch)
-                    mag = std::abs(1.0f - r * r) / std::max(d, 1e-4f);
-                }
-                gainDb = 20.0f * std::log10(std::clamp(mag, 1e-4f, 16.0f));
+            if (filterType == 0) { // LPF
+                if (filterSlope == 0)      mag = 1.0f / std::sqrt(1.0f + r * r);
+                else if (filterSlope == 1) mag = 1.0f / std::max(d, 1e-4f);
+                else if (filterSlope == 2) mag = (1.0f / std::max(d, 1e-4f)) * (1.0f / std::sqrt(1.0f + r * r));
+                else if (filterSlope == 3) mag = (1.0f / std::max(d, 1e-4f)) * (1.0f / std::max(d, 1e-4f));
+                else                       mag = std::pow(1.0f / std::max(d, 1e-4f), 3.0f);
+            } else if (filterType == 1) { // BPF
+                float bMag = (r / qVal) / std::max(d, 1e-4f);
+                if (filterSlope <= 1) mag = bMag;
+                else                  mag = bMag * (1.0f / std::sqrt(1.0f + r * r));
+            } else if (filterType == 2) { // HPF
+                if (filterSlope == 0)      mag = r / std::sqrt(1.0f + r * r);
+                else if (filterSlope == 1) mag = (r * r) / std::max(d, 1e-4f);
+                else if (filterSlope == 2) mag = ((r * r) / std::max(d, 1e-4f)) * (r / std::sqrt(1.0f + r * r));
+                else if (filterSlope == 3) mag = ((r * r) / std::max(d, 1e-4f)) * ((r * r) / std::max(d, 1e-4f));
+                else                       mag = std::pow((r * r) / std::max(d, 1e-4f), 3.0f);
+            } else if (filterType == 3) { // BRF (Notch)
+                mag = std::abs(1.0f - r * r) / std::max(d, 1e-4f);
             }
+            float gainDb = 20.0f * std::log10(std::clamp(mag, 1e-4f, 16.0f));
 
             float py = yZero - (gainDb / 36.0f) * (height * 0.55f);
             py = std::clamp(py, top + 1.0f, bottom - 1.0f);
@@ -745,11 +740,9 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
             else curvePath.lineTo(px, py);
         }
 
-        if (filterType != 0) {
-            float xCutoff = freqToX(fc);
-            g.setColour(traceCol.withAlpha(0.2f));
-            g.drawVerticalLine(static_cast<int>(xCutoff), top + 2.0f, bottom - 2.0f);
-        }
+        float xCutoff = freqToX(fc);
+        g.setColour(traceCol.withAlpha(0.2f));
+        g.drawVerticalLine(static_cast<int>(xCutoff), top + 2.0f, bottom - 2.0f);
     } else if (plotMode == PlotMode::EqXY) {
         yZero = top + height * 0.5f;
         g.setColour(juce::Colour(0xff222838));
@@ -1096,17 +1089,28 @@ void LedSelectorComponent::paint(juce::Graphics& g) {
         bool isSel = (i == selectedIndex);
         bool isHov = (i == hoveredIndex);
 
+        // Tactile button background & border
         if (isSel) {
-            g.setColour(accent.withAlpha(0.14f));
-            g.fillRoundedRectangle(r, 3.0f);
-            g.setColour(accent.withAlpha(0.35f));
-            g.drawRoundedRectangle(r, 3.0f, 1.0f);
+            juce::ColourGradient grad(accent.withAlpha(0.24f), r.getX(), r.getY(),
+                                      accent.withAlpha(0.10f), r.getX(), r.getBottom(), false);
+            g.setGradientFill(grad);
+            g.fillRoundedRectangle(r, 4.0f);
+            g.setColour(accent.withAlpha(0.70f));
+            g.drawRoundedRectangle(r, 4.0f, 1.2f);
         } else if (isHov) {
-            g.setColour(juce::Colour(0x15ffffff));
-            g.fillRoundedRectangle(r, 3.0f);
+            g.setColour(juce::Colour(0xff222733));
+            g.fillRoundedRectangle(r, 4.0f);
+            g.setColour(juce::Colour(0xff3f495e));
+            g.drawRoundedRectangle(r, 4.0f, 1.0f);
+        } else {
+            g.setColour(juce::Colour(0xff181b23));
+            g.fillRoundedRectangle(r, 4.0f);
+            g.setColour(juce::Colour(0xff2b3140));
+            g.drawRoundedRectangle(r, 4.0f, 1.0f);
         }
 
-        float ledSize = 7.0f;
+        // LED dot indicator
+        float ledSize = 6.0f;
         float ledX = r.getX() + 4.5f;
         float ledY = r.getCentreY() - ledSize * 0.5f;
         auto ledBounds = juce::Rectangle<float>(ledX, ledY, ledSize, ledSize);
@@ -1117,17 +1121,17 @@ void LedSelectorComponent::paint(juce::Graphics& g) {
             g.setColour(accent);
             g.fillEllipse(ledBounds);
             g.setColour(juce::Colours::white);
-            g.fillEllipse(ledBounds.reduced(1.5f));
+            g.fillEllipse(ledBounds.reduced(1.2f));
         } else {
-            g.setColour(juce::Colour(0xff232733));
+            g.setColour(juce::Colour(0xff20242e));
             g.fillEllipse(ledBounds);
-            g.setColour(juce::Colour(0xff394152));
+            g.setColour(juce::Colour(0xff353d4c));
             g.drawEllipse(ledBounds, 0.8f);
         }
 
-        auto textBounds = r.withTrimmedLeft(15.0f).withTrimmedRight(2.0f);
-        g.setFont(juce::FontOptions(isSel ? 13.5f : 13.0f, juce::Font::bold));
-        g.setColour(isSel ? juce::Colours::white : (isHov ? juce::Colour(0xffe6edf8) : juce::Colour(0xffb8c4d8)));
+        auto textBounds = r.withTrimmedLeft(14.0f).withTrimmedRight(2.0f);
+        g.setFont(juce::FontOptions(isSel ? 13.0f : 12.5f, juce::Font::bold));
+        g.setColour(isSel ? juce::Colours::white : (isHov ? juce::Colour(0xffe6edf8) : juce::Colour(0xffb0bdd0)));
         g.drawFittedText(items[i], textBounds.toNearestInt(), juce::Justification::centredLeft, 1);
     }
 }
@@ -1240,8 +1244,8 @@ void ModuleCardComponent::resized() {
 
     int count = 4;
     if (ledSelector != nullptr && secondLedSelector != nullptr) {
-        int selH1 = (ledSelector->getNumItems() > 4) ? 28 : 22;
-        int selH2 = (secondLedSelector->getNumItems() > 4) ? 28 : 22;
+        int selH1 = 26;
+        int selH2 = 26;
         ledSelector->setBounds(area.removeFromTop(selH1));
         area.removeFromTop(4);
         secondLedSelector->setBounds(area.removeFromTop(selH2));
@@ -1252,7 +1256,7 @@ void ModuleCardComponent::resized() {
         if (knobs[2]) knobs[2]->setVisible(false);
         if (knobs[3]) knobs[3]->setVisible(false);
     } else if (ledSelector != nullptr) {
-        int selH = (ledSelector->getNumItems() > 4) ? 36 : 24;
+        int selH = 26;
         ledSelector->setBounds(area.removeFromTop(selH));
         area.removeFromTop(6);
         count = 3;
@@ -1328,14 +1332,14 @@ void FXSlotCardComponent::resized() {
     }
 
     if (selector1.isVisible() && selector2.isVisible()) {
-        int selH1 = (selector1.getNumItems() > 4) ? 28 : 22;
-        int selH2 = (selector2.getNumItems() > 4) ? 28 : 22;
+        int selH1 = 26;
+        int selH2 = 26;
         selector1.setBounds(area.removeFromTop(selH1));
         area.removeFromTop(4);
         selector2.setBounds(area.removeFromTop(selH2));
         area.removeFromTop(6);
     } else if (selector1.isVisible()) {
-        int selH = (selector1.getNumItems() > 4) ? 36 : 24;
+        int selH = 26;
         selector1.setBounds(area.removeFromTop(selH));
         area.removeFromTop(6);
     }
@@ -1405,13 +1409,13 @@ void FXSlotCardComponent::configureForType(int fxType) {
             accent = juce::Colour(0xff7c4dff);
             selector1.setVisible(true);
             selector1.setAccent(accent);
-            selector1.setItems({ "Off", "LPF", "BPF", "HPF", "BRF" }, 3);
+            selector1.setItems({ "LPF", "BPF", "HPF", "BRF" }, 4);
             selector1.onChange = [this](int idx) {
-                knobs[0].setValue(idx * 0.25, juce::sendNotification);
+                knobs[0].setValue(idx / 3.0, juce::sendNotification);
             };
             selector2.setVisible(true);
             selector2.setAccent(accent);
-            selector2.setItems({ "-6dB", "-12dB", "-18dB", "-24dB", "-36dB" }, 3);
+            selector2.setItems({ "6", "12", "18", "24", "36" }, 5);
             selector2.onChange = [this](int idx) {
                 knobs[1].setValue(idx * 0.25, juce::sendNotification);
             };
@@ -1568,7 +1572,7 @@ void FXSlotCardComponent::updateDynamicControls() {
             lastSel1 = sel;
         }
     } else if (currentType == 2) { // Filter: knob 0 is Type, knob 1 is Slope
-        int sel1 = std::clamp(static_cast<int>(std::round(knobs[0].getValue() * 4.0)), 0, 4);
+        int sel1 = std::clamp(static_cast<int>(std::round(knobs[0].getValue() * 3.0)), 0, 3);
         if (sel1 != lastSel1) {
             selector1.setSelectedIndex(sel1, juce::dontSendNotification);
             lastSel1 = sel1;
@@ -1930,7 +1934,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 1. Carrier 1
     cardCarrier1 = std::make_unique<ModuleCardComponent>("Carrier 1", juce::Colour(0xff00d2ff));
     setupBox(carrier1TrackingBox);
-    bindSelector(carrier1TrackingSelector, carrier1TrackingBox, "carrier1_tracking", { "Midi Track", "Fixed Freq", "Fine Semi" });
+    bindSelector(carrier1TrackingSelector, carrier1TrackingBox, "carrier1_tracking", { "MIDI", "Fixed", "Offset" }, 3);
     cardCarrier1->setLedSelector(&carrier1TrackingSelector);
 
     setupKnob(carrier1PitchSlider, juce::Colour(0xff00d2ff), false, 36.0 / 127.0);
@@ -1960,9 +1964,9 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 2. Modulator 1
     cardMod1 = std::make_unique<ModuleCardComponent>("Modulator 1", juce::Colour(0xffff7043));
     setupBox(mod1TrackBox);
-    bindSelector(mod1TrackSelector, mod1TrackBox, "mod1_track", { "Fixed", "Follow", "FM Op" });
+    bindSelector(mod1TrackSelector, mod1TrackBox, "mod1_track", { "Fixed", "Follow", "FM" }, 3);
     setupBox(mod1TypeBox);
-    bindSelector(mod1TypeSelector, mod1TypeBox, "mod1_type", { "Osc", "Cyclic", "Noise" });
+    bindSelector(mod1TypeSelector, mod1TypeBox, "mod1_type", { "Osc", "Cyclic", "Noise" }, 3);
     cardMod1->setLedSelector(&mod1TrackSelector);
     cardMod1->setSecondLedSelector(&mod1TypeSelector);
 
@@ -1998,7 +2002,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 3. Pitch Envelope 1
     cardPitchEnv1 = std::make_unique<ModuleCardComponent>("Pitch Env 1", juce::Colour(0xffffab00));
     setupBox(pitchEnv1TargetBox);
-    bindSelector(pitchEnv1TargetSelector, pitchEnv1TargetBox, "pitchenv1_target", { "Off", "Carrier", "Mod", "Both" }, 2);
+    bindSelector(pitchEnv1TargetSelector, pitchEnv1TargetBox, "pitchenv1_target", { "Off", "Car", "Mod", "Both" }, 4);
     cardPitchEnv1->setLedSelector(&pitchEnv1TargetSelector);
 
     setupKnob(pitchEnv1SlopeSlider, juce::Colour(0xffffab00), false, 0.0);
@@ -2022,9 +2026,9 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 4. Filter 1
     cardFilter1 = std::make_unique<ModuleCardComponent>("Filter 1", juce::Colour(0xff7c4dff));
     setupBox(filter1TypeBox);
-    bindSelector(filter1TypeSelector, filter1TypeBox, "filter1_type", { "Off", "LPF", "BPF", "HPF", "BRF" }, 3);
+    bindSelector(filter1TypeSelector, filter1TypeBox, "filter1_type", { "LPF", "BPF", "HPF", "BRF" }, 4);
     setupBox(filter1SlopeBox);
-    bindSelector(filter1SlopeSelector, filter1SlopeBox, "filter1_slope", { "-6dB", "-12dB", "-18dB", "-24dB", "-36dB" }, 3);
+    bindSelector(filter1SlopeSelector, filter1SlopeBox, "filter1_slope", { "6", "12", "18", "24", "36" }, 5);
     cardFilter1->setLedSelector(&filter1TypeSelector);
     cardFilter1->setSecondLedSelector(&filter1SlopeSelector);
 
@@ -2068,7 +2072,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 6. Carrier 2
     cardCarrier2 = std::make_unique<ModuleCardComponent>("Carrier 2", juce::Colour(0xff00d2ff));
     setupBox(carrier2TrackingBox);
-    bindSelector(carrier2TrackingSelector, carrier2TrackingBox, "carrier2_tracking", { "Midi Track", "Fixed Freq", "Fine Semi" });
+    bindSelector(carrier2TrackingSelector, carrier2TrackingBox, "carrier2_tracking", { "MIDI", "Fixed", "Offset" }, 3);
     cardCarrier2->setLedSelector(&carrier2TrackingSelector);
 
     setupKnob(carrier2PitchSlider, juce::Colour(0xff00d2ff), false, 36.0 / 127.0);
@@ -2098,9 +2102,9 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 7. Modulator 2
     cardMod2 = std::make_unique<ModuleCardComponent>("Modulator 2", juce::Colour(0xffff7043));
     setupBox(mod2TrackBox);
-    bindSelector(mod2TrackSelector, mod2TrackBox, "mod2_track", { "Fixed", "Follow", "FM Op" });
+    bindSelector(mod2TrackSelector, mod2TrackBox, "mod2_track", { "Fixed", "Follow", "FM" }, 3);
     setupBox(mod2TypeBox);
-    bindSelector(mod2TypeSelector, mod2TypeBox, "mod2_type", { "Osc", "Cyclic", "Noise" });
+    bindSelector(mod2TypeSelector, mod2TypeBox, "mod2_type", { "Osc", "Cyclic", "Noise" }, 3);
     cardMod2->setLedSelector(&mod2TrackSelector);
     cardMod2->setSecondLedSelector(&mod2TypeSelector);
 
@@ -2136,7 +2140,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 8. Pitch Envelope 2
     cardPitchEnv2 = std::make_unique<ModuleCardComponent>("Pitch Env 2", juce::Colour(0xffffab00));
     setupBox(pitchEnv2TargetBox);
-    bindSelector(pitchEnv2TargetSelector, pitchEnv2TargetBox, "pitchenv2_target", { "Off", "Carrier", "Mod", "Both" }, 2);
+    bindSelector(pitchEnv2TargetSelector, pitchEnv2TargetBox, "pitchenv2_target", { "Off", "Car", "Mod", "Both" }, 4);
     cardPitchEnv2->setLedSelector(&pitchEnv2TargetSelector);
 
     setupKnob(pitchEnv2SlopeSlider, juce::Colour(0xffffab00), false, 0.0);
@@ -2160,9 +2164,9 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 9. Filter 2
     cardFilter2 = std::make_unique<ModuleCardComponent>("Filter 2", juce::Colour(0xff7c4dff));
     setupBox(filter2TypeBox);
-    bindSelector(filter2TypeSelector, filter2TypeBox, "filter2_type", { "Off", "LPF", "BPF", "HPF", "BRF" }, 3);
+    bindSelector(filter2TypeSelector, filter2TypeBox, "filter2_type", { "LPF", "BPF", "HPF", "BRF" }, 4);
     setupBox(filter2SlopeBox);
-    bindSelector(filter2SlopeSelector, filter2SlopeBox, "filter2_slope", { "-6dB", "-12dB", "-18dB", "-24dB", "-36dB" }, 3);
+    bindSelector(filter2SlopeSelector, filter2SlopeBox, "filter2_slope", { "6", "12", "18", "24", "36" }, 5);
     cardFilter2->setLedSelector(&filter2TypeSelector);
     cardFilter2->setSecondLedSelector(&filter2SlopeSelector);
 
@@ -2230,9 +2234,9 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 12. Filter 3 (Transients Filter)
     cardFilter3 = std::make_unique<ModuleCardComponent>("Filter 3", juce::Colour(0xff7c4dff));
     setupBox(filter3TypeBox);
-    bindSelector(filter3TypeSelector, filter3TypeBox, "filter3_type", { "Off", "LPF", "BPF", "HPF", "BRF" }, 3);
+    bindSelector(filter3TypeSelector, filter3TypeBox, "filter3_type", { "LPF", "BPF", "HPF", "BRF" }, 4);
     setupBox(filter3SlopeBox);
-    bindSelector(filter3SlopeSelector, filter3SlopeBox, "filter3_slope", { "-6dB", "-12dB", "-18dB", "-24dB", "-36dB" }, 3);
+    bindSelector(filter3SlopeSelector, filter3SlopeBox, "filter3_slope", { "6", "12", "18", "24", "36" }, 5);
     cardFilter3->setLedSelector(&filter3TypeSelector);
     cardFilter3->setSecondLedSelector(&filter3SlopeSelector);
 
@@ -2312,7 +2316,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 24. Amp
     cardAmp = std::make_unique<ModuleCardComponent>("Amplifier", juce::Colour(0xff00e5ff));
     setupBox(ampLimiterBox);
-    bindSelector(ampLimiterSelector, ampLimiterBox, "amp_limiter", { "Off", "On" });
+    bindSelector(ampLimiterSelector, ampLimiterBox, "amp_limiter", { "Off", "On" }, 2);
     cardAmp->setLedSelector(&ampLimiterSelector);
 
     setupKnob(ampLevelSlider, juce::Colour(0xff00e5ff), false, 1.0);
@@ -2364,7 +2368,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 26. Pre-Amp Limiter
     cardPreLimiter = std::make_unique<ModuleCardComponent>("Pre Limiter", juce::Colour(0xffffab00));
     setupBox(preLimiterEnableBox);
-    bindSelector(preLimiterEnableSelector, preLimiterEnableBox, "pre_limiter_enable", { "Off", "On" });
+    bindSelector(preLimiterEnableSelector, preLimiterEnableBox, "pre_limiter_enable", { "Off", "On" }, 2);
     cardPreLimiter->setLedSelector(&preLimiterEnableSelector);
 
     setupKnob(preLimiterGainSlider, juce::Colour(0xffffab00), false, 12.0 / 36.0);
@@ -2387,7 +2391,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 27. Post-Amp Limiter
     cardPostLimiter = std::make_unique<ModuleCardComponent>("Post Limiter", juce::Colour(0xff00e5ff));
     setupBox(postLimiterEnableBox);
-    bindSelector(postLimiterEnableSelector, postLimiterEnableBox, "post_limiter_enable", { "Off", "On" });
+    bindSelector(postLimiterEnableSelector, postLimiterEnableBox, "post_limiter_enable", { "Off", "On" }, 2);
     cardPostLimiter->setLedSelector(&postLimiterEnableSelector);
 
     setupKnob(postLimiterGainSlider, juce::Colour(0xff00e5ff), false, 12.0 / 36.0);
@@ -2691,7 +2695,7 @@ void TheKlangFarmerAudioProcessorEditor::setFXSlotDefaults(int slot, bool isPost
     float defs[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     switch (fxType) {
         case 1: defs[0] = 0.5f; defs[1] = 0.5f; defs[2] = 0.5f; defs[3] = 1.0f; break; // Drive: 0dB, 0 bias, 50% flat, Limiter On
-        case 2: defs[0] = 0.25f; defs[1] = 0.25f; defs[2] = 1.0f; defs[3] = 0.0f; break; // Filter: LPF, -12dB, 24kHz, 0% res
+        case 2: defs[0] = 0.0f; defs[1] = 0.25f; defs[2] = 1.0f; defs[3] = 0.0f; break; // Filter: LPF, -12dB, 24kHz, 0% res
         case 3: defs[0] = 1.0f; defs[1] = 0.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // WaveFolder: On, 0 fold, 0 bias, 50% flat
         case 4: defs[0] = 0.0f; defs[1] = 0.50934f; defs[2] = 0.0f; defs[3] = 0.5f; break; // RingMod: sine, 1kHz, 0% amt, center
         case 5: defs[0] = 0.5f; defs[1] = TbdAudio::rangeHzToNorm(3.0f); defs[2] = 0.5f; defs[3] = 0.5f; break; // FreqShift: 0 shift, 3Hz, dry, center
@@ -3024,7 +3028,7 @@ void TheKlangFarmerAudioProcessorEditor::timerCallback() {
             float fCutNorm = static_cast<float>(preFXCards[s]->getKnob(2).getValue());
             float fCutHz = 0.1f * std::pow(24000.0f / 0.1f, fCutNorm);
             float fRes = static_cast<float>(preFXCards[s]->getKnob(3).getValue());
-            int fType = static_cast<int>(std::round(preFXCards[s]->getKnob(0).getValue() * 4.0f));
+            int fType = static_cast<int>(std::round(preFXCards[s]->getKnob(0).getValue() * 3.0f));
             int fSlope = static_cast<int>(std::round(preFXCards[s]->getKnob(1).getValue() * 4.0f));
             vizCard.getOscilloscope().updateFilterParams(fType, fSlope, fCutHz, fRes);
         } else if (fxType == 9 && preFXCards[s]) {
@@ -3050,7 +3054,7 @@ void TheKlangFarmerAudioProcessorEditor::timerCallback() {
             float fCutNorm = static_cast<float>(postFXCards[s]->getKnob(2).getValue());
             float fCutHz = 0.1f * std::pow(24000.0f / 0.1f, fCutNorm);
             float fRes = static_cast<float>(postFXCards[s]->getKnob(3).getValue());
-            int fType = static_cast<int>(std::round(postFXCards[s]->getKnob(0).getValue() * 4.0f));
+            int fType = static_cast<int>(std::round(postFXCards[s]->getKnob(0).getValue() * 3.0f));
             int fSlope = static_cast<int>(std::round(postFXCards[s]->getKnob(1).getValue() * 4.0f));
             vizCard.getOscilloscope().updateFilterParams(fType, fSlope, fCutHz, fRes);
         } else if (fxType == 9 && postFXCards[s]) {

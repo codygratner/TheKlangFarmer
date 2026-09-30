@@ -598,18 +598,10 @@ int main() {
         ctx.invSr = 1.0f / 44100.0f;
         filter.init(ctx);
 
-        // Type 0 = Off (bypass)
-        filter.setParam(0, 0.0f); // Off
-        std::vector<float> sig(256, 1.0f);
-        filter.processStereo(sig.data(), nullptr, 256, ctx);
-        for (float s : sig) {
-            assert(std::abs(s - 1.0f) < 0.0001f);
-        }
-
-        // Test LPF at different slopes: -6dB, -12dB, -18dB, -24dB, -36dB
+        // Test LPF at different slopes: 6, 12, 18, 24, 36
         for (int slope = 0; slope < 5; ++slope) {
             filter.init(ctx);
-            filter.setParam(0, 0.25f); // 1 = LPF (normalized: 1/4 = 0.25)
+            filter.setParam(0, 0.0f); // 0 = LPF (normalized: 0/3 = 0.0)
             filter.setParam(1, slope * 0.25f); // Slope
             filter.setParam(2, 0.5f); // ~500 Hz cutoff
             filter.setParam(3, 0.2f); // Resonance
@@ -620,7 +612,22 @@ int main() {
                 assert(!std::isnan(s) && !std::isinf(s));
             }
         }
-        std::cout << "PASS: Filter block types and discrete slopes verified." << std::endl;
+
+        // Test all 4 types: 0=LPF, 1=BPF, 2=HPF, 3=BRF
+        for (int type = 0; type < 4; ++type) {
+            filter.init(ctx);
+            filter.setParam(0, static_cast<float>(type) / 3.0f);
+            filter.setParam(1, 0.25f); // 12 dB/oct
+            filter.setParam(2, 0.5f);
+            filter.setParam(3, 0.2f);
+
+            std::vector<float> sig(256, 0.5f);
+            filter.processStereo(sig.data(), nullptr, 256, ctx);
+            for (float s : sig) {
+                assert(!std::isnan(s) && !std::isinf(s));
+            }
+        }
+        std::cout << "PASS: Filter block types (LPF, BPF, HPF, BRF) and discrete slopes verified." << std::endl;
     }
 
     // 14. Test Bell EQ Block (BLK_EQ)
@@ -703,8 +710,8 @@ int main() {
 
         // Carrier 1 with LPF active at low cutoff
         fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 2, 0.4f); // Saw wave (lots of harmonics)
-        fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 0, 0.25f); // LPF
-        fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 1, 0.25f); // -12dB/oct
+        fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 0, 0.0f);  // LPF
+        fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 1, 0.25f); // 12dB/oct
         fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 2, 0.3f);  // Low cutoff
         fEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 3, 0.5f);  // Res
         fEngine.trigger(1.0f);

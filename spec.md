@@ -154,6 +154,14 @@ To maintain consistency across all modules and effect cards, standard parameter 
   - **Unipolar**: At 50% controller travel, the modulation value is at 10%.
   - **Bipolar**: At $\pm 25\%$ controller travel, the modulation value is at $\pm 5\%$.
 
+### 3.8. Tactile Hardware Button Selectors & Toggles
+- All discrete module state selectors and bypass toggles use consistent, large, tactile hardware-style single-row buttons with glowing status LED indicators:
+  - **Bypass / Toggle Buttons**: Standardized 2-column single-row layout (`Off`, `On`) with large 26px tactile touch zones (used in `Drive`, `Wave Folder`, `Comb Filter`, `Disperser`, `Amplifier Limiter`, `Pre-Limiter`, and `Post-Limiter`).
+  - **Carrier Pitch Tracking**: Single-row 3-button selector (`MIDI`, `Fixed`, `Offset`).
+  - **Modulator Tracking & Mode**: Two stacked single-row 3-button selectors: Pitch Tracking (`Fixed`, `Follow`, `FM`) and Type (`Osc`, `Cyclic`, `Noise`).
+  - **Pitch Envelope Target**: Single-row 4-button selector (`Off`, `Car`, `Mod`, `Both`).
+  - **Filter Mode & Slope**: Two stacked single-row selectors: Type (`LPF`, `BPF`, `HPF`, `BRF` — no bypass/off mode) and Slope (`6`, `12`, `18`, `24`, `36` dB/oct).
+
 ---
 
 ## 4. Hardware Rack Module Specifications (2 × 4 Paged Rack Layout)
@@ -193,28 +201,27 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 ### 4.3. Page 1: Voice 1
 - **Slot 1**: Navigation Module.
 - **Slot 2: Carrier 1**
-  - **Tracking (Selector)**: `Fixed Frequency` (0), `Fixed Pitch` (1), `MIDI Pitch` (2, default).
-  - **Pitch / Freq (Continuous)**:
-    - Fixed Frequency: $20\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
-    - Fixed Pitch: MIDI note 0 to 127 (default `A1 [33]`, shows note name and number).
-    - MIDI Pitch: Note offset $-60$ to $+60$ semitones (default $0$).
+  - **Tracking (Selector)**: `MIDI` (0, default), `Fixed` (1), `Offset` (2).
+    - MIDI: Tracks incoming MIDI pitch.
+    - Fixed: Fixed frequency $20\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
+    - Offset: Semitone offset from incoming MIDI pitch: $-60$ to $+60$ semitones (default $0$).
   - **Shape (Continuous)**: Waveform Morph (Sine $\to$ Tri $\to$ Saw $\to$ Square $\to$ PWM).
   - **Mod Depth (Continuous)**: Modulation depth from Modulator 1: $-100\%$ to $+100\%$ (default $0\% = 0.5$).
   - **Visualizer**: Self-locked oscilloscope phase-locked to Carrier 1 fundamental.
 - **Slot 3: Modulator 1**
-  - **Pitch Tracking (Selector)**: `Fixed` (0), `Following` (1), `FM Operator` (2).
-  - **Type (Selector)**: `Oscillator` (0), `Cyclic` (1, Sine $\times$ Noise), `Noise` (2, S&H).
+  - **Pitch Tracking (Selector)**: `Fixed` (0, default), `Follow` (1), `FM` (2).
+  - **Type (Selector)**: `Osc` (0, default), `Cyclic` (1, Sine $\times$ Noise), `Noise` (2, S&H).
   - **Shape (Continuous)**: Waveform Morph / DJ Filter / S&H Clock Rate.
   - **Speed (Continuous)**: Frequency ($0.1\,\text{Hz} - 24\,\text{kHz}$) / Offset ($-64$ to $+64$ st) / FM Ratio (1:32 to 32:1).
   - **Visualizer**: Self-locked oscilloscope phase-locked to Modulator 1's own internal frequency and zero crossings.
 - **Slot 4: Pitch Envelope 1**
-  - **Target (Selector)**: `Off` (0, default), `Carrier` (1), `Modulator` (2), `Both` (3).
+  - **Target (Selector)**: `Off` (0, default), `Car` (1), `Mod` (2), `Both` (3).
   - **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
   - **Depth (Continuous)**: $-5$ to $+5$ octaves (default $0$).
   - **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
 - **Slot 5: Filter 1**
-  - **Type (Selector)**: `Off` (0, default), `LPF` (1), `BPF` (2), `HPF` (3), `BRF / Notch` (4).
-  - **Slope (Selector)**: `-6dB/oct` (0), `-12dB/oct` (1, default), `-18dB/oct` (2), `-24dB/oct` (3), `-36dB/oct` (4).
+  - **Type (Selector)**: `LPF` (0, default), `BPF` (1), `HPF` (2), `BRF` (3). *(Off option removed; Filter is always active).*
+  - **Slope (Selector)**: `6` (0, 6 dB/oct), `12` (1, default, 12 dB/oct), `18` (2, 18 dB/oct), `24` (3, 24 dB/oct), `36` (4, 36 dB/oct).
   - **Cutoff (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
   - **Resonance (Continuous)**: $0\% - 100\%$ ($Q \approx 0.707 - 18.7$).
   - **Visualizer**: X-Y Frequency vs. Gain Bode plot with cutoff marker.
@@ -345,8 +352,8 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 - **Limiter (Selector)**: `Off` (0), `On` (1, default, post-saturation hard clipper).
 
 ### 2. Filter (Standalone Effect)
-- **Type (Selector)**: `Off` (0, default), `LPF` (1), `BPF` (2), `HPF` (3), `BRF / Notch` (4).
-- **Slope (Selector)**: `-6dB/oct` (0), `-12dB/oct` (1, default), `-18dB/oct` (2), `-24dB/oct` (3), `-36dB/oct` (4).
+- **Type (Selector)**: `LPF` (0, default), `BPF` (1), `HPF` (2), `BRF` (3). *(Off option removed; Filter is always active in one of 4 modes; use FX slot None to bypass).*
+- **Slope (Selector)**: `6` (0, 6 dB/oct), `12` (1, default, 12 dB/oct), `18` (2, 18 dB/oct), `24` (3, 24 dB/oct), `36` (4, 36 dB/oct).
 - **Cutoff (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Resonance (Continuous)**: $0\% - 100\%$ ($Q \approx 0.707 - 18.7$).
 - *Visualizer*: Real-time X-Y Frequency vs. Gain Bode magnitude plot.

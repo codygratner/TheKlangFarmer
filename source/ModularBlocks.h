@@ -751,11 +751,10 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. Type: 0=Off (def), 1=LPF, 2=BPF, 3=HPF, 4=BRF (Notch)
-        int type = std::clamp(static_cast<int>(std::round(params[0] * 4.0f)), 0, 4);
-        if (type == 0) return; // bypass
+        // 1. Type: 0=LPF, 1=BPF, 2=HPF, 3=BRF (Notch)
+        int type = std::clamp(static_cast<int>(std::round(params[0] * 3.0f)), 0, 3);
 
-        // 2. Slope: 0=-6dB/oct, 1=-12dB/oct (def), 2=-18dB/oct, 3=-24dB/oct, 4=-36dB/oct
+        // 2. Slope: 0=6dB/oct, 1=12dB/oct (def), 2=18dB/oct, 3=24dB/oct, 4=36dB/oct
         int slopeIdx = std::clamp(static_cast<int>(std::round(params[1] * 4.0f)), 0, 4);
 
         // 3. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
@@ -809,7 +808,7 @@ public:
             float g = std::tan(PI * cutoff * invSr);
             float k = 1.0f / filterQ;
             float a1 = 1.0f / (1.0f + g * (g + k));
-            int svfMode = type - 1; // 0=LP, 1=BP, 2=HP, 3=BRF (Notch)
+            int svfMode = type; // 0=LP, 1=BP, 2=HP, 3=BRF (Notch)
 
             for (int s = 0; s < svfStages; ++s) {
                 float hpL = (inL - (g + k) * s1L[s] - s2L[s]) * a1;
