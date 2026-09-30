@@ -807,6 +807,63 @@ int main() {
         std::cout << "PASS: Multi-instance FX: 8 independent Wavefolders in series verified." << std::endl;
     }
 
+    // 19. Test New Effects: Chorus (10), Phaser (11), Flanger (12), and Tempo Delay (13)
+    {
+        TbdAudio::ModularDrumEngine modFxEng;
+        modFxEng.init(44100.0f);
+        modFxEng.setBpm(135.0f);
+        assert(std::abs(modFxEng.getBpm() - 135.0f) < 0.001f);
+
+        // Put Chorus in Pre 0, Phaser in Pre 1, Flanger in Post 0, Tempo Delay in Post 1
+        modFxEng.setPreFXType(0, 10); // Chorus
+        modFxEng.setPreFXParam(0, 0, 0.5f);
+        modFxEng.setPreFXParam(0, 1, 0.7f);
+        modFxEng.setPreFXParam(0, 2, 0.6f);
+        modFxEng.setPreFXParam(0, 3, 0.5f);
+
+        modFxEng.setPreFXType(1, 11); // Phaser
+        modFxEng.setPreFXParam(1, 0, 0.4f);
+        modFxEng.setPreFXParam(1, 1, 0.8f);
+        modFxEng.setPreFXParam(1, 2, 0.7f);
+        modFxEng.setPreFXParam(1, 3, 0.5f);
+
+        modFxEng.setPostFXType(0, 12); // Flanger
+        modFxEng.setPostFXParam(0, 0, 0.3f);
+        modFxEng.setPostFXParam(0, 1, 0.7f);
+        modFxEng.setPostFXParam(0, 2, 0.8f);
+        modFxEng.setPostFXParam(0, 3, 0.5f);
+
+        modFxEng.setPostFXType(1, 13); // Tempo Delay
+        modFxEng.setPostFXParam(1, 0, 5.0f / 9.0f); // 1/8 note division
+        modFxEng.setPostFXParam(1, 1, 0.5f);       // 50% feedback
+        modFxEng.setPostFXParam(1, 2, 0.7f);       // Tone damping
+        modFxEng.setPostFXParam(1, 3, 0.4f);       // 40% mix
+
+        assert(modFxEng.getPreFXType(0) == 10);
+        assert(modFxEng.getPreFXType(1) == 11);
+        assert(modFxEng.getPostFXType(0) == 12);
+        assert(modFxEng.getPostFXType(1) == 13);
+
+        modFxEng.setMidiPitch(36);
+        modFxEng.trigger(1.0f);
+
+        std::vector<float> outL(blockSize, 0.0f);
+        std::vector<float> outR(blockSize, 0.0f);
+        float peakL = 0.0f;
+        float peakR = 0.0f;
+        for (int blk = 0; blk < 60; ++blk) {
+            modFxEng.processStereo(outL.data(), outR.data(), blockSize);
+            for (int i = 0; i < blockSize; ++i) {
+                assert(!std::isnan(outL[i]) && !std::isinf(outL[i]));
+                assert(!std::isnan(outR[i]) && !std::isinf(outR[i]));
+                peakL = std::max(peakL, std::abs(outL[i]));
+                peakR = std::max(peakR, std::abs(outR[i]));
+            }
+        }
+        assert(peakL > 0.001f && peakR > 0.001f);
+        std::cout << "PASS: Chorus, Phaser, Flanger, and Tempo Delay verified." << std::endl;
+    }
+
     std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
     return 0;
 }

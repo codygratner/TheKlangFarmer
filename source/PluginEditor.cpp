@@ -324,6 +324,63 @@ static double parseRangeHz(const juce::String& text) {
     return static_cast<double>(TbdAudio::rangeHzToNorm(static_cast<float>(hz)));
 }
 
+static juce::String formatChorusRate(double val) {
+    float hz = 0.1f * std::pow(100.0f, static_cast<float>(val));
+    return juce::String(hz, (hz < 1.0f ? 2 : 1)) + " Hz";
+}
+static double parseChorusRate(const juce::String& text) {
+    double hz = parseNumberSafe(text, 1.2);
+    hz = std::clamp(hz, 0.1, 10.0);
+    return std::clamp(std::log(hz / 0.1) / std::log(100.0), 0.0, 1.0);
+}
+
+static juce::String formatPhaserRate(double val) {
+    float hz = 0.05f * std::pow(160.0f, static_cast<float>(val));
+    return juce::String(hz, (hz < 1.0f ? 2 : 1)) + " Hz";
+}
+static double parsePhaserRate(const juce::String& text) {
+    double hz = parseNumberSafe(text, 0.5);
+    hz = std::clamp(hz, 0.05, 8.0);
+    return std::clamp(std::log(hz / 0.05) / std::log(160.0), 0.0, 1.0);
+}
+
+static juce::String formatFlangerRate(double val) {
+    float hz = 0.05f * std::pow(100.0f, static_cast<float>(val));
+    return juce::String(hz, (hz < 1.0f ? 2 : 1)) + " Hz";
+}
+static double parseFlangerRate(const juce::String& text) {
+    double hz = parseNumberSafe(text, 0.25);
+    hz = std::clamp(hz, 0.05, 5.0);
+    return std::clamp(std::log(hz / 0.05) / std::log(100.0), 0.0, 1.0);
+}
+
+static juce::String formatDelayDiv(double val) {
+    const juce::String names[] = { "1/32", "1/16T", "1/16", "1/16D", "1/8T", "1/8", "1/8D", "1/4", "1/4D", "1/2" };
+    int idx = std::clamp(static_cast<int>(std::round(val * 9.0)), 0, 9);
+    return names[idx];
+}
+static double parseDelayDiv(const juce::String& text) {
+    const juce::String names[] = { "1/32", "1/16T", "1/16", "1/16D", "1/8T", "1/8", "1/8D", "1/4", "1/4D", "1/2" };
+    for (int i = 0; i < 10; ++i) {
+        if (text.trim().equalsIgnoreCase(names[i])) return static_cast<double>(i) / 9.0;
+    }
+    return 5.0 / 9.0;
+}
+
+static juce::String formatDelayTone(double val) {
+    float hz = 500.0f * std::pow(40.0f, static_cast<float>(val));
+    if (hz >= 1000.0f) return juce::String(hz / 1000.0f, 1) + " kHz";
+    return juce::String(static_cast<int>(std::round(hz))) + " Hz";
+}
+static double parseDelayTone(const juce::String& text) {
+    auto t = text.trim().toLowerCase();
+    double mult = 1.0;
+    if (t.endsWith("khz") || t.endsWith("k")) mult = 1000.0;
+    double hz = parseNumberSafe(text, 8000.0) * mult;
+    hz = std::clamp(hz, 500.0, 20000.0);
+    return std::clamp(std::log(hz / 500.0) / std::log(40.0), 0.0, 1.0);
+}
+
 
 // --- ROTARY KNOB LOOK AND FEEL ---
 
@@ -1456,6 +1513,42 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(3, "DJ Filter", true, formatBipolarPercent, parseBipolarPercent);
             break;
         }
+        case 10: { // Chorus
+            title = "Chorus";
+            accent = juce::Colour(0xff38bdf8);
+            setupK(0, "Rate", false, formatChorusRate, parseChorusRate);
+            setupK(1, "Depth", false, formatPercent, parsePercent);
+            setupK(2, "Feedback", true, formatBipolarPercent, parseBipolarPercent);
+            setupK(3, "Mix", false, formatPercent, parsePercent);
+            break;
+        }
+        case 11: { // Phaser
+            title = "Phaser";
+            accent = juce::Colour(0xffa855f7);
+            setupK(0, "Rate", false, formatPhaserRate, parsePhaserRate);
+            setupK(1, "Depth", false, formatPercent, parsePercent);
+            setupK(2, "Feedback", true, formatBipolarPercent, parseBipolarPercent);
+            setupK(3, "Mix", false, formatPercent, parsePercent);
+            break;
+        }
+        case 12: { // Flanger
+            title = "Flanger";
+            accent = juce::Colour(0xffec4899);
+            setupK(0, "Rate", false, formatFlangerRate, parseFlangerRate);
+            setupK(1, "Depth", false, formatPercent, parsePercent);
+            setupK(2, "Feedback", true, formatBipolarPercent, parseBipolarPercent);
+            setupK(3, "Mix", false, formatPercent, parsePercent);
+            break;
+        }
+        case 13: { // Tempo Delay
+            title = "Tempo Delay";
+            accent = juce::Colour(0xff10b981);
+            setupK(0, "Division", false, formatDelayDiv, parseDelayDiv);
+            setupK(1, "Feedback", false, formatPercent, parsePercent);
+            setupK(2, "Tone", false, formatDelayTone, parseDelayTone);
+            setupK(3, "Mix", false, formatPercent, parsePercent);
+            break;
+        }
         default: { // None
             title = "Empty Slot";
             accent = juce::Colour(0xff75849b);
@@ -2500,7 +2593,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_pan", slopPanSlider));
 
     // --- FX PICKERS SETUP & ATTACHMENTS ---
-    const juce::StringArray fxChoices { "None", "Drive", "Filter", "Wave Folder", "RingMod", "Frequency Shifter", "Grit FX", "Comb Filter", "Disperser", "Bell EQ" };
+    const juce::StringArray fxChoices { "None", "Drive", "Filter", "Wave Folder", "RingMod", "Frequency Shifter", "Grit FX", "Comb Filter", "Disperser", "Bell EQ", "Chorus", "Phaser", "Flanger", "Tempo Delay" };
 
     for (int i = 0; i < 4; ++i) {
         preFXPickerCard->getBox(i).addItemList(fxChoices, 1);
@@ -2606,6 +2699,10 @@ void TheKlangFarmerAudioProcessorEditor::setFXSlotDefaults(int slot, bool isPost
         case 7: defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 1.0f; defs[3] = 0.5f; break; // Comb: On, 24kHz, 24kHz, 0%
         case 8: defs[0] = 1.0f; defs[1] = 4.0f / 32.0f; defs[2] = 0.62124f; defs[3] = 0.5f; break; // Disperser: On, 4 stages, 1kHz, 0%
         case 9: defs[0] = 1.0f; defs[1] = 0.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // Bell EQ: 1kHz, 0.1 oct, 0dB, flat
+        case 10: defs[0] = 0.5398f; defs[1] = 0.60f; defs[2] = 0.60f; defs[3] = 0.50f; break; // Chorus: 1.2Hz, 60% depth, +20% fb, 50% mix
+        case 11: defs[0] = 0.4530f; defs[1] = 0.70f; defs[2] = 0.763f; defs[3] = 0.50f; break; // Phaser: 0.5Hz, 70% depth, +50% fb, 50% mix
+        case 12: defs[0] = 0.3500f; defs[1] = 0.70f; defs[2] = 0.868f; defs[3] = 0.50f; break; // Flanger: 0.25Hz, 70% depth, +70% fb, 50% mix
+        case 13: defs[0] = 5.0f / 9.0f; defs[1] = 0.40f; defs[2] = 0.70f; defs[3] = 0.35f; break; // Tempo Delay: 1/8, 40% fb, 8kHz tone, 35% mix
         default: break;
     }
     juce::String prefix = isPost ? "post_fx_" : "pre_fx_";

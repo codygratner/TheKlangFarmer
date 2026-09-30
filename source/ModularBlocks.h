@@ -1126,6 +1126,342 @@ private:
     DJFilter djFilter;
 };
 
+// --- CHORUS EFFECT (Rate, Depth, Feedback, Mix) ---
+class ChorusBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        invSr = ctx.invSr;
+        sampleRate = ctx.sampleRate;
+        maxDelay = static_cast<int>(sampleRate * 0.05f) + 16;
+        if (maxDelay < 512) maxDelay = 512;
+        bufL.assign(maxDelay, 0.0f);
+        bufR.assign(maxDelay, 0.0f);
+        writeIdx = 0;
+        lfoPhase = 0.0f;
+    }
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+        // 1. Rate: 0.1 Hz to 10.0 Hz (def 1.2 Hz)
+        float rate = 0.1f * std::pow(100.0f, params[0]);
+        float phaseInc = rate * invSr;
+
+        // 2. Depth: 0% to 100% -> 0 to 8 ms modulation
+        float depthSamples = params[1] * (0.008f * sampleRate);
+
+        // 3. Feedback: -100% to +100% (bipolar, def +20%)
+        float fb = (params[2] - 0.5f) * 1.90f;
+
+        // 4. Mix: 0% to 100% (def 50%)
+        float mix = params[3];
+        float dry = 1.0f - mix;
+
+        float baseDelaySamples = 0.015f * sampleRate;
+
+        for (int i = 0; i < numSamples; ++i) {
+            float inL = left ? left[i] : 0.0f;
+            float inR = right ? right[i] : inL;
+
+            float lfoL = std::sin(lfoPhase * TWO_PI);
+            float lfoR = std::cos(lfoPhase * TWO_PI);
+
+            lfoPhase += phaseInc;
+            if (lfoPhase >= 1.0f) lfoPhase -= 1.0f;
+
+            float dL = std::clamp(baseDelaySamples + depthSamples * lfoL, 1.0f, static_cast<float>(maxDelay - 2));
+            float dR = std::clamp(baseDelaySamples + depthSamples * lfoR, 1.0f, static_cast<float>(maxDelay - 2));
+
+            auto readInterp = [](const std::vector<float>& buf, int wIdx, float delay, int sz) {
+                float readPos = static_cast<float>(wIdx) - delay;
+                while (readPos < 0.0f) readPos += sz;
+                int i0 = static_cast<int>(readPos);
+                int i1 = (i0 + 1) % sz;
+                float frac = readPos - static_cast<float>(i0);
+                return buf[i0] + frac * (buf[i1] - buf[i0]);
+            };
+
+            float wetL = readInterp(bufL, writeIdx, dL, maxDelay);
+            float wetR = readInterp(bufR, writeIdx, dR, maxDelay);
+
+            bufL[writeIdx] = inL + std::tanh(wetL * fb);
+            bufR[writeIdx] = inR + std::tanh(wetR * fb);
+            writeIdx = (writeIdx + 1) % maxDelay;
+
+            if (left)  left[i]  = dry * inL + mix * wetL;
+            if (right) right[i] = dry * inR + mix * wetR;
+        }
+    }
+
+private:
+    float sampleRate = 44100.0f;
+    float invSr = 1.0f / 44100.0f;
+    int maxDelay = 2048;
+    int writeIdx = 0;
+    float lfoPhase = 0.0f;
+    std::vector<float> bufL;
+    std::vector<float> bufR;
+};
+
+// --- PHASER EFFECT (Rate, Depth, Feedback, Mix) ---
+class PhaserBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        invSr = ctx.invSr;
+        sampleRate = ctx.sampleRate;
+        for (int ch = 0; ch < 2; ++ch) {
+            for (int s = 0; s < 6; ++s) {
+                apfX[ch][s] = 0.0f;
+                apfY[ch][s] = 0.0f;
+            }
+            lastFb[ch] = 0.0f;
+        }
+        lfoPhase = 0.0f;
+    }
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+        // 1. Rate: 0.05 Hz to 8.0 Hz (def 0.5 Hz)
+        float rate = 0.05f * std::pow(160.0f, params[0]);
+        float phaseInc = rate * invSr;
+
+        // 2. Depth: 0% to 100% (def 70%)
+        float depth = params[1];
+
+        // 3. Feedback: -95% to +95% (bipolar, def +50%)
+        float fb = (params[2] - 0.5f) * 1.90f;
+
+        // 4. Mix: 0% to 100% (def 50%)
+        float mix = params[3];
+        float dry = 1.0f - mix;
+
+        for (int i = 0; i < numSamples; ++i) {
+            float inL = left ? left[i] : 0.0f;
+            float inR = right ? right[i] : inL;
+
+            float lfoL = 0.5f * (1.0f + std::sin(lfoPhase * TWO_PI));
+            float lfoR = 0.5f * (1.0f + std::cos(lfoPhase * TWO_PI));
+
+            lfoPhase += phaseInc;
+            if (lfoPhase >= 1.0f) lfoPhase -= 1.0f;
+
+            float fMin = 200.0f;
+            float fMax = 200.0f * std::pow(20.0f, depth);
+            float fcL = std::clamp(fMin * std::pow(fMax / fMin, lfoL), 20.0f, sampleRate * 0.45f);
+            float fcR = std::clamp(fMin * std::pow(fMax / fMin, lfoR), 20.0f, sampleRate * 0.45f);
+
+            float wL = std::tan(PI * fcL * invSr);
+            float aL = (wL - 1.0f) / (wL + 1.0f);
+
+            float wR = std::tan(PI * fcR * invSr);
+            float aR = (wR - 1.0f) / (wR + 1.0f);
+
+            // Channel 0: Left
+            float x0 = inL + std::tanh(lastFb[0] * fb);
+            for (int s = 0; s < 6; ++s) {
+                float y = aL * x0 + apfX[0][s] - aL * apfY[0][s];
+                apfX[0][s] = x0;
+                apfY[0][s] = y;
+                x0 = y;
+            }
+            lastFb[0] = x0;
+            float wetL = x0;
+
+            // Channel 1: Right
+            float x1 = inR + std::tanh(lastFb[1] * fb);
+            for (int s = 0; s < 6; ++s) {
+                float y = aR * x1 + apfX[1][s] - aR * apfY[1][s];
+                apfX[1][s] = x1;
+                apfY[1][s] = y;
+                x1 = y;
+            }
+            lastFb[1] = x1;
+            float wetR = x1;
+
+            if (left)  left[i]  = dry * inL + mix * wetL;
+            if (right) right[i] = dry * inR + mix * wetR;
+        }
+    }
+
+private:
+    float sampleRate = 44100.0f;
+    float invSr = 1.0f / 44100.0f;
+    float lfoPhase = 0.0f;
+    float apfX[2][6] = {};
+    float apfY[2][6] = {};
+    float lastFb[2] = {};
+};
+
+// --- FLANGER EFFECT (Rate, Depth, Feedback, Mix) ---
+class FlangerBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        invSr = ctx.invSr;
+        sampleRate = ctx.sampleRate;
+        maxDelay = static_cast<int>(sampleRate * 0.02f) + 16;
+        if (maxDelay < 256) maxDelay = 256;
+        bufL.assign(maxDelay, 0.0f);
+        bufR.assign(maxDelay, 0.0f);
+        writeIdx = 0;
+        lfoPhase = 0.0f;
+    }
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+        // 1. Rate: 0.05 Hz to 5.0 Hz (def 0.25 Hz)
+        float rate = 0.05f * std::pow(100.0f, params[0]);
+        float phaseInc = rate * invSr;
+
+        // 2. Depth: 0% to 100% -> 0 to 4 ms excursion
+        float depthSamples = params[1] * (0.004f * sampleRate);
+
+        // 3. Feedback: -95% to +95% (bipolar, def +70%)
+        float fb = (params[2] - 0.5f) * 1.90f;
+
+        // 4. Mix: 0% to 100% (def 50%)
+        float mix = params[3];
+        float dry = 1.0f - mix;
+
+        float baseDelaySamples = 0.001f * sampleRate;
+
+        for (int i = 0; i < numSamples; ++i) {
+            float inL = left ? left[i] : 0.0f;
+            float inR = right ? right[i] : inL;
+
+            float lfoL = 0.5f * (1.0f + std::sin(lfoPhase * TWO_PI));
+            float lfoR = 0.5f * (1.0f + std::cos(lfoPhase * TWO_PI));
+
+            lfoPhase += phaseInc;
+            if (lfoPhase >= 1.0f) lfoPhase -= 1.0f;
+
+            float dL = std::clamp(baseDelaySamples + depthSamples * lfoL, 1.0f, static_cast<float>(maxDelay - 2));
+            float dR = std::clamp(baseDelaySamples + depthSamples * lfoR, 1.0f, static_cast<float>(maxDelay - 2));
+
+            auto readInterp = [](const std::vector<float>& buf, int wIdx, float delay, int sz) {
+                float readPos = static_cast<float>(wIdx) - delay;
+                while (readPos < 0.0f) readPos += sz;
+                int i0 = static_cast<int>(readPos);
+                int i1 = (i0 + 1) % sz;
+                float frac = readPos - static_cast<float>(i0);
+                return buf[i0] + frac * (buf[i1] - buf[i0]);
+            };
+
+            float wetL = readInterp(bufL, writeIdx, dL, maxDelay);
+            float wetR = readInterp(bufR, writeIdx, dR, maxDelay);
+
+            bufL[writeIdx] = inL + std::tanh(wetL * fb);
+            bufR[writeIdx] = inR + std::tanh(wetR * fb);
+            writeIdx = (writeIdx + 1) % maxDelay;
+
+            if (left)  left[i]  = dry * inL + mix * wetL;
+            if (right) right[i] = dry * inR + mix * wetR;
+        }
+    }
+
+private:
+    float sampleRate = 44100.0f;
+    float invSr = 1.0f / 44100.0f;
+    int maxDelay = 1024;
+    int writeIdx = 0;
+    float lfoPhase = 0.0f;
+    std::vector<float> bufL;
+    std::vector<float> bufR;
+};
+
+// --- TEMPO DELAY EFFECT (Division, Feedback, Tone, Mix) ---
+class DelayBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        invSr = ctx.invSr;
+        sampleRate = ctx.sampleRate;
+        maxDelay = static_cast<int>(sampleRate * 4.0f) + 16;
+        bufL.assign(maxDelay, 0.0f);
+        bufR.assign(maxDelay, 0.0f);
+        writeIdx = 0;
+        currentDelayL = currentDelayR = 0.25f * sampleRate;
+        dampL = dampR = 0.0f;
+    }
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
+        // 1. Division: 10 musical divisions (def 1/8)
+        constexpr float mults[10] = { 0.125f, 0.166667f, 0.25f, 0.375f, 0.333333f, 0.5f, 0.75f, 1.0f, 1.5f, 2.0f };
+        int divIdx = std::clamp(static_cast<int>(std::round(params[0] * 9.0f)), 0, 9);
+        float mult = mults[divIdx];
+
+        float effectiveBpm = (ctx.bpm > 20.0f && ctx.bpm < 999.0f) ? ctx.bpm : 120.0f;
+        float secPerBeat = 60.0f / effectiveBpm;
+        float targetDelaySec = mult * secPerBeat;
+        float targetDelaySamples = std::clamp(targetDelaySec * sampleRate, 1.0f, static_cast<float>(maxDelay - 4));
+
+        // 2. Feedback: 0% to 100% (def 40%)
+        float fb = params[1] * 0.98f;
+
+        // 3. Tone / Damp (Low-pass cutoff 500 Hz to 20 kHz)
+        float dampFreq = 500.0f * std::pow(40.0f, params[2]);
+        float dampAlpha = std::clamp(TWO_PI * dampFreq * invSr, 0.01f, 0.99f);
+
+        // 4. Mix: 0% to 100% (def 35%)
+        float mix = params[3];
+        float dry = 1.0f - mix;
+
+        float smoothRate = 0.002f;
+
+        for (int i = 0; i < numSamples; ++i) {
+            currentDelayL += (targetDelaySamples - currentDelayL) * smoothRate;
+            currentDelayR += (targetDelaySamples - currentDelayR) * smoothRate;
+
+            float inL = left ? left[i] : 0.0f;
+            float inR = right ? right[i] : inL;
+
+            auto readInterp = [](const std::vector<float>& buf, int wIdx, float delay, int sz) {
+                float readPos = static_cast<float>(wIdx) - delay;
+                while (readPos < 0.0f) readPos += sz;
+                int i0 = static_cast<int>(readPos);
+                int i1 = (i0 + 1) % sz;
+                float frac = readPos - static_cast<float>(i0);
+                return buf[i0] + frac * (buf[i1] - buf[i0]);
+            };
+
+            float wetL = readInterp(bufL, writeIdx, currentDelayL, maxDelay);
+            float wetR = readInterp(bufR, writeIdx, currentDelayR, maxDelay);
+
+            dampL += dampAlpha * (wetL - dampL);
+            dampR += dampAlpha * (wetR - dampR);
+
+            bufL[writeIdx] = inL + std::tanh((0.75f * dampL + 0.25f * dampR) * fb);
+            bufR[writeIdx] = inR + std::tanh((0.75f * dampR + 0.25f * dampL) * fb);
+            writeIdx = (writeIdx + 1) % maxDelay;
+
+            if (left)  left[i]  = dry * inL + mix * wetL;
+            if (right) right[i] = dry * inR + mix * wetR;
+        }
+    }
+
+private:
+    float sampleRate = 44100.0f;
+    float invSr = 1.0f / 44100.0f;
+    int maxDelay = 192000;
+    int writeIdx = 0;
+    float currentDelayL = 22050.0f;
+    float currentDelayR = 22050.0f;
+    float dampL = 0.0f;
+    float dampR = 0.0f;
+    std::vector<float> bufL;
+    std::vector<float> bufR;
+};
+
 // --- BLOCK 11: FILTER ENVELOPE (Slope, Depth, Decay, Post-Drive) ---
 class FilterEnvelopeBlock : public DSPBlock {
 public:
@@ -1908,6 +2244,10 @@ public:
             case 7: return std::make_unique<CombFilterBlock>();
             case 8: return std::make_unique<DisperserBlock>();
             case 9: return std::make_unique<EQBlock>();
+            case 10: return std::make_unique<ChorusBlock>();
+            case 11: return std::make_unique<PhaserBlock>();
+            case 12: return std::make_unique<FlangerBlock>();
+            case 13: return std::make_unique<DelayBlock>();
             default: return nullptr;
         }
     }
@@ -2261,7 +2601,7 @@ public:
 
     void setPreFXType(int slot, int type) {
         if (slot >= 0 && slot < 4) {
-            type = std::clamp(type, 0, 9);
+            type = std::clamp(type, 0, 13);
             if (preFXTypes[slot] != type || !preFXBlocks[slot]) {
                 preFXTypes[slot] = type;
                 preFXBlocks[slot] = createFXBlock(type);
@@ -2280,7 +2620,7 @@ public:
 
     void setPostFXType(int slot, int type) {
         if (slot >= 0 && slot < 4) {
-            type = std::clamp(type, 0, 9);
+            type = std::clamp(type, 0, 13);
             if (postFXTypes[slot] != type || !postFXBlocks[slot]) {
                 postFXTypes[slot] = type;
                 postFXBlocks[slot] = createFXBlock(type);
@@ -2296,6 +2636,13 @@ public:
     int getPostFXType(int slot) const {
         return (slot >= 0 && slot < 4) ? postFXTypes[slot] : 0;
     }
+
+    void setBpm(float bpm) {
+        if (bpm > 20.0f && bpm < 999.0f) {
+            ctx.bpm = bpm;
+        }
+    }
+    float getBpm() const { return ctx.bpm; }
 
     void setPreFXParam(int slot, int knobIndex, float value) {
         if (slot >= 0 && slot < 4 && knobIndex >= 0 && knobIndex < 4) {

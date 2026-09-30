@@ -12,6 +12,7 @@ constexpr float TWO_PI = 6.28318530717958647692f;
 struct BlockContext {
     float sampleRate = 44100.0f;
     float invSr = 1.0f / 44100.0f;
+    float bpm = 120.0f;
     // Shared contextual signals passed down the chain
     float triggerVelocity = 1.0f;
     bool isTriggered = false;

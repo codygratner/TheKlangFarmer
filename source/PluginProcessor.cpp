@@ -221,6 +221,14 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
         return p ? p->range.convertTo0to1(p->get()) : 0.0f;
     };
 
+    if (auto* playHead = getPlayHead()) {
+        if (auto posOpt = playHead->getPosition()) {
+            if (auto bpmOpt = posOpt->getBpm()) {
+                engine.setBpm(static_cast<float>(*bpmOpt));
+            }
+        }
+    }
+
     // 1. Carrier 1
     if (carrier1TrackingParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 0, static_cast<float>(carrier1TrackingParam->getIndex()) / 2.0f);
     if (carrier1PitchParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 1, getNorm(carrier1PitchParam));
@@ -659,7 +667,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("post_limiter_release", "Post-Limiter: Release", 0.6296f));       // 50 ms
 
     // --- FX PICKERS ---
-    const juce::StringArray fxChoices { "None", "Drive", "Filter", "Wave Folder", "RingMod", "Frequency Shifter", "Grit FX", "Comb Filter", "Disperser", "Bell EQ" };
+    const juce::StringArray fxChoices { "None", "Drive", "Filter", "Wave Folder", "RingMod", "Frequency Shifter", "Grit FX", "Comb Filter", "Disperser", "Bell EQ", "Chorus", "Phaser", "Flanger", "Tempo Delay" };
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("pre_fx_1_type", 1), "Pre FX 1: Type", fxChoices, 1)); // Drive
     layout.add(std::make_unique<juce::AudioParameterChoice>(
