@@ -147,4 +147,4 @@ For a detailed chronological record of updates and releases, see [CHANGELOG.md](
 ---
 
 ## License
-Created by Cody Gratner (CustomDSP).
+Created by Cody Gratner (R'lyeh Sound).

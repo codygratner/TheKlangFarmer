@@ -12,15 +12,16 @@ add_subdirectory(JUCE)
 
 # 3. Configure the plugin target
 juce_add_plugin(TheKlangFarmer
-    COMPANY_NAME "CustomDSP"
+    COMPANY_NAME "R'lyeh Sound"
     IS_SYNTH TRUE
     NEEDS_MIDI_INPUT TRUE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
     
     # 4-character codes (required by VST/AU specs; must have at least 1 uppercase)
-    PLUGIN_MANUFACTURER_CODE Cdsp
+    PLUGIN_MANUFACTURER_CODE Rlyh
     PLUGIN_CODE Tkf1
+    BUNDLE_ID com.rlyehsound.theklangfarmer
     
     # Builds both the DAW plugin and a standalone runnable executable for rapid DSP iteration
     FORMATS VST3 Standalone

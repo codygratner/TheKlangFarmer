@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Changelog**: Comprehensive project changelog tracking all development milestones.
 
 ### Changed
+- **Vendor Name**: Updated plugin vendor from "CustomDSP" to "R'lyeh Sound" (manufacturer code `Rlyh`, bundle ID `com.rlyehsound.theklangfarmer`).
 - **Project Version**: Bumped project version to `0.1.1` in `CMakeLists.txt` and VST3 `moduleinfo.json`.
 - **Header Layout**: Adjusted title bar bounds to prevent subtitle clipping or button collisions at smaller window sizes.
 
