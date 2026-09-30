@@ -532,6 +532,8 @@ private:
 
     void setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar = false, double defaultVal = 0.5);
     void setupBox(juce::ComboBox& box);
+    void updateCarrier1Controls();
+    void updateCarrier2Controls();
 
     // Tracking states
     int lastCarrier1Track = -1;

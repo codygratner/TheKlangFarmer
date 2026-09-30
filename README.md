@@ -30,6 +30,7 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 
 ### 1. Dual FM Voice Engine & Per-Voice Filtering
 - **Two FM Operator Pairs**: Independent `Carrier 1 & Modulator 1` and `Carrier 2 & Modulator 2` engines with 5-point warp decay curves.
+- **Carrier Pitch Tracking Modes**: Select between `MIDI` (tracks incoming MIDI with $\pm 24$ st semitone offset, center-detented bipolar meter), `Freq` (fixed continuous frequency from $20\,\text{Hz}$ to $24\,\text{kHz}$, defaulting to $55\,\text{Hz}$), and `Note` (fixed musical note across notes 0–127 with padded readout e.g. `A1   [   55 Hz,  33]`).
 - **Bipolar Modulation Depth**: FM depths range from **-100% to +100%** (defaulting to 0% center).
 - **Per-Voice Multimode Filters**: Each voice features its own dedicated multimode filter (LPF, BPF, HPF, BRF with 6/12/18/24 dB slopes) and filter envelope before hitting the mixer.
 - **Cross-Voice Ring Modulation**: Raw cross-multiplication (`Carrier 1 × Carrier 2`) routeable into the main mixer as an independent blendable tone.
@@ -59,7 +60,7 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 - **Slop (Module 17)**: Stepped random analog drift applied per trigger across frequency, FM depth, decay, and stereo panning (defaults strictly to 0% for sample-accurate repeatability).
 - **Velocity Dynamics (Module 16)**: Dynamic mapping curves scaling output volume, pitch decay, and bipolar modulation depth with exponential response.
 
-### 4. Real-Time Phase-Locked Visualizations (Slot 8)
+### 4. Real-Time Phase-Locked Visualizations (Slot 5)
 - **Self-Locked Oscilloscopes**: Carriers and modulators phase-lock to their own fundamental frequencies, eliminating visual drift even during deep FM sweeps.
 - **Bode Magnitude Plots**: Real-time logarithmic X-Y response curves for filters and bell EQs ($20\,\text{Hz} - 24\,\text{kHz}$) with grid reference markers.
 - **Auto-Tracking & Lock Toggle**: The visualizer automatically follows whichever module card you click or hover over. A padlock toggle lets you freeze the display on a specific module while tweaking others.

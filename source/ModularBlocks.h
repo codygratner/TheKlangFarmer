@@ -317,16 +317,16 @@ public:
         float slop = (voiceIndex == 1) ? ctx.slopCarrier1Pitch : ctx.slopCarrier2Pitch;
         float pitchParam = std::clamp(params[1] + slop, 0.0f, 1.0f);
         if (style == 0) {
+            // MIDI pitch: offset from -24 to +24 semitones (def 0 = 0.5f)
+            float offset = std::round((pitchParam - 0.5f) * 48.0f);
+            return ctx.currentPitchHz * std::pow(2.0f, offset / 12.0f);
+        } else if (style == 1) {
             // Fixed freq: 20 Hz to 24 kHz (def 55 Hz)
             return 20.0f * std::pow(24000.0f / 20.0f, pitchParam);
-        } else if (style == 1) {
-            // Fixed pitch: MIDI note 0 to 127 (def A1 33)
-            float note = pitchParam * 127.0f;
-            return 440.0f * std::pow(2.0f, (note - 69.0f) / 12.0f);
         } else {
-            // MIDI pitch: offset from -60 to +60 semitones (def 0)
-            float offset = std::round((pitchParam - 0.5f) * 120.0f);
-            return ctx.currentPitchHz * std::pow(2.0f, offset / 12.0f);
+            // Fixed note: MIDI note 0 to 127 (def A1 33 = 55 Hz)
+            float note = std::round(pitchParam * 127.0f);
+            return 440.0f * std::pow(2.0f, (note - 69.0f) / 12.0f);
         }
     }
 
@@ -2315,7 +2315,7 @@ public:
         ctx.ampEnvSignal.assign(1024, 1.0f);
 
         // Voice 1 defaults
-        setPageParameter(BLK_CARRIER1, 0, 1.0f);
+        setPageParameter(BLK_CARRIER1, 0, 0.0f);
         setPageParameter(BLK_CARRIER1, 1, 0.5f);
         setPageParameter(BLK_CARRIER1, 2, 0.0f);
         setPageParameter(BLK_CARRIER1, 3, 0.5f);
@@ -2341,7 +2341,7 @@ public:
         setPageParameter(BLK_FILTERENV1, 3, 0.5f);
 
         // Voice 2 defaults
-        setPageParameter(BLK_CARRIER2, 0, 1.0f);
+        setPageParameter(BLK_CARRIER2, 0, 0.0f);
         setPageParameter(BLK_CARRIER2, 1, 0.5f);
         setPageParameter(BLK_CARRIER2, 2, 0.0f);
         setPageParameter(BLK_CARRIER2, 3, 0.5f);
@@ -2668,6 +2668,9 @@ public:
     DSPBlock* getPostFXBlock(int slot) { return (slot >= 0 && slot < 4) ? postFXBlocks[slot].get() : nullptr; }
     const DSPBlock* getPostFXBlock(int slot) const { return (slot >= 0 && slot < 4) ? postFXBlocks[slot].get() : nullptr; }
 
+    DSPBlock* getBlock(int blockIndex) { return (blockIndex >= 0 && blockIndex < static_cast<int>(allBlocks.size())) ? allBlocks[blockIndex].get() : nullptr; }
+    const DSPBlock* getBlock(int blockIndex) const { return (blockIndex >= 0 && blockIndex < static_cast<int>(allBlocks.size())) ? allBlocks[blockIndex].get() : nullptr; }
+
     const BlockContext& getContext() const { return ctx; }
 
     void getScopeData(int blockIndex, float* dest, int count) const {
@@ -2953,8 +2956,8 @@ private:
     BlockContext ctx;
     std::vector<std::unique_ptr<DSPBlock>> allBlocks;
     VisualScope scopes[NUM_BLOCKS];
-    int preFXTypes[4] = { 1, 3, 4, 5 };
-    int postFXTypes[4] = { 6, 7, 8, 9 };
+    int preFXTypes[4] = { 5, 13, 11, 8 };
+    int postFXTypes[4] = { 9, 3, 4, 1 };
     std::unique_ptr<DSPBlock> preFXBlocks[4];
     std::unique_ptr<DSPBlock> postFXBlocks[4];
     float preFXParams[4][4] = { {0.0f} };

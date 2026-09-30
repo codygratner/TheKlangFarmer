@@ -527,7 +527,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- 1. CARRIER 1 ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("carrier1_tracking", 1), "Carrier 1: Tracking",
-        juce::StringArray{ "MIDI", "Fixed", "Offset" }, 0));
+        juce::StringArray{ "MIDI", "Freq", "Note" }, 0));
     layout.add(makeFloatParam("carrier1_pitch", "Carrier 1: Pitch / Freq", 0.5f));
     layout.add(makeFloatParam("carrier1_shape", "Carrier 1: Shape", 0.0f));         // Sine (0%)
     layout.add(makeFloatParam("carrier1_depth", "Carrier 1: Modulation Depth", 0.5f)); // 0% Depth (-200% to +200%)
@@ -553,7 +553,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- 4. CARRIER 2 ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("carrier2_tracking", 1), "Carrier 2: Tracking",
-        juce::StringArray{ "MIDI", "Fixed", "Offset" }, 0));
+        juce::StringArray{ "MIDI", "Freq", "Note" }, 0));
     layout.add(makeFloatParam("carrier2_pitch", "Carrier 2: Pitch / Freq", 0.5f));
     layout.add(makeFloatParam("carrier2_shape", "Carrier 2: Shape", 0.0f));         // Sine (0%)
     layout.add(makeFloatParam("carrier2_depth", "Carrier 2: Modulation Depth", 0.5f)); // 0% Depth (-200% to +200%)

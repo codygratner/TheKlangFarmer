@@ -83,6 +83,103 @@ static double parseSemi(const juce::String& text) {
     return std::clamp((semi / 48.0) + 0.5, 0.0, 1.0);
 }
 
+static juce::String formatSemi24(double val) {
+    int semi = static_cast<int>(std::round((val - 0.5) * 48.0));
+    return (semi > 0 ? "+" : "") + juce::String(semi) + " st";
+}
+static double parseSemi24(const juce::String& text) {
+    double semi = parseNumberSafe(text, 0.0);
+    return std::clamp((semi / 48.0) + 0.5, 0.0, 1.0);
+}
+
+static juce::String formatCarrierFreqHz(double val) {
+    float hz = 20.0f * std::pow(24000.0f / 20.0f, static_cast<float>(val));
+    if (hz >= 1000.0f) return juce::String(hz / 1000.0f, 2) + " kHz";
+    if (hz >= 100.0f) return juce::String(hz, 1) + " Hz";
+    return juce::String(hz, 2) + " Hz";
+}
+static double parseCarrierFreqHz(const juce::String& text) {
+    double hz = parseNumberSafe(text, 55.0);
+    hz = std::clamp(hz, 20.0, 24000.0);
+    return std::log(hz / 20.0) / std::log(24000.0 / 20.0);
+}
+
+static juce::String formatNoteDetail(double val) {
+    int note = std::clamp(static_cast<int>(std::round(val * 127.0)), 0, 127);
+    const char* names[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+    int octave = (note / 12) - 1;
+    juce::String noteName = juce::String(names[note % 12]) + juce::String(octave);
+
+    float f = 440.0f * std::pow(2.0f, (static_cast<float>(note) - 69.0f) / 12.0f);
+    juce::String hzStr;
+    if (f >= 1000.0f) {
+        hzStr = juce::String(f / 1000.0f, 1) + " kHz";
+    } else {
+        int hz = static_cast<int>(std::round(f));
+        hzStr = juce::String(hz) + " Hz";
+    }
+
+    juce::String noteNumStr = juce::String(note);
+    return noteName.paddedRight(' ', 4) + " [" + hzStr.paddedLeft(' ', 8) + ", " + noteNumStr.paddedLeft(' ', 3) + "]";
+}
+
+static double parseNoteDetail(const juce::String& text) {
+    juce::String t = text.trim();
+    if (t.isEmpty()) return 33.0 / 127.0;
+
+    // Check if bracketed format e.g. "A1 [55 Hz, 33]"
+    if (t.contains(",")) {
+        juce::String afterComma = t.fromFirstOccurrenceOf(",", false, false).replaceCharacters("]", " ").trim();
+        int noteNum = afterComma.getIntValue();
+        if (noteNum >= 0 && noteNum <= 127) {
+            return static_cast<double>(noteNum) / 127.0;
+        }
+    }
+
+    // Try parsing as standard note name, e.g. "A1", "C#4", "Db2"
+    juce::String notePart = t.upToFirstOccurrenceOf(" ", false, false).upToFirstOccurrenceOf("[", false, false).trim();
+    if (notePart.isNotEmpty() && ((notePart[0] >= 'A' && notePart[0] <= 'G') || (notePart[0] >= 'a' && notePart[0] <= 'g'))) {
+        char base = static_cast<char>(std::toupper(notePart[0]));
+        int semitone = 0;
+        switch (base) {
+            case 'C': semitone = 0; break;
+            case 'D': semitone = 2; break;
+            case 'E': semitone = 4; break;
+            case 'F': semitone = 5; break;
+            case 'G': semitone = 7; break;
+            case 'A': semitone = 9; break;
+            case 'B': semitone = 11; break;
+            default: break;
+        }
+        int idx = 1;
+        if (notePart.length() > idx && (notePart[idx] == '#' || notePart[idx] == 's' || notePart[idx] == 'S')) {
+            semitone += 1;
+            idx++;
+        } else if (notePart.length() > idx && (notePart[idx] == 'b' || notePart[idx] == 'B')) {
+            semitone -= 1;
+            idx++;
+        }
+        juce::String octStr = notePart.substring(idx).trim();
+        if (octStr.isNotEmpty()) {
+            int oct = octStr.getIntValue();
+            int midi = (oct + 1) * 12 + semitone;
+            return std::clamp(static_cast<double>(midi) / 127.0, 0.0, 1.0);
+        }
+    }
+
+    // Try parsing as Hz if contains "hz"
+    if (t.containsIgnoreCase("hz")) {
+        double hz = parseNumberSafe(t, 55.0);
+        hz = std::clamp(hz, 8.0, 24000.0);
+        double midi = 69.0 + 12.0 * std::log2(hz / 440.0);
+        return std::clamp(std::round(midi) / 127.0, 0.0, 1.0);
+    }
+
+    // Otherwise try parsing as raw MIDI number (e.g. 33)
+    double raw = parseNumberSafe(t, 33.0);
+    return std::clamp(std::round(raw) / 127.0, 0.0, 1.0);
+}
+
 static juce::String formatRatio(double val) {
     float r = static_cast<float>(val) * 16.0f;
     return juce::String(r, 2) + "x";
@@ -1228,12 +1325,13 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
 
     // 4. Fixed Right-Aligned Value Box
     // Statically anchored so text length variations never move or push other elements!
-    constexpr float valueBoxW = 78.0f;
-    constexpr float rightMargin = 10.0f;
+    g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+    auto valStr = getTextFromValue(getValue());
+    float valStrW = juce::GlyphArrangement::getStringWidth(g.getCurrentFont(), valStr);
+    float valueBoxW = std::max(78.0f, valStrW + 4.0f);
+    constexpr float rightMargin = 8.0f;
     auto valueBox = juce::Rectangle<float>(bounds.getRight() - rightMargin - valueBoxW,
                                            bounds.getY(), valueBoxW, bounds.getHeight());
-    auto valStr = getTextFromValue(getValue());
-    g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
 
     // Shadow & Value text
     g.setColour(juce::Colour(0xd0000000));
@@ -2199,7 +2297,7 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
     // Panel 1: Architecture & Signal Flow
     juce::Rectangle<float> p1(contentArea.getX(), contentArea.getY(), colW, rowH);
     juce::StringArray b1 = {
-        "• DUAL FM VOICES: Two parallel voices each with Carrier (MIDI/Fixed/Offset), FM Modulator (Fixed/Follow/FM), dedicated Pitch Env, and Multimode Filter (LPF/BPF/HPF/BRF with 6-36dB slopes).",
+        "• DUAL FM VOICES: Two parallel voices each with Carrier (MIDI/Freq/Note), FM Modulator (Fixed/Follow/FM), dedicated Pitch Env, and Multimode Filter (LPF/BPF/HPF/BRF with 6-36dB slopes).",
         "• TRANSIENT NOISE: Analog-modeled White/Pink/Metallic noise source with dedicated Filter 3 and Filter Env for snappy clicks, snaps, and snare rattle.",
         "• 3-CHANNEL MIXER: Balance Carrier 1, Carrier 2, and Noise Transients into the processing chain.",
         "• SIGNAL FLOW: Mixer -> Pre-Amp FX Rack (4 Slots) -> Pre-Limiter -> Amplifier + Amp Env -> Post-Amp FX Rack (4 Slots) -> Master Limiter -> Audio Output."
@@ -2328,19 +2426,24 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 1. Carrier 1
     cardCarrier1 = std::make_unique<ModuleCardComponent>("Carrier 1", juce::Colour(0xff00d2ff));
     setupBox(carrier1TrackingBox);
-    bindSelector(carrier1TrackingSelector, carrier1TrackingBox, "carrier1_tracking", { "MIDI", "Fixed", "Offset" }, 3);
+    bindSelector(carrier1TrackingSelector, carrier1TrackingBox, "carrier1_tracking", { "MIDI", "Freq", "Note" }, 3);
     cardCarrier1->setLedSelector(&carrier1TrackingSelector);
 
-    setupKnob(carrier1PitchSlider, juce::Colour(0xff00d2ff), false, 36.0 / 127.0);
+    setupKnob(carrier1PitchSlider, juce::Colour(0xff00d2ff), true, 0.5);
     carrier1PitchSlider.customFormatText = [this](double val) {
-        if (carrier1TrackingBox.getSelectedItemIndex() == 2) return formatSemi(val);
-        if (carrier1TrackingBox.getSelectedItemIndex() == 1) return formatFreqHz(val);
-        return formatMidiNote(val);
+        int mode = carrier1TrackingBox.getSelectedItemIndex();
+        if (mode == 0) return formatSemi24(val);
+        if (mode == 1) return formatCarrierFreqHz(val);
+        return formatNoteDetail(val);
     };
     carrier1PitchSlider.customParseText = [this](const juce::String& text) {
-        if (carrier1TrackingBox.getSelectedItemIndex() == 2) return parseSemi(text);
-        if (carrier1TrackingBox.getSelectedItemIndex() == 1) return parseFreqHz(text);
-        return parseMidiNote(text);
+        int mode = carrier1TrackingBox.getSelectedItemIndex();
+        if (mode == 0) return parseSemi24(text);
+        if (mode == 1) return parseCarrierFreqHz(text);
+        return parseNoteDetail(text);
+    };
+    carrier1TrackingBox.onChange = [this]() {
+        updateCarrier1Controls();
     };
 
     setupKnob(carrier1ShapeSlider, juce::Colour(0xff00d2ff), false, 0.0);
@@ -2350,10 +2453,11 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     carrier1DepthSlider.customFormatText = formatBipolarPercent;
     carrier1DepthSlider.customParseText  = parseBipolarPercent;
 
-    cardCarrier1->setKnob(0, "Pitch", &carrier1PitchSlider);
+    cardCarrier1->setKnob(0, "Offset", &carrier1PitchSlider);
     cardCarrier1->setKnob(1, "Shape", &carrier1ShapeSlider);
     cardCarrier1->setKnob(2, "Mod Depth", &carrier1DepthSlider);
     addChildComponent(cardCarrier1.get());
+    updateCarrier1Controls();
 
     // 2. Modulator 1
     cardMod1 = std::make_unique<ModuleCardComponent>("Modulator 1", juce::Colour(0xffff7043));
@@ -2466,19 +2570,24 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 6. Carrier 2
     cardCarrier2 = std::make_unique<ModuleCardComponent>("Carrier 2", juce::Colour(0xff00d2ff));
     setupBox(carrier2TrackingBox);
-    bindSelector(carrier2TrackingSelector, carrier2TrackingBox, "carrier2_tracking", { "MIDI", "Fixed", "Offset" }, 3);
+    bindSelector(carrier2TrackingSelector, carrier2TrackingBox, "carrier2_tracking", { "MIDI", "Freq", "Note" }, 3);
     cardCarrier2->setLedSelector(&carrier2TrackingSelector);
 
-    setupKnob(carrier2PitchSlider, juce::Colour(0xff00d2ff), false, 36.0 / 127.0);
+    setupKnob(carrier2PitchSlider, juce::Colour(0xff00d2ff), true, 0.5);
     carrier2PitchSlider.customFormatText = [this](double val) {
-        if (carrier2TrackingBox.getSelectedItemIndex() == 2) return formatSemi(val);
-        if (carrier2TrackingBox.getSelectedItemIndex() == 1) return formatFreqHz(val);
-        return formatMidiNote(val);
+        int mode = carrier2TrackingBox.getSelectedItemIndex();
+        if (mode == 0) return formatSemi24(val);
+        if (mode == 1) return formatCarrierFreqHz(val);
+        return formatNoteDetail(val);
     };
     carrier2PitchSlider.customParseText = [this](const juce::String& text) {
-        if (carrier2TrackingBox.getSelectedItemIndex() == 2) return parseSemi(text);
-        if (carrier2TrackingBox.getSelectedItemIndex() == 1) return parseFreqHz(text);
-        return parseMidiNote(text);
+        int mode = carrier2TrackingBox.getSelectedItemIndex();
+        if (mode == 0) return parseSemi24(text);
+        if (mode == 1) return parseCarrierFreqHz(text);
+        return parseNoteDetail(text);
+    };
+    carrier2TrackingBox.onChange = [this]() {
+        updateCarrier2Controls();
     };
 
     setupKnob(carrier2ShapeSlider, juce::Colour(0xff00d2ff), false, 0.0);
@@ -2488,10 +2597,11 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     carrier2DepthSlider.customFormatText = formatBipolarPercent;
     carrier2DepthSlider.customParseText  = parseBipolarPercent;
 
-    cardCarrier2->setKnob(0, "Pitch", &carrier2PitchSlider);
+    cardCarrier2->setKnob(0, "Offset", &carrier2PitchSlider);
     cardCarrier2->setKnob(1, "Shape", &carrier2ShapeSlider);
     cardCarrier2->setKnob(2, "Mod Depth", &carrier2DepthSlider);
     addChildComponent(cardCarrier2.get());
+    updateCarrier2Controls();
 
     // 7. Modulator 2
     cardMod2 = std::make_unique<ModuleCardComponent>("Modulator 2", juce::Colour(0xffff7043));
@@ -3130,6 +3240,48 @@ void TheKlangFarmerAudioProcessorEditor::setupBox(juce::ComboBox& box) {
     box.setVisible(false);
 }
 
+void TheKlangFarmerAudioProcessorEditor::updateCarrier1Controls() {
+    int mode = carrier1TrackingBox.getSelectedItemIndex();
+    if (mode == 0) { // MIDI
+        cardCarrier1->setKnobLabel(0, "Offset");
+        carrier1PitchSlider.setBipolar(true);
+        carrier1PitchSlider.getDefaultValue = []() { return 0.5; };
+    } else if (mode == 1) { // Freq
+        cardCarrier1->setKnobLabel(0, "Frequency");
+        carrier1PitchSlider.setBipolar(false);
+        carrier1PitchSlider.getDefaultValue = []() {
+            return static_cast<double>(std::log(55.0f / 20.0f) / std::log(24000.0f / 20.0f));
+        };
+    } else { // Note
+        cardCarrier1->setKnobLabel(0, "Note");
+        carrier1PitchSlider.setBipolar(false);
+        carrier1PitchSlider.getDefaultValue = []() { return 33.0 / 127.0; };
+    }
+    carrier1PitchSlider.repaint();
+    carrier1PitchSlider.updateText();
+}
+
+void TheKlangFarmerAudioProcessorEditor::updateCarrier2Controls() {
+    int mode = carrier2TrackingBox.getSelectedItemIndex();
+    if (mode == 0) { // MIDI
+        cardCarrier2->setKnobLabel(0, "Offset");
+        carrier2PitchSlider.setBipolar(true);
+        carrier2PitchSlider.getDefaultValue = []() { return 0.5; };
+    } else if (mode == 1) { // Freq
+        cardCarrier2->setKnobLabel(0, "Frequency");
+        carrier2PitchSlider.setBipolar(false);
+        carrier2PitchSlider.getDefaultValue = []() {
+            return static_cast<double>(std::log(55.0f / 20.0f) / std::log(24000.0f / 20.0f));
+        };
+    } else { // Note
+        cardCarrier2->setKnobLabel(0, "Note");
+        carrier2PitchSlider.setBipolar(false);
+        carrier2PitchSlider.getDefaultValue = []() { return 33.0 / 127.0; };
+    }
+    carrier2PitchSlider.repaint();
+    carrier2PitchSlider.updateText();
+}
+
 void TheKlangFarmerAudioProcessorEditor::resetToDefaults() {
     for (auto* param : audioProcessor.getParameters()) {
         if (auto* rangedParam = dynamic_cast<juce::RangedAudioParameter*>(param)) {
@@ -3380,8 +3532,7 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
 
     int curCarrier1Track = syncSelector(carrier1TrackingBox, carrier1TrackingSelector, "carrier1_tracking", lastCarrier1Track);
     if (curCarrier1Track >= 0) {
-        carrier1PitchSlider.setBipolar(curCarrier1Track == 2);
-        carrier1PitchSlider.updateText();
+        updateCarrier1Controls();
     }
 
     int curMod1Track = syncSelector(mod1TrackBox, mod1TrackSelector, "mod1_track", lastMod1Track);
@@ -3411,8 +3562,7 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
 
     int curCarrier2Track = syncSelector(carrier2TrackingBox, carrier2TrackingSelector, "carrier2_tracking", lastCarrier2Track);
     if (curCarrier2Track >= 0) {
-        carrier2PitchSlider.setBipolar(curCarrier2Track == 2);
-        carrier2PitchSlider.updateText();
+        updateCarrier2Controls();
     }
 
     int curMod2Track = syncSelector(mod2TrackBox, mod2TrackSelector, "mod2_track", lastMod2Track);

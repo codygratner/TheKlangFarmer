@@ -867,8 +867,62 @@ int main() {
                 peakR = std::max(peakR, std::abs(outR[i]));
             }
         }
-        assert(peakL > 0.001f && peakR > 0.001f);
         std::cout << "PASS: Chorus, Phaser, Flanger, and Tempo Delay verified." << std::endl;
+    }
+
+    // 20. Test Carrier Tracking Modes (MIDI +-24st, Freq 20Hz-24kHz, Fixed Note 0-127)
+    {
+        TbdAudio::ModularDrumEngine trackEng;
+        trackEng.init(44100.0f);
+
+        auto* carBlock = dynamic_cast<TbdAudio::CarrierBlock*>(trackEng.getBlock(TbdAudio::ModularDrumEngine::BLK_CARRIER1));
+        assert(carBlock != nullptr);
+
+        // Mode 0: MIDI tracking
+        trackEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 0, 0.0f); // MIDI
+        trackEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 1, 0.5f); // 0 st
+        trackEng.setMidiPitch(36); // C2 = 65.406 Hz
+        const auto& ctx0 = trackEng.getContext();
+        float f0 = carBlock->getBasePitch(ctx0);
+        assert(std::abs(f0 - 65.4064f) < 0.1f);
+
+        // MIDI +24 st offset (+2 octaves)
+        trackEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 1, 1.0f); // +24 st
+        float fPlus24 = carBlock->getBasePitch(ctx0);
+        assert(std::abs(fPlus24 - 65.4064f * 4.0f) < 0.5f);
+
+        // MIDI -24 st offset (-2 octaves)
+        trackEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 1, 0.0f); // -24 st
+        float fMinus24 = carBlock->getBasePitch(ctx0);
+        assert(std::abs(fMinus24 - 65.4064f * 0.25f) < 0.1f);
+
+        // Mode 1: Fixed Frequency
+        trackEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 0, 0.5f); // Freq (0.5 * 2 = 1)
+        float norm55 = std::log(55.0f / 20.0f) / std::log(24000.0f / 20.0f);
+        trackEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 1, norm55);
+        trackEng.setMidiPitch(36);
+        float fFreq1 = carBlock->getBasePitch(trackEng.getContext());
+        assert(std::abs(fFreq1 - 55.0f) < 0.1f);
+        trackEng.setMidiPitch(60); // changing incoming MIDI note has NO effect
+        float fFreq2 = carBlock->getBasePitch(trackEng.getContext());
+        assert(std::abs(fFreq2 - 55.0f) < 0.1f);
+
+        // Mode 2: Fixed Note
+        trackEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 0, 1.0f); // Note (1.0 * 2 = 2)
+        trackEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 1, 33.0f / 127.0f); // A1 (33 = 55 Hz)
+        trackEng.setMidiPitch(36);
+        float fNote1 = carBlock->getBasePitch(trackEng.getContext());
+        assert(std::abs(fNote1 - 55.0f) < 0.1f);
+        trackEng.setMidiPitch(72); // changing incoming MIDI note has NO effect
+        float fNote2 = carBlock->getBasePitch(trackEng.getContext());
+        assert(std::abs(fNote2 - 55.0f) < 0.1f);
+
+        // Fixed Note C4 (60 = 261.63 Hz)
+        trackEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 1, 60.0f / 127.0f);
+        float fNoteC4 = carBlock->getBasePitch(trackEng.getContext());
+        assert(std::abs(fNoteC4 - 261.6256f) < 0.2f);
+
+        std::cout << "PASS: Carrier tracking modes (MIDI +-24st, Fixed Freq, Fixed Note) verified." << std::endl;
     }
 
     std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;

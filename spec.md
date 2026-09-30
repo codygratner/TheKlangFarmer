@@ -157,7 +157,10 @@ To maintain consistency across all modules and effect cards, standard parameter 
 ### 3.8. Tactile Hardware Button Selectors & Toggles
 - All discrete module state selectors and bypass toggles use consistent, large, tactile hardware-style single-row buttons with glowing status LED indicators:
   - **Bypass / Toggle Buttons**: Standardized 2-column single-row layout (`Off`, `On`) with large 26px tactile touch zones (used in `Drive`, `Wave Folder`, `Comb Filter`, `Disperser`, `Amplifier Limiter`, `Pre-Limiter`, and `Post-Limiter`).
-  - **Carrier Pitch Tracking**: Single-row 3-button selector (`MIDI`, `Fixed`, `Offset`).
+  - **Carrier Pitch Tracking**: Single-row 3-button selector (`MIDI`, `Freq`, `Note`).
+    - **MIDI**: Tracks incoming MIDI pitch with a semitone offset slider ($-24$ to $+24$ st, default $0\text{ st}$, center-split bipolar meter).
+    - **Freq**: Fixed continuous frequency slider ($20\,\text{Hz} - 24\,\text{kHz}$, logarithmic, default $55\,\text{Hz}$).
+    - **Note**: Fixed musical note across MIDI notes 0–127 (`C-1` to `G9`, default `A1 = 55 Hz = note 33`) with fixed-width padded readout: `note name [frequency, midi note number]` (e.g. `A1   [   55 Hz,  33]`).
   - **Modulator Tracking & Mode**: Two stacked single-row 3-button selectors: Pitch Tracking (`Fixed`, `Follow`, `FM`) and Type (`Osc`, `Cyclic`, `Noise`).
   - **Pitch Envelope Target**: Single-row 4-button selector (`Off`, `Car`, `Mod`, `Both`).
   - **Filter Mode & Slope**: Two stacked single-row selectors: Type (`LPF`, `BPF`, `HPF`, `BRF` — no bypass/off mode) and Slope (`6`, `12`, `18`, `24`, `36` dB/oct).
@@ -166,7 +169,7 @@ To maintain consistency across all modules and effect cards, standard parameter 
 
 ## 4. Hardware Rack Module Specifications (2 × 4 Paged Rack Layout)
 
-The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 5–8 on bottom).
+The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 5–8 on bottom). Both left-hand slots (Slot 1 Navigation and Slot 5 Visualizer) remain permanently anchored across all pages.
 
 ```
 ┌─────────────────┬─────────────────┬─────────────────┬─────────────────┐
@@ -174,7 +177,7 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 │ Navigation Card │  Page Module 1  │  Page Module 2  │  Page Module 3  │
 ├─────────────────┼─────────────────┼─────────────────┼─────────────────┤
 │     SLOT 5      │     SLOT 6      │     SLOT 7      │     SLOT 8      │
-│  Page Module 4  │  Page Module 5  │  Page Module 6  │  Visualizations │
+│  Visualizations │  Page Module 4  │  Page Module 5  │  Page Module 6  │
 └─────────────────┴─────────────────┴─────────────────┴─────────────────┘
 ```
 
@@ -189,7 +192,7 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
   - `Modulations`
 - Highlighted active LED indicator denoting current page.
 
-### 4.2. Visualization Module (Slot 8 — Fixed Across All Pages)
+### 4.2. Visualization Module (Slot 5 — Fixed Across All Pages)
 - **Automatic Context Tracking**: Buttons have been removed to maximize screen real estate for the high-resolution scope display. The visualizer automatically changes based on whatever module or parameter is being edited or clicked on (including clicking anywhere on the panel/background of a module card).
 - **Active Block Readout**: Top-left corner displays `VISUALIZER: <BLOCK NAME>` (e.g., `VISUALIZER: CARRIER 1`, `VISUALIZER: FILTER 1`, `VISUALIZER: PRE 1: WAVEFOLDER`).
 - **Interactive Padlock Icon (Top Right)**:
@@ -216,10 +219,10 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 ### 4.3. Page 1: Voice 1
 - **Slot 1**: Navigation Module.
 - **Slot 2: Carrier 1**
-  - **Tracking (Selector)**: `MIDI` (0, default), `Fixed` (1), `Offset` (2).
-    - MIDI: Tracks incoming MIDI pitch.
-    - Fixed: Fixed frequency $20\,\text{Hz} - 24\,\text{kHz}$ (default $55\,\text{Hz}$).
-    - Offset: Semitone offset from incoming MIDI pitch: $-60$ to $+60$ semitones (default $0$).
+  - **Tracking (Selector)**: `MIDI` (0, default), `Freq` (1), `Note` (2).
+    - `MIDI`: Tracks incoming MIDI pitch with a semitone offset slider: $-24$ to $+24$ semitones (default $0\text{ st}$, center-split bipolar meter).
+    - `Freq`: Fixed continuous frequency $20\,\text{Hz} - 24\,\text{kHz}$ (logarithmic, default $55\,\text{Hz}$).
+    - `Note`: Fixed musical note across MIDI notes 0–127 (`C-1` to `G9`, default `A1 = 55 Hz = note 33`) with padded readout: `note name [frequency, midi note number]` (e.g. `A1   [   55 Hz,  33]`).
   - **Shape (Continuous)**: Waveform Morph (Sine $\to$ Tri $\to$ Saw $\to$ Square $\to$ PWM).
   - **Mod Depth (Continuous)**: Modulation depth from Modulator 1: $-100\%$ to $+100\%$ (default $0\% = 0.5$).
   - **Visualizer**: Self-locked oscilloscope phase-locked to Carrier 1 fundamental.
@@ -234,23 +237,23 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
   - **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
   - **Depth (Continuous)**: $-5$ to $+5$ octaves (default $0$).
   - **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
-- **Slot 5: Filter 1**
+- **Slot 5**: Visualization Module.
+- **Slot 6: Filter 1**
   - **Type (Selector)**: `LPF` (0, default), `BPF` (1), `HPF` (2), `BRF` (3). *(Off option removed; Filter is always active).*
   - **Slope (Selector)**: `6` (0, 6 dB/oct), `12` (1, default, 12 dB/oct), `18` (2, 18 dB/oct), `24` (3, 24 dB/oct), `36` (4, 36 dB/oct).
   - **Cutoff (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
   - **Resonance (Continuous)**: $0\% - 100\%$ ($Q \approx 0.707 - 18.7$).
   - **Visualizer**: X-Y Frequency vs. Gain Bode plot with cutoff marker.
-- **Slot 6: Filter Envelope 1**
+- **Slot 7: Filter Envelope 1**
   - **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
   - **Depth (Continuous)**: $-10$ to $+10$ octaves (default $0$ oct).
   - **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
   - **Post-Drive (Continuous)**: Filter post-saturation gain: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
-- **Slot 7: Mixer**
+- **Slot 8: Mixer**
   - **Carrier 1 Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $100\%$).
   - **Carrier 2 Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
   - **RingMod Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
   - **Noise Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
-- **Slot 8**: Visualization Module.
 
 ---
 
@@ -262,12 +265,12 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
   - Identical parameters and behavior to Modulator 1.
 - **Slot 4: Pitch Envelope 2**
   - Identical parameters and behavior to Pitch Envelope 1.
-- **Slot 5: Filter 2**
+- **Slot 5**: Visualization Module.
+- **Slot 6: Filter 2**
   - Identical parameters and behavior to Filter 1 (dedicated to Voice 2).
-- **Slot 6: Filter Envelope 2**
+- **Slot 7: Filter Envelope 2**
   - Identical parameters and behavior to Filter Envelope 1 (dedicated to Filter 2).
-- **Slot 7: Mixer** (Carrier 1, Carrier 2, RingMod, Noise levels).
-- **Slot 8**: Visualization Module.
+- **Slot 8: Mixer** (Carrier 1, Carrier 2, RingMod, Noise levels).
 
 ---
 
@@ -279,12 +282,12 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
   - **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
   - **Decay (Continuous)**: Percussive decay ($1\,\text{ms} - 60\,\text{s}$, default $100\,\text{ms}$).
 - **Slot 3 & 4**: Blank Rack Plates.
-- **Slot 5: Filter 3**
+- **Slot 5**: Visualization Module.
+- **Slot 6: Filter 3**
   - Identical parameters and behavior to Filter 1 (dedicated to Noise Transient).
-- **Slot 6: Filter Envelope 3**
+- **Slot 7: Filter Envelope 3**
   - Identical parameters and behavior to Filter Envelope 1 (dedicated to Filter 3).
-- **Slot 7: Mixer** (Carrier 1, Carrier 2, RingMod, Noise levels).
-- **Slot 8**: Visualization Module.
+- **Slot 8: Mixer** (Carrier 1, Carrier 2, RingMod, Noise levels).
 
 ---
 
@@ -293,14 +296,16 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 - **Slot 2: FX Picker**
   - **4 Dropdown Selectors**: Independently assign an effect into Pre-Amp FX Slots 1, 2, 3, and 4.
   - Multi-instance allowed: any effect can be chosen in any number of slots.
-- **Slots 3–6: Pre-Amp FX Slots 1 to 4**
-  - Dynamically configured to the selected effect (see Section 5: Effects Catalog).
-- **Slot 7: Pre-Amp Limiter**
+- **Slot 3: Pre-Amp FX Slot 1**
+- **Slot 4: Pre-Amp FX Slot 2**
+- **Slot 5**: Visualization Module.
+- **Slot 6: Pre-Amp FX Slot 3**
+- **Slot 7: Pre-Amp FX Slot 4**
+- **Slot 8: Pre-Amp Limiter**
   - **Enable (Selector)**: `Off` (0), `On` (1, default).
   - **Input Gain (Continuous)**: $-12\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
   - **Threshold (Continuous)**: $-24\,\text{dB}$ to $0\,\text{dB}$ (default $0\,\text{dB}$).
   - **Release (Continuous)**: $1\,\text{ms}$ to $500\,\text{ms}$ (default $50\,\text{ms}$).
-- **Slot 8**: Visualization Module.
 
 ---
 
@@ -316,9 +321,11 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
   - **Clap Speed (Continuous)**: Decay time per clap: $1\,\text{ms} - 15\,\text{ms}$ (default $3\,\text{ms}$).
   - **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
   - **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
-- **Slots 4–6**: Blank Rack Plates.
+- **Slot 4**: Blank Rack Plate.
+- **Slot 5**: Visualization Module.
+- **Slot 6**: Blank Rack Plate.
 - **Slot 7: Post-Amp Limiter** (Master Limiter controls).
-- **Slot 8**: Visualization Module.
+- **Slot 8: Mixer** (Carrier 1, Carrier 2, RingMod, Noise levels).
 
 ---
 
@@ -327,14 +334,16 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 - **Slot 2: FX Picker**
   - **4 Dropdown Selectors**: Independently assign an effect into Post-Amp FX Slots 1, 2, 3, and 4.
   - Multi-instance allowed: any effect can be chosen in any number of slots.
-- **Slots 3–6: Post-Amp FX Slots 1 to 4**
-  - Dynamically configured to the selected effect (see Section 5: Effects Catalog).
-- **Slot 7: Post-Amp Limiter**
+- **Slot 3: Post-Amp FX Slot 1**
+- **Slot 4: Post-Amp FX Slot 2**
+- **Slot 5**: Visualization Module.
+- **Slot 6: Post-Amp FX Slot 3**
+- **Slot 7: Post-Amp FX Slot 4**
+- **Slot 8: Post-Amp Limiter**
   - **Enable (Selector)**: `Off` (0), `On` (1, default).
   - **Input Gain (Continuous)**: $-12\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
   - **Threshold (Continuous)**: $-24\,\text{dB}$ to $0\,\text{dB}$ (default $0\,\text{dB}$).
   - **Release (Continuous)**: $1\,\text{ms}$ to $500\,\text{ms}$ (default $50\,\text{ms}$).
-- **Slot 8**: Visualization Module.
 
 ---
 
@@ -351,8 +360,9 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
   - **Envelope Depths (Continuous)**: $0\%$ to $\pm 100\%$ (controls all envelope depths).
   - **Envelope Decays (Continuous)**: $0\%$ to $\pm 100\%$ (controls all envelope decay times).
   - **Pan (Continuous)**: $0\%$ to $\pm 100\%$ (controls output stereo panning).
-- **Slots 4–7**: Blank Rack Plates.
-- **Slot 8**: Visualization Module.
+- **Slot 4**: Blank Rack Plate.
+- **Slot 5**: Visualization Module.
+- **Slots 6–8**: Blank Rack Plates.
 
 ---
 
