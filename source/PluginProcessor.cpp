@@ -179,15 +179,37 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
 
     // 21. Velocity
     velSlopeParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_slope"));
-    velDecayParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_decay"));
     velDepthParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_depth"));
+    velDecayParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_decay"));
     velVolumeParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("vel_volume"));
 
-    // 22. Slop
+    // 22. Key Tracking
+    keySlopeParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("key_slope"));
+    keyDepthParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("key_depth"));
+    keyDecayParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("key_decay"));
+    keyVolumeParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("key_volume"));
+
+    // 23. Slop
     slopFreqParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_freq"));
     slopDepthParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_depth"));
     slopDecayParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_decay"));
     slopPanParam         = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("slop_pan"));
+
+    // 24. Mod Envelopes 1..3
+    modEnv1SlopeParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("modenv1_slope"));
+    modEnv1DepthParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("modenv1_depth"));
+    modEnv1DecayParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("modenv1_decay"));
+    modEnv1TargetParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("modenv1_target"));
+
+    modEnv2SlopeParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("modenv2_slope"));
+    modEnv2DepthParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("modenv2_depth"));
+    modEnv2DecayParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("modenv2_decay"));
+    modEnv2TargetParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("modenv2_target"));
+
+    modEnv3SlopeParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("modenv3_slope"));
+    modEnv3DepthParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("modenv3_depth"));
+    modEnv3DecayParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("modenv3_decay"));
+    modEnv3TargetParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("modenv3_target"));
 
     for (int s = 0; s < 4; ++s) {
         for (int p = 0; p < 4; ++p) {
@@ -196,6 +218,12 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
             postFXParam[s][p] = dynamic_cast<juce::AudioParameterFloat*>(
                 apvts.getParameter("post_fx_" + juce::String(s + 1) + "_p" + juce::String(p + 1)));
         }
+    }
+
+    continuousParams.clear();
+    continuousParams.reserve(getModDestinations().size());
+    for (const auto& d : getModDestinations()) {
+        continuousParams.push_back(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(d.id)));
     }
 }
 
@@ -206,6 +234,183 @@ void TheKlangFarmerAudioProcessor::prepareToPlay(double sampleRate, int /*sample
 void TheKlangFarmerAudioProcessor::releaseResources() {
 }
 
+const std::vector<TheKlangFarmerAudioProcessor::ModDestDescriptor>& TheKlangFarmerAudioProcessor::getModDestinations() {
+    using MDE = TbdAudio::ModularDrumEngine;
+    static const std::vector<ModDestDescriptor> destinations = []() {
+        std::vector<ModDestDescriptor> list = {
+            // Voice 1
+            { "carrier1_pitch", "Carrier 1: Pitch / Freq", ModTargetType::PageBlock, MDE::BLK_CARRIER1, 1 },
+            { "carrier1_shape", "Carrier 1: Shape", ModTargetType::PageBlock, MDE::BLK_CARRIER1, 2 },
+            { "carrier1_depth", "Carrier 1: Modulation Depth", ModTargetType::PageBlock, MDE::BLK_CARRIER1, 3 },
+            { "mod1_shape", "Modulator 1: Shape", ModTargetType::PageBlock, MDE::BLK_MODULATOR1, 2 },
+            { "mod1_speed", "Modulator 1: Speed", ModTargetType::PageBlock, MDE::BLK_MODULATOR1, 3 },
+            { "pitchenv1_slope", "PitchEnv 1: Slope", ModTargetType::PageBlock, MDE::BLK_PITCHENV1, 0 },
+            { "pitchenv1_depth", "PitchEnv 1: Depth", ModTargetType::PageBlock, MDE::BLK_PITCHENV1, 1 },
+            { "pitchenv1_decay", "PitchEnv 1: Decay", ModTargetType::PageBlock, MDE::BLK_PITCHENV1, 2 },
+
+            // Voice 2
+            { "carrier2_pitch", "Carrier 2: Pitch / Freq", ModTargetType::PageBlock, MDE::BLK_CARRIER2, 1 },
+            { "carrier2_shape", "Carrier 2: Shape", ModTargetType::PageBlock, MDE::BLK_CARRIER2, 2 },
+            { "carrier2_depth", "Carrier 2: Modulation Depth", ModTargetType::PageBlock, MDE::BLK_CARRIER2, 3 },
+            { "mod2_shape", "Modulator 2: Shape", ModTargetType::PageBlock, MDE::BLK_MODULATOR2, 2 },
+            { "mod2_speed", "Modulator 2: Speed", ModTargetType::PageBlock, MDE::BLK_MODULATOR2, 3 },
+            { "pitchenv2_slope", "PitchEnv 2: Slope", ModTargetType::PageBlock, MDE::BLK_PITCHENV2, 0 },
+            { "pitchenv2_depth", "PitchEnv 2: Depth", ModTargetType::PageBlock, MDE::BLK_PITCHENV2, 1 },
+            { "pitchenv2_decay", "PitchEnv 2: Decay", ModTargetType::PageBlock, MDE::BLK_PITCHENV2, 2 },
+
+            // Transients & Mixer
+            { "noise_sh_rate", "Noise: S&H Rate", ModTargetType::PageBlock, MDE::BLK_NOISE, 0 },
+            { "noise_filter", "Noise: Filter", ModTargetType::PageBlock, MDE::BLK_NOISE, 1 },
+            { "noise_drive", "Noise: Drive", ModTargetType::PageBlock, MDE::BLK_NOISE, 2 },
+            { "noise_decay", "Noise: Decay", ModTargetType::PageBlock, MDE::BLK_NOISE, 3 },
+            { "mixer_carrier1_level", "Mixer: Carrier 1 Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 0 },
+            { "mixer_carrier2_level", "Mixer: Carrier 2 Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 1 },
+            { "mixer_ringmod", "Mixer: Ring Mod Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 2 },
+            { "mixer_noise_level", "Mixer: Noise Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 3 },
+
+            // Drive & Filters
+            { "drive_amount", "Drive: Amount", ModTargetType::PageBlock, MDE::BLK_DRIVE, 0 },
+            { "drive_bias", "Drive: Bias", ModTargetType::PageBlock, MDE::BLK_DRIVE, 1 },
+            { "drive_filter", "Drive: Filter", ModTargetType::PageBlock, MDE::BLK_DRIVE, 2 },
+            { "filter1_cutoff", "Filter 1: Cutoff", ModTargetType::PageBlock, MDE::BLK_FILTER1, 2 },
+            { "filter1_resonance", "Filter 1: Resonance", ModTargetType::PageBlock, MDE::BLK_FILTER1, 3 },
+            { "filterenv1_slope", "FilterEnv 1: Slope", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 0 },
+            { "filterenv1_depth", "FilterEnv 1: Depth", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 1 },
+            { "filterenv1_decay", "FilterEnv 1: Decay", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 2 },
+            { "filterenv1_postdrive", "FilterEnv 1: Post-Drive", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 3 },
+            { "filter2_cutoff", "Filter 2: Cutoff", ModTargetType::PageBlock, MDE::BLK_FILTER2, 2 },
+            { "filter2_resonance", "Filter 2: Resonance", ModTargetType::PageBlock, MDE::BLK_FILTER2, 3 },
+            { "filterenv2_slope", "FilterEnv 2: Slope", ModTargetType::PageBlock, MDE::BLK_FILTERENV2, 0 },
+            { "filterenv2_depth", "FilterEnv 2: Depth", ModTargetType::PageBlock, MDE::BLK_FILTERENV2, 1 },
+            { "filterenv2_decay", "FilterEnv 2: Decay", ModTargetType::PageBlock, MDE::BLK_FILTERENV2, 2 },
+            { "filterenv2_postdrive", "FilterEnv 2: Post-Drive", ModTargetType::PageBlock, MDE::BLK_FILTERENV2, 3 },
+            { "filter3_cutoff", "Filter 3: Cutoff", ModTargetType::PageBlock, MDE::BLK_FILTER3, 2 },
+            { "filter3_resonance", "Filter 3: Resonance", ModTargetType::PageBlock, MDE::BLK_FILTER3, 3 },
+            { "filterenv3_slope", "FilterEnv 3: Slope", ModTargetType::PageBlock, MDE::BLK_FILTERENV3, 0 },
+            { "filterenv3_depth", "FilterEnv 3: Depth", ModTargetType::PageBlock, MDE::BLK_FILTERENV3, 1 },
+            { "filterenv3_decay", "FilterEnv 3: Decay", ModTargetType::PageBlock, MDE::BLK_FILTERENV3, 2 },
+            { "filterenv3_postdrive", "FilterEnv 3: Post-Drive", ModTargetType::PageBlock, MDE::BLK_FILTERENV3, 3 },
+            { "fxfilter_cutoff", "FX Filter: Cutoff", ModTargetType::PageBlock, MDE::BLK_FXFILTER, 2 },
+            { "fxfilter_resonance", "FX Filter: Resonance", ModTargetType::PageBlock, MDE::BLK_FXFILTER, 3 },
+
+            // Limiters
+            { "pre_limiter_gain", "Pre-Limiter: Input Gain", ModTargetType::PageBlock, MDE::BLK_PRE_LIMITER, 1 },
+            { "pre_limiter_thresh", "Pre-Limiter: Threshold", ModTargetType::PageBlock, MDE::BLK_PRE_LIMITER, 2 },
+            { "pre_limiter_release", "Pre-Limiter: Release", ModTargetType::PageBlock, MDE::BLK_PRE_LIMITER, 3 },
+            { "post_limiter_gain", "Post-Limiter: Input Gain", ModTargetType::PageBlock, MDE::BLK_POST_LIMITER, 1 },
+            { "post_limiter_thresh", "Post-Limiter: Threshold", ModTargetType::PageBlock, MDE::BLK_POST_LIMITER, 2 },
+            { "post_limiter_release", "Post-Limiter: Release", ModTargetType::PageBlock, MDE::BLK_POST_LIMITER, 3 }
+        };
+
+        // 32 Pre & Post FX parameters (matching exact createParameterLayout order)
+        static const char* preIds[4][4] = {
+            { "pre_fx_1_p1", "pre_fx_1_p2", "pre_fx_1_p3", "pre_fx_1_p4" },
+            { "pre_fx_2_p1", "pre_fx_2_p2", "pre_fx_2_p3", "pre_fx_2_p4" },
+            { "pre_fx_3_p1", "pre_fx_3_p2", "pre_fx_3_p3", "pre_fx_3_p4" },
+            { "pre_fx_4_p1", "pre_fx_4_p2", "pre_fx_4_p3", "pre_fx_4_p4" }
+        };
+        static const char* preNames[4][4] = {
+            { "Pre FX 1: Param 1", "Pre FX 1: Param 2", "Pre FX 1: Param 3", "Pre FX 1: Param 4" },
+            { "Pre FX 2: Param 1", "Pre FX 2: Param 2", "Pre FX 2: Param 3", "Pre FX 2: Param 4" },
+            { "Pre FX 3: Param 1", "Pre FX 3: Param 2", "Pre FX 3: Param 3", "Pre FX 3: Param 4" },
+            { "Pre FX 4: Param 1", "Pre FX 4: Param 2", "Pre FX 4: Param 3", "Pre FX 4: Param 4" }
+        };
+        for (int s = 0; s < 4; ++s) {
+            for (int p = 0; p < 4; ++p) {
+                list.push_back({ preIds[s][p], preNames[s][p], ModTargetType::PreFX, s, p });
+            }
+        }
+
+        static const char* postIds[4][4] = {
+            { "post_fx_1_p1", "post_fx_1_p2", "post_fx_1_p3", "post_fx_1_p4" },
+            { "post_fx_2_p1", "post_fx_2_p2", "post_fx_2_p3", "post_fx_2_p4" },
+            { "post_fx_3_p1", "post_fx_3_p2", "post_fx_3_p3", "post_fx_3_p4" },
+            { "post_fx_4_p1", "post_fx_4_p2", "post_fx_4_p3", "post_fx_4_p4" }
+        };
+        static const char* postNames[4][4] = {
+            { "Post FX 1: Param 1", "Post FX 1: Param 2", "Post FX 1: Param 3", "Post FX 1: Param 4" },
+            { "Post FX 2: Param 1", "Post FX 2: Param 2", "Post FX 2: Param 3", "Post FX 2: Param 4" },
+            { "Post FX 3: Param 1", "Post FX 3: Param 2", "Post FX 3: Param 3", "Post FX 3: Param 4" },
+            { "Post FX 4: Param 1", "Post FX 4: Param 2", "Post FX 4: Param 3", "Post FX 4: Param 4" }
+        };
+        for (int s = 0; s < 4; ++s) {
+            for (int p = 0; p < 4; ++p) {
+                list.push_back({ postIds[s][p], postNames[s][p], ModTargetType::PostFX, s, p });
+            }
+        }
+
+        // Remaining Standalone FX, Amp, Modulations
+        std::vector<ModDestDescriptor> remaining = {
+            { "wavefolder_fold", "WaveFolder: Fold", ModTargetType::PageBlock, MDE::BLK_WAVEFOLDER, 1 },
+            { "wavefolder_bias", "WaveFolder: Bias", ModTargetType::PageBlock, MDE::BLK_WAVEFOLDER, 2 },
+            { "wavefolder_filter", "WaveFolder: Filter", ModTargetType::PageBlock, MDE::BLK_WAVEFOLDER, 3 },
+            { "ringmod_shape", "RingMod: Waveform", ModTargetType::PageBlock, MDE::BLK_RINGMOD, 0 },
+            { "ringmod_rate", "RingMod: Rate", ModTargetType::PageBlock, MDE::BLK_RINGMOD, 1 },
+            { "ringmod_amount", "RingMod: Amount", ModTargetType::PageBlock, MDE::BLK_RINGMOD, 2 },
+            { "ringmod_width", "RingMod: Width", ModTargetType::PageBlock, MDE::BLK_RINGMOD, 3 },
+            { "freqshift_shift", "FreqShift: Shift", ModTargetType::PageBlock, MDE::BLK_FREQSHIFT, 0 },
+            { "freqshift_range", "FreqShift: Range", ModTargetType::PageBlock, MDE::BLK_FREQSHIFT, 1 },
+            { "freqshift_blend", "FreqShift: Blend", ModTargetType::PageBlock, MDE::BLK_FREQSHIFT, 2 },
+            { "freqshift_width", "FreqShift: Width", ModTargetType::PageBlock, MDE::BLK_FREQSHIFT, 3 },
+            { "grit_bits", "Grit: Bit Reduction", ModTargetType::PageBlock, MDE::BLK_GRIT, 0 },
+            { "grit_rate", "Grit: Sample Rate", ModTargetType::PageBlock, MDE::BLK_GRIT, 1 },
+            { "grit_low", "Grit: Low Shelf", ModTargetType::PageBlock, MDE::BLK_GRIT, 2 },
+            { "grit_high", "Grit: High Shelf", ModTargetType::PageBlock, MDE::BLK_GRIT, 3 },
+            { "comb_dampening", "Comb: Dampening", ModTargetType::PageBlock, MDE::BLK_COMB, 1 },
+            { "comb_cutoff", "Comb: Cutoff", ModTargetType::PageBlock, MDE::BLK_COMB, 2 },
+            { "comb_resonance", "Comb: Resonance", ModTargetType::PageBlock, MDE::BLK_COMB, 3 },
+            { "disperser_amount", "Disperser: Amount", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 1 },
+            { "disperser_cutoff", "Disperser: Cutoff", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 2 },
+            { "disperser_resonance", "Disperser: Resonance", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 3 },
+            { "eq_freq", "EQ: Frequency", ModTargetType::PageBlock, MDE::BLK_EQ, 0 },
+            { "eq_width", "EQ: Width", ModTargetType::PageBlock, MDE::BLK_EQ, 1 },
+            { "eq_gain", "EQ: Gain", ModTargetType::PageBlock, MDE::BLK_EQ, 2 },
+            { "eq_filter", "EQ: DJ Filter", ModTargetType::PageBlock, MDE::BLK_EQ, 3 },
+            { "amp_level", "Amp: Level", ModTargetType::PageBlock, MDE::BLK_AMP, 0 },
+            { "amp_pan", "Amp: Pan", ModTargetType::PageBlock, MDE::BLK_AMP, 1 },
+            { "amp_drive", "Amp: Drive", ModTargetType::PageBlock, MDE::BLK_AMP, 2 },
+            { "ampenv_claps", "AmpEnv: Claps", ModTargetType::PageBlock, MDE::BLK_AMPENV, 0 },
+            { "ampenv_clapspeed", "AmpEnv: Clap Speed", ModTargetType::PageBlock, MDE::BLK_AMPENV, 1 },
+            { "ampenv_slope", "AmpEnv: Slope", ModTargetType::PageBlock, MDE::BLK_AMPENV, 2 },
+            { "ampenv_decay", "AmpEnv: Decay", ModTargetType::PageBlock, MDE::BLK_AMPENV, 3 },
+            { "vel_slope", "Velocity: Slope", ModTargetType::PageBlock, MDE::BLK_VELOCITY, 0 },
+            { "vel_depth", "Velocity: Depth", ModTargetType::PageBlock, MDE::BLK_VELOCITY, 1 },
+            { "vel_decay", "Velocity: Decay", ModTargetType::PageBlock, MDE::BLK_VELOCITY, 2 },
+            { "vel_volume", "Velocity: Volume", ModTargetType::PageBlock, MDE::BLK_VELOCITY, 3 },
+            { "key_slope", "KeyTrack: Slope", ModTargetType::PageBlock, MDE::BLK_KEYTRACK, 0 },
+            { "key_depth", "KeyTrack: Depth", ModTargetType::PageBlock, MDE::BLK_KEYTRACK, 1 },
+            { "key_decay", "KeyTrack: Decay", ModTargetType::PageBlock, MDE::BLK_KEYTRACK, 2 },
+            { "key_volume", "KeyTrack: Volume", ModTargetType::PageBlock, MDE::BLK_KEYTRACK, 3 },
+            { "slop_freq", "Slop: Frequency", ModTargetType::PageBlock, MDE::BLK_SLOP, 0 },
+            { "slop_depth", "Slop: Depth", ModTargetType::PageBlock, MDE::BLK_SLOP, 1 },
+            { "slop_decay", "Slop: Decay", ModTargetType::PageBlock, MDE::BLK_SLOP, 2 },
+            { "slop_pan", "Slop: Pan", ModTargetType::PageBlock, MDE::BLK_SLOP, 3 },
+            { "modenv1_slope", "ModEnv 1: Slope", ModTargetType::PageBlock, MDE::BLK_MODENV1, 0 },
+            { "modenv1_depth", "ModEnv 1: Depth", ModTargetType::PageBlock, MDE::BLK_MODENV1, 1 },
+            { "modenv1_decay", "ModEnv 1: Decay", ModTargetType::PageBlock, MDE::BLK_MODENV1, 2 },
+            { "modenv2_slope", "ModEnv 2: Slope", ModTargetType::PageBlock, MDE::BLK_MODENV2, 0 },
+            { "modenv2_depth", "ModEnv 2: Depth", ModTargetType::PageBlock, MDE::BLK_MODENV2, 1 },
+            { "modenv2_decay", "ModEnv 2: Decay", ModTargetType::PageBlock, MDE::BLK_MODENV2, 2 },
+            { "modenv3_slope", "ModEnv 3: Slope", ModTargetType::PageBlock, MDE::BLK_MODENV3, 0 },
+            { "modenv3_depth", "ModEnv 3: Depth", ModTargetType::PageBlock, MDE::BLK_MODENV3, 1 },
+            { "modenv3_decay", "ModEnv 3: Decay", ModTargetType::PageBlock, MDE::BLK_MODENV3, 2 }
+        };
+
+        for (auto& item : remaining) list.push_back(item);
+        return list;
+    }();
+    return destinations;
+}
+
+juce::StringArray TheKlangFarmerAudioProcessor::getModDestinationChoices() {
+    juce::StringArray choices;
+    choices.add("None");
+    for (const auto& d : getModDestinations()) {
+        choices.add(d.name);
+    }
+    return choices;
+}
+
 bool TheKlangFarmerAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const {
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()
      && layouts.getMainOutputChannelSet() != juce::AudioChannelSet::stereo())
@@ -214,20 +419,10 @@ bool TheKlangFarmerAudioProcessor::isBusesLayoutSupported(const BusesLayout& lay
     return true;
 }
 
-void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
-    juce::ScopedNoDenormals noDenormals;
-
+void TheKlangFarmerAudioProcessor::applyBaseParameters() {
     auto getNorm = [](juce::AudioParameterFloat* p) {
         return p ? p->range.convertTo0to1(p->get()) : 0.0f;
     };
-
-    if (auto* playHead = getPlayHead()) {
-        if (auto posOpt = playHead->getPosition()) {
-            if (auto bpmOpt = posOpt->getBpm()) {
-                engine.setBpm(static_cast<float>(*bpmOpt));
-            }
-        }
-    }
 
     // 1. Carrier 1
     if (carrier1TrackingParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 0, static_cast<float>(carrier1TrackingParam->getIndex()) / 2.0f);
@@ -242,10 +437,10 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     if (mod1SpeedParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODULATOR1, 3, getNorm(mod1SpeedParam));
 
     // 3. Pitch Envelope 1
-    if (pitchEnv1TargetParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 0, static_cast<float>(pitchEnv1TargetParam->getIndex()) / 3.0f);
-    if (pitchEnv1SlopeParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 1, getNorm(pitchEnv1SlopeParam));
-    if (pitchEnv1DepthParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 2, getNorm(pitchEnv1DepthParam));
-    if (pitchEnv1DecayParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 3, getNorm(pitchEnv1DecayParam));
+    if (pitchEnv1SlopeParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 0, getNorm(pitchEnv1SlopeParam));
+    if (pitchEnv1DepthParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 1, getNorm(pitchEnv1DepthParam));
+    if (pitchEnv1DecayParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 2, getNorm(pitchEnv1DecayParam));
+    if (pitchEnv1TargetParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 3, static_cast<float>(pitchEnv1TargetParam->getIndex()) / 3.0f);
 
     // 4. Carrier 2
     if (carrier2TrackingParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER2, 0, static_cast<float>(carrier2TrackingParam->getIndex()) / 2.0f);
@@ -260,10 +455,10 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     if (mod2SpeedParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODULATOR2, 3, getNorm(mod2SpeedParam));
 
     // 6. Pitch Envelope 2
-    if (pitchEnv2TargetParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 0, static_cast<float>(pitchEnv2TargetParam->getIndex()) / 3.0f);
-    if (pitchEnv2SlopeParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 1, getNorm(pitchEnv2SlopeParam));
-    if (pitchEnv2DepthParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 2, getNorm(pitchEnv2DepthParam));
-    if (pitchEnv2DecayParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 3, getNorm(pitchEnv2DecayParam));
+    if (pitchEnv2SlopeParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 0, getNorm(pitchEnv2SlopeParam));
+    if (pitchEnv2DepthParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 1, getNorm(pitchEnv2DepthParam));
+    if (pitchEnv2DecayParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 2, getNorm(pitchEnv2DecayParam));
+    if (pitchEnv2TargetParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 3, static_cast<float>(pitchEnv2TargetParam->getIndex()) / 3.0f);
 
     // 7. Noise Transient
     if (noiseShRateParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_NOISE, 0, getNorm(noiseShRateParam));
@@ -346,7 +541,7 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
 
     for (int s = 0; s < 4; ++s) {
         for (int p = 0; p < 4; ++p) {
-            if (preFXParam[s][p]) engine.setPreFXParam(s, p, getNorm(preFXParam[s][p]));
+            if (preFXParam[s][p])  engine.setPreFXParam(s, p, getNorm(preFXParam[s][p]));
             if (postFXParam[s][p]) engine.setPostFXParam(s, p, getNorm(postFXParam[s][p]));
         }
     }
@@ -407,19 +602,129 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
 
     // 21. Velocity
     if (velSlopeParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 0, getNorm(velSlopeParam));
-    if (velDecayParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, getNorm(velDecayParam));
-    if (velDepthParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, getNorm(velDepthParam));
+    if (velDepthParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, getNorm(velDepthParam));
+    if (velDecayParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, getNorm(velDecayParam));
     if (velVolumeParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 3, getNorm(velVolumeParam));
 
-    // 22. Slop
+    // 22. Key Tracking
+    if (keySlopeParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_KEYTRACK, 0, getNorm(keySlopeParam));
+    if (keyDepthParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_KEYTRACK, 1, getNorm(keyDepthParam));
+    if (keyDecayParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_KEYTRACK, 2, getNorm(keyDecayParam));
+    if (keyVolumeParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_KEYTRACK, 3, getNorm(keyVolumeParam));
+
+    // 23. Slop
     if (slopFreqParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 0, getNorm(slopFreqParam));
     if (slopDepthParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 1, getNorm(slopDepthParam));
     if (slopDecayParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 2, getNorm(slopDecayParam));
     if (slopPanParam)         engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_SLOP, 3, getNorm(slopPanParam));
 
+    // 24. Mod Envelopes 1..3
+    if (modEnv1SlopeParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV1, 0, getNorm(modEnv1SlopeParam));
+    if (modEnv1DepthParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV1, 1, getNorm(modEnv1DepthParam));
+    if (modEnv1DecayParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV1, 2, getNorm(modEnv1DecayParam));
+    if (modEnv1TargetParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV1, 3, static_cast<float>(modEnv1TargetParam->getIndex()));
+
+    if (modEnv2SlopeParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV2, 0, getNorm(modEnv2SlopeParam));
+    if (modEnv2DepthParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV2, 1, getNorm(modEnv2DepthParam));
+    if (modEnv2DecayParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV2, 2, getNorm(modEnv2DecayParam));
+    if (modEnv2TargetParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV2, 3, static_cast<float>(modEnv2TargetParam->getIndex()));
+
+    if (modEnv3SlopeParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV3, 0, getNorm(modEnv3SlopeParam));
+    if (modEnv3DepthParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV3, 1, getNorm(modEnv3DepthParam));
+    if (modEnv3DecayParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV3, 2, getNorm(modEnv3DecayParam));
+    if (modEnv3TargetParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV3, 3, static_cast<float>(modEnv3TargetParam->getIndex()));
+}
+
+void TheKlangFarmerAudioProcessor::applyModulationTargets(int target1, int target2, int target3) {
+    const auto& destinations = getModDestinations();
+    int numDests = static_cast<int>(destinations.size());
+
+    float me1Val = engine.getModEnvValue(0);
+    float me2Val = engine.getModEnvValue(1);
+    float me3Val = engine.getModEnvValue(2);
+
+    auto applySingleTarget = [&](int targetIdx, float offset) {
+        if (targetIdx <= 0 || targetIdx > numDests) return;
+        int dIdx = targetIdx - 1;
+        if (dIdx >= static_cast<int>(continuousParams.size())) return;
+        auto* p = continuousParams[dIdx];
+        if (!p) return;
+
+        float baseNorm = p->range.convertTo0to1(p->get());
+        float moddedVal = std::clamp(baseNorm + offset, 0.0f, 1.0f);
+        const auto& d = destinations[dIdx];
+
+        if (d.type == ModTargetType::PageBlock) {
+            engine.setPageParameter(static_cast<TbdAudio::ModularDrumEngine::BlockID>(d.blockOrSlot), d.paramIndex, moddedVal);
+        } else if (d.type == ModTargetType::PreFX) {
+            engine.setPreFXParam(d.blockOrSlot, d.paramIndex, moddedVal);
+        } else if (d.type == ModTargetType::PostFX) {
+            engine.setPostFXParam(d.blockOrSlot, d.paramIndex, moddedVal);
+        }
+    };
+
+    if (target1 > 0 && target2 == target1 && target3 == target1) {
+        applySingleTarget(target1, me1Val + me2Val + me3Val);
+    } else if (target1 > 0 && target2 == target1) {
+        applySingleTarget(target1, me1Val + me2Val);
+        if (target3 > 0) applySingleTarget(target3, me3Val);
+    } else if (target1 > 0 && target3 == target1) {
+        applySingleTarget(target1, me1Val + me3Val);
+        if (target2 > 0) applySingleTarget(target2, me2Val);
+    } else if (target2 > 0 && target3 == target2) {
+        if (target1 > 0) applySingleTarget(target1, me1Val);
+        applySingleTarget(target2, me2Val + me3Val);
+    } else {
+        if (target1 > 0) applySingleTarget(target1, me1Val);
+        if (target2 > 0) applySingleTarget(target2, me2Val);
+        if (target3 > 0) applySingleTarget(target3, me3Val);
+    }
+}
+
+void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
+    juce::ScopedNoDenormals noDenormals;
+
+    if (auto* playHead = getPlayHead()) {
+        if (auto posOpt = playHead->getPosition()) {
+            if (auto bpmOpt = posOpt->getBpm()) {
+                engine.setBpm(static_cast<float>(*bpmOpt));
+            }
+        }
+    }
+
+    applyBaseParameters();
+
+    int target1 = modEnv1TargetParam ? modEnv1TargetParam->getIndex() : 0;
+    int target2 = modEnv2TargetParam ? modEnv2TargetParam->getIndex() : 0;
+    int target3 = modEnv3TargetParam ? modEnv3TargetParam->getIndex() : 0;
+    bool hasModTargets = (target1 > 0 || target2 > 0 || target3 > 0);
+
     int numSamples = buffer.getNumSamples();
     float* left = buffer.getNumChannels() > 0 ? buffer.getWritePointer(0) : nullptr;
     float* right = buffer.getNumChannels() > 1 ? buffer.getWritePointer(1) : left;
+
+    auto renderSlice = [&](int startSample, int numSliceSamples) {
+        if (numSliceSamples <= 0) return;
+
+        if (!hasModTargets) {
+            float* l = left ? left + startSample : nullptr;
+            float* r = right ? right + startSample : nullptr;
+            engine.processStereo(l, r, numSliceSamples);
+            return;
+        }
+
+        constexpr int SUB_CHUNK = 32;
+        int slicePos = 0;
+        while (slicePos < numSliceSamples) {
+            int curChunk = std::min(SUB_CHUNK, numSliceSamples - slicePos);
+            float* l = left ? left + startSample + slicePos : nullptr;
+            float* r = right ? right + startSample + slicePos : nullptr;
+
+            applyModulationTargets(target1, target2, target3);
+            engine.processStereo(l, r, curChunk);
+            slicePos += curChunk;
+        }
+    };
 
     int currentSample = 0;
 
@@ -427,32 +732,25 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
         auto msg = metadata.getMessage();
         int eventSample = static_cast<int>(metadata.samplePosition);
 
-        // Sanity check eventSample (should be within [0, numSamples])
         if (eventSample < currentSample) eventSample = currentSample;
         if (eventSample > numSamples) eventSample = numSamples;
 
-        // Process audio up to this event
         if (eventSample > currentSample) {
-            int samplesToProcess = eventSample - currentSample;
-            float* leftPtr = left ? left + currentSample : nullptr;
-            float* rightPtr = right ? right + currentSample : nullptr;
-            engine.processStereo(leftPtr, rightPtr, samplesToProcess);
+            renderSlice(currentSample, eventSample - currentSample);
             currentSample = eventSample;
         }
 
-        // Handle MIDI triggers
         if (msg.isNoteOn()) {
             engine.setMidiPitch(msg.getNoteNumber());
             engine.trigger(msg.getFloatVelocity());
+            if (hasModTargets) {
+                applyModulationTargets(target1, target2, target3);
+            }
         }
     }
 
-    // Process remaining samples in the block
     if (currentSample < numSamples) {
-        int samplesToProcess = numSamples - currentSample;
-        float* leftPtr = left ? left + currentSample : nullptr;
-        float* rightPtr = right ? right + currentSample : nullptr;
-        engine.processStereo(leftPtr, rightPtr, samplesToProcess);
+        renderSlice(currentSample, numSamples - currentSample);
     }
 }
 
@@ -543,12 +841,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("mod1_speed", "Modulator 1: Speed", 0.50934f));      // 55 Hz (0.50934)
 
     // --- 3. PITCH ENVELOPE 1 ---
+    layout.add(makeFloatParam("pitchenv1_slope", "PitchEnv 1: Slope", 0.5886f));   // Exponential (def)
+    layout.add(makeFloatParam("pitchenv1_depth", "PitchEnv 1: Depth", 0.5f));      // 0%
+    layout.add(makeFloatParam("pitchenv1_decay", "PitchEnv 1: Decay", 0.3806f));   // 333 ms
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("pitchenv1_target", 1), "PitchEnv 1: Target",
         juce::StringArray{ "Off", "Car", "Mod", "Both" }, 0));
-    layout.add(makeFloatParam("pitchenv1_slope", "PitchEnv 1: Slope", 0.0f));      // Exponential
-    layout.add(makeFloatParam("pitchenv1_depth", "PitchEnv 1: Depth", 0.5f));      // 0%
-    layout.add(makeFloatParam("pitchenv1_decay", "PitchEnv 1: Decay", 0.3806f));   // 333 ms
 
     // --- 4. CARRIER 2 ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
@@ -569,12 +867,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("mod2_speed", "Modulator 2: Speed", 0.50934f));      // 55 Hz (0.50934)
 
     // --- 6. PITCH ENVELOPE 2 ---
+    layout.add(makeFloatParam("pitchenv2_slope", "PitchEnv 2: Slope", 0.5886f));   // Exponential (def)
+    layout.add(makeFloatParam("pitchenv2_depth", "PitchEnv 2: Depth", 0.5f));      // 0%
+    layout.add(makeFloatParam("pitchenv2_decay", "PitchEnv 2: Decay", 0.3806f));   // 333 ms
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("pitchenv2_target", 1), "PitchEnv 2: Target",
         juce::StringArray{ "Off", "Car", "Mod", "Both" }, 0));
-    layout.add(makeFloatParam("pitchenv2_slope", "PitchEnv 2: Slope", 0.0f));      // Exponential
-    layout.add(makeFloatParam("pitchenv2_depth", "PitchEnv 2: Depth", 0.5f));      // 0%
-    layout.add(makeFloatParam("pitchenv2_decay", "PitchEnv 2: Decay", 0.3806f));   // 333 ms
 
     // --- 7. NOISE TRANSIENT ---
     layout.add(makeFloatParam("noise_sh_rate", "Noise: S&H Rate", 1.0f));       // 24 kHz
@@ -606,7 +904,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("filter1_cutoff", "Filter 1: Cutoff", 1.0f));
     layout.add(makeFloatParam("filter1_resonance", "Filter 1: Resonance", 0.0f));
 
-    layout.add(makeFloatParam("filterenv1_slope", "FilterEnv 1: Slope", 0.0f));
+    layout.add(makeFloatParam("filterenv1_slope", "FilterEnv 1: Slope", 0.5886f));
     layout.add(makeFloatParam("filterenv1_depth", "FilterEnv 1: Depth", 0.5f));
     layout.add(makeFloatParam("filterenv1_decay", "FilterEnv 1: Decay", 0.3806f));
     layout.add(makeFloatParam("filterenv1_postdrive", "FilterEnv 1: Post-Drive", 0.5f));
@@ -621,7 +919,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("filter2_cutoff", "Filter 2: Cutoff", 1.0f));
     layout.add(makeFloatParam("filter2_resonance", "Filter 2: Resonance", 0.0f));
 
-    layout.add(makeFloatParam("filterenv2_slope", "FilterEnv 2: Slope", 0.0f));
+    layout.add(makeFloatParam("filterenv2_slope", "FilterEnv 2: Slope", 0.5886f));
     layout.add(makeFloatParam("filterenv2_depth", "FilterEnv 2: Depth", 0.5f));
     layout.add(makeFloatParam("filterenv2_decay", "FilterEnv 2: Decay", 0.3806f));
     layout.add(makeFloatParam("filterenv2_postdrive", "FilterEnv 2: Post-Drive", 0.5f));
@@ -636,7 +934,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("filter3_cutoff", "Filter 3: Cutoff", 1.0f));
     layout.add(makeFloatParam("filter3_resonance", "Filter 3: Resonance", 0.0f));
 
-    layout.add(makeFloatParam("filterenv3_slope", "FilterEnv 3: Slope", 0.0f));
+    layout.add(makeFloatParam("filterenv3_slope", "FilterEnv 3: Slope", 0.5886f));
     layout.add(makeFloatParam("filterenv3_depth", "FilterEnv 3: Depth", 0.5f));
     layout.add(makeFloatParam("filterenv3_decay", "FilterEnv 3: Decay", 0.3078f));
     layout.add(makeFloatParam("filterenv3_postdrive", "FilterEnv 3: Post-Drive", 0.5f));
@@ -783,20 +1081,51 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- 20. AMP ENVELOPE ---
     layout.add(makeFloatParam("ampenv_claps", "AmpEnv: Claps", 0.0f));          // 0 claps
     layout.add(makeFloatParam("ampenv_clapspeed", "AmpEnv: Clap Speed", 0.1429f)); // 3 ms
-    layout.add(makeFloatParam("ampenv_slope", "AmpEnv: Slope", 0.0f));          // Exponential
+    layout.add(makeFloatParam("ampenv_slope", "AmpEnv: Slope", 0.5886f));       // Exponential (def)
     layout.add(makeFloatParam("ampenv_decay", "AmpEnv: Decay", 0.3806f));       // 333 ms
 
     // --- 21. VELOCITY ---
-    layout.add(makeFloatParam("vel_slope", "Velocity: Slope", 0.0f));            // Exponential
-    layout.add(makeFloatParam("vel_decay", "Velocity: Decay", 0.5f));            // 0% (bipolar center)
+    layout.add(makeFloatParam("vel_slope", "Velocity: Slope", 0.5886f));          // Exponential (def)
     layout.add(makeFloatParam("vel_depth", "Velocity: Depth", 0.5f));            // 0% (bipolar center)
+    layout.add(makeFloatParam("vel_decay", "Velocity: Decay", 0.5f));            // 0% (bipolar center)
     layout.add(makeFloatParam("vel_volume", "Velocity: Volume", 0.0f));          // 0% (unipolar min)
 
-    // --- 22. SLOP ---
+    // --- 22. KEY TRACKING ---
+    layout.add(makeFloatParam("key_slope", "KeyTrack: Slope", 0.5886f));          // Exponential (def)
+    layout.add(makeFloatParam("key_depth", "KeyTrack: Depth", 0.5f));            // 0% (bipolar center)
+    layout.add(makeFloatParam("key_decay", "KeyTrack: Decay", 0.5f));            // 0% (bipolar center)
+    layout.add(makeFloatParam("key_volume", "KeyTrack: Volume", 0.0f));          // 0% (unipolar min)
+
+    // --- 23. SLOP ---
     layout.add(makeFloatParam("slop_freq", "Slop: Frequency", 0.0f));           // 0% (unipolar min)
     layout.add(makeFloatParam("slop_depth", "Slop: Depth", 0.0f));              // 0% (unipolar min)
     layout.add(makeFloatParam("slop_decay", "Slop: Decay", 0.0f));              // 0% (unipolar min)
     layout.add(makeFloatParam("slop_pan", "Slop: Pan", 0.0f));                  // 0% (unipolar min)
+
+    // --- 24. MOD ENVELOPE 1 ---
+    const auto modChoices = getModDestinationChoices();
+    layout.add(makeFloatParam("modenv1_slope", "ModEnv 1: Slope", 0.5886f));     // Exponential (def)
+    layout.add(makeFloatParam("modenv1_depth", "ModEnv 1: Depth", 0.5f));        // 0% (bipolar center)
+    layout.add(makeFloatParam("modenv1_decay", "ModEnv 1: Decay", 0.3806f));     // 333 ms
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("modenv1_target", 1), "ModEnv 1: Destination",
+        modChoices, 0));
+
+    // --- 25. MOD ENVELOPE 2 ---
+    layout.add(makeFloatParam("modenv2_slope", "ModEnv 2: Slope", 0.5886f));     // Exponential (def)
+    layout.add(makeFloatParam("modenv2_depth", "ModEnv 2: Depth", 0.5f));        // 0% (bipolar center)
+    layout.add(makeFloatParam("modenv2_decay", "ModEnv 2: Decay", 0.3806f));     // 333 ms
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("modenv2_target", 1), "ModEnv 2: Destination",
+        modChoices, 0));
+
+    // --- 26. MOD ENVELOPE 3 ---
+    layout.add(makeFloatParam("modenv3_slope", "ModEnv 3: Slope", 0.5886f));     // Exponential (def)
+    layout.add(makeFloatParam("modenv3_depth", "ModEnv 3: Depth", 0.5f));        // 0% (bipolar center)
+    layout.add(makeFloatParam("modenv3_decay", "ModEnv 3: Decay", 0.3806f));     // 333 ms
+    layout.add(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID("modenv3_target", 1), "ModEnv 3: Destination",
+        modChoices, 0));
 
     return layout;
 }

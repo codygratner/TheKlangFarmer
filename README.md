@@ -54,11 +54,20 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
   13. **Wave Folder**: High-gain harmonic folder with DC bias and post-filter.
   *(Or **None / Bypass** to bypass the slot and render a brushed-aluminum blank rack plate).*
 
-### 3. Transients & Modulation
+### 3. Transients & Modulation Rack
 - **Noise Transient Generator**: Dedicated filtered white/pink noise burst with its own filter envelope (`Filter 3 + Filter Env 3`).
 - **Multi-Clap Generator**: Multi-burst envelope generator simulating handclap flam bursts.
-- **Slop (Module 17)**: Stepped random analog drift applied per trigger across frequency, FM depth, decay, and stereo panning (defaults strictly to 0% for sample-accurate repeatability).
-- **Velocity Dynamics (Module 16)**: Dynamic mapping curves scaling output volume, pitch decay, and bipolar modulation depth with exponential response.
+- **Top-Row Dynamics**:
+  - **Velocity Dynamics**: Dynamic mapping scaling output volume, pitch decay, and modulation depth with exponential response.
+  - **Key Tracking**: Scales envelope depth, decay, and level relative to incoming MIDI note (0–127, center at note 64).
+  - **Slop**: Stepped random analog drift applied per trigger across frequency, FM depth, decay, and stereo panning (defaults strictly to 0% for sample-accurate repeatability).
+- **Freely Assignable Mod Envelopes (Mod Env 1, 2, 3)**:
+  - 3 dedicated modulation envelopes filling the bottom row of the Modulations page.
+  - Each envelope features Slope, bipolar Depth (-100% to +100%), Decay (1 ms – 2000 ms), and a dropdown ComboBox that can modulate **any continuous parameter on the entire synthesizer** (138 destinations across dual voices, filters, mixer, amplifier, and all 8 FX slots).
+- **High-Precision Slope Curve Response**:
+  - Slope controls feature a linear center at **75%** of slider travel, matching logarithmic response up to 100%, and an extended exponential curve descending down to **4× steeper** curvature at 0%. Default double-click reset set to `0.5886` matches the original classic exponential response.
+- **Doepfer-Style Dark Silver Panels**:
+  - Mixer module and Limiters (Pre-Limiter & Master Limiter) feature dark silver anodized finishes (`#606060`), red accents, and mounting screws, with satin light troughs on the Mixer and dark troughs on the Limiters for immediate visual contrast in the rack.
 
 ### 4. Real-Time Phase-Locked Visualizations (Slot 5)
 - **Self-Locked Oscilloscopes**: Carriers and modulators phase-lock to their own fundamental frequencies, eliminating visual drift even during deep FM sweeps.

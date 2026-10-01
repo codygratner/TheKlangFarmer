@@ -39,6 +39,17 @@ struct BlockContext {
     float velDepthMod = 0.0f;
     float velVolumeGain = 1.0f;
 
+    // Key tracking modulation state
+    float curvedKeyNote = 0.5f;
+    float keyDecayMod = 0.0f;
+    float keyDepthMod = 0.0f;
+    float keyVolumeGain = 1.0f;
+
+    // Mod Envelope signals
+    std::vector<float> modEnv1Signal;
+    std::vector<float> modEnv2Signal;
+    std::vector<float> modEnv3Signal;
+
     // Slop modulation state (independent stepped bipolar random offsets drawn on each trigger)
     // 1. Frequency (pitch and filters)
     float slopCarrier1Pitch = 0.0f;

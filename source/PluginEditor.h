@@ -177,6 +177,8 @@ public:
     void setLedSelector(LedSelectorComponent* selector);
     void setSecondLedSelector(LedSelectorComponent* selector);
     void setSelector(juce::ComboBox* box);
+    void setSelectorAtBottom(bool atBottom);
+    void setKnobsLightTrough(bool lightTrough);
     void setKnob(int slotIndex, const juce::String& label, RotaryKnobSlider* slider);
     void setKnobLabel(int slotIndex, const juce::String& label);
     void setNumActiveKnobs(int count) { numActiveKnobs = count; }
@@ -195,6 +197,8 @@ private:
     LedSelectorComponent* ledSelector = nullptr;
     LedSelectorComponent* secondLedSelector = nullptr;
     juce::ComboBox* selectorBox = nullptr;
+    bool selectorAtBottom = false;
+    bool knobsLightTrough = false;
     juce::Label labels[4];
     RotaryKnobSlider* knobs[4] = {};
     int numActiveKnobs = 4;
@@ -405,7 +409,11 @@ private:
     std::unique_ptr<ModuleCardComponent> cardPostLimiter;
 
     std::unique_ptr<ModuleCardComponent> cardVelocity;
+    std::unique_ptr<ModuleCardComponent> cardKeyTrack;
     std::unique_ptr<ModuleCardComponent> cardSlop;
+    std::unique_ptr<ModuleCardComponent> cardModEnv1;
+    std::unique_ptr<ModuleCardComponent> cardModEnv2;
+    std::unique_ptr<ModuleCardComponent> cardModEnv3;
 
     // --- Controls ---
     // Voice 1
@@ -525,15 +533,37 @@ private:
 
     // Velocity
     RotaryKnobSlider velSlopeSlider;
-    RotaryKnobSlider velDecaySlider;
     RotaryKnobSlider velDepthSlider;
+    RotaryKnobSlider velDecaySlider;
     RotaryKnobSlider velVolumeSlider;
+
+    // Key Tracking
+    RotaryKnobSlider keySlopeSlider;
+    RotaryKnobSlider keyDepthSlider;
+    RotaryKnobSlider keyDecaySlider;
+    RotaryKnobSlider keyVolumeSlider;
 
     // Slop
     RotaryKnobSlider slopFreqSlider;
     RotaryKnobSlider slopDepthSlider;
     RotaryKnobSlider slopDecaySlider;
     RotaryKnobSlider slopPanSlider;
+
+    // Mod Envelopes 1..3
+    RotaryKnobSlider modEnv1SlopeSlider;
+    RotaryKnobSlider modEnv1DepthSlider;
+    RotaryKnobSlider modEnv1DecaySlider;
+    juce::ComboBox   modEnv1TargetBox;
+
+    RotaryKnobSlider modEnv2SlopeSlider;
+    RotaryKnobSlider modEnv2DepthSlider;
+    RotaryKnobSlider modEnv2DecaySlider;
+    juce::ComboBox   modEnv2TargetBox;
+
+    RotaryKnobSlider modEnv3SlopeSlider;
+    RotaryKnobSlider modEnv3DepthSlider;
+    RotaryKnobSlider modEnv3DecaySlider;
+    juce::ComboBox   modEnv3TargetBox;
 
     // APVTS Attachments
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;

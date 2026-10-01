@@ -215,19 +215,63 @@ private:
 
     // 21. Velocity
     juce::AudioParameterFloat*  velSlopeParam        = nullptr;
-    juce::AudioParameterFloat*  velDecayParam        = nullptr;
     juce::AudioParameterFloat*  velDepthParam        = nullptr;
+    juce::AudioParameterFloat*  velDecayParam        = nullptr;
     juce::AudioParameterFloat*  velVolumeParam       = nullptr;
 
-    // 22. Slop
+    // 22. Key Tracking
+    juce::AudioParameterFloat*  keySlopeParam        = nullptr;
+    juce::AudioParameterFloat*  keyDepthParam        = nullptr;
+    juce::AudioParameterFloat*  keyDecayParam        = nullptr;
+    juce::AudioParameterFloat*  keyVolumeParam       = nullptr;
+
+    // 23. Slop
     juce::AudioParameterFloat*  slopFreqParam        = nullptr;
     juce::AudioParameterFloat*  slopDepthParam       = nullptr;
     juce::AudioParameterFloat*  slopDecayParam       = nullptr;
     juce::AudioParameterFloat*  slopPanParam         = nullptr;
 
-    // 23. Multi-Instance FX Slots
+    // 24. Mod Envelopes 1..3
+    juce::AudioParameterFloat*  modEnv1SlopeParam    = nullptr;
+    juce::AudioParameterFloat*  modEnv1DepthParam    = nullptr;
+    juce::AudioParameterFloat*  modEnv1DecayParam    = nullptr;
+    juce::AudioParameterChoice* modEnv1TargetParam   = nullptr;
+
+    juce::AudioParameterFloat*  modEnv2SlopeParam    = nullptr;
+    juce::AudioParameterFloat*  modEnv2DepthParam    = nullptr;
+    juce::AudioParameterFloat*  modEnv2DecayParam    = nullptr;
+    juce::AudioParameterChoice* modEnv2TargetParam   = nullptr;
+
+    juce::AudioParameterFloat*  modEnv3SlopeParam    = nullptr;
+    juce::AudioParameterFloat*  modEnv3DepthParam    = nullptr;
+    juce::AudioParameterFloat*  modEnv3DecayParam    = nullptr;
+    juce::AudioParameterChoice* modEnv3TargetParam   = nullptr;
+
+    // 25. Multi-Instance FX Slots
     juce::AudioParameterFloat* preFXParam[4][4]  = { {nullptr} };
     juce::AudioParameterFloat* postFXParam[4][4] = { {nullptr} };
+
+    std::vector<juce::AudioParameterFloat*> continuousParams;
+    void applyBaseParameters();
+    void applyModulationTargets(int target1, int target2, int target3);
+
+public:
+    enum class ModTargetType {
+        PageBlock,
+        PreFX,
+        PostFX
+    };
+
+    struct ModDestDescriptor {
+        const char* id;
+        const char* name;
+        ModTargetType type;
+        int blockOrSlot;
+        int paramIndex;
+    };
+
+    static const std::vector<ModDestDescriptor>& getModDestinations();
+    static juce::StringArray getModDestinationChoices();
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangFarmerAudioProcessor)
 };

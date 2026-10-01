@@ -136,10 +136,10 @@ int main() {
     std::cout << "PASS: 2nd-order APF Disperser smearing, zapping, and energy conservation verified." << std::endl;
 
     // 4. Test Pitch Envelope 1 Modulation
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 0, 1.0f); // Both
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 1, 0.0f); // Exp
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 2, 1.0f); // Max depth
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 3, 0.3806f); // 333 ms
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 0, 0.0f); // Exp
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 1, 1.0f); // Max depth
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 2, 0.3806f); // 333 ms
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 3, 1.0f); // Both
     engine.trigger(1.0f);
     for (int block = 0; block < 50; ++block) {
         engine.processStereo(left.data(), right.data(), blockSize);
@@ -220,8 +220,8 @@ int main() {
             eng.init(44100.0f);
             eng.setMidiPitch(36); // C2 = 65.4 Hz
             // Turn off pitch envelopes to have stable carrier
-            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 0, 0.0f); // Off
-            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 0, 0.0f); // Off
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 3, 0.0f); // Off
+            eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV2, 3, 0.0f); // Off
             // Isolate Carrier 1 in mixer (C1 = 100%, C2 = 0%, RingMod = 0%, Noise = 0%)
             eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 0, 0.5f);
             eng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 1, 0.0f);
@@ -373,11 +373,11 @@ int main() {
         assert(std::abs(TbdAudio::warpBipolarExp(0.0f) - (-1.0f)) < 0.0001f);
 
         // B. Bipolar ±25% knob displacement -> ±5% effective modulation at max velocity (velModFactor = 1.0)
-        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, 0.75f); // +25% knob
-        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, 0.25f); // -25% knob
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, 0.25f); // -25% Depth knob
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, 0.75f); // +25% Decay knob
         velEngine.trigger(1.0f);
-        assert(std::abs(velEngine.getContext().velDecayMod - 0.05f) < 0.001f);
         assert(std::abs(velEngine.getContext().velDepthMod - (-0.05f)) < 0.001f);
+        assert(std::abs(velEngine.getContext().velDecayMod - 0.05f) < 0.001f);
 
         // C. Unipolar 50% knob travel -> 10% effective volume attenuation at min velocity
         velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 3, 0.50f); // 50% knob
@@ -923,6 +923,142 @@ int main() {
         assert(std::abs(fNoteC4 - 261.6256f) < 0.2f);
 
         std::cout << "PASS: Carrier tracking modes (MIDI +-24st, Fixed Freq, Fixed Note) verified." << std::endl;
+    }
+
+    // 25. Test New Slope Curves & Defaults
+    {
+        // A. Linear region at 0.75
+        float linVal = TbdAudio::applyEnvelopeSlope(0.5f, 0.75f);
+        assert(std::abs(linVal - 0.5f) < 1e-5f);
+
+        // B. Reset/default value 0.5886f corresponds to original exponential power 3.94
+        float expDefault = TbdAudio::applyEnvelopeSlope(0.5f, 0.5886f);
+        float origExpected = std::pow(0.5f, 3.94f);
+        assert(std::abs(expDefault - origExpected) < 0.005f);
+
+        // C. Steepest exponential at 0.0 corresponds to 4x steeper curve (power = 15.76)
+        float expSteepest = TbdAudio::applyEnvelopeSlope(0.5f, 0.0f);
+        float steepExpected = std::pow(0.5f, 15.76f);
+        assert(std::abs(expSteepest - steepExpected) < 1e-5f);
+
+        // D. Logarithmic curve at 1.0 (power = 1 / 3.94)
+        float logVal = TbdAudio::applyEnvelopeSlope(0.5f, 1.0f);
+        float logExpected = std::pow(0.5f, 1.0f / 3.94f);
+        assert(std::abs(logVal - logExpected) < 1e-5f);
+
+        std::cout << "PASS: Slope curves (linear at 0.75, 4x steeper exp at 0.0, default 0.5886) verified." << std::endl;
+    }
+
+    // 26. Test Key Tracking Module (Block BLK_KEYTRACK)
+    {
+        TbdAudio::ModularDrumEngine keyEng;
+        keyEng.init(44100.0f);
+
+        // Center note 64 -> 0 modulation factor
+        keyEng.setMidiPitch(64);
+        keyEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_KEYTRACK, 0, 0.75f); // Linear slope
+        keyEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_KEYTRACK, 1, 1.0f);  // Max positive depth
+        keyEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_KEYTRACK, 2, 1.0f);  // Max positive decay
+        keyEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_KEYTRACK, 3, 1.0f);  // 100% volume sensitivity
+        keyEng.trigger(1.0f);
+        const auto& ctx64 = keyEng.getContext();
+        assert(std::abs(ctx64.keyDepthMod) < 0.01f);
+        assert(std::abs(ctx64.keyDecayMod) < 0.01f);
+
+        // Max note 127 -> positive modulation
+        keyEng.setMidiPitch(127);
+        keyEng.trigger(1.0f);
+        const auto& ctx127 = keyEng.getContext();
+        assert(ctx127.keyDepthMod > 0.95f);
+        assert(ctx127.keyDecayMod > 0.95f);
+        assert(std::abs(ctx127.keyVolumeGain - 1.0f) < 0.01f);
+
+        // Min note 0 -> negative modulation
+        keyEng.setMidiPitch(0);
+        keyEng.trigger(1.0f);
+        const auto& ctx0 = keyEng.getContext();
+        assert(ctx0.keyDepthMod < -0.95f);
+        assert(ctx0.keyDecayMod < -0.95f);
+        assert(ctx0.keyVolumeGain < 0.05f);
+
+        std::cout << "PASS: Key Tracking module verified." << std::endl;
+    }
+
+    // 27. Test Freely Assignable Mod Envelopes 1, 2, 3 (Blocks BLK_MODENV1..3)
+    {
+        TbdAudio::ModularDrumEngine modEng;
+        modEng.init(44100.0f);
+
+        // Trigger and verify mod envelopes generate signal and decay
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV1, 0, 0.75f); // Linear
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV1, 1, 1.0f);  // Depth +100%
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV1, 2, 0.1f);  // Fast decay
+
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV2, 0, 0.75f);
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV2, 1, 0.5f);  // Depth 0% (bipolar center)
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV2, 2, 0.1f);
+
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV3, 0, 0.75f);
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV3, 1, 0.0f);  // Depth -100%
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV3, 2, 0.1f);
+
+        modEng.trigger(1.0f);
+        std::vector<float> bL(blockSize, 0.0f);
+        std::vector<float> bR(blockSize, 0.0f);
+        modEng.processStereo(bL.data(), bR.data(), blockSize);
+
+        // ModEnv 1 initial value should be near +1.0
+        float val1 = modEng.getModEnvValue(0);
+        assert(val1 > 0.5f);
+
+        // ModEnv 2 depth is 0 -> value should be 0.0
+        float val2 = modEng.getModEnvValue(1);
+        assert(std::abs(val2) < 0.001f);
+
+        // ModEnv 3 initial value should be near -1.0
+        float val3 = modEng.getModEnvValue(2);
+        assert(val3 < -0.5f);
+
+        // Process several blocks until envelope decays
+        for (int b = 0; b < 100; ++b) {
+            modEng.processStereo(bL.data(), bR.data(), blockSize);
+        }
+        assert(std::abs(modEng.getModEnvValue(0)) < 0.01f);
+        assert(std::abs(modEng.getModEnvValue(2)) < 0.01f);
+
+        std::cout << "PASS: Mod Envelopes 1, 2, 3 verified." << std::endl;
+    }
+
+    // 28. Test Mod Envelope Trigger Peak Initialization & Real-Time Sweep
+    {
+        TbdAudio::ModularDrumEngine modEng;
+        modEng.init(44100.0f);
+
+        // ModEnv 1: Linear slope (0.75), Depth +100% (1.0), Decay 50ms
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV1, 0, 0.75f);
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV1, 1, 1.0f); // +100%
+        modEng.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV1, 2, 0.15f);
+
+        // Before trigger, value is 0
+        assert(std::abs(modEng.getModEnvValue(0)) < 0.001f);
+
+        // Trigger hit: ModEnvelopeBlock immediately initializes currentVal to depth
+        modEng.trigger(1.0f);
+        float peakVal = modEng.getModEnvValue(0);
+        assert(peakVal > 0.99f); // Peak at trigger is exactly +1.0
+
+        // Process in small sub-blocks of 32 samples (sub-block precision)
+        std::vector<float> subL(32, 0.0f);
+        std::vector<float> subR(32, 0.0f);
+        float prevVal = peakVal;
+        for (int chunk = 0; chunk < 10; ++chunk) {
+            modEng.processStereo(subL.data(), subR.data(), 32);
+            float curVal = modEng.getModEnvValue(0);
+            assert(curVal <= prevVal); // Smoothly monotonic decay
+            prevVal = curVal;
+        }
+
+        std::cout << "PASS: Mod Envelope trigger peak initialization and 32-sample sub-block sweep verified." << std::endl;
     }
 
     std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;

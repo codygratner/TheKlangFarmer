@@ -44,14 +44,19 @@ inline float evaluateWaveform(float phase, float shape) {
     }
 }
 
-// Envelope slope shaper: exponential -> linear -> logarithmic
+// Envelope slope shaper:
+// Linear is at shape = 0.75 (deadzone [0.735, 0.765]).
+// shape > 0.765 -> logarithmic curve (same exponent range as original: power 1.0 down to 1/3.94)
+// shape < 0.735 -> exponential curve (4x steeper: power 1.0 up to 15.76 at shape = 0.0)
 inline float applyEnvelopeSlope(float linearVal, float shape) {
     linearVal = std::clamp(linearVal, 0.0f, 1.0f);
-    if (shape < 0.49f) {
-        float p = 1.0f + (0.49f - shape) * 6.0f;
+    if (shape < 0.735f) {
+        float norm = (0.735f - shape) / 0.735f; // 0.0 at deadzone boundary, 1.0 at shape = 0.0
+        float p = 1.0f + norm * 14.76f;         // reaches 15.76f (4x original steepness: 1 + 6*0.49 = 3.94; 3.94*4 = 15.76)
         return std::pow(linearVal, p);
-    } else if (shape > 0.51f) {
-        float p = 1.0f / (1.0f + (shape - 0.51f) * 6.0f);
+    } else if (shape > 0.765f) {
+        float norm = (shape - 0.765f) / 0.235f; // 0.0 at deadzone boundary, 1.0 at shape = 1.0
+        float p = 1.0f / (1.0f + norm * 2.94f); // reaches 1 / 3.94f (matches original logarithmic curve)
         return std::pow(linearVal, p);
     }
     return linearVal;
@@ -486,7 +491,7 @@ private:
     uint32_t rngState = 0x98765432;
 };
 
-// --- BLOCK 3 & 6: PITCH ENVELOPE (Target, Slope, Depth, Decay) ---
+// --- BLOCK 3 & 6: PITCH ENVELOPE (Slope, Depth, Decay, Target) ---
 class PitchEnvelopeBlock : public DSPBlock {
 public:
     explicit PitchEnvelopeBlock(int voice = 1) : voiceIndex(voice) {}
@@ -505,21 +510,21 @@ public:
     }
 
     void processStereo(float* /*left*/, float* /*right*/, int numSamples, BlockContext& ctx) override {
-        int target = std::clamp(static_cast<int>(std::round(params[0] * 3.0f)), 0, 3);
-        if (voiceIndex == 1) ctx.pitchEnv1Target = target;
-        else ctx.pitchEnv2Target = target;
-
-        float slope = params[1];
+        float slope = params[0];
 
         float slopDepth = (voiceIndex == 1) ? ctx.slopPitchEnv1Depth : ctx.slopPitchEnv2Depth;
-        float effDepthParam = std::clamp(params[2] + slopDepth, 0.0f, 1.0f);
+        float effDepthParam = std::clamp(params[1] + slopDepth, 0.0f, 1.0f);
         float baseDepth = (effDepthParam - 0.5f) * 2.0f;
-        float depth = std::clamp(baseDepth + ctx.velDepthMod, -1.0f, 1.0f);
+        float depth = std::clamp(baseDepth + ctx.velDepthMod + ctx.keyDepthMod, -1.0f, 1.0f);
 
         float slopDecay = (voiceIndex == 1) ? ctx.slopPitchEnv1Decay : ctx.slopPitchEnv2Decay;
-        float decayParam = std::clamp(params[3] + slopDecay + ctx.velDecayMod, 0.0f, 1.0f);
+        float decayParam = std::clamp(params[2] + slopDecay + ctx.velDecayMod + ctx.keyDecayMod, 0.0f, 1.0f);
         float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
+
+        int target = std::clamp(static_cast<int>(std::round(params[3] * 3.0f)), 0, 3);
+        if (voiceIndex == 1) ctx.pitchEnv1Target = target;
+        else ctx.pitchEnv2Target = target;
 
         auto& peSig = (voiceIndex == 1) ? ctx.pitchEnv1Signal : ctx.pitchEnv2Signal;
         peSig.resize(numSamples);
@@ -537,7 +542,7 @@ public:
     }
 
     int getTarget() const {
-        return std::clamp(static_cast<int>(std::round(params[0] * 3.0f)), 0, 3);
+        return std::clamp(static_cast<int>(std::round(params[3] * 3.0f)), 0, 3);
     }
 
 private:
@@ -1483,17 +1488,17 @@ public:
         // 1. Slope: Exp (0.0, def) -> Lin (0.5) -> Log (1.0)
         float slope = params[0];
 
-        // 2. Depth: -10 octaves to 0 to +10 octaves (bipolar, def 0 octaves = 0.5) + slop + velocity modulation
+        // 2. Depth: -10 octaves to 0 to +10 octaves (bipolar, def 0 octaves = 0.5) + slop + velocity/key modulation
         float slopDepth = (voiceIndex == 1) ? ctx.slopFilterEnv1Depth :
                           ((voiceIndex == 2) ? ctx.slopFilterEnv2Depth : ctx.slopFilterEnv3Depth);
         float effDepthParam = std::clamp(params[1] + slopDepth, 0.0f, 1.0f);
         float baseDepth = (effDepthParam - 0.5f) * 2.0f;
-        float depth = std::clamp(baseDepth + ctx.velDepthMod, -1.0f, 1.0f);
+        float depth = std::clamp(baseDepth + ctx.velDepthMod + ctx.keyDepthMod, -1.0f, 1.0f);
 
-        // 3. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + slop + velocity modulation
+        // 3. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + slop + velocity/key modulation
         float slopDecay = (voiceIndex == 1) ? ctx.slopFilterEnv1Decay :
                           ((voiceIndex == 2) ? ctx.slopFilterEnv2Decay : ctx.slopFilterEnv3Decay);
-        float decayParam = std::clamp(params[2] + slopDecay + ctx.velDecayMod, 0.0f, 1.0f);
+        float decayParam = std::clamp(params[2] + slopDecay + ctx.velDecayMod + ctx.keyDecayMod, 0.0f, 1.0f);
         float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
 
@@ -1914,7 +1919,7 @@ public:
             float inL = left ? left[i] : 0.0f;
             float inR = right ? right[i] : inL;
 
-            float effectiveGain = ctx.velVolumeGain * level;
+            float effectiveGain = ctx.velVolumeGain * ctx.keyVolumeGain * level;
             float curL = inL * envVal * effectiveGain;
             float curR = inR * envVal * effectiveGain;
 
@@ -1965,8 +1970,8 @@ public:
         // 3. Slope: Exp (0.0, def) -> Lin (0.5) -> Log (1.0)
         float slope = params[2];
 
-        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + slop + velocity modulation
-        float decayParam = std::clamp(params[3] + ctx.slopAmpEnvDecay + ctx.velDecayMod, 0.0f, 1.0f);
+        // 4. Decay: 5-point warp (5ms, 100ms, 1s, 5s, 60s; def 333ms) + slop + velocity/key modulation
+        float decayParam = std::clamp(params[3] + ctx.slopAmpEnvDecay + ctx.velDecayMod + ctx.keyDecayMod, 0.0f, 1.0f);
         float decayTime = warp5PointTime(decayParam);
         decayTime = std::max(decayTime, 0.001f);
 
@@ -1999,7 +2004,7 @@ private:
     float timeSinceTrigger = 1000.0f;
 };
 
-// --- BLOCK 16: VELOCITY (Slope, Decay, Depth, Volume) ---
+// --- BLOCK 16: VELOCITY (Slope, Depth, Decay, Volume) ---
 class VelocityBlock : public DSPBlock {
 public:
     void init(const BlockContext& ctx) override {
@@ -2019,8 +2024,8 @@ public:
     void processStereo(float* /*left*/, float* /*right*/, int /*numSamples*/, BlockContext& ctx) override {
         // Parameters:
         // 0: slope: 0.0 Exp -> 0.5 Lin (def) -> 1.0 Log
-        // 1: decay: -100% (0.0) to 0% (0.5, def) to +100% (1.0)
-        // 2: depth: -100% (0.0) to 0% (0.5, def) to +100% (1.0)
+        // 1: depth: -100% (0.0) to 0% (0.5, def) to +100% (1.0)
+        // 2: decay: -100% (0.0) to 0% (0.5, def) to +100% (1.0)
         // 3: volume: 0% (0.0, def) to -100% (1.0)
 
         float slope = params[0];
@@ -2047,6 +2052,115 @@ private:
     float invSr = 1.0f / 44100.0f;
     float lastVelocity = 1.0f;
     float scopeData[128] = { 0.0f };
+};
+
+// --- KEY TRACKING (Slope, Depth, Decay, Volume) ---
+class KeyTrackingBlock : public DSPBlock {
+public:
+    void init(const BlockContext& ctx) override {
+        sampleRate = ctx.sampleRate;
+        invSr = ctx.invSr;
+        for (int i = 0; i < 128; ++i) scopeData[i] = 0.0f;
+    }
+
+    void trigger(float /*velocity*/) override {}
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* /*left*/, float* /*right*/, int /*numSamples*/, BlockContext& ctx) override {
+        // Parameters:
+        // 0: slope: 0.0 Exp -> 0.5 Lin (def) -> 1.0 Log
+        // 1: depth: -100% (0.0) to 0% (0.5, def) to +100% (1.0)
+        // 2: decay: -100% (0.0) to 0% (0.5, def) to +100% (1.0)
+        // 3: volume: 0% (0.0, def) to -100% (1.0)
+
+        float slope = params[0];
+        for (int i = 0; i < 128; ++i) {
+            float t = static_cast<float>(i) / 127.0f;
+            float y = applyEnvelopeSlope(t, slope);
+            // Highlight current note with a subtle blip marker
+            if (std::abs(i - ctx.currentMidiNote) <= 2) {
+                y = std::clamp(y + 0.3f, 0.0f, 1.0f);
+            }
+            scopeData[i] = y * 1.8f - 0.9f;
+        }
+    }
+
+    void getVisualScopeData(float* dest, int numSamples) const {
+        for (int i = 0; i < numSamples; ++i) {
+            int idx = (i * 128) / numSamples;
+            dest[i] = scopeData[std::clamp(idx, 0, 127)];
+        }
+    }
+
+private:
+    float sampleRate = 44100.0f;
+    float invSr = 1.0f / 44100.0f;
+    float scopeData[128] = { 0.0f };
+};
+
+// --- MODULATION ENVELOPE (Slope, Depth, Decay, Target) ---
+class ModEnvelopeBlock : public DSPBlock {
+public:
+    explicit ModEnvelopeBlock(int envIndex = 1) : index(envIndex) {}
+
+    void init(const BlockContext& ctx) override {
+        invSr = ctx.invSr;
+        ctxPtr = &ctx;
+        timeSinceTrigger = 1000.0f;
+        currentVal = 0.0f;
+    }
+
+    void trigger(float) override {
+        timeSinceTrigger = 0.0f;
+        float slope = params[0];
+        float baseDepth = (params[1] - 0.5f) * 2.0f;
+        float velMod = ctxPtr ? ctxPtr->velDepthMod : 0.0f;
+        float keyMod = ctxPtr ? ctxPtr->keyDepthMod : 0.0f;
+        float depth = std::clamp(baseDepth + velMod + keyMod, -1.0f, 1.0f);
+        currentVal = applyEnvelopeSlope(1.0f, slope) * depth;
+    }
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* /*left*/, float* /*right*/, int numSamples, BlockContext& ctx) override {
+        ctxPtr = &ctx;
+        float slope = params[0];
+        float baseDepth = (params[1] - 0.5f) * 2.0f;
+        float depth = std::clamp(baseDepth + ctx.velDepthMod + ctx.keyDepthMod, -1.0f, 1.0f);
+
+        float decayParam = std::clamp(params[2] + ctx.velDecayMod + ctx.keyDecayMod, 0.0f, 1.0f);
+        float decayTime = warp5PointTime(decayParam);
+        decayTime = std::max(decayTime, 0.001f);
+
+        std::vector<float>& envSig = (index == 1) ? ctx.modEnv1Signal :
+                                     ((index == 2) ? ctx.modEnv2Signal : ctx.modEnv3Signal);
+        if (static_cast<int>(envSig.size()) < numSamples) {
+            envSig.resize(numSamples);
+        }
+
+        for (int i = 0; i < numSamples; ++i) {
+            float linearProgress = timeSinceTrigger / decayTime;
+            float envLinear = std::clamp(1.0f - linearProgress, 0.0f, 1.0f);
+            float envVal = applyEnvelopeSlope(envLinear, slope) * depth;
+            timeSinceTrigger += invSr;
+            envSig[i] = envVal;
+            currentVal = envVal;
+        }
+    }
+
+    float getCurrentValue() const { return currentVal; }
+
+private:
+    int index = 1;
+    float invSr = 1.0f / 44100.0f;
+    const BlockContext* ctxPtr = nullptr;
+    float timeSinceTrigger = 1000.0f;
+    float currentVal = 0.0f;
 };
 
 // --- BLOCK 17: SLOP (Frequency, Depth, Decay, Pan) ---
@@ -2220,7 +2334,11 @@ public:
         BLK_PRE_LIMITER,
         BLK_POST_LIMITER,
         BLK_VELOCITY,
+        BLK_KEYTRACK,
         BLK_SLOP,
+        BLK_MODENV1,
+        BLK_MODENV2,
+        BLK_MODENV3,
         BLK_PRE_FX_1,
         BLK_PRE_FX_2,
         BLK_PRE_FX_3,
@@ -2255,7 +2373,7 @@ public:
         ctx.sampleRate = sampleRate;
         ctx.invSr = 1.0f / sampleRate;
 
-        // Instantiate all 29 blocks
+        // Instantiate all blocks
         allBlocks.resize(NUM_BLOCKS);
         allBlocks[BLK_CARRIER1]   = std::make_unique<CarrierBlock>(1);
         allBlocks[BLK_MODULATOR1] = std::make_unique<ModulatorBlock>(1);
@@ -2292,7 +2410,11 @@ public:
         allBlocks[BLK_POST_LIMITER] = std::make_unique<LimiterBlock>();
 
         allBlocks[BLK_VELOCITY]   = std::make_unique<VelocityBlock>();
+        allBlocks[BLK_KEYTRACK]   = std::make_unique<KeyTrackingBlock>();
         allBlocks[BLK_SLOP]       = std::make_unique<SlopBlock>();
+        allBlocks[BLK_MODENV1]    = std::make_unique<ModEnvelopeBlock>(1);
+        allBlocks[BLK_MODENV2]    = std::make_unique<ModEnvelopeBlock>(2);
+        allBlocks[BLK_MODENV3]    = std::make_unique<ModEnvelopeBlock>(3);
 
         for (auto& b : allBlocks) {
             if (b) b->init(ctx);
@@ -2313,6 +2435,9 @@ public:
         ctx.filterEnv2Signal.assign(1024, 0.0f);
         ctx.filterEnv3Signal.assign(1024, 0.0f);
         ctx.ampEnvSignal.assign(1024, 1.0f);
+        ctx.modEnv1Signal.assign(1024, 0.0f);
+        ctx.modEnv2Signal.assign(1024, 0.0f);
+        ctx.modEnv3Signal.assign(1024, 0.0f);
 
         // Voice 1 defaults
         setPageParameter(BLK_CARRIER1, 0, 0.0f);
@@ -2325,17 +2450,17 @@ public:
         setPageParameter(BLK_MODULATOR1, 2, 0.0f);
         setPageParameter(BLK_MODULATOR1, 3, 0.50934f);
 
-        setPageParameter(BLK_PITCHENV1, 0, 0.0f);
-        setPageParameter(BLK_PITCHENV1, 1, 0.0f);
-        setPageParameter(BLK_PITCHENV1, 2, 0.5f);
-        setPageParameter(BLK_PITCHENV1, 3, 0.3806f);
+        setPageParameter(BLK_PITCHENV1, 0, 0.5886f); // Slope
+        setPageParameter(BLK_PITCHENV1, 1, 0.5f);    // Depth
+        setPageParameter(BLK_PITCHENV1, 2, 0.3806f); // Decay
+        setPageParameter(BLK_PITCHENV1, 3, 0.0f);    // Target
 
         setPageParameter(BLK_FILTER1, 0, 0.0f);
         setPageParameter(BLK_FILTER1, 1, 0.25f);
         setPageParameter(BLK_FILTER1, 2, 1.0f);
         setPageParameter(BLK_FILTER1, 3, 0.0f);
 
-        setPageParameter(BLK_FILTERENV1, 0, 0.0f);
+        setPageParameter(BLK_FILTERENV1, 0, 0.5886f); // Slope
         setPageParameter(BLK_FILTERENV1, 1, 0.5f);
         setPageParameter(BLK_FILTERENV1, 2, 0.3806f);
         setPageParameter(BLK_FILTERENV1, 3, 0.5f);
@@ -2351,17 +2476,17 @@ public:
         setPageParameter(BLK_MODULATOR2, 2, 0.0f);
         setPageParameter(BLK_MODULATOR2, 3, 0.50934f);
 
-        setPageParameter(BLK_PITCHENV2, 0, 0.0f);
-        setPageParameter(BLK_PITCHENV2, 1, 0.0f);
-        setPageParameter(BLK_PITCHENV2, 2, 0.5f);
-        setPageParameter(BLK_PITCHENV2, 3, 0.3806f);
+        setPageParameter(BLK_PITCHENV2, 0, 0.5886f); // Slope
+        setPageParameter(BLK_PITCHENV2, 1, 0.5f);    // Depth
+        setPageParameter(BLK_PITCHENV2, 2, 0.3806f); // Decay
+        setPageParameter(BLK_PITCHENV2, 3, 0.0f);    // Target
 
         setPageParameter(BLK_FILTER2, 0, 0.0f);
         setPageParameter(BLK_FILTER2, 1, 0.25f);
         setPageParameter(BLK_FILTER2, 2, 1.0f);
         setPageParameter(BLK_FILTER2, 3, 0.0f);
 
-        setPageParameter(BLK_FILTERENV2, 0, 0.0f);
+        setPageParameter(BLK_FILTERENV2, 0, 0.5886f); // Slope
         setPageParameter(BLK_FILTERENV2, 1, 0.5f);
         setPageParameter(BLK_FILTERENV2, 2, 0.3806f);
         setPageParameter(BLK_FILTERENV2, 3, 0.5f);
@@ -2377,7 +2502,7 @@ public:
         setPageParameter(BLK_FILTER3, 2, 1.0f);
         setPageParameter(BLK_FILTER3, 3, 0.0f);
 
-        setPageParameter(BLK_FILTERENV3, 0, 0.0f);
+        setPageParameter(BLK_FILTERENV3, 0, 0.5886f); // Slope
         setPageParameter(BLK_FILTERENV3, 1, 0.5f);
         setPageParameter(BLK_FILTERENV3, 2, 0.3078f);
         setPageParameter(BLK_FILTERENV3, 3, 0.5f);
@@ -2442,7 +2567,7 @@ public:
 
         setPageParameter(BLK_AMPENV, 0, 0.0f);
         setPageParameter(BLK_AMPENV, 1, 0.1429f);
-        setPageParameter(BLK_AMPENV, 2, 0.0f);
+        setPageParameter(BLK_AMPENV, 2, 0.5886f); // Slope
         setPageParameter(BLK_AMPENV, 3, 0.3806f);
 
         // Limiters defaults
@@ -2457,15 +2582,35 @@ public:
         setPageParameter(BLK_POST_LIMITER, 3, 0.6296f);
 
         // Modulations defaults
-        setPageParameter(BLK_VELOCITY, 0, 0.0f);
-        setPageParameter(BLK_VELOCITY, 1, 0.5f);
-        setPageParameter(BLK_VELOCITY, 2, 0.5f);
-        setPageParameter(BLK_VELOCITY, 3, 0.0f);
+        setPageParameter(BLK_VELOCITY, 0, 0.5886f); // Slope
+        setPageParameter(BLK_VELOCITY, 1, 0.5f);    // Depth
+        setPageParameter(BLK_VELOCITY, 2, 0.5f);    // Decay
+        setPageParameter(BLK_VELOCITY, 3, 0.0f);    // Volume
 
-        setPageParameter(BLK_SLOP, 0, 0.0f);
-        setPageParameter(BLK_SLOP, 1, 0.0f);
-        setPageParameter(BLK_SLOP, 2, 0.0f);
-        setPageParameter(BLK_SLOP, 3, 0.0f);
+        setPageParameter(BLK_KEYTRACK, 0, 0.5886f); // Slope
+        setPageParameter(BLK_KEYTRACK, 1, 0.5f);    // Depth
+        setPageParameter(BLK_KEYTRACK, 2, 0.5f);    // Decay
+        setPageParameter(BLK_KEYTRACK, 3, 0.0f);    // Volume
+
+        setPageParameter(BLK_SLOP, 0, 0.0f); // Freq
+        setPageParameter(BLK_SLOP, 1, 0.0f); // Depth
+        setPageParameter(BLK_SLOP, 2, 0.0f); // Decay
+        setPageParameter(BLK_SLOP, 3, 0.0f); // Pan
+
+        setPageParameter(BLK_MODENV1, 0, 0.5886f); // Slope
+        setPageParameter(BLK_MODENV1, 1, 0.5f);    // Depth
+        setPageParameter(BLK_MODENV1, 2, 0.3806f); // Decay
+        setPageParameter(BLK_MODENV1, 3, 0.0f);    // Target
+
+        setPageParameter(BLK_MODENV2, 0, 0.5886f); // Slope
+        setPageParameter(BLK_MODENV2, 1, 0.5f);    // Depth
+        setPageParameter(BLK_MODENV2, 2, 0.3806f); // Decay
+        setPageParameter(BLK_MODENV2, 3, 0.0f);    // Target
+
+        setPageParameter(BLK_MODENV3, 0, 0.5886f); // Slope
+        setPageParameter(BLK_MODENV3, 1, 0.5f);    // Depth
+        setPageParameter(BLK_MODENV3, 2, 0.3806f); // Decay
+        setPageParameter(BLK_MODENV3, 3, 0.0f);    // Target
 
         // Pre-Amp FX defaults
         preFXTypes[0] = 5; preFXParams[0][0] = 0.5f; preFXParams[0][1] = 0.5f; preFXParams[0][2] = 0.5f; preFXParams[0][3] = 1.0f; // Drive
@@ -2499,8 +2644,8 @@ public:
         ctx.isTriggered = true;
 
         float velSlope  = allBlocks[BLK_VELOCITY] ? allBlocks[BLK_VELOCITY]->getParam(0) : 0.0f;
-        float velDecay  = allBlocks[BLK_VELOCITY] ? warpBipolarExp(allBlocks[BLK_VELOCITY]->getParam(1)) : 0.0f; // -1 to +1
-        float velDepth  = allBlocks[BLK_VELOCITY] ? warpBipolarExp(allBlocks[BLK_VELOCITY]->getParam(2)) : 0.0f; // -1 to +1
+        float velDepth  = allBlocks[BLK_VELOCITY] ? warpBipolarExp(allBlocks[BLK_VELOCITY]->getParam(1)) : 0.0f; // -1 to +1
+        float velDecay  = allBlocks[BLK_VELOCITY] ? warpBipolarExp(allBlocks[BLK_VELOCITY]->getParam(2)) : 0.0f; // -1 to +1
         float velVolume = allBlocks[BLK_VELOCITY] ? warpUnipolarExp(allBlocks[BLK_VELOCITY]->getParam(3)) : 0.0f; // 0 to 1
 
         float curvedVel = applyEnvelopeSlope(velocity, velSlope);
@@ -2513,6 +2658,20 @@ public:
         float velModFactor = curvedVel * 2.0f - 1.0f;
         ctx.velDecayMod   = velModFactor * velDecay;
         ctx.velDepthMod   = velModFactor * velDepth;
+
+        // Key tracking calculation:
+        float keySlope  = allBlocks[BLK_KEYTRACK] ? allBlocks[BLK_KEYTRACK]->getParam(0) : 0.0f;
+        float keyDepth  = allBlocks[BLK_KEYTRACK] ? warpBipolarExp(allBlocks[BLK_KEYTRACK]->getParam(1)) : 0.0f;
+        float keyDecay  = allBlocks[BLK_KEYTRACK] ? warpBipolarExp(allBlocks[BLK_KEYTRACK]->getParam(2)) : 0.0f;
+        float keyVolume = allBlocks[BLK_KEYTRACK] ? warpUnipolarExp(allBlocks[BLK_KEYTRACK]->getParam(3)) : 0.0f;
+
+        float normKey = std::clamp(static_cast<float>(ctx.currentMidiNote) / 127.0f, 0.0f, 1.0f);
+        float curvedKey = applyEnvelopeSlope(normKey, keySlope);
+        ctx.curvedKeyNote = curvedKey;
+        ctx.keyVolumeGain = 1.0f - (1.0f - curvedKey) * keyVolume;
+        float keyModFactor = curvedKey * 2.0f - 1.0f;
+        ctx.keyDecayMod   = keyModFactor * keyDecay;
+        ctx.keyDepthMod   = keyModFactor * keyDepth;
 
         // Sample independent stepped random offsets for Slop
         float slopFreq  = allBlocks[BLK_SLOP] ? warpUnipolarExp(allBlocks[BLK_SLOP]->getParam(0)) : 0.0f;
@@ -2682,11 +2841,21 @@ public:
                 return;
             }
         }
+        if (blockIndex == BLK_KEYTRACK) {
+            if (auto* ktBlk = dynamic_cast<KeyTrackingBlock*>(allBlocks[BLK_KEYTRACK].get())) {
+                ktBlk->getVisualScopeData(dest, count);
+                return;
+            }
+        }
         if (blockIndex == BLK_SLOP) {
             if (auto* slopBlk = dynamic_cast<SlopBlock*>(allBlocks[BLK_SLOP].get())) {
                 slopBlk->getVisualScopeData(dest, count);
                 return;
             }
+        }
+        if (blockIndex == BLK_MODENV1 || blockIndex == BLK_MODENV2 || blockIndex == BLK_MODENV3) {
+            scopes[blockIndex].readLatest(dest, count);
+            return;
         }
 
         // Determine which scope buffer and fundamental frequency to lock to:
@@ -2806,6 +2975,14 @@ public:
             ctx.filterEnv3Signal.assign(numSamples, 0.0f);
             ctx.ampEnvSignal.assign(numSamples, 1.0f);
         }
+
+        // --- MODULATION ENVELOPES ---
+        allBlocks[BLK_MODENV1]->processStereo(nullptr, nullptr, numSamples, ctx);
+        scopes[BLK_MODENV1].pushBlock(ctx.modEnv1Signal.data(), numSamples);
+        allBlocks[BLK_MODENV2]->processStereo(nullptr, nullptr, numSamples, ctx);
+        scopes[BLK_MODENV2].pushBlock(ctx.modEnv2Signal.data(), numSamples);
+        allBlocks[BLK_MODENV3]->processStereo(nullptr, nullptr, numSamples, ctx);
+        scopes[BLK_MODENV3].pushBlock(ctx.modEnv3Signal.data(), numSamples);
 
         // --- VOICE 1 ---
         // 1. Pitch Envelope 1
@@ -2949,7 +3126,18 @@ public:
 
         // --- MODULATIONS VISUALIZATION UPDATE ---
         allBlocks[BLK_VELOCITY]->processStereo(nullptr, nullptr, numSamples, ctx);
+        allBlocks[BLK_KEYTRACK]->processStereo(nullptr, nullptr, numSamples, ctx);
         allBlocks[BLK_SLOP]->processStereo(nullptr, nullptr, numSamples, ctx);
+    }
+
+    float getModEnvValue(int envIndex) const {
+        BlockID blk = (envIndex == 0) ? BLK_MODENV1 : ((envIndex == 1) ? BLK_MODENV2 : BLK_MODENV3);
+        if (blk < NUM_BLOCKS && allBlocks[blk]) {
+            if (auto* mb = dynamic_cast<ModEnvelopeBlock*>(allBlocks[blk].get())) {
+                return mb->getCurrentValue();
+            }
+        }
+        return 0.0f;
     }
 
 private:
