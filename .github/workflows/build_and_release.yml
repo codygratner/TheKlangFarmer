@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: 'Tag name to release to (e.g. v0.1.4)'
+        description: 'Tag name to release to (e.g. v0.1.5)'
         required: true
-        default: 'v0.1.4'
+        default: 'v0.1.5'
 
 permissions:
   contents: write
@@ -150,3 +150,53 @@ jobs:
           files: TheKlangFarmer-*-Linux.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    name: Windows x64 (VST3 / Standalone)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Release Tag
+        id: tag
+        shell: pwsh
+        run: |
+          $TAG = "${{ inputs.tag_name }}"
+          if ([string]::IsNullOrEmpty($TAG)) {
+            $TAG = "${{ github.ref_name }}"
+          }
+          echo "tag=$TAG" >> $env:GITHUB_OUTPUT
+          Write-Host "Building for release tag: $TAG"
+
+      - name: Clone JUCE
+        run: git clone --depth 1 --branch 9.0.3 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Plugins & Standalone
+        run: cmake --build build --config Release --parallel --target TheKlangFarmer_VST3 TheKlangFarmer_Standalone dsp_tests
+
+      - name: Run DSP Unit Tests
+        run: .\build\Release\dsp_tests.exe
+
+      - name: Package Windows Binaries
+        shell: pwsh
+        run: |
+          $TAG = "${{ steps.tag.outputs.tag }}"
+          $ZIP_NAME = "TheKlangFarmer-$TAG-Windows.zip"
+          New-Item -ItemType Directory -Path win_dist
+          Copy-Item -Recurse "build/TheKlangFarmer_artefacts/Release/VST3/The Klang Farmer.vst3" win_dist/
+          Copy-Item "build/TheKlangFarmer_artefacts/Release/Standalone/The Klang Farmer.exe" win_dist/
+          Compress-Archive -Path win_dist/* -DestinationPath $ZIP_NAME
+          Get-Item $ZIP_NAME
+
+      - name: Upload Windows Archive to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: TheKlangFarmer-*-Windows.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

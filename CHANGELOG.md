@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.5] - 2026-10-01
+
+### Added
+- **Visualizer OFF Switch**: Added an `OFF` toggle badge to the right of the Visualizer header title (beside the Lock icon). Lit dim grey (`#687488`) when running (default); glowing signal red (`#ff3b5c`) with crimson background and border when turned off. When off, live oscilloscope, Bode, and filter analysis calculations are completely suspended, displaying a motionless flat reference line to reduce CPU usage and visual distraction.
+- **Carrier Frequency Modulation Range (No Needle)**: Active carrier `MOD DEPTH` now dynamically highlights the affected modulation span directly on the Carrier pitch / offset slider as a modulation bar, without rendering the real-time needle indicator (preventing visual clutter and distraction from audio-rate FM oscillations).
+- **INIT 3-Option Confirmation Dialog**: Clicking `INIT` launches an interactive confirmation modal with three distinct choices:
+  - `Default`: Restores factory patch state (default synth parameters and default loaded FX rack).
+  - `Clean`: Restores factory synth parameters while stripping all 8 Pre-FX and Post-FX slots to "None" (empty racks with blank plates).
+  - `Cancel`: Dismisses the dialog leaving the current state untouched.
+- **Multi-Platform Automated Cloud CI/CD (GitHub Actions)**: Added automated workflows building macOS Universal Binaries (AU, VST3, Standalone for Apple Silicon & Intel), Linux x86_64, and Windows x64 with automated testing and GitHub release asset publishing.
+- **GPLv3 Licensing**: Standard GNU General Public License v3.0 license text (`LICENSE`) and repository compliance for free open-source JUCE tier.
+
+### Changed
+- **Global DJ Filter Defaults & Double-Click Resets**: Standardized all DJ Filter controls across the plugin (`Cyclic Noise`, `S&H Noise`, `Bell EQ`, `Drive` post-filter, `Wave Folder` post-filter, and `Noise Transient` filter) to default to `0%` (center `0.5` normalized) with double-click reset to `0%`.
+- **S&H Noise Modulator Architecture**:
+  - Parameter 3 (Knob 0 on the card) is now a bipolar DJ Filter, matching Cyclic Noise behavior.
+  - Parameter 4 (Knob 1 on the card) is now the S&H Clock Rate, labeled `"Speed"`, frequency-formatted from $0.1\,\text{Hz}$ to $24\,\text{kHz}$, defaulting to $24.00\,\text{kHz}$ with double-click reset to $24\,\text{kHz}$.
+  - The Pitch Envelope accurately sweeps this S&H clock rate up to $\pm 5$ octaves when targeted at the modulator.
+  - Mode switching in the UI automatically initializes sensible defaults (DJ filter to 0%, S&H speed to 24 kHz).
+- **Percussive Decay Envelope Clarification**: Formally clarified across documentation that all envelopes are pure percussive decay envelopes with variable exponential/linear/logarithmic slope curves (no sustain or DAHDSR stages).
+- **Project Version**: Bumped project version to `0.1.5` in `CMakeLists.txt`, `source/PluginEditor.cpp`, and top header version badge.
+
+---
+
 ## [0.1.4] - 2026-10-01
 
 ### Added

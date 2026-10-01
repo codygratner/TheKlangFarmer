@@ -114,11 +114,11 @@ To maintain consistency across all modules and effect cards, standard parameter 
 - Renders an interactive live waveform diagram inside its value readout box.
 
 ### 3.2. DJ-Style Bipolar Filters
-*Used in: `Modulator 1 & 2` (Cyclic mode), `Drive` (Post-Filter), `Wave Folder` (Post-Filter), `Noise Transient` (Filter), `Bell EQ` (DJ Filter)*
+*Used in: `Modulator 1 & 2` (Cyclic & Noise modes), `Drive` (Post-Filter), `Wave Folder` (Post-Filter), `Noise Transient` (Filter), `Bell EQ` (DJ Filter)*
 - A single center-detented knob providing low-pass and high-pass filtering without dead zones:
-  - **0% to 49%**: Low-Pass Filter ($20\,\text{Hz} - 24\,\text{kHz}$, steep to gentle slope).
-  - **50%**: Flat / Completely Bypassed (Default).
-  - **51% to 100%**: High-Pass Filter ($20\,\text{Hz} - 24\,\text{kHz}$, gentle to steep slope).
+  - **-100% to -1% (0.0 to 0.49 normalized)**: Low-Pass Filter ($20\,\text{Hz} - 24\,\text{kHz}$, steep to gentle slope).
+  - **0% (0.50 normalized)**: Flat / Completely Bypassed (Default across all DJ filters in the plugin; double-click reset always returns to 0%).
+  - **+1% to +100% (0.51 to 1.0 normalized)**: High-Pass Filter ($20\,\text{Hz} - 24\,\text{kHz}$, gentle to steep slope).
 
 ### 3.3. Musical Envelope Decay Times
 *Used in: `Pitch Env 1`, `Pitch Env 2`, `Filter Env 1`, `Filter Env 2`, `Filter Env 3`, `Amp Env`*
@@ -195,7 +195,10 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 ### 4.2. Visualization Module (Slot 5 — Fixed Across All Pages)
 - **Automatic Context Tracking**: Buttons have been removed to maximize screen real estate for the high-resolution scope display. The visualizer automatically changes based on whatever module or parameter is being edited or clicked on (including clicking anywhere on the panel/background of a module card).
 - **Active Block Readout**: Top-left corner displays `VISUALIZER: <BLOCK NAME>` (e.g., `VISUALIZER: CARRIER 1`, `VISUALIZER: FILTER 1`, `VISUALIZER: PRE 1: WAVEFOLDER`).
-- **Interactive Padlock Icon (Top Right)**:
+- **Interactive Header Controls (Top Right)**:
+  - **OFF Button**: Situated directly to the left of the padlock icon.
+    - *Running (Default)*: Dim subtle grey (`#687488`) with transparent background.
+    - *OFF*: Glowing signal red (`#ff3b5c`) with crimson translucent background and border. Completely halts all real-time waveform, filter, and Bode analysis, rendering a calm, motionless flat baseline to eliminate CPU consumption and visual distraction.
   - **Grey Unlocked Icon**: Auto-tracking mode. As the user clicks or edits any module or turns any knob, the visualizer automatically follows the active block.
   - **Yellow Locked Icon**: Locked mode. When clicked, the lock turns bright yellow and locks the visualizer to the currently displayed block. The visualizer will not auto-change, even when navigating between pages or tweaking controls on other modules.
   - *Pro Workflow*: Lock the visualizer to a downstream effect (such as the Pre-Amp Wavefolder or Master Limiter), navigate back to Voice 1, and tweak Carrier/Modulator parameters while observing the folding waveform in real time.
@@ -214,6 +217,13 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
   4. *Sound Design Recipes & Pro Tips*: Quick kick, snare, velocity shaping, analog slop drift, and audition button.
 - **Dismissal**: Closes via the top-right `✕` button, clicking outside the modal dialog card, or pressing the `Escape` key.
 
+### 4.2.2. INIT 3-Option Confirmation Dialog
+- **Header Button**: `INIT` button situated between `GUIDE` and `AUDITION HIT` in the top navigation bar.
+- **Confirmation Modal**: Clicking `INIT` launches an interactive confirmation dialog with three distinct actions:
+  1. **Default**: Reverts the synthesizer to the factory initialized state (loaded default sound and standard loaded FX rack: Drive, Wave Folder, RingMod, Freq Shift, Grit FX, Comb Filter, Phase Smear, Bell EQ).
+  2. **Clean**: Reverts all synthesis and modulation parameters to factory defaults, but strips all 8 FX slots (Pre-FX 1–4 and Post-FX 1–4) to `None`, providing a clean slate with empty rack faceplates.
+  3. **Cancel**: Closes the dialog leaving the active patch completely untouched.
+
 ---
 
 ### 4.3. Page 1: Voice 1
@@ -224,13 +234,17 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
     - `Freq`: Fixed continuous frequency $20\,\text{Hz} - 24\,\text{kHz}$ (logarithmic, default $55\,\text{Hz}$).
     - `Note`: Fixed musical note across MIDI notes 0–127 (`C-1` to `G9`, default `A1 = 55 Hz = note 33`) with padded readout: `note name [frequency, midi note number]` (e.g. `A1   [   55 Hz,  33]`).
   - **Shape (Continuous)**: Waveform Morph (Sine $\to$ Tri $\to$ Saw $\to$ Square $\to$ PWM).
-  - **Mod Depth (Continuous)**: Modulation depth from Modulator 1: $-100\%$ to $+100\%$ (default $0\% = 0.5$).
+  - **Mod Depth (Continuous)**: Modulation depth from Modulator 1: $-100\%$ to $+100\%$ (default $0\% = 0.5$). When non-zero, the Carrier Pitch / Offset slider dynamically highlights the active FM modulation span (without a real-time needle indicator to avoid high-frequency visual flicker).
   - **Visualizer**: Self-locked oscilloscope phase-locked to Carrier 1 fundamental.
 - **Slot 3: Modulator 1**
   - **Pitch Tracking (Selector)**: `Fixed` (0, default), `Follow` (1), `FM` (2).
-  - **Type (Selector)**: `Osc` (0, default), `Cyclic` (1, Sine $\times$ Noise), `Noise` (2, S&H).
-  - **Shape (Continuous)**: Waveform Morph / DJ Filter / S&H Clock Rate.
-  - **Speed (Continuous)**: Frequency ($0.1\,\text{Hz} - 24\,\text{kHz}$) / Offset ($-64$ to $+64$ st) / FM Ratio (1:32 to 32:1).
+  - **Type (Selector)**: `Osc` (0, default), `Cyclic` (1, Sine $\times$ Noise), `Noise` (2, S&H Noise).
+  - **Knob 0 (Continuous)**:
+    - *Osc mode*: Waveform Morph (Sine $\to$ Tri $\to$ Saw $\to$ Square $\to$ PWM).
+    - *Cyclic & Noise modes*: DJ Filter (bipolar $-100\%$ to $+100\%$, default $0\%$, double-click reset to $0\%$).
+  - **Knob 1 (Speed, Continuous)**:
+    - *Osc & Cyclic modes*: Frequency ($0.1\,\text{Hz} - 24\,\text{kHz}$) / Offset ($-64$ to $+64$ st) / FM Ratio (1:32 to 32:1).
+    - *Noise mode*: S&H Clock Rate (labeled "Speed", $0.1\,\text{Hz} - 24\,\text{kHz}$, default $24\,\text{kHz}$, double-click reset to $24\,\text{kHz}$), dynamically swept by Pitch Envelope 1.
   - **Visualizer**: Self-locked oscilloscope phase-locked to Modulator 1's own internal frequency and zero crossings.
 - **Slot 4: Pitch Envelope 1**
   - **Target (Selector)**: `Car` (0, default), `Mod` (1), `Both` (2), `Opp` (3).

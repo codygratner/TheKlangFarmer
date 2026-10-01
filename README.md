@@ -45,10 +45,15 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 
 ## Key Features
 
-### 1. Dual FM Voice Engine & Per-Voice Filtering
+#### 1. Dual FM Voice Engine & Per-Voice Filtering
 - **Two FM Operator Pairs**: Independent `Carrier 1 & Modulator 1` and `Carrier 2 & Modulator 2` engines with 5-point warp decay curves.
-- **Carrier Pitch Tracking Modes**: Select between `MIDI` (tracks incoming MIDI with $\pm 24$ st semitone offset, center-detented bipolar meter), `Freq` (fixed continuous frequency from $20\,\text{Hz}$ to $24\,\text{kHz}$, defaulting to $55\,\text{Hz}$), and `Note` (fixed musical note across notes 0–127 with padded readout e.g. `A1   [   55 Hz,  33]`).
-- **Pitch Envelope with Inverse Mode**: Dedicated pitch envelopes for each voice feature `Car`, `Mod`, `Both`, and `Opp` (Opposite / Inverse mode, driving carrier and modulator pitch in reciprocal directions).
+- **Carrier Pitch Tracking & FM Depth Modulation Bar**:
+  - Select between `MIDI` (tracks incoming MIDI with $\pm 24$ st semitone offset, center-detented bipolar meter), `Freq` (fixed continuous frequency from $20\,\text{Hz}$ to $24\,\text{kHz}$, defaulting to $55\,\text{Hz}$), and `Note` (fixed musical note across notes 0–127 with padded readout e.g. `A1   [   55 Hz,  33]`).
+  - Active `MOD DEPTH` displays the affected frequency modulation span directly on the Carrier pitch slider (with real-time needle hidden to prevent high-frequency visual jitter).
+- **Pitch Envelope with Inverse Mode**: Dedicated percussive decay envelopes for each voice feature `Car`, `Mod`, `Both`, and `Opp` (Opposite / Inverse mode, driving carrier and modulator pitch in reciprocal directions).
+- **S&H Noise Engine & Global DJ Filter Standardization**:
+  - Modulator Noise engine features a bipolar DJ Filter on parameter 3 and S&H Clock Rate ("Speed", $0.1\,\text{Hz} - 24\,\text{kHz}$, default $24\,\text{kHz}$) on parameter 4, swept dynamically by the pitch envelope.
+  - All DJ Filters throughout the synth default to `0%` (center `0.5`) with double-click reset to `0%`.
 - **Distinct Voice Palettes**: Voice 2 features an inverted complementary color palette (180° rotated hues on accents and card background tints) for instant visual differentiation.
 - **Per-Voice Multimode Filters**: Each voice features its own dedicated multimode filter (LPF, BPF, HPF, BRF with 6/12/18/24/36 dB slopes) with resonance calibrated right to the edge of self-oscillation.
 - **Cross-Voice Ring Modulation**: Raw cross-multiplication (`Carrier 1 × Carrier 2`) routeable into the 4-channel mixer.
@@ -88,10 +93,12 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 - **Silver Brushed Eurorack Faceplates**:
   - Mixer module and Limiters (Pre-Limiter & Master Limiter) feature authentic brushed-aluminum faceplates, corner rack screws, white recessed troughs, and signal red accents with dynamic text inversion.
 
-### 4. Real-Time Phase-Locked Visualizations (Slot 5)
+### 4. Real-Time Phase-Locked Visualizations (Slot 5) & Global Controls
 - **Self-Locked Oscilloscopes**: Carriers and modulators phase-lock to their own fundamental frequencies, eliminating visual drift even during deep FM sweeps.
 - **Bode Magnitude Plots**: Real-time logarithmic X-Y response curves for filters and bell EQs ($20\,\text{Hz} - 24\,\text{kHz}$) with grid reference markers.
 - **Auto-Tracking & Lock Toggle**: The visualizer automatically follows whichever module card you click or hover over. A padlock toggle lets you freeze the display on a specific module while tweaking others.
+- **Visualizer OFF Button**: An `OFF` toggle badge directly in the visualizer header strip (dim grey when active, glowing red when off) suspends all scope and Bode rendering, locking to a calm flat baseline and saving CPU.
+- **INIT 3-Option Confirmation Dialog**: Clicking `INIT` launches an interactive confirmation modal with three distinct choices: `Default` (factory preset), `Clean` (factory sound with all 8 FX slots stripped to empty racks), and `Cancel`.
 
 ### 5. Rock-Solid Audio Thread Stability
 - **Zero Real-Time Allocations**: Strictly **no dynamic heap memory allocations** (`malloc`/`new`) on the audio rendering thread.
