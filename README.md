@@ -76,7 +76,7 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 - **Noise Transient Generator**: Dedicated filtered white/pink noise burst with its own filter envelope (`Filter 3 + Filter Env 3`).
 - **Multi-Clap Generator**: Multi-burst envelope generator simulating handclap flam bursts.
 - **3 Freely Assignable Mod Envelopes (Top Row)**:
-  - DAHDSR envelopes (Delay, Attack, Hold, Decay, Sustain, Release) with bipolar depth and flexible slope curvature.
+  - Dedicated percussive decay envelopes with bipolar depth (-100% to +100%) and flexible slope curvature (Exponential, Linear, Logarithmic).
   - Dropdown target selector with **dynamic loaded-FX naming** (e.g. `Post FX 1 [Ring Mod]: Param 1 [Waveform]` or `Post FX 1 [Empty]: Param 1 [Empty]`) across 108 continuous synthesis and effect parameters.
 - **Dynamics & Analog Drift (Bottom Row)**:
   - **Velocity Dynamics**: Dynamic scaling of output volume, envelope decay, and modulation depth.

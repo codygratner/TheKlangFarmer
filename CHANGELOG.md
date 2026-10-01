@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.3] - 2026-10-01
 
 ### Added
-- **3 Freely Assignable Modulation Envelopes**: DAHDSR envelopes (Delay, Attack, Hold, Decay, Sustain, Release) with bipolar modulation depth and flexible slope curve shaping.
+- **3 Freely Assignable Modulation Envelopes**: Fast percussive decay envelopes with bipolar modulation depth (-100% to +100%) and flexible slope curve shaping (Exponential, Linear, Logarithmic).
 - **Real-Time Modulation Visualization**: Animated lower indicator bar on modulated Arcade HP sliders displaying live modulation range and instantaneous position; right-click callout popup to edit base parameter value while monitoring modulation span.
 - **Sub-Block Modulation Smoothing**: Real-time sample-accurate sub-block modulation matrix routing across all active synthesis and effect parameters.
 - **Key Tracking Module**: Pitch tracking module with configurable root key, tracking rate, and key center.

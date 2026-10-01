@@ -353,7 +353,7 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 ### 4.9. Page 7: Modulations
 - **Slot 1**: Navigation Module.
 - **Slot 2: Mod Envelope 1**
-  - **Slope (Continuous)**: DAHDSR curve shape (Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic, default Exponential).
+  - **Slope (Continuous)**: Percussive decay curve shape (Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic, default Exponential).
   - **Depth (Continuous)**: Bipolar modulation depth ($-100\%$ to $+100\%$, default $0\%$).
   - **Decay (Continuous)**: Envelope decay time ($1\,\text{ms} - 2000\,\text{ms}$, default $333\,\text{ms}$).
   - **Destination (Selector ComboBox)**: Selects one of 108 continuous synthesis and effect parameter targets, dynamically labeled with loaded FX names (e.g. `Post FX 1 [Ring Mod]: Param 1 [Waveform]`).
