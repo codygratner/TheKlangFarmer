@@ -107,18 +107,14 @@ inline float unwarpBipolarExp(float y) {
     return std::clamp(0.5f + sign * u * 0.5f, 0.0f, 1.0f);
 }
 
-// Drive mapping: -6dB to 0dB (at 50% knob) to +24dB
+// Drive mapping: -6dB to +24dB (0dB at 0.2, +6dB at 0.4)
 inline float normToDriveDb(float norm) {
     norm = std::clamp(norm, 0.0f, 1.0f);
-    return (norm <= 0.5f) ? (-6.0f + norm * 12.0f) : ((norm - 0.5f) * 48.0f);
+    return -6.0f + norm * 30.0f;
 }
 
 inline float driveDbToNorm(float db) {
-    if (db <= 0.0f) {
-        return std::clamp((db + 6.0f) / 12.0f, 0.0f, 0.5f);
-    } else {
-        return std::clamp(0.5f + db / 48.0f, 0.5f, 1.0f);
-    }
+    return std::clamp((db + 6.0f) / 30.0f, 0.0f, 1.0f);
 }
 
 inline float normToDriveGain(float norm) {
@@ -345,7 +341,7 @@ public:
         float modDepth = (params[3] - 0.5f) * 2.0f; // -100% to +100% (default 0% = 0.5)
 
         int target = (voiceIndex == 1) ? ctx.pitchEnv1Target : ctx.pitchEnv2Target;
-        bool applyPitchEnv = (target == 1 || target == 3);
+        bool applyPitchEnv = (target == 0 || target == 2 || target == 3);
         const auto& modSig = (voiceIndex == 1) ? ctx.mod1Signal : ctx.mod2Signal;
         const auto& peSig  = (voiceIndex == 1) ? ctx.pitchEnv1Signal : ctx.pitchEnv2Signal;
 
@@ -440,10 +436,11 @@ public:
         const auto& peSig = (voiceIndex == 1) ? ctx.pitchEnv1Signal : ctx.pitchEnv2Signal;
         modSig.resize(numSamples);
         int target = (voiceIndex == 1) ? ctx.pitchEnv1Target : ctx.pitchEnv2Target;
-        bool applyPitchEnv = (target == 2 || target == 3);
+        bool applyPitchEnv = (target == 1 || target == 2 || target == 3);
+        float pitchEnvSign = (target == 3) ? -1.0f : 1.0f;
 
         for (int i = 0; i < numSamples; ++i) {
-            float pitchEnv = (applyPitchEnv && i < static_cast<int>(peSig.size())) ? peSig[i] : 0.0f;
+            float pitchEnv = (applyPitchEnv && i < static_cast<int>(peSig.size())) ? (peSig[i] * pitchEnvSign) : 0.0f;
             float instFreq = oscFreq * std::pow(2.0f, pitchEnv * 5.0f);
             instFreq = std::clamp(instFreq, 0.05f, sampleRate * 0.48f);
 
@@ -530,12 +527,9 @@ public:
         peSig.resize(numSamples);
 
         for (int i = 0; i < numSamples; ++i) {
-            float envVal = 0.0f;
-            if (target != 0) {
-                float linearProgress = timeSinceTrigger / decayTime;
-                float envLinear = std::clamp(1.0f - linearProgress, 0.0f, 1.0f);
-                envVal = applyEnvelopeSlope(envLinear, slope) * depth;
-            }
+            float linearProgress = timeSinceTrigger / decayTime;
+            float envLinear = std::clamp(1.0f - linearProgress, 0.0f, 1.0f);
+            float envVal = applyEnvelopeSlope(envLinear, slope) * depth;
             timeSinceTrigger += invSr;
             peSig[i] = envVal;
         }
@@ -564,9 +558,8 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. Drive: -6dB to 0dB to +24dB (def: 0dB = 0.5)
-        float driveDb = (params[0] <= 0.5f) ? (-6.0f + params[0] * 12.0f) : ((params[0] - 0.5f) * 48.0f);
-        float satGain = std::pow(10.0f, driveDb / 20.0f);
+        // 1. Drive: -6dB to +24dB (0dB at 0.2, +6dB def at 0.4)
+        float satGain = normToDriveGain(params[0]);
 
         // 2. Bias: DC offset -1 to +1 (def: 0 = 0.5)
         float bias = (params[1] - 0.5f) * 2.0f;
@@ -774,23 +767,34 @@ public:
 
         // 4. Resonance: 0% to 100%
         float rawRes = params[3];
-        float filterQ = 0.707f + rawRes * 18.0f;
 
-        // Number of 2-pole SVF stages:
+        // Number of 2-pole SVF stages and per-stage Q distribution:
+        // For all slopes at -12dB and above, 100% resonance sits right at the self-oscillation level (peak gain ~ 20.0).
+        // Higher-order slopes distribute resonance cleanly without runaway Q^2 or Q^3 gain explosions.
         int svfStages = 1;
         bool hasExtraPole = false;
+        float stageQ[3] = { 0.7071f, 0.7071f, 0.7071f };
+        constexpr float targetPeak = 20.0f;
+
         if (slopeIdx == 0) {
             svfStages = 1;
-            filterQ = 0.5f + rawRes * 5.0f; // Softened Q for 6dB slope
+            stageQ[0] = 0.5f + rawRes * 5.0f; // Softened Q for 6dB slope
         } else if (slopeIdx == 1) {
             svfStages = 1; // 12 dB/oct (2 poles)
+            stageQ[0] = 0.7071f + rawRes * (targetPeak - 0.7071f);
         } else if (slopeIdx == 2) {
             svfStages = 1; // 18 dB/oct (3 poles: 2 SVF + 1 RC)
             hasExtraPole = true;
+            stageQ[0] = 0.7071f + rawRes * (targetPeak * 1.4142f - 0.7071f);
         } else if (slopeIdx == 3) {
-            svfStages = 2; // 24 dB/oct (4 poles)
+            svfStages = 2; // 24 dB/oct (4 poles: 2 SVF stages)
+            stageQ[0] = 0.7071f + rawRes * (targetPeak * 1.4142f - 0.7071f);
+            stageQ[1] = 0.7071f;
         } else if (slopeIdx == 4) {
-            svfStages = 3; // 36 dB/oct (6 poles)
+            svfStages = 3; // 36 dB/oct (6 poles: 3 SVF stages)
+            stageQ[0] = 0.7071f + rawRes * (targetPeak * 2.0f - 0.7071f);
+            stageQ[1] = 0.7071f;
+            stageQ[2] = 0.7071f;
         }
 
         float postDrive = postdriveGain;
@@ -811,11 +815,12 @@ public:
 
             // SVF filter cascade
             float g = std::tan(PI * cutoff * invSr);
-            float k = 1.0f / filterQ;
-            float a1 = 1.0f / (1.0f + g * (g + k));
             int svfMode = type; // 0=LP, 1=BP, 2=HP, 3=BRF (Notch)
 
             for (int s = 0; s < svfStages; ++s) {
+                float k = 1.0f / stageQ[s];
+                float a1 = 1.0f / (1.0f + g * (g + k));
+
                 float hpL = (inL - (g + k) * s1L[s] - s2L[s]) * a1;
                 float bpL = g * hpL + s1L[s];
                 s1L[s] = g * hpL + bpL;
@@ -888,23 +893,24 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. Type: 0=Off (def), 1=On
-        bool enabled = (params[0] >= 0.5f);
-        if (!enabled) return; // bypass
-
-        // 2. Dampening: 0.1 Hz to 24 kHz (def 24 kHz)
-        float dampParam = std::clamp(params[1] + ctx.slopCombDamp, 0.0f, 1.0f);
+        // 1. Dampening: 0.1 Hz to 24 kHz (def 24 kHz)
+        float dampParam = std::clamp(params[0] + ctx.slopCombDamp, 0.0f, 1.0f);
         float dampHz = 0.1f * std::pow(24000.0f / 0.1f, dampParam);
         float combDampCoeff = std::clamp(TWO_PI * dampHz * invSr, 0.0001f, 0.999f);
 
-        // 3. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
-        float cutoffParam = std::clamp(params[2] + ctx.slopCombCutoff, 0.0f, 1.0f);
+        // 2. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
+        float cutoffParam = std::clamp(params[1] + ctx.slopCombCutoff, 0.0f, 1.0f);
         float cutoff = 0.1f * std::pow(24000.0f / 0.1f, cutoffParam);
         cutoff = std::clamp(cutoff, 20.0f, sampleRate * 0.485f);
 
-        // 4. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
-        float rawRes = params[3];
+        // 3. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
+        float rawRes = params[2];
         float combFb = (rawRes - 0.5f) * 2.0f * 0.98f;
+
+        // 4. Mix: -100%:0% .. 0%:100% (Dry at 0.5) .. +100%:0% (def +50%:50% = 0.75)
+        float blend = (params[3] - 0.5f) * 2.0f;
+        float wetAmount = std::abs(blend);
+        float wetSign = (blend >= 0.0f) ? 1.0f : -1.0f;
 
         float delayLen = std::clamp(sampleRate / cutoff, 2.0f, static_cast<float>(maxDelaySamples - 2));
 
@@ -929,11 +935,11 @@ public:
             combBufferR[combWriteIdx] = inR + combDampR * combFb;
             combWriteIdx = (combWriteIdx + 1) % maxDelaySamples;
 
-            inL = inL + delayedL;
-            inR = inR + delayedR;
+            float outL = inL * (1.0f - wetAmount) + (delayedL * wetSign) * wetAmount;
+            float outR = inR * (1.0f - wetAmount) + (delayedR * wetSign) * wetAmount;
 
-            if (left) left[i] = inL;
-            if (right) right[i] = inR;
+            if (left) left[i] = outL;
+            if (right) right[i] = outR;
         }
     }
 
@@ -954,8 +960,8 @@ public:
         invSr = ctx.invSr;
         sampleRate = ctx.sampleRate;
         for (int i = 0; i < 32; ++i) {
-            apfS1L[i] = apfS2L[i] = 0.0f;
-            apfS1R[i] = apfS2R[i] = 0.0f;
+            apfS1L[i] = apfS2L[i] = apf2S1L[i] = apf2S2L[i] = 0.0f;
+            apfS1R[i] = apfS2R[i] = apf2S1R[i] = apf2S2R[i] = 0.0f;
         }
     }
 
@@ -966,9 +972,8 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. Type: 0=Off (def), 1=On
-        bool enabled = (params[0] >= 0.5f);
-        if (!enabled) return; // bypass
+        // 1. Order: 0 = 2nd Order, 1 = 4th Order
+        bool fourthOrder = (params[0] >= 0.5f);
 
         // 2. Amount: 0 to 32 APFs (def 4 = 4.0 / 32.0)
         int apfStages = std::clamp(static_cast<int>(std::round(params[1] * 32.0f)), 0, 32);
@@ -980,8 +985,8 @@ public:
         cutoff = std::clamp(cutoff, 10.0f, sampleRate * 0.485f);
 
         // 4. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
-        // High resonance (Q) creates a steep 2nd-order phase transition and dramatic group delay
-        // (the classic laser zap / chirp / smearing of Kilohearts Disperser)
+        // High resonance (Q) creates a steep phase transition and dramatic group delay
+        // (the classic laser zap / chirp / smearing of Phase Smear)
         float disperserRes = (params[3] - 0.5f) * 2.0f;
         float Q = 0.7071f;
         if (disperserRes >= 0.0f) {
@@ -991,7 +996,7 @@ public:
         }
         Q = std::clamp(Q, 0.1f, 30.0f);
 
-        // 2nd-order allpass biquad coefficients (RBJ Cookbook normalized)
+        // Allpass biquad coefficients (RBJ Cookbook normalized)
         float w0 = TWO_PI * cutoff * invSr;
         w0 = std::clamp(w0, 0.001f, 3.10f);
         float cosw0 = std::cos(w0);
@@ -1010,17 +1015,36 @@ public:
             float inR = right ? right[i] : inL;
 
             for (int st = 0; st < apfStages; ++st) {
-                // Left channel Direct Form II Transposed
+                // Section 1: Left channel Direct Form II Transposed
                 float yL = b0 * inL + apfS1L[st];
                 apfS1L[st] = b1 * inL - a1 * yL + apfS2L[st];
                 apfS2L[st] = b2 * inL - a2 * yL;
                 inL = yL;
 
-                // Right channel Direct Form II Transposed
+                // Section 1: Right channel Direct Form II Transposed
                 float yR = b0 * inR + apfS1R[st];
                 apfS1R[st] = b1 * inR - a1 * yR + apfS2R[st];
                 apfS2R[st] = b2 * inR - a2 * yR;
                 inR = yR;
+
+                if (fourthOrder) {
+                    // Section 2: Left channel Direct Form II Transposed (cascaded for 4th-order APF)
+                    float yL2 = b0 * inL + apf2S1L[st];
+                    apf2S1L[st] = b1 * inL - a1 * yL2 + apf2S2L[st];
+                    apf2S2L[st] = b2 * inL - a2 * yL2;
+                    inL = yL2;
+
+                    // Section 2: Right channel Direct Form II Transposed
+                    float yR2 = b0 * inR + apf2S1R[st];
+                    apf2S1R[st] = b1 * inR - a1 * yR2 + apf2S2R[st];
+                    apf2S2R[st] = b2 * inR - a2 * yR2;
+                    inR = yR2;
+
+                    if (std::abs(apf2S1L[st]) < 1e-15f) apf2S1L[st] = 0.0f;
+                    if (std::abs(apf2S2L[st]) < 1e-15f) apf2S2L[st] = 0.0f;
+                    if (std::abs(apf2S1R[st]) < 1e-15f) apf2S1R[st] = 0.0f;
+                    if (std::abs(apf2S2R[st]) < 1e-15f) apf2S2R[st] = 0.0f;
+                }
 
                 // Flush denormals
                 if (std::abs(apfS1L[st]) < 1e-15f) apfS1L[st] = 0.0f;
@@ -1041,7 +1065,13 @@ private:
     float apfS2L[32] = { 0.0f };
     float apfS1R[32] = { 0.0f };
     float apfS2R[32] = { 0.0f };
+    float apf2S1L[32] = { 0.0f };
+    float apf2S2L[32] = { 0.0f };
+    float apf2S1R[32] = { 0.0f };
+    float apf2S2R[32] = { 0.0f };
 };
+
+using PhaseSmearBlock = DisperserBlock;
 
 // --- BLOCK: EQ (Bell EQ + DJ Filter) ---
 class EQBlock : public DSPBlock {
@@ -2514,7 +2544,7 @@ public:
         setPageParameter(BLK_MIXER, 3, 0.0f);
 
         // FX defaults
-        setPageParameter(BLK_DRIVE, 0, 0.5f);
+        setPageParameter(BLK_DRIVE, 0, 0.4f); // +6 dB (def)
         setPageParameter(BLK_DRIVE, 1, 0.5f);
         setPageParameter(BLK_DRIVE, 2, 0.5f);
         setPageParameter(BLK_DRIVE, 3, 1.0f);
@@ -2536,7 +2566,7 @@ public:
 
         setPageParameter(BLK_FREQSHIFT, 0, 0.5f);
         setPageParameter(BLK_FREQSHIFT, 1, rangeHzToNorm(3.0f));
-        setPageParameter(BLK_FREQSHIFT, 2, 0.5f);
+        setPageParameter(BLK_FREQSHIFT, 2, 0.75f); // +50%:50% (def)
         setPageParameter(BLK_FREQSHIFT, 3, 0.5f);
 
         setPageParameter(BLK_GRIT, 0, 1.0f);
@@ -2544,13 +2574,13 @@ public:
         setPageParameter(BLK_GRIT, 2, 0.5f);
         setPageParameter(BLK_GRIT, 3, 0.5f);
 
-        setPageParameter(BLK_COMB, 0, 0.0f);
-        setPageParameter(BLK_COMB, 1, 1.0f);
-        setPageParameter(BLK_COMB, 2, 1.0f);
-        setPageParameter(BLK_COMB, 3, 0.5f);
+        setPageParameter(BLK_COMB, 0, 1.0f);  // Dampening
+        setPageParameter(BLK_COMB, 1, 1.0f);  // Cutoff
+        setPageParameter(BLK_COMB, 2, 0.5f);  // Resonance
+        setPageParameter(BLK_COMB, 3, 0.75f); // Mix (+50%:50% def)
 
-        setPageParameter(BLK_DISPERSER, 0, 0.0f);
-        setPageParameter(BLK_DISPERSER, 1, 4.0f / 32.0f);
+        setPageParameter(BLK_DISPERSER, 0, 0.0f); // 2nd Order
+        setPageParameter(BLK_DISPERSER, 1, 4.0f / 32.0f); // 4 APFs
         setPageParameter(BLK_DISPERSER, 2, 0.62124f);
         setPageParameter(BLK_DISPERSER, 3, 0.5f);
 
@@ -2613,15 +2643,15 @@ public:
         setPageParameter(BLK_MODENV3, 3, 0.0f);    // Target
 
         // Pre-Amp FX defaults
-        preFXTypes[0] = 5; preFXParams[0][0] = 0.5f; preFXParams[0][1] = 0.5f; preFXParams[0][2] = 0.5f; preFXParams[0][3] = 1.0f; // Drive
+        preFXTypes[0] = 5; preFXParams[0][0] = 0.4f; preFXParams[0][1] = 0.5f; preFXParams[0][2] = 0.5f; preFXParams[0][3] = 1.0f; // Drive: +6dB (0.4)
         preFXTypes[1] = 13; preFXParams[1][0] = 0.0f; preFXParams[1][1] = 0.0f; preFXParams[1][2] = 0.5f; preFXParams[1][3] = 0.5f; // WaveFolder
         preFXTypes[2] = 11; preFXParams[2][0] = 0.0f; preFXParams[2][1] = 0.50934f; preFXParams[2][2] = 0.0f; preFXParams[2][3] = 0.5f; // RingMod
-        preFXTypes[3] = 8; preFXParams[3][0] = 0.5f; preFXParams[3][1] = rangeHzToNorm(3.0f); preFXParams[3][2] = 0.5f; preFXParams[3][3] = 0.5f; // FreqShift
+        preFXTypes[3] = 8; preFXParams[3][0] = 0.5f; preFXParams[3][1] = rangeHzToNorm(3.0f); preFXParams[3][2] = 0.75f; preFXParams[3][3] = 0.5f; // FreqShift: +50%:50% (0.75)
 
         // Post-Amp FX defaults
         postFXTypes[0] = 9; postFXParams[0][0] = 1.0f; postFXParams[0][1] = 1.0f; postFXParams[0][2] = 0.5f; postFXParams[0][3] = 0.5f; // Grit
-        postFXTypes[1] = 3; postFXParams[1][0] = 0.0f; postFXParams[1][1] = 1.0f; postFXParams[1][2] = 1.0f; postFXParams[1][3] = 0.5f; // Comb
-        postFXTypes[2] = 4; postFXParams[2][0] = 0.0f; postFXParams[2][1] = 4.0f / 32.0f; postFXParams[2][2] = 0.62124f; postFXParams[2][3] = 0.5f; // Disperser
+        postFXTypes[1] = 3; postFXParams[1][0] = 1.0f; postFXParams[1][1] = 1.0f; postFXParams[1][2] = 0.5f; postFXParams[1][3] = 0.75f; // Comb: Damp 24k, Cut 24k, Res 0%, Mix +50%:50%
+        postFXTypes[2] = 4; postFXParams[2][0] = 0.0f; postFXParams[2][1] = 4.0f / 32.0f; postFXParams[2][2] = 0.62124f; postFXParams[2][3] = 0.5f; // Phase Smear: 2nd Order (0.0)
         postFXTypes[3] = 1; postFXParams[3][0] = 1.0f; postFXParams[3][1] = 0.0f; postFXParams[3][2] = 0.5f; postFXParams[3][3] = 0.5f; // Bell EQ
 
         for (int s = 0; s < 4; ++s) {

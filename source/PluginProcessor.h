@@ -184,10 +184,10 @@ private:
     juce::AudioParameterFloat*  gritHighParam        = nullptr;
 
     // 16. Comb Filter
-    juce::AudioParameterChoice* combTypeParam        = nullptr;
     juce::AudioParameterFloat*  combDampeningParam   = nullptr;
     juce::AudioParameterFloat*  combCutoffParam      = nullptr;
     juce::AudioParameterFloat*  combResonanceParam   = nullptr;
+    juce::AudioParameterFloat*  combMixParam         = nullptr;
 
     // 17. Disperser
     juce::AudioParameterChoice* disperserTypeParam   = nullptr;

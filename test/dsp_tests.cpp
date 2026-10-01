@@ -62,12 +62,12 @@ int main() {
     }
     std::cout << "PASS: 22-block parameter sweep stability test." << std::endl;
 
-    // 3. Test Comb filter and APF disperser
-    // Comb filter (Block BLK_COMB, Type = 1.0f On)
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 0, 1.0f);        // On
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 1, 0.5f);        // Dampening
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 2, 0.5f);        // Cutoff
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 3, 0.95f);       // High resonance
+    // 3. Test Comb filter and Phase Smear (APF Disperser)
+    // Comb filter (Block BLK_COMB: Dampening, Cutoff, Res, Mix)
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 0, 0.5f);        // Dampening
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 1, 0.5f);        // Cutoff
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 2, 0.95f);       // High resonance
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 3, 0.75f);       // Mix (+50%:50%)
     engine.trigger(1.0f);
     for (int block = 0; block < 50; ++block) {
         engine.processStereo(left.data(), right.data(), blockSize);
@@ -81,8 +81,8 @@ int main() {
     }
     std::cout << "PASS: Comb filter test." << std::endl;
 
-    // APF Disperser (Block BLK_DISPERSER, Type = 1.0f On)
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 0, 1.0f); // On
+    // Phase Smear (Block BLK_DISPERSER: Order, Amount, Cutoff, Resonance)
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 0, 0.0f); // 2nd Order
     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 1, 1.0f); // 32 stages
     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 2, 0.6f); // Cutoff
     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 3, 0.8f); // Resonance
@@ -92,54 +92,70 @@ int main() {
         for (int i = 0; i < blockSize; ++i) {
             if (std::isnan(left[i]) || std::isinf(left[i]) ||
                 std::isnan(right[i]) || std::isinf(right[i])) {
-                std::cerr << "FAILED: NaN or Inf in APF Disperser!" << std::endl;
+                std::cerr << "FAILED: NaN or Inf in Phase Smear (2nd Order)!" << std::endl;
                 return 1;
             }
         }
     }
-    // Verify 2nd-order Disperser phase smearing and allpass energy preservation
-    {
-        TbdAudio::DisperserBlock disp;
-        TbdAudio::BlockContext ctx;
-        ctx.sampleRate = 44100.0f;
-        ctx.invSr = 1.0f / 44100.0f;
-        disp.init(ctx);
-        disp.setParam(0, 1.0f);          // On
-        disp.setParam(1, 16.0f / 32.0f); // 16 stages
-        disp.setParam(2, 0.65f);         // ~600 Hz cutoff
-        disp.setParam(3, 0.85f);         // High resonance (Q ~ 14.5)
-
-        constexpr int impLen = 512;
-        std::vector<float> impBuf(impLen, 0.0f);
-        impBuf[0] = 1.0f; // Single impulse
-        disp.processStereo(impBuf.data(), nullptr, impLen, ctx);
-
-        float energy = 0.0f;
-        int nonZeroSamples = 0;
-        for (float s : impBuf) {
-            energy += s * s;
-            if (std::abs(s) > 0.005f) nonZeroSamples++;
-        }
-
-        // Energy should be strictly conserved within ~5% for allpass
-        if (std::abs(energy - 1.0f) > 0.05f) {
-            std::cerr << "FAILED: Disperser is not preserving allpass energy! Energy = " << energy << std::endl;
-            return 1;
-        }
-
-        // 16 cascaded 2nd-order APF stages must smear the single-sample impulse over dozens of samples
-        if (nonZeroSamples < 20) {
-            std::cerr << "FAILED: Disperser did not smear impulse! Nonzero samples: " << nonZeroSamples << std::endl;
-            return 1;
+    // Test 4th Order mode
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 0, 1.0f); // 4th Order
+    engine.trigger(1.0f);
+    for (int block = 0; block < 50; ++block) {
+        engine.processStereo(left.data(), right.data(), blockSize);
+        for (int i = 0; i < blockSize; ++i) {
+            if (std::isnan(left[i]) || std::isinf(left[i]) ||
+                std::isnan(right[i]) || std::isinf(right[i])) {
+                std::cerr << "FAILED: NaN or Inf in Phase Smear (4th Order)!" << std::endl;
+                return 1;
+            }
         }
     }
-    std::cout << "PASS: 2nd-order APF Disperser smearing, zapping, and energy conservation verified." << std::endl;
 
-    // 4. Test Pitch Envelope 1 Modulation
+    // Verify Phase Smear 2nd-order and 4th-order smearing and allpass energy preservation
+    {
+        for (int order = 0; order <= 1; ++order) {
+            TbdAudio::DisperserBlock disp;
+            TbdAudio::BlockContext ctx;
+            ctx.sampleRate = 44100.0f;
+            ctx.invSr = 1.0f / 44100.0f;
+            disp.init(ctx);
+            disp.setParam(0, static_cast<float>(order)); // 0 = 2nd Order, 1 = 4th Order
+            disp.setParam(1, 16.0f / 32.0f);             // 16 stages
+            disp.setParam(2, 0.65f);                     // ~600 Hz cutoff
+            disp.setParam(3, 0.85f);                     // High resonance (Q ~ 14.5)
+
+            constexpr int impLen = 512;
+            std::vector<float> impBuf(impLen, 0.0f);
+            impBuf[0] = 1.0f; // Single impulse
+            disp.processStereo(impBuf.data(), nullptr, impLen, ctx);
+
+            float energy = 0.0f;
+            int nonZeroSamples = 0;
+            for (float s : impBuf) {
+                energy += s * s;
+                if (std::abs(s) > 0.005f) nonZeroSamples++;
+            }
+
+            // Energy should be strictly conserved within ~5% for allpass
+            if (std::abs(energy - 1.0f) > 0.05f) {
+                std::cerr << "FAILED: Phase Smear order " << order << " is not preserving allpass energy! Energy = " << energy << std::endl;
+                return 1;
+            }
+
+            // Cascaded APF stages must smear the single-sample impulse over dozens of samples
+            if (nonZeroSamples < 20) {
+                std::cerr << "FAILED: Phase Smear order " << order << " did not smear impulse! Nonzero samples: " << nonZeroSamples << std::endl;
+                return 1;
+            }
+        }
+    }
+    std::cout << "PASS: Phase Smear 2nd-order & 4th-order smearing, zapping, and energy conservation verified." << std::endl;
+
+    // 4. Test Pitch Envelope 1 Modulation (Opp mode: target = 3 / 3.0f = 1.0f)
     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 0, 0.0f); // Exp
     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 1, 1.0f); // Max depth
     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 2, 0.3806f); // 333 ms
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 3, 1.0f); // Both
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PITCHENV1, 3, 1.0f); // Opp (target 3)
     engine.trigger(1.0f);
     for (int block = 0; block < 50; ++block) {
         engine.processStereo(left.data(), right.data(), blockSize);
@@ -151,7 +167,7 @@ int main() {
             }
         }
     }
-    std::cout << "PASS: Pitch Envelope test." << std::endl;
+    std::cout << "PASS: Pitch Envelope Opp mode test." << std::endl;
 
     // 5. Test Claps Burst on Amp Envelope
     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMPENV, 0, 1.0f); // 32 claps
@@ -290,31 +306,41 @@ int main() {
         velEngine.init(44100.0f);
         velEngine.setMidiPitch(36); // C2
 
-        // Set Velocity: Slope = Linear (0.5), Volume = 100% (-100% at min vel, param3 = 1.0f)
-        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 0, 0.5f);
+        // Set Velocity: Slope = Linear (0.75), Volume = 100% (-100% at min vel, param3 = 1.0f)
+        velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 0, 0.75f);
         velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, 0.5f);
         velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, 0.5f);
         velEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 3, 1.0f); // 100% volume sensitivity
 
         // Trigger at max velocity (1.0)
         velEngine.trigger(1.0f);
-        std::vector<float> highL(256, 0.0f);
-        std::vector<float> highR(256, 0.0f);
-        velEngine.processStereo(highL.data(), highR.data(), 256);
+        std::vector<float> highL(1024, 0.0f);
+        std::vector<float> highR(1024, 0.0f);
+        velEngine.processStereo(highL.data(), highR.data(), 1024);
 
         float maxPeak = 0.0f;
         for (float s : highL) maxPeak = std::max(maxPeak, std::abs(s));
 
-        // Trigger at very low velocity (0.01)
-        velEngine.trigger(0.01f);
-        std::vector<float> lowL(256, 0.0f);
-        std::vector<float> lowR(256, 0.0f);
-        velEngine.processStereo(lowL.data(), lowR.data(), 256);
+        // Trigger at very low velocity (0.01) from silence
+        TbdAudio::ModularDrumEngine lowEngine;
+        lowEngine.init(44100.0f);
+        lowEngine.setMidiPitch(36);
+        lowEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 0, 0.75f);
+        lowEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 1, 0.5f);
+        lowEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 2, 0.5f);
+        lowEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 3, 1.0f);
+
+        lowEngine.trigger(0.01f);
+        std::vector<float> lowL(1024, 0.0f);
+        std::vector<float> lowR(1024, 0.0f);
+        lowEngine.processStereo(lowL.data(), lowR.data(), 1024);
 
         float minPeak = 0.0f;
         for (float s : lowL) minPeak = std::max(minPeak, std::abs(s));
 
-        std::cout << "Velocity Volume Sensitivity: Peak at Vel 1.0 = " << maxPeak << " | Peak at Vel 0.01 = " << minPeak << std::endl;
+        std::cout << "Velocity Volume Sensitivity: Peak at Vel 1.0 = " << maxPeak 
+                  << " (gain=" << velEngine.getContext().velVolumeGain << ") | Peak at Vel 0.01 = " 
+                  << minPeak << " (gain=" << lowEngine.getContext().velVolumeGain << ")" << std::endl;
         if (minPeak >= maxPeak * 0.1f) {
             std::cerr << "FAILED: Velocity volume did not scale output correctly!" << std::endl;
             return 1;
@@ -610,6 +636,24 @@ int main() {
             filter.processStereo(lpfSig.data(), nullptr, 256, ctx);
             for (float s : lpfSig) {
                 assert(!std::isnan(s) && !std::isinf(s));
+            }
+        }
+
+        // Test 100% resonance (self-oscillation boundary) across all slopes
+        for (int slope = 0; slope < 5; ++slope) {
+            filter.init(ctx);
+            filter.setParam(0, 0.0f); // LPF
+            filter.setParam(1, slope * 0.25f);
+            filter.setParam(2, 0.5f); // ~500 Hz cutoff
+            filter.setParam(3, 1.0f); // 100% Resonance
+
+            std::vector<float> impulse(512, 0.0f);
+            impulse[0] = 1.0f;
+            filter.processStereo(impulse.data(), nullptr, 512, ctx);
+            for (float s : impulse) {
+                assert(!std::isnan(s) && !std::isinf(s));
+                // Peak gain should be bounded by the self-oscillation calibration (target peak ~20.0)
+                assert(std::abs(s) < 100.0f);
             }
         }
 

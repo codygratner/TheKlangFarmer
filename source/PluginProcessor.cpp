@@ -148,10 +148,10 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     gritHighParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_high"));
 
     // 16. Comb Filter
-    combTypeParam        = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("comb_type"));
     combDampeningParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_dampening"));
     combCutoffParam      = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_cutoff"));
     combResonanceParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_resonance"));
+    combMixParam         = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_mix"));
 
     // 17. Disperser
     disperserTypeParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("disperser_type"));
@@ -356,12 +356,13 @@ const std::vector<TheKlangFarmerAudioProcessor::ModDestDescriptor>& TheKlangFarm
             { "grit_rate", "Grit: Sample Rate", ModTargetType::PageBlock, MDE::BLK_GRIT, 1 },
             { "grit_low", "Grit: Low Shelf", ModTargetType::PageBlock, MDE::BLK_GRIT, 2 },
             { "grit_high", "Grit: High Shelf", ModTargetType::PageBlock, MDE::BLK_GRIT, 3 },
-            { "comb_dampening", "Comb: Dampening", ModTargetType::PageBlock, MDE::BLK_COMB, 1 },
-            { "comb_cutoff", "Comb: Cutoff", ModTargetType::PageBlock, MDE::BLK_COMB, 2 },
-            { "comb_resonance", "Comb: Resonance", ModTargetType::PageBlock, MDE::BLK_COMB, 3 },
-            { "disperser_amount", "Disperser: Amount", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 1 },
-            { "disperser_cutoff", "Disperser: Cutoff", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 2 },
-            { "disperser_resonance", "Disperser: Resonance", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 3 },
+            { "comb_dampening", "Comb: Dampening", ModTargetType::PageBlock, MDE::BLK_COMB, 0 },
+            { "comb_cutoff", "Comb: Cutoff", ModTargetType::PageBlock, MDE::BLK_COMB, 1 },
+            { "comb_resonance", "Comb: Resonance", ModTargetType::PageBlock, MDE::BLK_COMB, 2 },
+            { "comb_mix", "Comb: Mix", ModTargetType::PageBlock, MDE::BLK_COMB, 3 },
+            { "disperser_amount", "Phase Smear: Amount", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 1 },
+            { "disperser_cutoff", "Phase Smear: Cutoff", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 2 },
+            { "disperser_resonance", "Phase Smear: Resonance", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 3 },
             { "eq_freq", "EQ: Frequency", ModTargetType::PageBlock, MDE::BLK_EQ, 0 },
             { "eq_width", "EQ: Width", ModTargetType::PageBlock, MDE::BLK_EQ, 1 },
             { "eq_gain", "EQ: Gain", ModTargetType::PageBlock, MDE::BLK_EQ, 2 },
@@ -571,10 +572,10 @@ void TheKlangFarmerAudioProcessor::applyBaseParameters() {
     if (gritHighParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 3, getNorm(gritHighParam));
 
     // 16. Comb Filter
-    if (combTypeParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 0, static_cast<float>(combTypeParam->getIndex()));
-    if (combDampeningParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 1, getNorm(combDampeningParam));
-    if (combCutoffParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 2, getNorm(combCutoffParam));
-    if (combResonanceParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 3, getNorm(combResonanceParam));
+    if (combDampeningParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 0, getNorm(combDampeningParam));
+    if (combCutoffParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 1, getNorm(combCutoffParam));
+    if (combResonanceParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 2, getNorm(combResonanceParam));
+    if (combMixParam)         engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 3, getNorm(combMixParam));
 
     // 17. Disperser
     if (disperserTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 0, static_cast<float>(disperserTypeParam->getIndex()));
@@ -846,7 +847,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("pitchenv1_decay", "PitchEnv 1: Decay", 0.3806f));   // 333 ms
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("pitchenv1_target", 1), "PitchEnv 1: Target",
-        juce::StringArray{ "Off", "Car", "Mod", "Both" }, 0));
+        juce::StringArray{ "Car", "Mod", "Both", "Opp" }, 0));
 
     // --- 4. CARRIER 2 ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
@@ -872,7 +873,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("pitchenv2_decay", "PitchEnv 2: Decay", 0.3806f));   // 333 ms
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("pitchenv2_target", 1), "PitchEnv 2: Target",
-        juce::StringArray{ "Off", "Car", "Mod", "Both" }, 0));
+        juce::StringArray{ "Car", "Mod", "Both", "Opp" }, 0));
 
     // --- 7. NOISE TRANSIENT ---
     layout.add(makeFloatParam("noise_sh_rate", "Noise: S&H Rate", 1.0f));       // 24 kHz
@@ -887,7 +888,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("mixer_noise_level", "Mixer: Noise Level", 0.0f));       // 0% (double click returns 100%)
 
     // --- 9. DRIVE ---
-    layout.add(makeFloatParam("drive_amount", "Drive: Amount", 0.5f));              // 0 dB
+    layout.add(makeFloatParam("drive_amount", "Drive: Amount", 0.4f));              // +6 dB (def)
     layout.add(makeFloatParam("drive_bias", "Drive: Bias", 0.5f));                  // 0 DC Bias
     layout.add(makeFloatParam("drive_filter", "Drive: Filter", 0.5f));              // Flat (50%)
     layout.add(std::make_unique<juce::AudioParameterChoice>(
@@ -970,7 +971,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
         "Bell EQ",
         "Chorus",
         "Comb Filter",
-        "Disperser",
+        "Phase Smear",
         "Drive",
         "Filter",
         "Flanger",
@@ -995,7 +996,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("post_fx_2_type", 1), "Post FX 2: Type", fxChoices, 3)); // Comb Filter
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_3_type", 1), "Post FX 3: Type", fxChoices, 4)); // Disperser
+        juce::ParameterID("post_fx_3_type", 1), "Post FX 3: Type", fxChoices, 4)); // Phase Smear
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("post_fx_4_type", 1), "Post FX 4: Type", fxChoices, 1)); // Bell EQ
 
@@ -1005,18 +1006,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
             juce::String preId = "pre_fx_" + juce::String(s + 1) + "_p" + juce::String(p + 1);
             juce::String preName = "Pre FX " + juce::String(s + 1) + ": Param " + juce::String(p + 1);
             float defPre = 0.5f;
-            if (s == 0) { const float d[4] = { 0.5f, 0.5f, 0.5f, 1.0f }; defPre = d[p]; }
+            if (s == 0) { const float d[4] = { 0.4f, 0.5f, 0.5f, 1.0f }; defPre = d[p]; } // Drive: +6dB (0.4)
             else if (s == 1) { const float d[4] = { 0.0f, 0.0f, 0.5f, 0.5f }; defPre = d[p]; }
             else if (s == 2) { const float d[4] = { 0.0f, 0.50934f, 0.0f, 0.5f }; defPre = d[p]; }
-            else if (s == 3) { const float d[4] = { 0.5f, TbdAudio::rangeHzToNorm(3.0f), 0.5f, 0.5f }; defPre = d[p]; }
+            else if (s == 3) { const float d[4] = { 0.5f, TbdAudio::rangeHzToNorm(3.0f), 0.75f, 0.5f }; defPre = d[p]; } // FreqShift: Blend +50%:50% (0.75)
             layout.add(makeFloatParam(preId, preName, defPre));
 
             juce::String postId = "post_fx_" + juce::String(s + 1) + "_p" + juce::String(p + 1);
             juce::String postName = "Post FX " + juce::String(s + 1) + ": Param " + juce::String(p + 1);
             float defPost = 0.5f;
             if (s == 0) { const float d[4] = { 1.0f, 1.0f, 0.5f, 0.5f }; defPost = d[p]; }
-            else if (s == 1) { const float d[4] = { 0.0f, 1.0f, 1.0f, 0.5f }; defPost = d[p]; }
-            else if (s == 2) { const float d[4] = { 0.0f, 4.0f / 32.0f, 0.62124f, 0.5f }; defPost = d[p]; }
+            else if (s == 1) { const float d[4] = { 1.0f, 1.0f, 0.5f, 0.75f }; defPost = d[p]; } // Comb: Damp 24k, Cut 24k, Res 0%, Mix +50%:50%
+            else if (s == 2) { const float d[4] = { 0.0f, 4.0f / 32.0f, 0.62124f, 0.5f }; defPost = d[p]; } // Phase Smear: 2nd Order (0)
             else if (s == 3) { const float d[4] = { 1.0f, 0.0f, 0.5f, 0.5f }; defPost = d[p]; }
             layout.add(makeFloatParam(postId, postName, defPost));
         }
@@ -1039,7 +1040,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     // --- 14. FREQUENCY SHIFTER ---
     layout.add(makeFloatParam("freqshift_shift", "FreqShift: Shift", 0.5f));    // 0 Hz
     layout.add(makeFloatParam("freqshift_range", "FreqShift: Range", TbdAudio::rangeHzToNorm(3.0f))); // 3 Hz default
-    layout.add(makeFloatParam("freqshift_blend", "FreqShift: Blend", 0.5f));    // Dry (0%)
+    layout.add(makeFloatParam("freqshift_blend", "FreqShift: Blend", 0.75f));   // +50%:50% (def)
     layout.add(makeFloatParam("freqshift_width", "FreqShift: Width", 0.5f));    // Center (0%)
 
     // --- 15. GRIT FX ---
@@ -1049,20 +1050,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("grit_high", "Grit: High Shelf", 0.5f));          // 0 dB
 
     // --- 16. COMB FILTER ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("comb_type", 1), "Comb: Type",
-        juce::StringArray{ "Off", "On" }, 0));
     layout.add(makeFloatParam("comb_dampening", "Comb: Dampening", 1.0f));      // 24 kHz
     layout.add(makeFloatParam("comb_cutoff", "Comb: Cutoff", 1.0f));            // 24 kHz
     layout.add(makeFloatParam("comb_resonance", "Comb: Resonance", 0.5f));      // 0% (bipolar center)
+    layout.add(makeFloatParam("comb_mix", "Comb: Mix", 0.75f));                // +50%:50% (def)
 
-    // --- 17. DISPERSER ---
+    // --- 17. PHASE SMEAR ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("disperser_type", 1), "Disperser: Type",
-        juce::StringArray{ "Off", "On" }, 0));
-    layout.add(makeFloatParam("disperser_amount", "Disperser: Amount", 4.0f / 32.0f)); // 4 APFs
-    layout.add(makeFloatParam("disperser_cutoff", "Disperser: Cutoff", 0.62124f));     // 220 Hz
-    layout.add(makeFloatParam("disperser_resonance", "Disperser: Resonance", 0.5f));   // 0% (bipolar center)
+        juce::ParameterID("disperser_type", 1), "Phase Smear: Order",
+        juce::StringArray{ "2nd", "4th" }, 0));
+    layout.add(makeFloatParam("disperser_amount", "Phase Smear: Amount", 4.0f / 32.0f)); // 4 APFs
+    layout.add(makeFloatParam("disperser_cutoff", "Phase Smear: Cutoff", 0.62124f));     // 220 Hz
+    layout.add(makeFloatParam("disperser_resonance", "Phase Smear: Resonance", 0.5f));   // 0% (bipolar center)
 
     // --- 18. EQ (bell EQ) ---
     layout.add(makeFloatParam("eq_freq", "EQ: Frequency", 1.0f));               // 24 kHz

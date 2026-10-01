@@ -270,6 +270,32 @@ static double parseBipolarDb(const juce::String& text) {
     return std::clamp((db / 48.0) + 0.5, 0.0, 1.0);
 }
 
+static juce::String formatWetDry(double val) {
+    double b = (val - 0.5) * 2.0;
+    int wet = static_cast<int>(std::round(std::abs(b) * 100.0));
+    int dry = static_cast<int>(std::round((1.0 - std::abs(b)) * 100.0));
+    if (b > 0.005) {
+        return "+" + juce::String(wet) + "%:" + juce::String(dry) + "%";
+    } else if (b < -0.005) {
+        return "-" + juce::String(wet) + "%:" + juce::String(dry) + "%";
+    } else {
+        return juce::String("0%:100%");
+    }
+}
+
+static double parseWetDry(const juce::String& text) {
+    auto t = text.trim();
+    if (t.containsChar(':')) {
+        auto parts = juce::StringArray::fromTokens(t, ":", "");
+        if (parts.size() >= 1) {
+            double sign = t.startsWith("-") ? -1.0 : 1.0;
+            double wet = parseNumberSafe(parts[0], 50.0);
+            return std::clamp((sign * std::abs(wet) / 200.0) + 0.5, 0.0, 1.0);
+        }
+    }
+    return parseBipolarPercent(text);
+}
+
 static juce::String formatMixerLevel(double val) {
     float pct = (val <= 0.5) ? static_cast<float>(val * 200.0) : static_cast<float>(100.0 + (val - 0.5) * 600.0);
     return juce::String(static_cast<int>(std::round(pct))) + "%";
@@ -1708,9 +1734,13 @@ void ModuleCardComponent::paint(juce::Graphics& g) {
         return;
     }
 
-    g.setColour(juce::Colour(0xff151821));
+    auto compColour = accent.withRotatedHue(0.5f);
+    auto panelBg = juce::Colour(0xff151821).interpolatedWith(compColour, 0.12f);
+    auto panelBorder = juce::Colour(0xff222736).interpolatedWith(compColour, 0.15f);
+
+    g.setColour(panelBg);
     g.fillRoundedRectangle(bounds, 6.0f);
-    g.setColour(juce::Colour(0xff222736));
+    g.setColour(panelBorder);
     g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
 
     auto headerStrip = bounds.removeFromTop(3.0f);
@@ -1826,9 +1856,13 @@ void FXSlotCardComponent::mouseDown(const juce::MouseEvent& /*e*/) {
 void FXSlotCardComponent::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds().toFloat();
 
-    g.setColour(juce::Colour(0xff151821));
+    auto compColour = accent.withRotatedHue(0.5f);
+    auto panelBg = juce::Colour(0xff151821).interpolatedWith(compColour, 0.12f);
+    auto panelBorder = juce::Colour(0xff222736).interpolatedWith(compColour, 0.15f);
+
+    g.setColour(panelBg);
     g.fillRoundedRectangle(bounds, 6.0f);
-    g.setColour(juce::Colour(0xff222736));
+    g.setColour(panelBorder);
     g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
 
     auto headerStrip = bounds.removeFromTop(3.0f);
@@ -1934,23 +1968,20 @@ void FXSlotCardComponent::configureForType(int fxType) {
         case 3: { // Comb Filter
             title = "Comb Filter";
             accent = juce::Colour(0xff26a69a);
-            selector1.setVisible(true);
-            selector1.setAccent(accent);
-            selector1.setItems({ "Off", "On" }, 2);
-            selector1.onChange = [this](int idx) {
-                knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
-            };
-            setupK(1, "Dampening", false, formatFreqHz, parseFreqHz);
-            setupK(2, "Cutoff", false, formatFreqHz, parseFreqHz);
-            setupK(3, "Resonance", true, formatBipolarPercent, parseBipolarPercent);
+            setupK(0, "Dampening", false, formatFreqHz, parseFreqHz);
+            setupK(1, "Cutoff", false, formatFreqHz, parseFreqHz);
+            setupK(2, "Resonance", true, formatBipolarPercent, parseBipolarPercent);
+            setupK(3, "Mix", true, formatWetDry, parseWetDry);
+            knobs[3].setDoubleClickReturnValue(true, 0.5); // 0%:100% (Dry)
+            knobs[3].getDefaultValue = []() { return 0.5; };
             break;
         }
-        case 4: { // Disperser
-            title = "Disperser";
+        case 4: { // Phase Smear
+            title = "Phase Smear";
             accent = juce::Colour(0xffec407a);
             selector1.setVisible(true);
             selector1.setAccent(accent);
-            selector1.setItems({ "Off", "On" }, 2);
+            selector1.setItems({ "2nd", "4th" }, 2);
             selector1.onChange = [this](int idx) {
                 knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
             };
@@ -1969,6 +2000,8 @@ void FXSlotCardComponent::configureForType(int fxType) {
                 knobs[3].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
             };
             setupK(0, "Drive", false, formatDb, parseDb);
+            knobs[0].setDoubleClickReturnValue(true, 0.2); // 0 dB
+            knobs[0].getDefaultValue = []() { return 0.2; }; // 0 dB
             setupK(1, "Bias", true, formatBipolarPercent, parseBipolarPercent);
             setupK(2, "Filter", true, formatBipolarPercent, parseBipolarPercent);
             break;
@@ -2014,14 +2047,11 @@ void FXSlotCardComponent::configureForType(int fxType) {
                 double hz = parseNumberSafe(text, 0.0);
                 return std::clamp((hz / (2.0 * maxRange)) + 0.5, 0.0, 1.0);
             };
-            auto fmtBlend = [](double val) {
-                int b = static_cast<int>(std::round((val - 0.5) * 200.0));
-                if (b == 0) return juce::String("Dry");
-                return (b > 0 ? "+" : "") + juce::String(b) + "%";
-            };
             setupK(0, "Shift", true, fmtShift, prsShift);
             setupK(1, "Range", false, formatRangeHz, parseRangeHz);
-            setupK(2, "Blend", true, fmtBlend, parseBipolarPercent);
+            setupK(2, "Blend", true, formatWetDry, parseWetDry);
+            knobs[2].setDoubleClickReturnValue(true, 0.5); // 0%:100% (Dry)
+            knobs[2].getDefaultValue = []() { return 0.5; };
             setupK(3, "Width", true, formatBipolarPercent, parseBipolarPercent);
             break;
         }
@@ -2105,7 +2135,13 @@ void FXSlotCardComponent::updateDynamicControls() {
             selector2.setSelectedIndex(sel2, juce::dontSendNotification);
             lastSel2 = sel2;
         }
-    } else if (currentType == 3 || currentType == 4 || currentType == 13) { // Comb, Disperser, WaveFolder: knob 0 is Off/On
+    } else if (currentType == 4) { // Phase Smear: knob 0 is Order (0: 2nd, 1: 4th)
+        int sel = (knobs[0].getValue() >= 0.5) ? 1 : 0;
+        if (sel != lastSel1) {
+            selector1.setSelectedIndex(sel, juce::dontSendNotification);
+            lastSel1 = sel;
+        }
+    } else if (currentType == 13) { // WaveFolder: knob 0 is Off/On
         int sel = (knobs[0].getValue() >= 0.5) ? 1 : 0;
         if (sel != lastSel1) {
             selector1.setSelectedIndex(sel, juce::dontSendNotification);
@@ -2301,9 +2337,13 @@ void VisualizationCardComponent::mouseExit(const juce::MouseEvent& /*e*/) {
 
 void VisualizationCardComponent::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds().toFloat();
-    g.setColour(juce::Colour(0xff151821));
+    auto compColour = accent.withRotatedHue(0.5f);
+    auto panelBg = juce::Colour(0xff151821).interpolatedWith(compColour, 0.12f);
+    auto panelBorder = juce::Colour(0xff222736).interpolatedWith(compColour, 0.15f);
+
+    g.setColour(panelBg);
     g.fillRoundedRectangle(bounds, 6.0f);
-    g.setColour(juce::Colour(0xff222736));
+    g.setColour(panelBorder);
     g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
 
     auto headerStrip = bounds.removeFromTop(3.0f);
@@ -2487,7 +2527,7 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
     juce::StringArray b3 = {
         "• 8 FX SLOTS: 4 Pre-Amp slots (pre-saturation) and 4 Post-Amp slots (post-saturation / spatial).",
         "• MULTI-INSTANCE: Assign ANY of the 13 effects to ANY slot. Stack up to 8 of the same effect in series if desired (e.g. multiple Wavefolders or cascading Filters)!",
-        "• 13 DSP PROCESSORS: Bell EQ, Chorus, Comb Filter, Disperser, Drive, Filter, Flanger, Frequency Shifter, Grit FX, Phaser, RingMod, Tempo Delay, Wave Folder.",
+        "• 13 DSP PROCESSORS: Bell EQ, Chorus, Comb Filter, Phase Smear, Drive, Filter, Flanger, Frequency Shifter, Grit FX, Phaser, RingMod, Tempo Delay, Wave Folder.",
         "• HARDWARE CONTROL: Standardized 4-knob tactile interface with illuminated LED button switches for quick, intuitive sound design."
     };
     drawPanel(p3, "3. MULTI-INSTANCE FX (13 EFFECTS)", juce::Colour(0xffff7043), b3);
@@ -2668,7 +2708,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 3. Pitch Envelope 1
     cardPitchEnv1 = std::make_unique<ModuleCardComponent>("Pitch Env 1", juce::Colour(0xffffab00));
     setupBox(pitchEnv1TargetBox);
-    bindSelector(pitchEnv1TargetSelector, pitchEnv1TargetBox, "pitchenv1_target", { "Off", "Car", "Mod", "Both" }, 4);
+    bindSelector(pitchEnv1TargetSelector, pitchEnv1TargetBox, "pitchenv1_target", { "Car", "Mod", "Both", "Opp" }, 4);
     cardPitchEnv1->setSelectorAtBottom(true);
     cardPitchEnv1->setLedSelector(&pitchEnv1TargetSelector);
 
@@ -2813,7 +2853,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // 8. Pitch Envelope 2
     cardPitchEnv2 = std::make_unique<ModuleCardComponent>("Pitch Env 2", juce::Colour(0xffffab00));
     setupBox(pitchEnv2TargetBox);
-    bindSelector(pitchEnv2TargetSelector, pitchEnv2TargetBox, "pitchenv2_target", { "Off", "Car", "Mod", "Both" }, 4);
+    bindSelector(pitchEnv2TargetSelector, pitchEnv2TargetBox, "pitchenv2_target", { "Car", "Mod", "Both", "Opp" }, 4);
     cardPitchEnv2->setSelectorAtBottom(true);
     cardPitchEnv2->setLedSelector(&pitchEnv2TargetSelector);
 
@@ -3377,7 +3417,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         "Bell EQ",
         "Chorus",
         "Comb Filter",
-        "Disperser",
+        "Phase Smear",
         "Drive",
         "Filter",
         "Flanger",
@@ -3587,12 +3627,12 @@ void TheKlangFarmerAudioProcessorEditor::setFXSlotDefaults(int slot, bool isPost
     switch (fxType) {
         case 1:  defs[0] = 1.0f; defs[1] = 0.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // Bell EQ: 1kHz, 0.1 oct, 0dB, flat
         case 2:  defs[0] = 0.5398f; defs[1] = 0.60f; defs[2] = 0.60f; defs[3] = 0.50f; break; // Chorus: 1.2Hz, 60% depth, +20% fb, 50% mix
-        case 3:  defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 1.0f; defs[3] = 0.5f; break; // Comb: On, 24kHz, 24kHz, 0%
-        case 4:  defs[0] = 1.0f; defs[1] = 4.0f / 32.0f; defs[2] = 0.62124f; defs[3] = 0.5f; break; // Disperser: On, 4 stages, 1kHz, 0%
-        case 5:  defs[0] = 0.5f; defs[1] = 0.5f; defs[2] = 0.5f; defs[3] = 1.0f; break; // Drive: 0dB, 0 bias, 50% flat, Limiter On
+        case 3:  defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 0.5f; defs[3] = 0.75f; break; // Comb: Damp 24kHz, Cut 24kHz, Res 0%, Mix +50%:50%
+        case 4:  defs[0] = 0.0f; defs[1] = 4.0f / 32.0f; defs[2] = 0.62124f; defs[3] = 0.5f; break; // Phase Smear: 2nd Order, 4 stages, 1kHz, 0%
+        case 5:  defs[0] = 0.4f; defs[1] = 0.5f; defs[2] = 0.5f; defs[3] = 1.0f; break; // Drive: +6dB, 0 bias, 50% flat, Limiter On
         case 6:  defs[0] = 0.0f; defs[1] = 0.25f; defs[2] = 1.0f; defs[3] = 0.0f; break; // Filter: LPF, -12dB, 24kHz, 0% res
         case 7:  defs[0] = 0.3500f; defs[1] = 0.70f; defs[2] = 0.868f; defs[3] = 0.50f; break; // Flanger: 0.25Hz, 70% depth, +70% fb, 50% mix
-        case 8:  defs[0] = 0.5f; defs[1] = TbdAudio::rangeHzToNorm(3.0f); defs[2] = 0.5f; defs[3] = 0.5f; break; // FreqShift: 0 shift, 3Hz, dry, center
+        case 8:  defs[0] = 0.5f; defs[1] = TbdAudio::rangeHzToNorm(3.0f); defs[2] = 0.75f; defs[3] = 0.5f; break; // FreqShift: 0 shift, 3Hz, Blend +50%:50%, center
         case 9:  defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // Grit: 16 bit, 24kHz, 0dB, 0dB
         case 10: defs[0] = 0.4530f; defs[1] = 0.70f; defs[2] = 0.763f; defs[3] = 0.50f; break; // Phaser: 0.5Hz, 70% depth, +50% fb, 50% mix
         case 11: defs[0] = 0.0f; defs[1] = 0.50934f; defs[2] = 0.0f; defs[3] = 0.5f; break; // RingMod: sine, 1kHz, 0% amt, center
