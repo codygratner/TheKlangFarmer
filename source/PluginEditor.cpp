@@ -1236,14 +1236,33 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds().toFloat().reduced(0.5f);
     float cornerRadius = 4.0f;
 
-    // 1. Recessed dark trough background
-    g.setColour(juce::Colour(0xff090c12));
-    g.fillRoundedRectangle(bounds, cornerRadius);
+    if (isLightTrough) {
+        // 1. Recessed white/light satin trough
+        juce::ColourGradient troughGrad(juce::Colour(0xfff8fafc), bounds.getX(), bounds.getY(),
+                                       juce::Colour(0xffe2e7ef), bounds.getX(), bounds.getBottom(), false);
+        g.setGradientFill(troughGrad);
+        g.fillRoundedRectangle(bounds, cornerRadius);
 
-    // Trough border
-    bool isHot = isMouseOverOrDragging();
-    g.setColour(isHot ? accentColour.withAlpha(0.65f) : juce::Colour(0xff1e2535));
-    g.drawRoundedRectangle(bounds, cornerRadius, 1.2f);
+        // Sunken hardware shadow at top
+        g.setColour(juce::Colour(0x28000000));
+        g.drawHorizontalLine(static_cast<int>(bounds.getY() + 1.0f), bounds.getX() + 2.0f, bounds.getRight() - 2.0f);
+        g.setColour(juce::Colour(0x12000000));
+        g.drawHorizontalLine(static_cast<int>(bounds.getY() + 2.0f), bounds.getX() + 3.0f, bounds.getRight() - 3.0f);
+
+        // Crisp dark-slate border
+        bool isHot = isMouseOverOrDragging();
+        g.setColour(isHot ? accentColour.withAlpha(0.9f) : juce::Colour(0xff7a8496));
+        g.drawRoundedRectangle(bounds, cornerRadius, isHot ? 1.4f : 1.0f);
+    } else {
+        // 1. Recessed dark trough background
+        g.setColour(juce::Colour(0xff090c12));
+        g.fillRoundedRectangle(bounds, cornerRadius);
+
+        // Trough border
+        bool isHot = isMouseOverOrDragging();
+        g.setColour(isHot ? accentColour.withAlpha(0.65f) : juce::Colour(0xff1e2535));
+        g.drawRoundedRectangle(bounds, cornerRadius, 1.2f);
+    }
 
     float pad = 1.5f;
     float innerX = bounds.getX() + pad;
@@ -1257,12 +1276,16 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
     float norm = (rng > 0.0) ? static_cast<float>((getValue() - getMinimum()) / rng) : 0.0f;
     norm = std::clamp(norm, 0.0f, 1.0f);
 
+    juce::Rectangle<float> fillRect;
+    bool hasFill = false;
+
     if (isBipolar) {
         float midX = innerX + innerW * 0.5f;
 
         if (norm > 0.501f) {
             float fillW = innerW * (norm - 0.5f);
-            juce::Rectangle<float> fillRect(midX, innerY, fillW, innerH);
+            fillRect = juce::Rectangle<float>(midX, innerY, fillW, innerH);
+            hasFill = true;
             juce::ColourGradient grad(accentColour.darker(0.45f), midX, innerY,
                                       accentColour.brighter(0.1f), midX + fillW, innerY, false);
             g.setGradientFill(grad);
@@ -1277,7 +1300,8 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
         } else if (norm < 0.499f) {
             float fillW = innerW * (0.5f - norm);
             float startX = midX - fillW;
-            juce::Rectangle<float> fillRect(startX, innerY, fillW, innerH);
+            fillRect = juce::Rectangle<float>(startX, innerY, fillW, innerH);
+            hasFill = true;
             juce::ColourGradient grad(accentColour.brighter(0.1f), startX, innerY,
                                       accentColour.darker(0.45f), midX, innerY, false);
             g.setGradientFill(grad);
@@ -1292,17 +1316,18 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
         }
 
         // Center dividing needle
-        g.setColour(accentColour.withAlpha(0.85f));
+        g.setColour(isLightTrough ? juce::Colour(0xff222732) : accentColour.withAlpha(0.85f));
         g.drawVerticalLine(static_cast<int>(midX), innerY, innerY + innerH);
         g.setColour(juce::Colours::white.withAlpha(0.7f));
         g.drawVerticalLine(static_cast<int>(midX), innerY + 1.0f, innerY + innerH - 1.0f);
     } else {
         float fillW = innerW * norm;
         if (fillW > 1.0f) {
-            juce::Rectangle<float> fillRect(innerX, innerY, fillW, innerH);
-            juce::ColourGradient grad(accentColour.withMultipliedSaturation(1.1f).darker(0.6f),
+            fillRect = juce::Rectangle<float>(innerX, innerY, fillW, innerH);
+            hasFill = true;
+            juce::ColourGradient grad(accentColour.withMultipliedSaturation(1.1f).darker(isLightTrough ? 0.35f : 0.6f),
                                       innerX, innerY,
-                                      accentColour.brighter(0.1f),
+                                      accentColour.brighter(0.12f),
                                       innerX + fillW, innerY, false);
             g.setGradientFill(grad);
             g.fillRoundedRectangle(fillRect, innerRadius);
@@ -1318,7 +1343,7 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
 
     // 3. Glass sheen reflection on top 44%
     float sheenH = innerH * 0.44f;
-    juce::ColourGradient sheen(juce::Colour(0x35ffffff), innerX, innerY,
+    juce::ColourGradient sheen(juce::Colour(isLightTrough ? 0x40ffffff : 0x35ffffff), innerX, innerY,
                                juce::Colour(0x04ffffff), innerX, innerY + sheenH, false);
     g.setGradientFill(sheen);
     g.fillRoundedRectangle(innerX, innerY, innerW, sheenH, 2.5f);
@@ -1332,12 +1357,6 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
     constexpr float rightMargin = 8.0f;
     auto valueBox = juce::Rectangle<float>(bounds.getRight() - rightMargin - valueBoxW,
                                            bounds.getY(), valueBoxW, bounds.getHeight());
-
-    // Shadow & Value text
-    g.setColour(juce::Colour(0xd0000000));
-    g.drawText(valStr, valueBox.translated(1.0f, 1.0f), juce::Justification::centredRight, false);
-    g.setColour(juce::Colour(0xffedf2fa));
-    g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
 
     // 5. Embedded Mini Diagram (if applicable)
     float labelRightLimit = valueBox.getX() - 6.0f;
@@ -1357,11 +1376,40 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
                                            bounds.getHeight());
     g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
 
-    // Shadow & Label text
-    g.setColour(juce::Colour(0xd0000000));
-    g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
-    g.setColour(juce::Colour(0xffedf2fa));
-    g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
+    // 7. Render Text with High-Contrast / Inversion Support
+    if (isLightTrough) {
+        // Base pass: Crisp solid black text on the white trough
+        g.setColour(juce::Colour(0xff101318));
+        g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
+        g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
+
+        // Clipped pass: Over the colored fill, invert text to crisp white with dark drop shadow
+        if (hasFill && fillRect.getWidth() > 1.0f) {
+            g.saveState();
+            g.reduceClipRegion(fillRect.toNearestInt());
+
+            // Shadow
+            g.setColour(juce::Colour(0x90000000));
+            g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
+            g.drawText(valStr, valueBox.translated(1.0f, 1.0f), juce::Justification::centredRight, false);
+
+            // Pure white text over fill
+            g.setColour(juce::Colours::white);
+            g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
+            g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
+
+            g.restoreState();
+        }
+    } else {
+        // Standard dark trough text rendering
+        g.setColour(juce::Colour(0xd0000000));
+        g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
+        g.drawText(valStr, valueBox.translated(1.0f, 1.0f), juce::Justification::centredRight, false);
+
+        g.setColour(juce::Colour(0xffedf2fa));
+        g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
+        g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
+    }
 }
 
 // --- LED SELECTOR COMPONENT ---
@@ -1499,8 +1547,8 @@ void LedSelectorComponent::mouseDown(const juce::MouseEvent& e) {
 
 // --- MODULE CARD COMPONENT ---
 
-ModuleCardComponent::ModuleCardComponent(const juce::String& title, juce::Colour accentColour)
-    : moduleTitle(title), accent(accentColour), oscilloscope(accentColour)
+ModuleCardComponent::ModuleCardComponent(const juce::String& title, juce::Colour accentColour, PanelStyle style)
+    : moduleTitle(title), accent(accentColour), panelStyle(style), oscilloscope(accentColour)
 {
     addAndMakeVisible(oscilloscope);
 
@@ -1510,6 +1558,16 @@ ModuleCardComponent::ModuleCardComponent(const juce::String& title, juce::Colour
         labels[i].setJustificationType(juce::Justification::centredLeft);
         addAndMakeVisible(labels[i]);
     }
+}
+
+void ModuleCardComponent::setPanelStyle(PanelStyle style) {
+    panelStyle = style;
+    for (int i = 0; i < 4; ++i) {
+        if (knobs[i]) {
+            knobs[i]->setLightTrough(panelStyle == PanelStyle::DoepferSilver);
+        }
+    }
+    repaint();
 }
 
 void ModuleCardComponent::setLedSelector(LedSelectorComponent* selector) {
@@ -1535,6 +1593,9 @@ void ModuleCardComponent::setKnob(int slotIndex, const juce::String& label, Rota
         if (slider) {
             slider->setLabel(label);
             slider->setAccentColour(accent);
+            if (panelStyle == PanelStyle::DoepferSilver) {
+                slider->setLightTrough(true);
+            }
             addAndMakeVisible(slider);
         }
     }
@@ -1571,6 +1632,66 @@ void ModuleCardComponent::mouseDown(const juce::MouseEvent& /*e*/) {
 
 void ModuleCardComponent::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds().toFloat();
+
+    if (panelStyle == PanelStyle::DoepferSilver) {
+        // 1. Brushed aluminum silver background
+        juce::ColourGradient aluGrad(juce::Colour(0xffe5e9f0), bounds.getX(), bounds.getY(),
+                                    juce::Colour(0xffccd1da), bounds.getX(), bounds.getBottom(), false);
+        g.setGradientFill(aluGrad);
+        g.fillRoundedRectangle(bounds, 6.0f);
+
+        // Subtle fine horizontal hairline brushed grain
+        g.setColour(juce::Colour(0x0a000000));
+        for (float y = bounds.getY() + 3.0f; y < bounds.getBottom() - 3.0f; y += 3.0f) {
+            g.drawHorizontalLine(static_cast<int>(y), bounds.getX() + 6.0f, bounds.getRight() - 6.0f);
+        }
+        g.setColour(juce::Colour(0x0cffffff));
+        for (float y = bounds.getY() + 4.0f; y < bounds.getBottom() - 3.0f; y += 3.0f) {
+            g.drawHorizontalLine(static_cast<int>(y), bounds.getX() + 6.0f, bounds.getRight() - 6.0f);
+        }
+
+        // Dark industrial bezel border
+        g.setColour(juce::Colour(0xff222630));
+        g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.2f);
+
+        // 2. Corner countersunk rack screws
+        auto drawScrew = [&](float cx, float cy) {
+            float r = 4.5f;
+            g.setColour(juce::Colour(0xff4a5260));
+            g.fillEllipse(cx - r, cy - r, r * 2.0f, r * 2.0f);
+            juce::ColourGradient screwGrad(juce::Colour(0xff727b8a), cx, cy - r * 0.7f,
+                                          juce::Colour(0xff363c48), cx, cy + r * 0.7f, false);
+            g.setGradientFill(screwGrad);
+            g.fillEllipse(cx - r + 0.8f, cy - r + 0.8f, (r - 0.8f) * 2.0f, (r - 0.8f) * 2.0f);
+            g.setColour(juce::Colour(0xff161920));
+            g.drawLine(cx - 2.5f, cy - 1.5f, cx + 2.5f, cy + 1.5f, 1.2f);
+        };
+        drawScrew(bounds.getX() + 9.0f, bounds.getY() + 9.0f);
+        drawScrew(bounds.getRight() - 9.0f, bounds.getY() + 9.0f);
+        drawScrew(bounds.getX() + 9.0f, bounds.getBottom() - 9.0f);
+        drawScrew(bounds.getRight() - 9.0f, bounds.getBottom() - 9.0f);
+
+        // 3. Red accent strip at the top
+        auto headerStrip = bounds.removeFromTop(3.0f);
+        g.setColour(accent);
+        g.fillRoundedRectangle(headerStrip, 2.0f);
+
+        // 4. Solid black screenprinted title
+        g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
+        g.setColour(juce::Colour(0xff0d0f14));
+        g.drawText(moduleTitle.toUpperCase(), 18, 4, getWidth() - 36, 18, juce::Justification::left, true);
+
+        // Subtitle / model code in accent red
+        g.setFont(juce::FontOptions(10.5f, juce::Font::bold));
+        g.setColour(accent);
+        g.drawText("A-138", getWidth() - 56, 5, 36, 18, juce::Justification::right, true);
+
+        // Thin screenprint divider under header
+        g.setColour(juce::Colour(0xff181b22));
+        g.drawHorizontalLine(24, bounds.getX() + 14.0f, bounds.getRight() - 14.0f);
+
+        return;
+    }
 
     g.setColour(juce::Colour(0xff151821));
     g.fillRoundedRectangle(bounds, 6.0f);
@@ -2354,9 +2475,9 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
       filter2SlopeSelector(juce::Colour(0xff7c4dff)),
       filter3TypeSelector(juce::Colour(0xff7c4dff)),
       filter3SlopeSelector(juce::Colour(0xff7c4dff)),
-      ampLimiterSelector(juce::Colour(0xff00e5ff)),
-      preLimiterEnableSelector(juce::Colour(0xffffab00)),
-      postLimiterEnableSelector(juce::Colour(0xff00e5ff)),
+      ampLimiterSelector(juce::Colour(0xffe53935)),
+      preLimiterEnableSelector(juce::Colour(0xffe53935)),
+      postLimiterEnableSelector(juce::Colour(0xffe53935)),
       vizCard(juce::Colour(0xff00d2ff))
 {
     setLookAndFeel(&knobLookAndFeel);
@@ -2782,23 +2903,27 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     addChildComponent(cardFilterEnv3.get());
 
     // 14. Mixer
-    cardMixer = std::make_unique<ModuleCardComponent>("Mixer", juce::Colour(0xff26a69a));
-    setupKnob(mixerCarrier1LevelSlider, juce::Colour(0xff26a69a), false, 0.5);
+    cardMixer = std::make_unique<ModuleCardComponent>("Mixer", juce::Colour(0xffe53935), ModuleCardComponent::PanelStyle::DoepferSilver);
+    setupKnob(mixerCarrier1LevelSlider, juce::Colour(0xffe53935), false, 0.5);
+    mixerCarrier1LevelSlider.setLightTrough(true);
     mixerCarrier1LevelSlider.customFormatText = formatMixerLevel;
     mixerCarrier1LevelSlider.customParseText  = parseMixerLevel;
 
-    setupKnob(mixerCarrier2LevelSlider, juce::Colour(0xff26a69a), false, 0.0);
+    setupKnob(mixerCarrier2LevelSlider, juce::Colour(0xffe53935), false, 0.0);
     mixerCarrier2LevelSlider.setDoubleClickReturnValue(true, 0.5);
+    mixerCarrier2LevelSlider.setLightTrough(true);
     mixerCarrier2LevelSlider.customFormatText = formatMixerLevel;
     mixerCarrier2LevelSlider.customParseText  = parseMixerLevel;
 
-    setupKnob(mixerRingModSlider, juce::Colour(0xff26a69a), false, 0.0);
+    setupKnob(mixerRingModSlider, juce::Colour(0xffe53935), false, 0.0);
     mixerRingModSlider.setDoubleClickReturnValue(true, 0.5);
+    mixerRingModSlider.setLightTrough(true);
     mixerRingModSlider.customFormatText = formatMixerLevel;
     mixerRingModSlider.customParseText  = parseMixerLevel;
 
-    setupKnob(mixerNoiseLevelSlider, juce::Colour(0xff26a69a), false, 0.0);
+    setupKnob(mixerNoiseLevelSlider, juce::Colour(0xffe53935), false, 0.0);
     mixerNoiseLevelSlider.setDoubleClickReturnValue(true, 0.5);
+    mixerNoiseLevelSlider.setLightTrough(true);
     mixerNoiseLevelSlider.customFormatText = formatMixerLevel;
     mixerNoiseLevelSlider.customParseText  = parseMixerLevel;
 
@@ -2821,6 +2946,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     cardAmp = std::make_unique<ModuleCardComponent>("Amplifier", juce::Colour(0xff00e5ff));
     setupBox(ampLimiterBox);
     bindSelector(ampLimiterSelector, ampLimiterBox, "amp_limiter", { "Off", "On" }, 2);
+    ampLimiterSelector.setAccent(juce::Colour(0xffe53935));
     cardAmp->setLedSelector(&ampLimiterSelector);
 
     setupKnob(ampLevelSlider, juce::Colour(0xff00e5ff), false, 1.0);
@@ -2870,20 +2996,21 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     addChildComponent(cardAmpEnv.get());
 
     // 26. Pre-Amp Limiter
-    cardPreLimiter = std::make_unique<ModuleCardComponent>("Pre Limiter", juce::Colour(0xffffab00));
+    cardPreLimiter = std::make_unique<ModuleCardComponent>("Pre Limiter", juce::Colour(0xffe53935));
     setupBox(preLimiterEnableBox);
     bindSelector(preLimiterEnableSelector, preLimiterEnableBox, "pre_limiter_enable", { "Off", "On" }, 2);
+    preLimiterEnableSelector.setAccent(juce::Colour(0xffe53935));
     cardPreLimiter->setLedSelector(&preLimiterEnableSelector);
 
-    setupKnob(preLimiterGainSlider, juce::Colour(0xffffab00), false, 12.0 / 36.0);
+    setupKnob(preLimiterGainSlider, juce::Colour(0xffe53935), false, 12.0 / 36.0);
     preLimiterGainSlider.customFormatText = formatLimiterGain;
     preLimiterGainSlider.customParseText  = parseLimiterGain;
 
-    setupKnob(preLimiterThreshSlider, juce::Colour(0xffffab00), false, 1.0);
+    setupKnob(preLimiterThreshSlider, juce::Colour(0xffe53935), false, 1.0);
     preLimiterThreshSlider.customFormatText = formatLimiterThresh;
     preLimiterThreshSlider.customParseText  = parseLimiterThresh;
 
-    setupKnob(preLimiterReleaseSlider, juce::Colour(0xffffab00), false, 0.6296);
+    setupKnob(preLimiterReleaseSlider, juce::Colour(0xffe53935), false, 0.6296);
     preLimiterReleaseSlider.customFormatText = formatLimiterRelease;
     preLimiterReleaseSlider.customParseText  = parseLimiterRelease;
 
@@ -2893,20 +3020,21 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     addChildComponent(cardPreLimiter.get());
 
     // 27. Post-Amp Limiter
-    cardPostLimiter = std::make_unique<ModuleCardComponent>("Post Limiter", juce::Colour(0xff00e5ff));
+    cardPostLimiter = std::make_unique<ModuleCardComponent>("Post Limiter", juce::Colour(0xffe53935));
     setupBox(postLimiterEnableBox);
     bindSelector(postLimiterEnableSelector, postLimiterEnableBox, "post_limiter_enable", { "Off", "On" }, 2);
+    postLimiterEnableSelector.setAccent(juce::Colour(0xffe53935));
     cardPostLimiter->setLedSelector(&postLimiterEnableSelector);
 
-    setupKnob(postLimiterGainSlider, juce::Colour(0xff00e5ff), false, 12.0 / 36.0);
+    setupKnob(postLimiterGainSlider, juce::Colour(0xffe53935), false, 12.0 / 36.0);
     postLimiterGainSlider.customFormatText = formatLimiterGain;
     postLimiterGainSlider.customParseText  = parseLimiterGain;
 
-    setupKnob(postLimiterThreshSlider, juce::Colour(0xff00e5ff), false, 1.0);
+    setupKnob(postLimiterThreshSlider, juce::Colour(0xffe53935), false, 1.0);
     postLimiterThreshSlider.customFormatText = formatLimiterThresh;
     postLimiterThreshSlider.customParseText  = parseLimiterThresh;
 
-    setupKnob(postLimiterReleaseSlider, juce::Colour(0xff00e5ff), false, 0.6296);
+    setupKnob(postLimiterReleaseSlider, juce::Colour(0xffe53935), false, 0.6296);
     postLimiterReleaseSlider.customFormatText = formatLimiterRelease;
     postLimiterReleaseSlider.customParseText  = parseLimiterRelease;
 

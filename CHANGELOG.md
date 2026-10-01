@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Doepfer A-138 Silver Mixer Faceplate**: Redesigned the Mixer module (Slot 8) with an authentic brushed-aluminum Eurorack faceplate aesthetic featuring countersunk dark corner rack screws, solid black screenprinted DIN typography, red model code badge (`A-138`), and a dark industrial bezel frame.
+- **Mixer White Recessed Troughs & Dynamic Text Inversion**: Upgraded the Mixer sliders to recessed white/light-satin troughs with signal red (`#e53935`) level fills and real-time dual-pass text clipping (labels and values dynamically invert from sharp black over the white trough to pure white over the red fill bar).
+- **Limiter Red Accent Alignment**: Styled `Pre Limiter`, `Post Limiter`, and the `Amp Limiter` toggle switch with the same signal red accent (`#e53935`) while keeping the standard dark slate chassis, creating visual unity between gain staging and dynamic control modules.
+
 ---
 
 ## [0.1.2] - 2026-09-30

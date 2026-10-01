@@ -86,6 +86,9 @@ public:
     bool isBipolar = false;
     void setBipolar(bool bipolar) { isBipolar = bipolar; repaint(); }
 
+    bool isLightTrough = false;
+    void setLightTrough(bool light) { isLightTrough = light; repaint(); }
+
     DiagramType diagramType = DiagramType::None;
 
     std::function<double()> getDefaultValue;
@@ -155,9 +158,17 @@ private:
 // Card component representing one modular block in the rack
 class ModuleCardComponent : public juce::Component {
 public:
-    ModuleCardComponent(const juce::String& title, juce::Colour accentColour);
+    enum class PanelStyle {
+        StandardDark,
+        DoepferSilver
+    };
+
+    ModuleCardComponent(const juce::String& title, juce::Colour accentColour, PanelStyle style = PanelStyle::StandardDark);
     void paint(juce::Graphics& g) override;
     void resized() override;
+
+    void setPanelStyle(PanelStyle style);
+    PanelStyle getPanelStyle() const { return panelStyle; }
 
     void updateScope(const float* data, int numSamples);
     void setPlotMode(MiniOscilloscopeComponent::PlotMode mode);
@@ -178,6 +189,7 @@ public:
 private:
     juce::String moduleTitle;
     juce::Colour accent;
+    PanelStyle panelStyle = PanelStyle::StandardDark;
     MiniOscilloscopeComponent oscilloscope;
 
     LedSelectorComponent* ledSelector = nullptr;
