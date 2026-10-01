@@ -10,6 +10,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # 2. Add the cloned JUCE repository
 add_subdirectory(JUCE)
 
+# Configure plugin formats per platform
+set(TKF_FORMATS VST3 Standalone)
+if (APPLE)
+    list(APPEND TKF_FORMATS AU)
+endif()
+
 # 3. Configure the plugin target
 juce_add_plugin(TheKlangFarmer
     COMPANY_NAME "R'lyeh Sound"
@@ -23,8 +29,7 @@ juce_add_plugin(TheKlangFarmer
     PLUGIN_CODE Tkf1
     BUNDLE_ID com.rlyehsound.theklangfarmer
     
-    # Builds the DAW plugin(s) and a standalone runnable executable
-    FORMATS VST3 Standalone $<$<PLATFORM_ID:Darwin>:AU>
+    FORMATS ${TKF_FORMATS}
     PRODUCT_NAME "The Klang Farmer"
     VST3_CAN_REPLACE_VST2 FALSE
 )

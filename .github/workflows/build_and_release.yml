@@ -105,6 +105,7 @@ jobs:
             libxinerama-dev \
             libxrandr-dev \
             libxrender-dev \
+            libxi-dev \
             libglu1-mesa-dev \
             mesa-common-dev \
             libgl1-mesa-dev \
