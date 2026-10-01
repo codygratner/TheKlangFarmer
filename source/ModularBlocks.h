@@ -410,8 +410,8 @@ public:
         float shRate = 24000.0f;
 
         if (type == 2) {
-            // Noise: Shape controls S&H noise rate: 0.1 Hz to 24 kHz (def 24 kHz)
-            shRate = 0.1f * std::pow(24000.0f / 0.1f, shape);
+            // Noise: Speed (params[3]) controls S&H noise rate: 0.1 Hz to 24 kHz (def 24 kHz)
+            shRate = 0.1f * std::pow(24000.0f / 0.1f, speed);
         } else {
             // Oscillator (0) or Cyclic (1)
             if (tracking == 0) {
@@ -459,13 +459,18 @@ public:
                 djFilter.process(rawNoise, dummyR, shape, sampleRate);
                 val = sinVal * rawNoise;
             } else {
-                // Noise: S&H Noise clocked at shRate
-                noisePhase += shRate * invSr;
+                // Noise: S&H Noise clocked at shRate modulated by pitch envelope
+                float instShRate = shRate * std::pow(2.0f, pitchEnv * 5.0f);
+                instShRate = std::clamp(instShRate, 0.05f, sampleRate * 0.48f);
+                noisePhase += instShRate * invSr;
                 if (noisePhase >= 1.0f) {
-                    noisePhase -= 1.0f;
+                    noisePhase -= std::floor(noisePhase);
                     noiseVal = fastRng(rngState);
                 }
-                val = noiseVal;
+                float filteredNoise = noiseVal;
+                float dummyR = filteredNoise;
+                djFilter.process(filteredNoise, dummyR, shape, sampleRate);
+                val = filteredNoise;
             }
 
             modSig[i] = val;

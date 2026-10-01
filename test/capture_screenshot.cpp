@@ -66,6 +66,47 @@ int main(int argc, char* argv[]) {
     editor.timerCallback();
     saveImage(editor.createComponentSnapshot(editor.getLocalBounds()), "page0_voice1_modulated.png");
 
+    // Test Carrier Mod Depth visualization (shows affected span on Offset slider WITHOUT indicator needle)
+    if (auto* p = processor.apvts.getParameter("carrier1_depth")) {
+        p->setValueNotifyingHost(0.75f); // +50% depth (+-2 octaves)
+    }
+    auto modInfo = processor.getParamModulationInfo("carrier1_pitch");
+    std::cout << "DEBUG carrier1_pitch isMod=" << modInfo.isModulated 
+              << " min=" << modInfo.rangeMinNorm << " max=" << modInfo.rangeMaxNorm 
+              << " needle=" << modInfo.showNeedle << " numSrc=" << modInfo.sources.size() << std::endl;
+    editor.timerCallback();
+    saveImage(editor.createComponentSnapshot(editor.getLocalBounds()), "page0_carrier_depth_modulated.png");
+
+    // Test Modulator Noise mode (3rd param is DJ Filter, 4th param is Speed 24 kHz)
+    if (auto* p = processor.apvts.getParameter("mod1_type")) {
+        p->setValueNotifyingHost(1.0f); // Type 2 = Noise
+    }
+    if (auto* p = processor.apvts.getParameter("mod1_shape")) {
+        p->setValueNotifyingHost(0.5f); // DJ Filter default 0%
+    }
+    if (auto* p = processor.apvts.getParameter("mod1_speed")) {
+        p->setValueNotifyingHost(1.0f); // Speed default 24 kHz
+    }
+    editor.timerCallback();
+    saveImage(editor.createComponentSnapshot(editor.getLocalBounds()), "page0_noise_modulator.png");
+
+    // Test Visualizer OFF mode (lit up glowing red, motionless flat line)
+    // Find vizCard via editor component or toggle
+    for (auto* child : editor.getChildren()) {
+        if (auto* viz = dynamic_cast<VisualizationCardComponent*>(child)) {
+            viz->setIsOff(true);
+            break;
+        }
+    }
+    editor.timerCallback();
+    saveImage(editor.createComponentSnapshot(editor.getLocalBounds()), "visualizer_off.png");
+
+    // Test INIT Clean mode (empty FX slots)
+    editor.resetToDefaults(true); // Clean: all FX slots set to None
+    editor.setPage(3); // PRE-AMP FX page
+    editor.timerCallback();
+    saveImage(editor.createComponentSnapshot(editor.getLocalBounds()), "pre_fx_clean.png");
+
     // Also test and render the SliderCalloutComponent standalone
     RotaryKnobSlider testSlider;
     testSlider.setLabel("Filter 1 Cutoff");

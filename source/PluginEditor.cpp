@@ -1490,18 +1490,20 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
         g.drawRoundedRectangle(modBarRect, 1.5f, 0.8f);
 
         // Realtime indicator needle
-        float currX = innerX + innerW * std::clamp(modulation.currentNorm, 0.0f, 1.0f);
-        float indW = 4.0f;
-        float indH = 8.0f;
-        float indY = barY - 2.5f;
-        juce::Rectangle<float> indRect(currX - indW * 0.5f, indY, indW, indH);
+        if (modulation.showNeedle) {
+            float currX = innerX + innerW * std::clamp(modulation.currentNorm, 0.0f, 1.0f);
+            float indW = 4.0f;
+            float indH = 8.0f;
+            float indY = barY - 2.5f;
+            juce::Rectangle<float> indRect(currX - indW * 0.5f, indY, indW, indH);
 
-        g.setColour(accentColour.withAlpha(0.6f));
-        g.fillRoundedRectangle(indRect.expanded(1.0f, 0.5f), 1.5f);
-        g.setColour(juce::Colours::white);
-        g.fillRoundedRectangle(indRect, 1.2f);
-        g.setColour(juce::Colour(0xff090c12));
-        g.drawVerticalLine(static_cast<int>(currX), indY + 1.0f, indY + indH - 1.0f);
+            g.setColour(accentColour.withAlpha(0.6f));
+            g.fillRoundedRectangle(indRect.expanded(1.0f, 0.5f), 1.5f);
+            g.setColour(juce::Colours::white);
+            g.fillRoundedRectangle(indRect, 1.2f);
+            g.setColour(juce::Colour(0xff090c12));
+            g.drawVerticalLine(static_cast<int>(currX), indY + 1.0f, indY + indH - 1.0f);
+        }
     }
 
     // 3. Glass sheen reflection on top 44%
@@ -2079,6 +2081,13 @@ void FXSlotCardComponent::configureForType(int fxType) {
         knobs[kIdx].setColour(juce::Slider::trackColourId, accent);
         knobs[kIdx].customFormatText = fmt;
         knobs[kIdx].customParseText = prs;
+        if (bipolar) {
+            knobs[kIdx].setDoubleClickReturnValue(true, 0.5);
+            knobs[kIdx].getDefaultValue = []() { return 0.5; };
+        } else {
+            knobs[kIdx].setDoubleClickReturnValue(true, 0.0);
+            knobs[kIdx].getDefaultValue = []() { return 0.0; };
+        }
         knobs[kIdx].repaint();
         knobs[kIdx].updateText();
     };
@@ -2441,6 +2450,22 @@ juce::Rectangle<int> VisualizationCardComponent::getLockBounds() const {
     return juce::Rectangle<int>(getWidth() - 34, 4, 26, 20);
 }
 
+juce::Rectangle<int> VisualizationCardComponent::getOffBounds() const {
+    return juce::Rectangle<int>(getWidth() - 70, 4, 32, 20);
+}
+
+void VisualizationCardComponent::setIsOff(bool off) {
+    if (isOff != off) {
+        isOff = off;
+        if (isOff) {
+            oscilloscope.setPlotMode(MiniOscilloscopeComponent::PlotMode::Oscilloscope);
+            static const float zeros[128] = { 0.0f };
+            oscilloscope.updateData(zeros, 128);
+        }
+        repaint();
+    }
+}
+
 void VisualizationCardComponent::setVisualizedBlock(int blockIndex, const juce::String& blockName) {
     if (isLocked) return;
     currentBlockIndex = blockIndex;
@@ -2449,24 +2474,39 @@ void VisualizationCardComponent::setVisualizedBlock(int blockIndex, const juce::
 }
 
 void VisualizationCardComponent::mouseDown(const juce::MouseEvent& e) {
+    if (getOffBounds().contains(e.getPosition())) {
+        setIsOff(!isOff);
+        return;
+    }
     if (getLockBounds().contains(e.getPosition())) {
         isLocked = !isLocked;
         repaint();
+        return;
     }
 }
 
 void VisualizationCardComponent::mouseMove(const juce::MouseEvent& e) {
-    bool hovered = getLockBounds().contains(e.getPosition());
-    if (hovered != isLockHovered) {
-        isLockHovered = hovered;
-        setMouseCursor(hovered ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
+    bool lockHov = getLockBounds().contains(e.getPosition());
+    bool offHov  = getOffBounds().contains(e.getPosition());
+    bool needRepaint = false;
+    if (lockHov != isLockHovered) {
+        isLockHovered = lockHov;
+        needRepaint = true;
+    }
+    if (offHov != isOffHovered) {
+        isOffHovered = offHov;
+        needRepaint = true;
+    }
+    if (needRepaint) {
+        setMouseCursor((lockHov || offHov) ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
         repaint();
     }
 }
 
 void VisualizationCardComponent::mouseExit(const juce::MouseEvent& /*e*/) {
-    if (isLockHovered) {
+    if (isLockHovered || isOffHovered) {
         isLockHovered = false;
+        isOffHovered = false;
         setMouseCursor(juce::MouseCursor::NormalCursor);
         repaint();
     }
@@ -2487,11 +2527,32 @@ void VisualizationCardComponent::paint(juce::Graphics& g) {
     g.setColour(accent);
     g.fillRoundedRectangle(headerStrip, 2.0f);
 
-    // Module name on top left
+    // Module name on top left (bounded before OFF button)
     g.setFont(juce::FontOptions(13.5f, juce::Font::bold));
     g.setColour(accent);
     juce::String headerText = "VISUALIZER: " + currentBlockName;
-    g.drawText(headerText, 10, 4, getWidth() - 50, 20, juce::Justification::centredLeft, true);
+    g.drawText(headerText, 10, 4, getWidth() - 78, 20, juce::Justification::centredLeft, true);
+
+    // OFF button: dim greyed out when visualizer is running, lit up glowing red when OFF
+    auto offR = getOffBounds().toFloat();
+    juce::Colour offBg = isOff ? juce::Colour(0x35ff2d55) : juce::Colour(0x14ffffff);
+    juce::Colour offBorder = isOff ? juce::Colour(0xeeff2d55) : juce::Colour(0x338892a4);
+    juce::Colour offText = isOff ? juce::Colour(0xffff3b5c) : juce::Colour(0xff687488);
+
+    if (isOffHovered) {
+        offBg = offBg.brighter(0.25f);
+        offBorder = offBorder.brighter(0.25f);
+        offText = offText.brighter(0.25f);
+    }
+
+    g.setColour(offBg);
+    g.fillRoundedRectangle(offR, 3.0f);
+    g.setColour(offBorder);
+    g.drawRoundedRectangle(offR, 3.0f, isOff ? 1.4f : 1.0f);
+
+    g.setFont(juce::FontOptions(10.5f, juce::Font::bold));
+    g.setColour(offText);
+    g.drawText("OFF", offR, juce::Justification::centred, false);
 
     // Lock icon on top right: grey (0xff8892a4) when unlocked, bright yellow (0xffffd600) when locked
     auto lockR = getLockBounds().toFloat();
@@ -2722,17 +2783,20 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     initButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff222736));
     initButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffc5d1e8));
     initButton.onClick = [this]() {
-        auto* alert = new juce::AlertWindow("Reset to Defaults",
-                                           "Are you sure you want to reset all parameters to their default values?",
+        auto* alert = new juce::AlertWindow("Initialize Preset",
+                                           "Select initialization preset mode:\n\nDefault: Restores factory synthesis and default FX rack.\nClean: Restores factory synthesis with empty FX slots.",
                                            juce::AlertWindow::QuestionIcon, this);
-        alert->addButton("Reset", 1, juce::KeyPress(juce::KeyPress::returnKey));
+        alert->addButton("Default", 1, juce::KeyPress(juce::KeyPress::returnKey));
+        alert->addButton("Clean", 2);
         alert->addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey));
         alert->setColour(juce::AlertWindow::backgroundColourId, juce::Colour(0xff151821));
         alert->setColour(juce::AlertWindow::textColourId, juce::Colour(0xffffffff));
         alert->setColour(juce::AlertWindow::outlineColourId, juce::Colour(0xff00d2ff));
         alert->enterModalState(true, juce::ModalCallbackFunction::create([this](int result) {
             if (result == 1) {
-                resetToDefaults();
+                resetToDefaults(false);
+            } else if (result == 2) {
+                resetToDefaults(true);
             }
         }), true);
     };
@@ -2810,29 +2874,43 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     bindSelector(mod1TrackSelector, mod1TrackBox, "mod1_track", { "Fixed", "Follow", "FM" }, 3);
     setupBox(mod1TypeBox);
     bindSelector(mod1TypeSelector, mod1TypeBox, "mod1_type", { "Osc", "Cyclic", "Noise" }, 3);
+    mod1TypeBox.onChange = [this]() {
+        int t = mod1TypeBox.getSelectedItemIndex();
+        if (t == 1 || t == 2) {
+            if (mod1ShapeSlider.getValue() == 0.0) {
+                mod1ShapeSlider.setValue(0.5, juce::sendNotification);
+            }
+            if (t == 2 && mod1SpeedSlider.getValue() < 0.9) {
+                mod1SpeedSlider.setValue(1.0, juce::sendNotification);
+            }
+        }
+        updateDynamicControls();
+    };
     cardMod1->setLedSelector(&mod1TrackSelector);
     cardMod1->setSecondLedSelector(&mod1TypeSelector);
 
     setupKnob(mod1ShapeSlider, juce::Colour(0xffff7043), false, 0.0);
     mod1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
     mod1ShapeSlider.customFormatText = [this](double val) {
-        if (mod1TypeBox.getSelectedItemIndex() == 1) return formatBipolarPercent(val);
-        if (mod1TypeBox.getSelectedItemIndex() == 2) return formatFreqHz(val);
+        int t = mod1TypeBox.getSelectedItemIndex();
+        if (t == 1 || t == 2) return formatBipolarPercent(val);
         return formatPercent(val);
     };
     mod1ShapeSlider.customParseText = [this](const juce::String& text) {
-        if (mod1TypeBox.getSelectedItemIndex() == 1) return parseBipolarPercent(text);
-        if (mod1TypeBox.getSelectedItemIndex() == 2) return parseFreqHz(text);
+        int t = mod1TypeBox.getSelectedItemIndex();
+        if (t == 1 || t == 2) return parseBipolarPercent(text);
         return parsePercent(text);
     };
 
     setupKnob(mod1SpeedSlider, juce::Colour(0xffff7043), false, 0.50934);
     mod1SpeedSlider.customFormatText = [this](double val) {
+        if (mod1TypeBox.getSelectedItemIndex() == 2) return formatFreqHz(val);
         if (mod1TrackBox.getSelectedItemIndex() == 2) return formatRatio(val);
         if (mod1TrackBox.getSelectedItemIndex() == 1) return formatSemi(val);
         return formatFreqHz(val);
     };
     mod1SpeedSlider.customParseText = [this](const juce::String& text) {
+        if (mod1TypeBox.getSelectedItemIndex() == 2) return parseFreqHz(text);
         if (mod1TrackBox.getSelectedItemIndex() == 2) return parseRatio(text);
         if (mod1TrackBox.getSelectedItemIndex() == 1) return parseSemi(text);
         return parseFreqHz(text);
@@ -2961,29 +3039,43 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     bindSelector(mod2TrackSelector, mod2TrackBox, "mod2_track", { "Fixed", "Follow", "FM" }, 3);
     setupBox(mod2TypeBox);
     bindSelector(mod2TypeSelector, mod2TypeBox, "mod2_type", { "Osc", "Cyclic", "Noise" }, 3);
+    mod2TypeBox.onChange = [this]() {
+        int t = mod2TypeBox.getSelectedItemIndex();
+        if (t == 1 || t == 2) {
+            if (mod2ShapeSlider.getValue() == 0.0) {
+                mod2ShapeSlider.setValue(0.5, juce::sendNotification);
+            }
+            if (t == 2 && mod2SpeedSlider.getValue() < 0.9) {
+                mod2SpeedSlider.setValue(1.0, juce::sendNotification);
+            }
+        }
+        updateDynamicControls();
+    };
     cardMod2->setLedSelector(&mod2TrackSelector);
     cardMod2->setSecondLedSelector(&mod2TypeSelector);
 
     setupKnob(mod2ShapeSlider, mod2Colour, false, 0.0);
     mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
     mod2ShapeSlider.customFormatText = [this](double val) {
-        if (mod2TypeBox.getSelectedItemIndex() == 1) return formatBipolarPercent(val);
-        if (mod2TypeBox.getSelectedItemIndex() == 2) return formatFreqHz(val);
+        int t = mod2TypeBox.getSelectedItemIndex();
+        if (t == 1 || t == 2) return formatBipolarPercent(val);
         return formatPercent(val);
     };
     mod2ShapeSlider.customParseText = [this](const juce::String& text) {
-        if (mod2TypeBox.getSelectedItemIndex() == 1) return parseBipolarPercent(text);
-        if (mod2TypeBox.getSelectedItemIndex() == 2) return parseFreqHz(text);
+        int t = mod2TypeBox.getSelectedItemIndex();
+        if (t == 1 || t == 2) return parseBipolarPercent(text);
         return parsePercent(text);
     };
 
     setupKnob(mod2SpeedSlider, mod2Colour, false, 0.50934);
     mod2SpeedSlider.customFormatText = [this](double val) {
+        if (mod2TypeBox.getSelectedItemIndex() == 2) return formatFreqHz(val);
         if (mod2TrackBox.getSelectedItemIndex() == 2) return formatRatio(val);
         if (mod2TrackBox.getSelectedItemIndex() == 1) return formatSemi(val);
         return formatFreqHz(val);
     };
     mod2SpeedSlider.customParseText = [this](const juce::String& text) {
+        if (mod2TypeBox.getSelectedItemIndex() == 2) return parseFreqHz(text);
         if (mod2TrackBox.getSelectedItemIndex() == 2) return parseRatio(text);
         if (mod2TrackBox.getSelectedItemIndex() == 1) return parseSemi(text);
         return parseFreqHz(text);
@@ -3727,6 +3819,7 @@ void TheKlangFarmerAudioProcessorEditor::updateCarrier1Controls() {
         carrier1PitchSlider.setBipolar(false);
         carrier1PitchSlider.getDefaultValue = []() { return 33.0 / 127.0; };
     }
+    carrier1PitchSlider.setDoubleClickReturnValue(true, carrier1PitchSlider.getDefaultValue());
     carrier1PitchSlider.repaint();
     carrier1PitchSlider.updateText();
 }
@@ -3748,18 +3841,51 @@ void TheKlangFarmerAudioProcessorEditor::updateCarrier2Controls() {
         carrier2PitchSlider.setBipolar(false);
         carrier2PitchSlider.getDefaultValue = []() { return 33.0 / 127.0; };
     }
+    carrier2PitchSlider.setDoubleClickReturnValue(true, carrier2PitchSlider.getDefaultValue());
     carrier2PitchSlider.repaint();
     carrier2PitchSlider.updateText();
 }
 
-void TheKlangFarmerAudioProcessorEditor::resetToDefaults() {
+void TheKlangFarmerAudioProcessorEditor::resetToDefaults(bool cleanFX) {
     for (auto* param : audioProcessor.getParameters()) {
         if (auto* rangedParam = dynamic_cast<juce::RangedAudioParameter*>(param)) {
             rangedParam->setValueNotifyingHost(rangedParam->getDefaultValue());
         }
     }
+
+    if (cleanFX) {
+        for (int i = 0; i < 4; ++i) {
+            juce::String preId = "pre_fx_" + juce::String(i + 1) + "_type";
+            if (auto* p = audioProcessor.apvts.getParameter(preId)) {
+                p->setValueNotifyingHost(0.0f);
+            }
+            audioProcessor.getEngine().setPreFXType(i, 0);
+            preFXPickerCard->getBox(i).setSelectedId(1, juce::dontSendNotification);
+            if (preFXCards[i]) preFXCards[i]->configureForType(0);
+
+            juce::String postId = "post_fx_" + juce::String(i + 1) + "_type";
+            if (auto* p = audioProcessor.apvts.getParameter(postId)) {
+                p->setValueNotifyingHost(0.0f);
+            }
+            audioProcessor.getEngine().setPostFXType(i, 0);
+            postFXPickerCard->getBox(i).setSelectedId(1, juce::dontSendNotification);
+            if (postFXCards[i]) postFXCards[i]->configureForType(0);
+        }
+    } else {
+        for (int i = 0; i < 4; ++i) {
+            int preType = audioProcessor.getEngine().getPreFXType(i);
+            preFXPickerCard->getBox(i).setSelectedId(preType + 1, juce::dontSendNotification);
+            if (preFXCards[i]) preFXCards[i]->configureForType(preType);
+
+            int postType = audioProcessor.getEngine().getPostFXType(i);
+            postFXPickerCard->getBox(i).setSelectedId(postType + 1, juce::dontSendNotification);
+            if (postFXCards[i]) postFXCards[i]->configureForType(postType);
+        }
+    }
+
     updateDynamicControls();
     updatePageLayout();
+    updateModTargetBoxItems();
     repaint();
 }
 
@@ -4036,17 +4162,44 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
             cardMod1->setKnobLabel(0, "Shape");
             mod1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
             mod1ShapeSlider.setBipolar(false);
+            mod1ShapeSlider.getDefaultValue = []() { return 0.0; };
+            mod1ShapeSlider.setDoubleClickReturnValue(true, 0.0);
+            cardMod1->setKnobLabel(1, "Speed");
+            if (curMod1Track == 0) {
+                mod1SpeedSlider.getDefaultValue = []() { return 0.50934; }; // 55 Hz
+                mod1SpeedSlider.setDoubleClickReturnValue(true, 0.50934);
+            } else {
+                mod1SpeedSlider.getDefaultValue = []() { return 0.5; };
+                mod1SpeedSlider.setDoubleClickReturnValue(true, 0.5);
+            }
         } else if (curMod1Type == 1) {
             cardMod1->setKnobLabel(0, "DJ Filter");
             mod1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::None;
             mod1ShapeSlider.setBipolar(true);
+            mod1ShapeSlider.getDefaultValue = []() { return 0.5; };
+            mod1ShapeSlider.setDoubleClickReturnValue(true, 0.5);
+            cardMod1->setKnobLabel(1, "Speed");
+            if (curMod1Track == 0) {
+                mod1SpeedSlider.getDefaultValue = []() { return 0.50934; };
+                mod1SpeedSlider.setDoubleClickReturnValue(true, 0.50934);
+            } else {
+                mod1SpeedSlider.getDefaultValue = []() { return 0.5; };
+                mod1SpeedSlider.setDoubleClickReturnValue(true, 0.5);
+            }
         } else {
-            cardMod1->setKnobLabel(0, "S&H Rate");
+            // curMod1Type == 2 (S&H Noise): Knob 0 is DJ Filter, Knob 1 is Speed (S&H rate def 24 kHz)
+            cardMod1->setKnobLabel(0, "DJ Filter");
             mod1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::None;
-            mod1ShapeSlider.setBipolar(false);
+            mod1ShapeSlider.setBipolar(true);
+            mod1ShapeSlider.getDefaultValue = []() { return 0.5; };
+            mod1ShapeSlider.setDoubleClickReturnValue(true, 0.5);
+            cardMod1->setKnobLabel(1, "Speed");
+            mod1SpeedSlider.getDefaultValue = []() { return 1.0; }; // 24 kHz
+            mod1SpeedSlider.setDoubleClickReturnValue(true, 1.0);
         }
         mod1ShapeSlider.repaint();
         mod1ShapeSlider.updateText();
+        mod1SpeedSlider.repaint();
         mod1SpeedSlider.updateText();
     }
 
@@ -4066,17 +4219,44 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
             cardMod2->setKnobLabel(0, "Shape");
             mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
             mod2ShapeSlider.setBipolar(false);
+            mod2ShapeSlider.getDefaultValue = []() { return 0.0; };
+            mod2ShapeSlider.setDoubleClickReturnValue(true, 0.0);
+            cardMod2->setKnobLabel(1, "Speed");
+            if (curMod2Track == 0) {
+                mod2SpeedSlider.getDefaultValue = []() { return 0.50934; }; // 55 Hz
+                mod2SpeedSlider.setDoubleClickReturnValue(true, 0.50934);
+            } else {
+                mod2SpeedSlider.getDefaultValue = []() { return 0.5; };
+                mod2SpeedSlider.setDoubleClickReturnValue(true, 0.5);
+            }
         } else if (curMod2Type == 1) {
             cardMod2->setKnobLabel(0, "DJ Filter");
             mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::None;
             mod2ShapeSlider.setBipolar(true);
+            mod2ShapeSlider.getDefaultValue = []() { return 0.5; };
+            mod2ShapeSlider.setDoubleClickReturnValue(true, 0.5);
+            cardMod2->setKnobLabel(1, "Speed");
+            if (curMod2Track == 0) {
+                mod2SpeedSlider.getDefaultValue = []() { return 0.50934; };
+                mod2SpeedSlider.setDoubleClickReturnValue(true, 0.50934);
+            } else {
+                mod2SpeedSlider.getDefaultValue = []() { return 0.5; };
+                mod2SpeedSlider.setDoubleClickReturnValue(true, 0.5);
+            }
         } else {
-            cardMod2->setKnobLabel(0, "S&H Rate");
+            // curMod2Type == 2 (S&H Noise): Knob 0 is DJ Filter, Knob 1 is Speed (S&H rate def 24 kHz)
+            cardMod2->setKnobLabel(0, "DJ Filter");
             mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::None;
-            mod2ShapeSlider.setBipolar(false);
+            mod2ShapeSlider.setBipolar(true);
+            mod2ShapeSlider.getDefaultValue = []() { return 0.5; };
+            mod2ShapeSlider.setDoubleClickReturnValue(true, 0.5);
+            cardMod2->setKnobLabel(1, "Speed");
+            mod2SpeedSlider.getDefaultValue = []() { return 1.0; }; // 24 kHz
+            mod2SpeedSlider.setDoubleClickReturnValue(true, 1.0);
         }
         mod2ShapeSlider.repaint();
         mod2ShapeSlider.updateText();
+        mod2SpeedSlider.repaint();
         mod2SpeedSlider.updateText();
     }
 
@@ -4120,7 +4300,7 @@ void TheKlangFarmerAudioProcessorEditor::timerCallback() {
 
     for (auto* s : registeredSliders) {
         if (!s || s->getParamId().isEmpty()) continue;
-        if (!s->isShowing()) continue;
+        if (!s->isVisible()) continue;
 
         auto info = audioProcessor.getParamModulationInfo(s->getParamId());
         RotaryKnobSlider::ModulationVisual mv;
@@ -4128,8 +4308,11 @@ void TheKlangFarmerAudioProcessorEditor::timerCallback() {
         mv.rangeMinNorm = info.rangeMinNorm;
         mv.rangeMaxNorm = info.rangeMaxNorm;
         mv.currentNorm = info.currentNorm;
+        mv.showNeedle = info.showNeedle;
         s->setModulation(mv);
     }
+
+    if (vizCard.getIsOff()) return;
 
     int activeBlock = vizCard.getCurrentBlockIndex();
     if (activeBlock < 0) return;

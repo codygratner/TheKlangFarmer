@@ -103,11 +103,13 @@ public:
         float rangeMinNorm = 0.0f;
         float rangeMaxNorm = 0.0f;
         float currentNorm = 0.0f;
+        bool showNeedle = true;
     };
     ModulationVisual modulation;
 
     void setModulation(const ModulationVisual& mod) {
         if (modulation.isModulated != mod.isModulated ||
+            modulation.showNeedle != mod.showNeedle ||
             std::abs(modulation.rangeMinNorm - mod.rangeMinNorm) > 0.001f ||
             std::abs(modulation.rangeMaxNorm - mod.rangeMaxNorm) > 0.001f ||
             std::abs(modulation.currentNorm - mod.currentNorm) > 0.001f) {
@@ -346,6 +348,9 @@ public:
     void setLocked(bool locked) { isLocked = locked; repaint(); }
     bool getIsLocked() const { return isLocked; }
 
+    void setIsOff(bool off);
+    bool getIsOff() const { return isOff; }
+
     MiniOscilloscopeComponent& getOscilloscope() { return oscilloscope; }
 
     void mouseDown(const juce::MouseEvent& e) override;
@@ -353,6 +358,7 @@ public:
     void mouseExit(const juce::MouseEvent& e) override;
 
     juce::Rectangle<int> getLockBounds() const;
+    juce::Rectangle<int> getOffBounds() const;
 
 private:
     juce::Colour accent;
@@ -360,6 +366,8 @@ private:
     juce::String currentBlockName { "CARRIER 1" };
     bool isLocked = false;
     bool isLockHovered = false;
+    bool isOff = false;
+    bool isOffHovered = false;
 
     MiniOscilloscopeComponent oscilloscope;
 };
@@ -398,6 +406,7 @@ public:
     void mouseDrag(const juce::MouseEvent& e) override;
     void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& d) override;
     void handleCardInteraction(juce::Component* comp);
+    void resetToDefaults(bool cleanFX = false);
 
 private:
     TheKlangFarmerAudioProcessor& audioProcessor;
@@ -407,7 +416,6 @@ private:
     juce::TextButton guideButton { "GUIDE" };
     juce::TextButton initButton { "INIT" };
     juce::TextButton triggerButton { "AUDITION HIT" };
-    void resetToDefaults();
 
     // Quickstart Guide overlay
     QuickstartGuideModalComponent quickstartGuide;

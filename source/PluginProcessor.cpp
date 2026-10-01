@@ -1198,15 +1198,30 @@ TheKlangFarmerAudioProcessor::ParamModulationInfo TheKlangFarmerAudioProcessor::
 
     // 3. Pitch Envelopes 1..2
     constexpr float pitchOctToNorm = 0.34363f; // 5.0 / log2(24000)
-    if (paramId == "carrier1_pitch" && pitchEnv1DepthParam && pitchEnv1TargetParam) {
-        int t = pitchEnv1TargetParam->getIndex();
-        if (t == 0 || t == 2 || t == 3) {
-            float d = (pitchEnv1DepthParam->get() - 0.5f) * 2.0f;
-            if (std::abs(d) >= 0.005f) {
-                totalPeakOffset += d * pitchOctToNorm;
-                totalCurrOffset += engine.getPitchEnvValue(1) * pitchOctToNorm;
-                float oct = d * 5.0f;
-                info.sources.push_back({ "Pitch Env 1", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+    float fmPeakSpan = 0.0f;
+    if (paramId == "carrier1_pitch") {
+        info.showNeedle = false;
+        if (pitchEnv1DepthParam && pitchEnv1TargetParam) {
+            int t = pitchEnv1TargetParam->getIndex();
+            if (t == 0 || t == 2 || t == 3) {
+                float d = (pitchEnv1DepthParam->get() - 0.5f) * 2.0f;
+                if (std::abs(d) >= 0.005f) {
+                    totalPeakOffset += d * pitchOctToNorm;
+                    totalCurrOffset += engine.getPitchEnvValue(1) * pitchOctToNorm;
+                    float oct = d * 5.0f;
+                    info.sources.push_back({ "Pitch Env 1", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+                }
+            }
+        }
+        if (carrier1DepthParam) {
+            float d = (carrier1DepthParam->get() - 0.5f) * 2.0f;
+            float absD = std::abs(d);
+            if (absD >= 0.005f) {
+                float fmSpanNorm = absD * (4.0f / 10.2288f);
+                float oct = absD * 4.0f;
+                float pct = absD * 100.0f;
+                info.sources.push_back({ "Mod Depth", juce::String(pct, 0) + "% (\xc2\xb1" + juce::String(oct, 1) + " oct)" });
+                fmPeakSpan = std::max(fmPeakSpan, fmSpanNorm);
             }
         }
     } else if (paramId == "mod1_speed" && pitchEnv1DepthParam && pitchEnv1TargetParam) {
@@ -1221,15 +1236,29 @@ TheKlangFarmerAudioProcessor::ParamModulationInfo TheKlangFarmerAudioProcessor::
                 info.sources.push_back({ "Pitch Env 1", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
             }
         }
-    } else if (paramId == "carrier2_pitch" && pitchEnv2DepthParam && pitchEnv2TargetParam) {
-        int t = pitchEnv2TargetParam->getIndex();
-        if (t == 0 || t == 2 || t == 3) {
-            float d = (pitchEnv2DepthParam->get() - 0.5f) * 2.0f;
-            if (std::abs(d) >= 0.005f) {
-                totalPeakOffset += d * pitchOctToNorm;
-                totalCurrOffset += engine.getPitchEnvValue(2) * pitchOctToNorm;
-                float oct = d * 5.0f;
-                info.sources.push_back({ "Pitch Env 2", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+    } else if (paramId == "carrier2_pitch") {
+        info.showNeedle = false;
+        if (pitchEnv2DepthParam && pitchEnv2TargetParam) {
+            int t = pitchEnv2TargetParam->getIndex();
+            if (t == 0 || t == 2 || t == 3) {
+                float d = (pitchEnv2DepthParam->get() - 0.5f) * 2.0f;
+                if (std::abs(d) >= 0.005f) {
+                    totalPeakOffset += d * pitchOctToNorm;
+                    totalCurrOffset += engine.getPitchEnvValue(2) * pitchOctToNorm;
+                    float oct = d * 5.0f;
+                    info.sources.push_back({ "Pitch Env 2", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+                }
+            }
+        }
+        if (carrier2DepthParam) {
+            float d = (carrier2DepthParam->get() - 0.5f) * 2.0f;
+            float absD = std::abs(d);
+            if (absD >= 0.005f) {
+                float fmSpanNorm = absD * (4.0f / 10.2288f);
+                float oct = absD * 4.0f;
+                float pct = absD * 100.0f;
+                info.sources.push_back({ "Mod Depth", juce::String(pct, 0) + "% (\xc2\xb1" + juce::String(oct, 1) + " oct)" });
+                fmPeakSpan = std::max(fmPeakSpan, fmSpanNorm);
             }
         }
     } else if (paramId == "mod2_speed" && pitchEnv2DepthParam && pitchEnv2TargetParam) {
@@ -1246,7 +1275,7 @@ TheKlangFarmerAudioProcessor::ParamModulationInfo TheKlangFarmerAudioProcessor::
         }
     }
 
-    if (info.sources.empty() || std::abs(totalPeakOffset) < 0.002f) {
+    if (info.sources.empty() || (std::abs(totalPeakOffset) < 0.002f && fmPeakSpan < 0.002f)) {
         info.isModulated = false;
         return info;
     }
@@ -1254,10 +1283,12 @@ TheKlangFarmerAudioProcessor::ParamModulationInfo TheKlangFarmerAudioProcessor::
     info.isModulated = true;
     float peakNorm = std::clamp(baseNorm + totalPeakOffset, 0.0f, 1.0f);
     float currNorm = std::clamp(baseNorm + totalCurrOffset, 0.0f, 1.0f);
-    info.rangeMinNorm = std::min(baseNorm, peakNorm);
-    info.rangeMaxNorm = std::max(baseNorm, peakNorm);
+    float minN = std::min(baseNorm, peakNorm) - fmPeakSpan;
+    float maxN = std::max(baseNorm, peakNorm) + fmPeakSpan;
+    info.rangeMinNorm = std::clamp(minN, 0.0f, 1.0f);
+    info.rangeMaxNorm = std::clamp(maxN, 0.0f, 1.0f);
     info.currentNorm = currNorm;
-    info.rangeText = param->getText(baseNorm, 16) + " " + juce::String(juce::CharPointer_UTF8("\xe2\x86\x92")) + " " + param->getText(peakNorm, 16);
+    info.rangeText = param->getText(info.rangeMinNorm, 16) + " " + juce::String(juce::CharPointer_UTF8("\xe2\x86\x92")) + " " + param->getText(info.rangeMaxNorm, 16);
     info.liveValueText = param->getText(currNorm, 16);
 
     return info;

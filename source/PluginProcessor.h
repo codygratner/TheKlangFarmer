@@ -284,6 +284,7 @@ public:
         float rangeMinNorm = 0.0f;
         float rangeMaxNorm = 0.0f;
         float currentNorm = 0.0f;
+        bool showNeedle = true;
         juce::String rangeText;
         juce::String liveValueText;
         std::vector<ModSourceDetail> sources;
