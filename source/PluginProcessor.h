@@ -1,7 +1,7 @@
 #pragma once
 #include <juce_audio_processors/juce_audio_processors.h>
-#include <juce_audio_utils/juce_audio_utils.h>
 #include "ModularBlocks.h"
+#include "UIComponents.h"
 
 class TheKlangFarmerAudioProcessor : public juce::AudioProcessor {
 public:
@@ -274,21 +274,8 @@ public:
     static juce::StringArray getModDestinationChoices();
     static juce::String getFXParamDisplayName(bool isPost, int slotIndex, int fxType, int paramIndex);
 
-    struct ModSourceDetail {
-        juce::String name;
-        juce::String depthText;
-    };
-
-    struct ParamModulationInfo {
-        bool isModulated = false;
-        float rangeMinNorm = 0.0f;
-        float rangeMaxNorm = 0.0f;
-        float currentNorm = 0.0f;
-        bool showNeedle = true;
-        juce::String rangeText;
-        juce::String liveValueText;
-        std::vector<ModSourceDetail> sources;
-    };
+    using ModSourceDetail = ::ModSourceDetail;
+    using ParamModulationInfo = ::ParamModulationInfo;
 
     ParamModulationInfo getParamModulationInfo(const juce::String& paramId) const;
 

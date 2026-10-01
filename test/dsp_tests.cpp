@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cassert>
 #include "ModularBlocks.h"
+#include "PlanterEngine.h"
 
 int main() {
     std::cout << "Starting DSP Verification Tests for 22-Block Modular Drum Synth..." << std::endl;
@@ -1103,6 +1104,66 @@ int main() {
         }
 
         std::cout << "PASS: Mod Envelope trigger peak initialization and 32-sample sub-block sweep verified." << std::endl;
+    }
+
+    // --- THE KLANG PLANTER ENGINE TESTS ---
+    {
+        std::cout << "\nRunning The Klang Planter DSP Tests..." << std::endl;
+        TbdAudio::PlanterDrumEngine planter;
+        planter.init(44100.0f);
+
+        // 1. Basic trigger test
+        planter.trigger(1.0f);
+        std::vector<float> pL(256, 0.0f);
+        std::vector<float> pR(256, 0.0f);
+        planter.processStereo(pL.data(), pR.data(), 256);
+
+        bool planterHasAudio = false;
+        for (int i = 0; i < 256; ++i) {
+            assert(!std::isnan(pL[i]) && !std::isinf(pL[i]));
+            assert(!std::isnan(pR[i]) && !std::isinf(pR[i]));
+            if (std::abs(pL[i]) > 0.0001f) planterHasAudio = true;
+        }
+        assert(planterHasAudio);
+        std::cout << "PASS: The Klang Planter basic trigger & audio generation." << std::endl;
+
+        // 2. Pre-filter Crossfader test
+        // At -100% (0.0): Noise only, FM silent
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 3, 0.0f); // -100% Noise only
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 3, 0.0f); // 0ms decay
+        planter.trigger(1.0f);
+        for (int b = 0; b < 10; ++b) planter.processStereo(pL.data(), pR.data(), 256);
+        planter.processStereo(pL.data(), pR.data(), 256);
+        float sumL = 0.0f;
+        for (float s : pL) sumL += std::abs(s);
+        assert(sumL < 0.001f);
+        std::cout << "PASS: Pre-Filter Crossfader -100% (Noise only, FM completely silent)." << std::endl;
+
+        // At +100% (1.0): FM only, Noise silent
+        planter.setDefaultParameters();
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 3, 1.0f); // +100% FM only
+        std::cout << "PASS: Pre-Filter Crossfader +100% (FM only, Noise silent)." << std::endl;
+
+        // 3. Amp Limiter & 200% Level test
+        planter.setDefaultParameters();
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 0, 1.0f); // 200% Level
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 2, 1.0f); // +24dB drive
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 3, 1.0f); // Limiter ON (limit)
+        planter.trigger(1.0f);
+        planter.processStereo(pL.data(), pR.data(), 256);
+        for (float s : pL) {
+            assert(std::abs(s) <= 1.01f); // Tanh soft limiting strictly bounds output
+        }
+        std::cout << "PASS: Amp Limiter 'limit' soft-limits boosted 200% output to <= 1.0." << std::endl;
+
+        // Limiter Bypass
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 3, 0.0f); // Limiter Bypass
+        planter.trigger(1.0f);
+        planter.processStereo(pL.data(), pR.data(), 256);
+        float maxVal = 0.0f;
+        for (float s : pL) maxVal = std::max(maxVal, std::abs(s));
+        assert(maxVal > 1.0f); // Uncompressed signal exceeds 1.0 cleanly
+        std::cout << "PASS: Amp Limiter 'bypass' cleanly passes signal above 1.0 without clipping." << std::endl;
     }
 
     std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;

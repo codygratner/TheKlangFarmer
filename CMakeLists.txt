@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 
 # 1. Project definition
-project(TheKlangFarmer VERSION 0.1.5 LANGUAGES C CXX)
+project(TheKlangFarmer VERSION 0.1.6 LANGUAGES C CXX)
 
 # Enforce modern C++ standard
 set(CMAKE_CXX_STANDARD 20)
@@ -38,6 +38,8 @@ juce_add_plugin(TheKlangFarmer
 target_sources(TheKlangFarmer PRIVATE
     source/DSPBlock.h
     source/ModularBlocks.h
+    source/UIComponents.h
+    source/UIComponents.cpp
     source/PluginProcessor.h
     source/PluginProcessor.cpp
     source/PluginEditor.h
@@ -52,8 +54,7 @@ target_compile_definitions(TheKlangFarmer PUBLIC
     JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
-# 5. Link required JUCE modules
-target_link_libraries(TheKlangFarmer PRIVATE
+set(TKF_JUCE_MODULES
     juce::juce_audio_basics
     juce::juce_audio_devices
     juce::juce_audio_formats
@@ -67,21 +68,70 @@ target_link_libraries(TheKlangFarmer PRIVATE
     juce::juce_graphics
     juce::juce_gui_basics
     juce::juce_gui_extra
+)
+
+# 5. Link required JUCE modules for The Klang Farmer
+target_link_libraries(TheKlangFarmer PRIVATE
+    ${TKF_JUCE_MODULES}
     PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
     juce::juce_recommended_warning_flags
 )
 
-# 6. Test suite executable
+# --- 6. The Klang Planter Plugin Target ---
+juce_add_plugin(TheKlangPlanter
+    COMPANY_NAME "R'lyeh Sound"
+    IS_SYNTH TRUE
+    NEEDS_MIDI_INPUT TRUE
+    NEEDS_MIDI_OUTPUT FALSE
+    IS_MIDI_EFFECT FALSE
+    
+    PLUGIN_MANUFACTURER_CODE Rlyh
+    PLUGIN_CODE Tkp1
+    BUNDLE_ID com.rlyehsound.theklangplanter
+    
+    FORMATS ${TKF_FORMATS}
+    PRODUCT_NAME "The Klang Planter"
+    VST3_CAN_REPLACE_VST2 FALSE
+)
+
+target_sources(TheKlangPlanter PRIVATE
+    source/DSPBlock.h
+    source/ModularBlocks.h
+    source/PlanterEngine.h
+    source/UIComponents.h
+    source/UIComponents.cpp
+    source/PlanterProcessor.h
+    source/PlanterProcessor.cpp
+    source/PlanterEditor.h
+    source/PlanterEditor.cpp
+)
+
+target_include_directories(TheKlangPlanter PRIVATE source)
+
+target_compile_definitions(TheKlangPlanter PUBLIC
+    JUCE_VST3_CAN_REPLACE_VST2=0
+)
+
+target_link_libraries(TheKlangPlanter PRIVATE
+    ${TKF_JUCE_MODULES}
+    PUBLIC
+    juce::juce_recommended_config_flags
+    juce::juce_recommended_lto_flags
+    juce::juce_recommended_warning_flags
+)
+
+# 7. Test suite executable
 add_executable(dsp_tests
     test/dsp_tests.cpp
     source/DSPBlock.h
     source/ModularBlocks.h
+    source/PlanterEngine.h
 )
 target_include_directories(dsp_tests PRIVATE source)
 
-# 7. Screenshot snapshot generator
+# 8. Screenshot snapshot generator
 add_executable(capture_screenshot
     test/capture_screenshot.cpp
 )
@@ -91,3 +141,13 @@ target_link_libraries(capture_screenshot PRIVATE
     juce::juce_graphics
 )
 target_include_directories(capture_screenshot PRIVATE source)
+
+add_executable(capture_planter_screenshot
+    test/capture_planter_screenshot.cpp
+)
+target_link_libraries(capture_planter_screenshot PRIVATE
+    TheKlangPlanter
+    juce::juce_gui_basics
+    juce::juce_graphics
+)
+target_include_directories(capture_planter_screenshot PRIVATE source)
