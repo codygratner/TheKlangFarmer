@@ -162,7 +162,7 @@ To maintain consistency across all modules and effect cards, standard parameter 
     - **Freq**: Fixed continuous frequency slider ($20\,\text{Hz} - 24\,\text{kHz}$, logarithmic, default $55\,\text{Hz}$).
     - **Note**: Fixed musical note across MIDI notes 0–127 (`C-1` to `G9`, default `A1 = 55 Hz = note 33`) with fixed-width padded readout: `note name [frequency, midi note number]` (e.g. `A1   [   55 Hz,  33]`).
   - **Modulator Tracking & Mode**: Two stacked single-row 3-button selectors: Pitch Tracking (`Fixed`, `Follow`, `FM`) and Type (`Osc`, `Cyclic`, `Noise`).
-  - **Pitch Envelope Target**: Single-row 4-button selector (`Off`, `Car`, `Mod`, `Both`).
+  - **Pitch Envelope Target**: Single-row 4-button selector (`Car`, `Mod`, `Both`, `Opp`). `Opp` drives carrier and modulator pitch in inverse directions.
   - **Filter Mode & Slope**: Two stacked single-row selectors: Type (`LPF`, `BPF`, `HPF`, `BRF` — no bypass/off mode) and Slope (`6`, `12`, `18`, `24`, `36` dB/oct).
 
 ---
@@ -208,7 +208,7 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 ### 4.2.1. Quickstart Guide Modal Dialog
 - **Header Button**: A dedicated `GUIDE` button is situated on the header bar directly to the left of `INIT`.
 - **Non-Scrollable One-Page Layout**: Clicking `GUIDE` opens an instantaneous, non-scrollable modal overlay covering the plugin window, presenting a structured 4-panel quick reference:
-  1. *Architecture & Signal Flow*: Dual FM voices, transient noise, 3-channel mixer, serial pre/post amp FX racks, and dual limiters.
+  1. *Architecture & Signal Flow*: Dual FM voices, transient noise, 4-channel mixer, serial pre/post amp FX racks, and dual limiters.
   2. *Navigation & Smart Auto-Visualizer*: Page tabs, automatic context-switching, Bode/oscilloscope modes, and padlock locking.
   3. *Multi-Instance Effects Catalog*: All 13 DSP effects with 4-knob standardized tactile controls and multi-instance chaining.
   4. *Sound Design Recipes & Pro Tips*: Quick kick, snare, velocity shaping, analog slop drift, and audition button.
@@ -233,7 +233,7 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
   - **Speed (Continuous)**: Frequency ($0.1\,\text{Hz} - 24\,\text{kHz}$) / Offset ($-64$ to $+64$ st) / FM Ratio (1:32 to 32:1).
   - **Visualizer**: Self-locked oscilloscope phase-locked to Modulator 1's own internal frequency and zero crossings.
 - **Slot 4: Pitch Envelope 1**
-  - **Target (Selector)**: `Off` (0, default), `Car` (1), `Mod` (2), `Both` (3).
+  - **Target (Selector)**: `Car` (0, default), `Mod` (1), `Both` (2), `Opp` (3).
   - **Slope (Continuous)**: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
   - **Depth (Continuous)**: $-5$ to $+5$ octaves (default $0$).
   - **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
@@ -352,20 +352,32 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
 
 ### 4.9. Page 7: Modulations
 - **Slot 1**: Navigation Module.
-- **Slot 2: Velocity**
+- **Slot 2: Mod Envelope 1**
+  - **Slope (Continuous)**: DAHDSR curve shape (Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic, default Exponential).
+  - **Depth (Continuous)**: Bipolar modulation depth ($-100\%$ to $+100\%$, default $0\%$).
+  - **Decay (Continuous)**: Envelope decay time ($1\,\text{ms} - 2000\,\text{ms}$, default $333\,\text{ms}$).
+  - **Destination (Selector ComboBox)**: Selects one of 108 continuous synthesis and effect parameter targets, dynamically labeled with loaded FX names (e.g. `Post FX 1 [Ring Mod]: Param 1 [Waveform]`).
+- **Slot 3: Mod Envelope 2**
+  - Identical controls and routing to Mod Envelope 1.
+- **Slot 4: Mod Envelope 3**
+  - Identical controls and routing to Mod Envelope 1.
+- **Slot 5**: Visualization Module (defaults to Mod Envelope 1 oscilloscope).
+- **Slot 6: Velocity**
   - **Slope (Continuous)**: Velocity response curve: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
-  - **Decay (Continuous)**: Velocity-to-decay scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
   - **Depth (Continuous)**: Velocity-to-envelope depth scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
+  - **Decay (Continuous)**: Velocity-to-decay scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
   - **Volume (Continuous)**: Velocity-to-output volume attenuation: $0\%$ (full volume) to $-100\%$ (min velocity is silent) (default $0\%$).
-- **Slot 3: Slop**
+- **Slot 7: Key Tracking**
+  - **Slope (Continuous)**: Key tracking curve shape: Exponential $\leftrightarrow$ Linear $\leftrightarrow$ Logarithmic (default Exponential).
+  - **Depth (Continuous)**: Key tracking depth scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
+  - **Decay (Continuous)**: Key tracking decay scaling: $-100\%$ to $+100\%$ (bipolar, default $0\%$).
+  - **Volume (Continuous)**: Key tracking volume scaling: $0\%$ to $-100\%$ (default $0\%$).
+- **Slot 8: Slop**
   - Injects independent, stepped random values per trigger hit across 24 engine parameters.
   - **Frequency (Continuous)**: $0\%$ to $\pm 100\%$ (controls pitch and filter frequencies).
   - **Envelope Depths (Continuous)**: $0\%$ to $\pm 100\%$ (controls all envelope depths).
   - **Envelope Decays (Continuous)**: $0\%$ to $\pm 100\%$ (controls all envelope decay times).
   - **Pan (Continuous)**: $0\%$ to $\pm 100\%$ (controls output stereo panning).
-- **Slot 4**: Blank Rack Plate.
-- **Slot 5**: Visualization Module.
-- **Slots 6–8**: Blank Rack Plates.
 
 ---
 
@@ -388,19 +400,19 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 - *Architecture*: Quadrature ($90^\circ$ phase-offset) dual sine LFO driving stereo fractional delay lines with soft-saturation feedback limiting.
 
 ### 3. Comb Filter
-- **Type (Selector)**: `Off` (0, default), `On` (1).
 - **Dampening (Continuous)**: Internal feedback damping $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Cutoff (Continuous)**: Comb fundamental frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Resonance (Continuous)**: Feedback $-100\%$ to $+100\%$ (default $0\%$).
+- **Mix (Continuous)**: Bipolar Wet/Dry balance: $-100\%:0\%$ to $0\%:100\%$ (dry) to $+100\%:0\%$ (default $+50\%:50\%$, double-click snaps to $0\%:100\%$ dry).
 
-### 4. Disperser
-- **Type (Selector)**: `Off` (0, default), `On` (1).
-- **Amount (Continuous)**: Cascaded 2nd-order all-pass filter stages: 0 to 32 stages (default 4).
+### 4. Phase Smear
+- **Order (Selector)**: `2nd` (0, default, 2nd-order APF cascade), `4th` (1, 4th-order APF cascade for extreme phase dispersion).
+- **Amount (Continuous)**: Cascaded all-pass filter stages: 0 to 32 stages (default 4).
 - **Cutoff (Continuous)**: APF center frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $220\,\text{Hz}$).
 - **Resonance (Continuous)**: APF Q factor $-100\%$ to $+100\%$ (default $0\%$).
 
 ### 5. Drive / Saturation
-- **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
+- **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $+6\,\text{dB}$, double-click snaps to $0\,\text{dB}$).
 - **Bias (Continuous)**: DC offset $-1.0$ to $+1.0$ (bipolar, default $0.0$).
 - **Post-Filter (Continuous)**: DJ-style bipolar filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
 - **Limiter (Selector)**: `Off` (0), `On` (1, default, post-saturation hard clipper).
@@ -422,7 +434,7 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 ### 8. Frequency Shifter
 - **Shift (Continuous)**: Bipolar shift $-X\,\text{Hz}$ to $0\,\text{Hz}$ to $+X\,\text{Hz}$ (default $0\,\text{Hz}$).
 - **Range (Continuous)**: Maximum shift range $0\,\text{Hz} - 5\,\text{kHz}$ (default $3\,\text{Hz}$).
-- **Blend (Continuous)**: $-100\%$ (wet negative sideband) $\to 0\%$ (dry) $\to +100\%$ (wet positive sideband).
+- **Blend (Continuous)**: Bipolar Wet/Dry balance: $-100\%:0\%$ to $0\%:100\%$ (dry) to $+100\%:0\%$ (default $+50\%:50\%$, double-click snaps to $0\%:100\%$ dry).
 - **Width (Continuous)**: Stereo quadrature phase width $-100\% - +100\%$ (default $0\%$).
 
 ### 9. Grit FX (BitCrusher)

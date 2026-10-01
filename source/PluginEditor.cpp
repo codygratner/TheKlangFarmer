@@ -2644,7 +2644,7 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
     juce::StringArray b1 = {
         "• DUAL FM VOICES: Two parallel voices each with Carrier (MIDI/Freq/Note), FM Modulator (Fixed/Follow/FM), dedicated Pitch Env, and Multimode Filter (LPF/BPF/HPF/BRF with 6-36dB slopes).",
         "• TRANSIENT NOISE: Analog-modeled White/Pink/Metallic noise source with dedicated Filter 3 and Filter Env for snappy clicks, snaps, and snare rattle.",
-        "• 3-CHANNEL MIXER: Balance Carrier 1, Carrier 2, and Noise Transients into the processing chain.",
+        "• 4-CHANNEL MIXER: Balance Carrier 1, Carrier 2, RingMod, and Noise Transients into the processing chain.",
         "• SIGNAL FLOW: Mixer -> Pre-Amp FX Rack (4 Slots) -> Pre-Limiter -> Amplifier + Amp Env -> Post-Amp FX Rack (4 Slots) -> Master Limiter -> Audio Output."
     };
     drawPanel(p1, "1. ARCHITECTURE & SIGNAL FLOW", juce::Colour(0xff00d2ff), b1);
@@ -2653,7 +2653,7 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
     juce::Rectangle<float> p2(contentArea.getX() + colW + gap, contentArea.getY(), colW, rowH);
     juce::StringArray b2 = {
         "• 7-PAGE NAVIGATION (Slot 1): Instant 1-click access to Voice 1, Voice 2, Transients, Pre-Amp FX, Amplifier, Post-Amp FX, and Modulations.",
-        "• AUTO-TRACKING VISUALIZER (Slot 8): Automatically switches to display real-time analysis for whichever module card or knob you click or edit.",
+        "• AUTO-TRACKING VISUALIZER (Slot 5): Automatically switches to display real-time analysis for whichever module card or knob you click or edit.",
         "• BODE & OSCILLOSCOPE: Filters and EQ show interactive X-Y frequency response curves; Oscillators and FX display real-time triggered waveforms.",
         "• PADLOCK ICON (Top Right): Grey = auto-tracking active. Yellow = LOCKED! Lock visualizer to an FX (e.g. Wavefolder), then switch pages to sculpt sound while watching the locked waveform!"
     };

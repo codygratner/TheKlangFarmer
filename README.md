@@ -26,14 +26,31 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 
 ---
 
+## Gallery
+
+| Voice 1 (Standard Palette) | Voice 2 (Inverted Complementary Palette) |
+| :---: | :---: |
+| ![Voice 1](screenshots/page0_voice1.png) | ![Voice 2](screenshots/page1_voice2.png) |
+
+| Amplifier & Master Limiter | Modulations Rack (Mod Envelopes + Dynamics) |
+| :---: | :---: |
+| ![Amplifier](screenshots/page4_amplifier.png) | ![Modulations](screenshots/page6_modulations.png) |
+
+| Real-Time Modulation Visualization | Right-Click Callout Popup |
+| :---: | :---: |
+| ![Modulation Visualizer](screenshots/page0_voice1_modulated.png) | ![Callout Popup](screenshots/callout_popup_modulated.png) |
+
+---
+
 ## Key Features
 
 ### 1. Dual FM Voice Engine & Per-Voice Filtering
 - **Two FM Operator Pairs**: Independent `Carrier 1 & Modulator 1` and `Carrier 2 & Modulator 2` engines with 5-point warp decay curves.
 - **Carrier Pitch Tracking Modes**: Select between `MIDI` (tracks incoming MIDI with $\pm 24$ st semitone offset, center-detented bipolar meter), `Freq` (fixed continuous frequency from $20\,\text{Hz}$ to $24\,\text{kHz}$, defaulting to $55\,\text{Hz}$), and `Note` (fixed musical note across notes 0–127 with padded readout e.g. `A1   [   55 Hz,  33]`).
-- **Bipolar Modulation Depth**: FM depths range from **-100% to +100%** (defaulting to 0% center).
-- **Per-Voice Multimode Filters**: Each voice features its own dedicated multimode filter (LPF, BPF, HPF, BRF with 6/12/18/24 dB slopes) and filter envelope before hitting the mixer.
-- **Cross-Voice Ring Modulation**: Raw cross-multiplication (`Carrier 1 × Carrier 2`) routeable into the main mixer as an independent blendable tone.
+- **Pitch Envelope with Inverse Mode**: Dedicated pitch envelopes for each voice feature `Car`, `Mod`, `Both`, and `Opp` (Opposite / Inverse mode, driving carrier and modulator pitch in reciprocal directions).
+- **Distinct Voice Palettes**: Voice 2 features an inverted complementary color palette (180° rotated hues on accents and card background tints) for instant visual differentiation.
+- **Per-Voice Multimode Filters**: Each voice features its own dedicated multimode filter (LPF, BPF, HPF, BRF with 6/12/18/24/36 dB slopes) with resonance calibrated right to the edge of self-oscillation.
+- **Cross-Voice Ring Modulation**: Raw cross-multiplication (`Carrier 1 × Carrier 2`) routeable into the 4-channel mixer.
 
 ### 2. Multi-Instance FX Engine (8 Independent Slots)
 - **4 Pre-Amp FX Slots** and **4 Post-Amp FX Slots**.
@@ -41,12 +58,12 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 - **13 Effect Processors**:
   1. **Bell EQ**: Peaking parametric boost/cut and DJ-style dual filter tilt with Bode magnitude visualizer.
   2. **Chorus**: Dual quadrature sine LFOs driving stereo fractional delays with soft-saturation feedback.
-  3. **Comb Filter**: Resonant feedback delay line for metallic/karplus-strong tones.
-  4. **Disperser**: Cascaded 2nd-order allpass filters for authentic acoustic strike "zapping" and phase smearing.
-  5. **Drive**: Soft-clipping saturation with DC bias, post-filter, and hard-clipper limiter.
+  3. **Comb Filter**: Resonant feedback delay line with bipolar wet/dry mix (-100%:0% to +100%:0%, default +50%:50%, double-click reset to dry).
+  4. **Phase Smear**: Cascaded all-pass filter network with selectable **2nd Order** or **4th Order** topology for subtle acoustic strike zapping or extreme dispersion.
+  5. **Drive**: Soft-clipping saturation with DC bias, post-filter, and limiter (+6 dB default gain, 0 dB double-click reset).
   6. **Filter**: Standalone multi-mode filter (LPF, BPF, HPF, BRF) with selectable slopes (6 dB to 36 dB/oct) and Bode visualizer.
   7. **Flanger**: Sub-millisecond delay line (0.2 ms – 5 ms) with bipolar resonant feedback (-95% to +95%).
-  8. **Frequency Shifter**: True quadrature single-sideband frequency shifting (+/- 50 Hz or +/- 500 Hz).
+  8. **Frequency Shifter**: True quadrature single-sideband frequency shifting with bipolar wet/dry blend (+50%:50% default, double-click reset to dry).
   9. **Grit FX (Bitcrusher)**: Word-length reduction (1.0 to 16.0 bits), sample-rate reduction, and dual-shelf tone shaping.
   10. **Phaser**: 6-stage cascaded allpass ladder with regenerative feedback.
   11. **RingMod**: Morphable oscillator ring modulation with rate, amount, and stereo phase width.
@@ -54,20 +71,21 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
   13. **Wave Folder**: High-gain harmonic folder with DC bias and post-filter.
   *(Or **None / Bypass** to bypass the slot and render a brushed-aluminum blank rack plate).*
 
-### 3. Transients & Modulation Rack
+### 3. Transients & Modulation Matrix
 - **Noise Transient Generator**: Dedicated filtered white/pink noise burst with its own filter envelope (`Filter 3 + Filter Env 3`).
 - **Multi-Clap Generator**: Multi-burst envelope generator simulating handclap flam bursts.
-- **Top-Row Dynamics**:
-  - **Velocity Dynamics**: Dynamic mapping scaling output volume, pitch decay, and modulation depth with exponential response.
-  - **Key Tracking**: Scales envelope depth, decay, and level relative to incoming MIDI note (0–127, center at note 64).
-  - **Slop**: Stepped random analog drift applied per trigger across frequency, FM depth, decay, and stereo panning (defaults strictly to 0% for sample-accurate repeatability).
-- **Freely Assignable Mod Envelopes (Mod Env 1, 2, 3)**:
-  - 3 dedicated modulation envelopes filling the bottom row of the Modulations page.
-  - Each envelope features Slope, bipolar Depth (-100% to +100%), Decay (1 ms – 2000 ms), and a dropdown ComboBox that can modulate **any continuous parameter on the entire synthesizer** (138 destinations across dual voices, filters, mixer, amplifier, and all 8 FX slots).
-- **High-Precision Slope Curve Response**:
-  - Slope controls feature a linear center at **75%** of slider travel, matching logarithmic response up to 100%, and an extended exponential curve descending down to **4× steeper** curvature at 0%. Default double-click reset set to `0.5886` matches the original classic exponential response.
-- **Doepfer-Style Dark Silver Panels**:
-  - Mixer module and Limiters (Pre-Limiter & Master Limiter) feature dark silver anodized finishes (`#606060`), red accents, and mounting screws, with satin light troughs on the Mixer and dark troughs on the Limiters for immediate visual contrast in the rack.
+- **3 Freely Assignable Mod Envelopes (Top Row)**:
+  - DAHDSR envelopes (Delay, Attack, Hold, Decay, Sustain, Release) with bipolar depth and flexible slope curvature.
+  - Dropdown target selector with **dynamic loaded-FX naming** (e.g. `Post FX 1 [Ring Mod]: Param 1 [Waveform]` or `Post FX 1 [Empty]: Param 1 [Empty]`) across 108 continuous synthesis and effect parameters.
+- **Dynamics & Analog Drift (Bottom Row)**:
+  - **Velocity Dynamics**: Dynamic scaling of output volume, envelope decay, and modulation depth.
+  - **Key Tracking**: Scales envelope depth, decay, and level relative to incoming MIDI note.
+  - **Slop**: Stepped random analog drift per trigger across frequency, FM depth, decay, and stereo panning.
+- **Real-Time Modulation Visualization**:
+  - Modulated parameters display an animated lower indicator bar under the slider illustrating the live modulation span and instantaneous needle position.
+  - Right-click callout popup allows adjusting base slider values while monitoring live modulation sweep.
+- **Silver Brushed Eurorack Faceplates**:
+  - Mixer module and Limiters (Pre-Limiter & Master Limiter) feature authentic brushed-aluminum faceplates, corner rack screws, white recessed troughs, and signal red accents with dynamic text inversion.
 
 ### 4. Real-Time Phase-Locked Visualizations (Slot 5)
 - **Self-Locked Oscilloscopes**: Carriers and modulators phase-lock to their own fundamental frequencies, eliminating visual drift even during deep FM sweeps.
@@ -142,13 +160,13 @@ The 8-slot, 2x4 layout is organized as follows:
 | **Visualizer Module** *(Fixed)* | Active Page Card | Active Page Card | Active Page Card |
 
 ### Navigation Pages
-1. **Voice 1**: Pitch Envelope 1, Modulator 1, Carrier 1, Filter 1, Filter Env 1
-2. **Voice 2**: Pitch Envelope 2, Modulator 2, Carrier 2, Filter 2, Filter Env 2
-3. **Transients**: Clap Burst, Noise Transient, Filter 3, Filter Env 3
-4. **Pre-Amp FX**: Pre FX 1..4 (Assignable to any of the 13 processors) + Pre-Amp Limiter
-5. **Amplifier**: Main Mixer (Carrier 1, Carrier 2, RingMod, Noise, Clap, FX Return), Amp Envelope, Master Limiter
-6. **Post-Amp FX**: Post FX 1..4 (Assignable to any of the 13 processors) + Post-Amp Limiter
-7. **Modulations**: Velocity Modulation, Slop Stepped Randomizer
+1. **Voice 1**: Carrier 1, Modulator 1, Pitch Env 1, Filter 1, Filter Env 1, Mixer
+2. **Voice 2**: Carrier 2, Modulator 2, Pitch Env 2, Filter 2, Filter Env 2, Mixer (Swapped Palette)
+3. **Transients**: Clap Burst, Noise Transient, Filter 3, Filter Env 3, Mixer
+4. **Pre-Amp FX**: FX Picker + Pre FX 1..4 (Assignable to any of 13 processors) + Pre Limiter
+5. **Amplifier**: Main Amplifier + Amp Envelope + Post Limiter + Mixer
+6. **Post-Amp FX**: FX Picker + Post FX 1..4 (Assignable to any of 13 processors) + Master Limiter
+7. **Modulations**: Mod Envelopes 1–3 (Top Row) + Velocity, Key Tracking, and Slop (Bottom Row)
 
 ---
 
