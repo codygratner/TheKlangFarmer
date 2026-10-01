@@ -1,0 +1,151 @@
+name: Multi-Platform Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Tag name to release to (e.g. v0.1.4)'
+        required: true
+        default: 'v0.1.4'
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    name: macOS (Universal AU / VST3 / Standalone)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Release Tag
+        id: tag
+        run: |
+          TAG="${{ inputs.tag_name }}"
+          if [ -z "$TAG" ]; then
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Building for release tag: $TAG"
+
+      - name: Clone JUCE
+        run: git clone --depth 1 --branch 9.0.3 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Build Plugins & Standalone
+        run: |
+          cmake --build build --config Release --parallel --target TheKlangFarmer_VST3 TheKlangFarmer_AU TheKlangFarmer_Standalone dsp_tests
+
+      - name: Run DSP Unit Tests
+        run: |
+          if [ -f "./build/dsp_tests" ]; then
+            ./build/dsp_tests
+          elif [ -f "./build/Release/dsp_tests" ]; then
+            ./build/Release/dsp_tests
+          fi
+
+      - name: Package macOS Universal Binaries
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          ZIP_NAME="TheKlangFarmer-${TAG}-macOS.zip"
+          mkdir -p macos_dist
+          find build/TheKlangFarmer_artefacts -name "The Klang Farmer.vst3" -exec cp -R -P {} macos_dist/ \;
+          find build/TheKlangFarmer_artefacts -name "The Klang Farmer.component" -exec cp -R -P {} macos_dist/ \;
+          find build/TheKlangFarmer_artefacts -name "The Klang Farmer.app" -exec cp -R -P {} macos_dist/ \;
+          cd macos_dist
+          zip -r -y "../${ZIP_NAME}" *
+          cd ..
+          ls -lh "${ZIP_NAME}"
+
+      - name: Upload macOS Archive to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: TheKlangFarmer-*-macOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-linux:
+    name: Linux x86_64 (VST3 / Standalone)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve Release Tag
+        id: tag
+        run: |
+          TAG="${{ inputs.tag_name }}"
+          if [ -z "$TAG" ]; then
+            TAG="${{ github.ref_name }}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "Building for release tag: $TAG"
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libjack-jackd2-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libxcomposite-dev \
+            libxcursor-dev \
+            libxext-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxrender-dev \
+            libglu1-mesa-dev \
+            mesa-common-dev \
+            libgl1-mesa-dev \
+            libfontconfig1-dev \
+            zip
+
+      - name: Clone JUCE
+        run: git clone --depth 1 --branch 9.0.3 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Plugins & Standalone
+        run: |
+          cmake --build build --config Release --parallel --target TheKlangFarmer_VST3 TheKlangFarmer_Standalone dsp_tests
+
+      - name: Run DSP Unit Tests
+        run: |
+          if [ -f "./build/dsp_tests" ]; then
+            ./build/dsp_tests
+          elif [ -f "./build/Release/dsp_tests" ]; then
+            ./build/Release/dsp_tests
+          fi
+
+      - name: Package Linux Binaries
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          ZIP_NAME="TheKlangFarmer-${TAG}-Linux.zip"
+          mkdir -p linux_dist
+          find build/TheKlangFarmer_artefacts -name "The Klang Farmer.vst3" -exec cp -r {} linux_dist/ \;
+          find build/TheKlangFarmer_artefacts -name "The Klang Farmer" -type f -exec cp {} linux_dist/ \;
+          cd linux_dist
+          zip -r "../${ZIP_NAME}" *
+          cd ..
+          ls -lh "${ZIP_NAME}"
+
+      - name: Upload Linux Archive to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          files: TheKlangFarmer-*-Linux.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

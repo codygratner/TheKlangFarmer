@@ -23,8 +23,8 @@ juce_add_plugin(TheKlangFarmer
     PLUGIN_CODE Tkf1
     BUNDLE_ID com.rlyehsound.theklangfarmer
     
-    # Builds both the DAW plugin and a standalone runnable executable for rapid DSP iteration
-    FORMATS VST3 Standalone
+    # Builds the DAW plugin(s) and a standalone runnable executable
+    FORMATS VST3 Standalone $<$<PLATFORM_ID:Darwin>:AU>
     PRODUCT_NAME "The Klang Farmer"
     VST3_CAN_REPLACE_VST2 FALSE
 )
