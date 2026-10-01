@@ -9,15 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [0.1.2] - 2026-09-30
+
+### Added
+- **Release Packaging**: Automated packaging of distribution builds into separate zip archives:
+  - `TheKlangFarmer-v0.1.2-VST3.zip` (DAW plugin bundle)
+  - `TheKlangFarmer-v0.1.2-Standalone.zip` (standalone desktop executable)
+
 ### Changed
 - **Carrier Pitch Tracking Overhaul (`MIDI`, `Freq`, `Note`)**: Revamped Carrier 1 & 2 pitch tracking from the legacy `MIDI / Fixed / Offset` design:
   - **`MIDI` Mode**: Tracks incoming MIDI note with semitone offset constrained to $\pm 24\text{ st}$ (default $0\text{ st}$), displaying a center-split bipolar meter with center detent mark.
   - **`Freq` Mode**: Fixed continuous frequency slider from $20\,\text{Hz}$ to $24\,\text{kHz}$ (default $55\,\text{Hz}$), unipolar fill.
   - **`Note` Mode**: Fixed musical note across MIDI notes 0–127 (`C-1` to `G9`, default `A1 = 55 Hz = note 33`) with padded fixed-width readout `note name [frequency, midi note number]` (e.g. `A1   [   55 Hz,  33]`), preventing layout shift or text jumping while dragging.
-- **Alphabetized Effects Catalog**: Reordered the 13 multi-instance effect processors alphabetically (`Bell EQ` through `Wave Folder`) across all FX picker dropdowns, DSP block dispatch, Quickstart modal, and documentation (`spec.md`, `README.md`).
 - **Arcade HP Meter-Style Sliders**: Upgraded parameter controls from rotary knobs and separate value boxes into fighting-game "HP meter" horizontal bar meters featuring embedded left-aligned labels, static right-aligned value readouts, bidirectional center-split fills for bipolar parameters, and 2D mouse dragging.
 - **Card Geometry & Typography Scaling**: Scaled up control heights, fonts, and spacing within the existing 1040 × 740 px chassis for improved readability and ergonomic tweaking.
 - **Visualizer Layout Reorganization**: Relocated the Real-Time Phase-Locked Visualizer from Slot 8 (bottom-right) to Slot 5 (bottom-left), anchoring both left-hand corner slots (Slot 1 Navigation and Slot 5 Visualizer) as permanent anchors across all 7 pages.
+- **Alphabetized Effects Catalog**: Reordered the 13 multi-instance effect processors alphabetically (`Bell EQ` through `Wave Folder`) across all FX picker dropdowns, DSP block dispatch, Quickstart modal, and documentation (`spec.md`, `README.md`).
+- **Project Version**: Bumped project version to `0.1.2` in `CMakeLists.txt` and VST3 `moduleinfo.json`.
 
 ---
 
