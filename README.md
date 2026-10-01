@@ -6,6 +6,7 @@
 [![Release](https://img.shields.io/github/v/release/codygratner/TheKlangFarmer?color=4a9eff&label=Release)](https://github.com/codygratner/TheKlangFarmer/releases)
 [![Standard](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
 [![Framework](https://img.shields.io/badge/JUCE-8-orange.svg)](https://juce.com/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Format](https://img.shields.io/badge/Format-VST3%20%7C%20Standalone-brightgreen.svg)](#installation)
 
 > [!NOTE]
@@ -176,4 +177,7 @@ For a detailed chronological record of updates and releases, see [CHANGELOG.md](
 ---
 
 ## License
-Created by Cody Gratner (R'lyeh Sound).
+
+This project is open-source software licensed under the [GNU General Public License v3.0 (GPLv3)](LICENSE).
+
+Copyright &copy; 2026 Cody Gratner (R'lyeh Sound).
