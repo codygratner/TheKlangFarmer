@@ -250,7 +250,7 @@ The UI is organized as 8 modular slots across 2 rows (Slots 1–4 on top, Slots 
   - **Decay (Continuous)**: Standard musical decay ($5\,\text{ms} - 60\,\text{s}$, default $333\,\text{ms}$).
   - **Post-Drive (Continuous)**: Filter post-saturation gain: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $0\,\text{dB}$).
 - **Slot 8: Mixer**
-  - **Doepfer A-138 Silver Faceplate Aesthetic**: Styled as an authentic brushed-aluminum Eurorack utility module with countersunk corner rack screws, solid black screenprinted DIN typography, red `A-138` model code, recessed white/light-satin slider troughs, and signal red level fills with dynamic text inversion (white over red fill, black over white trough).
+  - **Silver Faceplate Aesthetic**: Styled as an authentic brushed-aluminum Eurorack utility module with countersunk corner rack screws, solid black screenprinted DIN typography, recessed white/light-satin slider troughs, and signal red level fills with dynamic text inversion (white over red fill, black over white trough).
   - **Carrier 1 Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $100\%$).
   - **Carrier 2 Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).
   - **RingMod Level (Continuous)**: $0\%$ to $100\%$ ($0.5$) to $400\%$ (default $0\%$, double-click snaps to $100\%$).

@@ -7,9 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
+## [0.1.4] - 2026-10-01
+
+### Added
+- **Dynamic FX Slot Parameter Naming in Mod Targets**: Mod envelope target dropdown dynamically inspects loaded FX types in Pre-FX and Post-FX slots and labels parameters accordingly (e.g. `Post FX 1 [Ring Mod]: Param 1 [Waveform]` or `Post FX 1 [Empty]: Param 1 [Empty]`). Names update dynamically on effect changes.
+- **Voice 2 Inverted Color Palette**: Voice 2 modules (Carrier 2, Modulator 2, Pitch Env 2, Filter 2, Filter Env 2) now invert their accent and complementary colors (180° hue rotation) compared to Voice 1, giving Voice 2 an instantly distinct visual identity.
 
 ### Changed
+- **Page 6 Row Swap**: Moved Mod Envelopes 1–3 to the top row and Velocity, Key Tracking, and Slop to the bottom row for a more ergonomic modulation workflow.
+- **Mod Destinations Cleanup**: Removed 34 phantom standalone effect parameters from the modulation routing matrix, leaving 108 live, continuously modulated parameters.
+- **Removed Model Code Text**: Removed "A-138" lettering from Mixer and Limiter silver faceplates.
+- **Project Version**: Bumped project version to `0.1.4` in `CMakeLists.txt`, `source/PluginEditor.cpp`, and top header version badge.
+
+---
+
+## [0.1.3] - 2026-10-01
+
+### Added
+- **3 Freely Assignable Modulation Envelopes**: DAHDSR envelopes (Delay, Attack, Hold, Decay, Sustain, Release) with bipolar modulation depth and flexible slope curve shaping.
+- **Real-Time Modulation Visualization**: Animated lower indicator bar on modulated Arcade HP sliders displaying live modulation range and instantaneous position; right-click callout popup to edit base parameter value while monitoring modulation span.
+- **Sub-Block Modulation Smoothing**: Real-time sample-accurate sub-block modulation matrix routing across all active synthesis and effect parameters.
+- **Key Tracking Module**: Pitch tracking module with configurable root key, tracking rate, and key center.
+- **Pitch Envelope OPP Mode**: Added `OPP` (Opposite / Inverse) mode to pitch envelopes alongside `CAR`, `MOD`, and `BOTH`, driving carrier and modulator pitch in reciprocal directions.
+- **Phase Smear 2nd / 4th Order Selector**: Replaced Disperser on/off switch with a 2nd Order / 4th Order all-pass filter cascade selector for standard or extreme phase dispersion.
+
+### Changed
+- **Complementary Color Panel Tints**: Added 10–15% complementary color tinting to module cards, enhancing visual separation across the modular rack.
+- **Filter Resonance Recalibration**: Calibrated 100% resonance to sit right at the threshold of self-oscillation across -12dB and -24dB filter topologies.
+- **Comb Filter & Frequency Shifter Bipolar Mix**: Replaced Comb Filter on/off toggle with bipolar wet/dry mix (-100%:0% to +100%:0%), defaulting to +50%:50% with double-click reset to 0%:100% (dry). Updated Frequency Shifter default and reset behavior to match.
+- **Drive Effect Defaults**: Changed default drive gain to +6dB with double-click reset to 0dB.
 - **Doepfer A-138 Silver Mixer Faceplate**: Redesigned the Mixer module (Slot 8) with an authentic brushed-aluminum Eurorack faceplate aesthetic featuring countersunk dark corner rack screws, solid black screenprinted DIN typography, red model code badge (`A-138`), and a dark industrial bezel frame.
 - **Mixer White Recessed Troughs & Dynamic Text Inversion**: Upgraded the Mixer sliders to recessed white/light-satin troughs with signal red (`#e53935`) level fills and real-time dual-pass text clipping (labels and values dynamically invert from sharp black over the white trough to pure white over the red fill bar).
 - **Limiter Red Accent Alignment**: Styled `Pre Limiter`, `Post Limiter`, and the `Amp Limiter` toggle switch with the same signal red accent (`#e53935`) while keeping the standard dark slate chassis, creating visual unity between gain staging and dynamic control modules.

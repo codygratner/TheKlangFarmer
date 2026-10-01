@@ -98,15 +98,61 @@ public:
     juce::String getTextFromValue(double val) override;
     double getValueFromText(const juce::String& text) override;
 
+    struct ModulationVisual {
+        bool isModulated = false;
+        float rangeMinNorm = 0.0f;
+        float rangeMaxNorm = 0.0f;
+        float currentNorm = 0.0f;
+    };
+    ModulationVisual modulation;
+
+    void setModulation(const ModulationVisual& mod) {
+        if (modulation.isModulated != mod.isModulated ||
+            std::abs(modulation.rangeMinNorm - mod.rangeMinNorm) > 0.001f ||
+            std::abs(modulation.rangeMaxNorm - mod.rangeMaxNorm) > 0.001f ||
+            std::abs(modulation.currentNorm - mod.currentNorm) > 0.001f) {
+            modulation = mod;
+            repaint();
+        }
+    }
+
+    void setParamId(const juce::String& id) { paramId = id; }
+    const juce::String& getParamId() const { return paramId; }
+
+    std::function<TheKlangFarmerAudioProcessor::ParamModulationInfo(const juce::String&)> getModInfoFunc;
+
     void paint(juce::Graphics& g) override;
 
 private:
     juce::String label;
+    juce::String paramId;
     juce::Colour accentColour { 0xff00d2ff };
     juce::Point<int> dragStartPos;
     double dragStartVal = 0.0;
 
     void drawDiagram(juce::Graphics& g, juce::Rectangle<float> area);
+};
+
+// Interactive callout popup on right-click allowing slider value editing and displaying active modulation info
+class SliderCalloutComponent : public juce::Component, public juce::Timer {
+public:
+    SliderCalloutComponent(RotaryKnobSlider& ownerSlider,
+                           const juce::String& pId,
+                           std::function<TheKlangFarmerAudioProcessor::ParamModulationInfo(const juce::String&)> modGetter);
+    ~SliderCalloutComponent() override;
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void timerCallback() override;
+    void visibilityChanged() override;
+
+private:
+    RotaryKnobSlider& slider;
+    juce::String paramId;
+    std::function<TheKlangFarmerAudioProcessor::ParamModulationInfo(const juce::String&)> getModInfo;
+    TheKlangFarmerAudioProcessor::ParamModulationInfo cachedInfo;
+    juce::TextEditor editor;
+    juce::String lastLiveText;
 };
 
 // Custom diagram-rendering label used as slider text box
@@ -599,7 +645,13 @@ private:
     int lastPreLimiterEnable = -1;
     int lastPostLimiterEnable = -1;
 
+    int lastPreFXTypes[4] = { -1, -1, -1, -1 };
+    int lastPostFXTypes[4] = { -1, -1, -1, -1 };
+    void updateModTargetBoxItems();
+
     std::vector<float> scopeBuffer;
+    std::vector<RotaryKnobSlider*> registeredSliders;
+    void bindSlider(const juce::String& paramId, RotaryKnobSlider& slider);
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangFarmerAudioProcessorEditor)
 };

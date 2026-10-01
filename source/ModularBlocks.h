@@ -500,6 +500,9 @@ public:
 
     void trigger(float) override {
         timeSinceTrigger = 0.0f;
+        float slope = params[0];
+        float baseDepth = (params[1] - 0.5f) * 2.0f;
+        currentVal = applyEnvelopeSlope(1.0f, slope) * baseDepth;
     }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
@@ -532,6 +535,7 @@ public:
             float envVal = applyEnvelopeSlope(envLinear, slope) * depth;
             timeSinceTrigger += invSr;
             peSig[i] = envVal;
+            currentVal = envVal;
         }
     }
 
@@ -539,10 +543,13 @@ public:
         return std::clamp(static_cast<int>(std::round(params[3] * 3.0f)), 0, 3);
     }
 
+    float getCurrentValue() const { return currentVal; }
+
 private:
     int voiceIndex = 1;
     float invSr = 1.0f / 44100.0f;
     float timeSinceTrigger = 1000.0f;
+    float currentVal = 0.0f;
 };
 
 // --- BLOCK: DRIVE (Drive, Bias, Post-Filter, Limiter) ---
@@ -1508,6 +1515,9 @@ public:
 
     void trigger(float) override {
         timeSinceTrigger = 0.0f;
+        float slope = params[0];
+        float baseDepth = (params[1] - 0.5f) * 2.0f;
+        currentVal = applyEnvelopeSlope(1.0f, slope) * baseDepth;
     }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
@@ -1548,16 +1558,19 @@ public:
             float envVal = applyEnvelopeSlope(envLinear, slope) * depth;
             timeSinceTrigger += invSr;
             targetSig[i] = envVal;
+            currentVal = envVal;
         }
     }
 
     float getPostDriveGain() const { return postDriveGain; }
+    float getCurrentValue() const { return currentVal; }
 
 private:
     int voiceIndex = 1;
     float invSr = 1.0f / 44100.0f;
     float timeSinceTrigger = 1000.0f;
     float postDriveGain = 1.0f;
+    float currentVal = 0.0f;
 };
 
 // --- BLOCK: WAVE FOLDER (Type, Fold, Bias, Post-Filter) ---
@@ -2399,6 +2412,10 @@ public:
         }
     }
 
+    ModularDrumEngine() {
+        init(44100.0f);
+    }
+
     void init(float sampleRate) {
         ctx.sampleRate = sampleRate;
         ctx.invSr = 1.0f / sampleRate;
@@ -2864,6 +2881,7 @@ public:
 
     void getScopeData(int blockIndex, float* dest, int count) const {
         if (blockIndex < 0 || blockIndex >= NUM_BLOCKS || !dest || count <= 0) return;
+        if (blockIndex >= static_cast<int>(allBlocks.size()) || !allBlocks[blockIndex]) return;
 
         if (blockIndex == BLK_VELOCITY) {
             if (auto* velBlk = dynamic_cast<VelocityBlock*>(allBlocks[BLK_VELOCITY].get())) {
@@ -3165,6 +3183,26 @@ public:
         if (blk < NUM_BLOCKS && allBlocks[blk]) {
             if (auto* mb = dynamic_cast<ModEnvelopeBlock*>(allBlocks[blk].get())) {
                 return mb->getCurrentValue();
+            }
+        }
+        return 0.0f;
+    }
+
+    float getFilterEnvValue(int voiceIndex) const {
+        BlockID blk = (voiceIndex == 1) ? BLK_FILTERENV1 : ((voiceIndex == 2) ? BLK_FILTERENV2 : BLK_FILTERENV3);
+        if (blk < NUM_BLOCKS && allBlocks[blk]) {
+            if (auto* fb = dynamic_cast<FilterEnvelopeBlock*>(allBlocks[blk].get())) {
+                return fb->getCurrentValue();
+            }
+        }
+        return 0.0f;
+    }
+
+    float getPitchEnvValue(int voiceIndex) const {
+        BlockID blk = (voiceIndex == 1) ? BLK_PITCHENV1 : BLK_PITCHENV2;
+        if (blk < NUM_BLOCKS && allBlocks[blk]) {
+            if (auto* pb = dynamic_cast<PitchEnvelopeBlock*>(allBlocks[blk].get())) {
+                return pb->getCurrentValue();
             }
         }
         return 0.0f;

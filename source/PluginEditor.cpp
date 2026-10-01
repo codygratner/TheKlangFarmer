@@ -1130,32 +1130,140 @@ void RotaryKnobSlider::mouseWheelMove(const juce::MouseEvent& e, const juce::Mou
     }
 }
 
+// --- SLIDER CALLOUT COMPONENT ---
+
+SliderCalloutComponent::SliderCalloutComponent(RotaryKnobSlider& ownerSlider,
+                                               const juce::String& pId,
+                                               std::function<TheKlangFarmerAudioProcessor::ParamModulationInfo(const juce::String&)> modGetter)
+    : slider(ownerSlider), paramId(pId), getModInfo(std::move(modGetter))
+{
+    if (getModInfo && paramId.isNotEmpty()) {
+        cachedInfo = getModInfo(paramId);
+    }
+
+    editor.setFont(juce::FontOptions(13.5f, juce::Font::bold));
+    editor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff0e1117));
+    editor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffffffff));
+    editor.setColour(juce::TextEditor::outlineColourId, slider.getAccentColour().withAlpha(0.8f));
+    editor.setText(slider.getTextFromValue(slider.getValue()), false);
+    addAndMakeVisible(editor);
+
+    editor.onReturnKey = [this]() {
+        juce::String text = editor.getText().trim();
+        double newVal = slider.getValueFromText(text);
+        slider.setValue(newVal, juce::sendNotificationAsync);
+        if (auto* callout = findParentComponentOfClass<juce::CallOutBox>()) {
+            callout->dismiss();
+        }
+    };
+    editor.onEscapeKey = [this]() {
+        if (auto* callout = findParentComponentOfClass<juce::CallOutBox>()) {
+            callout->dismiss();
+        }
+    };
+
+    int w = 210;
+    int h = 62;
+    if (cachedInfo.isModulated) {
+        h += 16; // divider + header
+        h += static_cast<int>(cachedInfo.sources.size()) * 18;
+        h += 18; // range text
+        h += 18; // live value text
+        h += 8;  // padding
+        lastLiveText = cachedInfo.liveValueText;
+        startTimerHz(30);
+    }
+    setSize(w, h);
+}
+
+SliderCalloutComponent::~SliderCalloutComponent() {
+    stopTimer();
+}
+
+void SliderCalloutComponent::visibilityChanged() {
+    if (isVisible()) {
+        editor.grabKeyboardFocus();
+        editor.selectAll();
+    }
+}
+
+void SliderCalloutComponent::timerCallback() {
+    if (getModInfo && paramId.isNotEmpty()) {
+        auto latest = getModInfo(paramId);
+        if (latest.liveValueText != lastLiveText || latest.isModulated != cachedInfo.isModulated) {
+            lastLiveText = latest.liveValueText;
+            cachedInfo = latest;
+            repaint();
+        }
+    }
+}
+
+void SliderCalloutComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+    g.setColour(juce::Colour(0xff12141a));
+    g.fillRoundedRectangle(bounds, 4.0f);
+    g.setColour(slider.getAccentColour().withAlpha(0.6f));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 4.0f, 1.2f);
+
+    // Title
+    g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
+    g.setColour(slider.getAccentColour());
+    juce::Rectangle<float> titleBox(10.0f, 6.0f, bounds.getWidth() - 20.0f, 18.0f);
+    g.drawText(slider.getLabel().toUpperCase(), titleBox, juce::Justification::centredLeft, true);
+
+    if (cachedInfo.isModulated) {
+        float curY = static_cast<float>(editor.getBottom()) + 8.0f;
+        // Divider
+        g.setColour(juce::Colour(0xff2a3242));
+        g.drawHorizontalLine(static_cast<int>(curY), 10.0f, bounds.getWidth() - 10.0f);
+        curY += 6.0f;
+
+        // Header
+        g.setFont(juce::FontOptions(10.0f, juce::Font::bold));
+        g.setColour(juce::Colour(0xff8a99ad));
+        g.drawText("ACTIVE MODULATION", 10.0f, curY, bounds.getWidth() - 20.0f, 14.0f, juce::Justification::centredLeft, true);
+        curY += 16.0f;
+
+        // Sources
+        for (const auto& src : cachedInfo.sources) {
+            g.setFont(juce::FontOptions(11.5f, juce::Font::plain));
+            g.setColour(juce::Colour(0xffc5d2e3));
+            juce::String labelStr = juce::String(juce::CharPointer_UTF8("\xe2\x80\xa2 ")) + src.name + ": ";
+            g.drawText(labelStr, 12.0f, curY, bounds.getWidth() - 24.0f, 16.0f, juce::Justification::centredLeft, true);
+
+            float nameW = juce::GlyphArrangement::getStringWidth(juce::Font(juce::FontOptions(11.5f, juce::Font::plain)), labelStr);
+            g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
+            g.setColour(slider.getAccentColour().brighter(0.2f));
+            g.drawText(src.depthText, 12.0f + nameW, curY, bounds.getWidth() - 24.0f - nameW, 16.0f, juce::Justification::centredLeft, true);
+            curY += 18.0f;
+        }
+
+        // Modulation range: Start -> Peak
+        g.setFont(juce::FontOptions(11.5f, juce::Font::plain));
+        g.setColour(juce::Colour(0xff8a99ad));
+        g.drawText("Range:", 12.0f, curY, 48.0f, 16.0f, juce::Justification::centredLeft, true);
+        g.setFont(juce::FontOptions(11.5f, juce::Font::bold));
+        g.setColour(juce::Colour(0xffedf2fa));
+        g.drawText(cachedInfo.rangeText, 60.0f, curY, bounds.getWidth() - 72.0f, 16.0f, juce::Justification::centredLeft, true);
+        curY += 18.0f;
+
+        // Instantaneous live value
+        g.setFont(juce::FontOptions(11.5f, juce::Font::plain));
+        g.setColour(juce::Colour(0xff8a99ad));
+        g.drawText("Live:", 12.0f, curY, 48.0f, 16.0f, juce::Justification::centredLeft, true);
+        g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
+        g.setColour(slider.getAccentColour());
+        g.drawText(cachedInfo.liveValueText, 60.0f, curY, bounds.getWidth() - 72.0f, 16.0f, juce::Justification::centredLeft, true);
+    }
+}
+
+void SliderCalloutComponent::resized() {
+    editor.setBounds(8, 26, getWidth() - 16, 24);
+}
+
 void RotaryKnobSlider::openHoveringEditor() {
-    auto editor = std::make_unique<juce::TextEditor>();
-    editor->setSize(110, 28);
-    editor->setFont(juce::FontOptions(14.0f, juce::Font::bold));
-    editor->setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff12141a));
-    editor->setColour(juce::TextEditor::textColourId, juce::Colour(0xffffffff));
-    editor->setColour(juce::TextEditor::outlineColourId, accentColour);
-    editor->setText(getTextFromValue(getValue()), false);
-    editor->selectAll();
-
-    auto* edRaw = editor.get();
-    edRaw->onReturnKey = [this, edRaw]() {
-        juce::String text = edRaw->getText().trim();
-        double newVal = getValueFromText(text);
-        setValue(newVal, juce::sendNotificationAsync);
-        if (auto* callout = edRaw->findParentComponentOfClass<juce::CallOutBox>()) {
-            callout->dismiss();
-        }
-    };
-    edRaw->onEscapeKey = [edRaw]() {
-        if (auto* callout = edRaw->findParentComponentOfClass<juce::CallOutBox>()) {
-            callout->dismiss();
-        }
-    };
-
-    juce::CallOutBox::launchAsynchronously(std::move(editor), getScreenBounds(), nullptr);
+    auto callout = std::make_unique<SliderCalloutComponent>(*this, paramId, getModInfoFunc);
+    juce::CallOutBox::launchAsynchronously(std::move(callout), getScreenBounds(), nullptr);
 }
 
 juce::String RotaryKnobSlider::getTextFromValue(double val) {
@@ -1365,6 +1473,35 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
             g.setColour(juce::Colours::white);
             g.drawVerticalLine(static_cast<int>(needleX), innerY, innerY + innerH);
         }
+    }
+
+    // 2b. Modulation Range Bar & Indicator Needle (if modulated)
+    if (modulation.isModulated) {
+        float barH = 3.5f;
+        float barY = innerY + innerH - barH - 1.5f;
+        float minX = innerX + innerW * std::clamp(modulation.rangeMinNorm, 0.0f, 1.0f);
+        float maxX = innerX + innerW * std::clamp(modulation.rangeMaxNorm, 0.0f, 1.0f);
+        float spanW = std::max(2.5f, maxX - minX);
+
+        juce::Rectangle<float> modBarRect(minX, barY, spanW, barH);
+        g.setColour(accentColour.withAlpha(0.5f));
+        g.fillRoundedRectangle(modBarRect, 1.5f);
+        g.setColour(accentColour.brighter(0.3f).withAlpha(0.85f));
+        g.drawRoundedRectangle(modBarRect, 1.5f, 0.8f);
+
+        // Realtime indicator needle
+        float currX = innerX + innerW * std::clamp(modulation.currentNorm, 0.0f, 1.0f);
+        float indW = 4.0f;
+        float indH = 8.0f;
+        float indY = barY - 2.5f;
+        juce::Rectangle<float> indRect(currX - indW * 0.5f, indY, indW, indH);
+
+        g.setColour(accentColour.withAlpha(0.6f));
+        g.fillRoundedRectangle(indRect.expanded(1.0f, 0.5f), 1.5f);
+        g.setColour(juce::Colours::white);
+        g.fillRoundedRectangle(indRect, 1.2f);
+        g.setColour(juce::Colour(0xff090c12));
+        g.drawVerticalLine(static_cast<int>(currX), indY + 1.0f, indY + indH - 1.0f);
     }
 
     // 3. Glass sheen reflection on top 44%
@@ -1613,12 +1750,18 @@ void ModuleCardComponent::setPanelStyle(PanelStyle style) {
 
 void ModuleCardComponent::setLedSelector(LedSelectorComponent* selector) {
     ledSelector = selector;
-    if (ledSelector) addAndMakeVisible(ledSelector);
+    if (ledSelector) {
+        ledSelector->setAccent(accent);
+        addAndMakeVisible(ledSelector);
+    }
 }
 
 void ModuleCardComponent::setSecondLedSelector(LedSelectorComponent* selector) {
     secondLedSelector = selector;
-    if (secondLedSelector) addAndMakeVisible(secondLedSelector);
+    if (secondLedSelector) {
+        secondLedSelector->setAccent(accent);
+        addAndMakeVisible(secondLedSelector);
+    }
 }
 
 void ModuleCardComponent::setSelector(juce::ComboBox* box) {
@@ -1721,12 +1864,6 @@ void ModuleCardComponent::paint(juce::Graphics& g) {
         g.drawText(moduleTitle.toUpperCase(), 18, 5, getWidth() - 36, 18, juce::Justification::left, true);
         g.setColour(juce::Colour(0xff0e1116));
         g.drawText(moduleTitle.toUpperCase(), 18, 4, getWidth() - 36, 18, juce::Justification::left, true);
-
-        // Subtitle / model code in accent red
-        g.setFont(juce::FontOptions(10.5f, juce::Font::bold));
-        g.setColour(accent);
-        g.drawText("A-138", getWidth() - 56, 5, 36, 18, juce::Justification::right, true);
-
         // Thin screenprint divider under header
         g.setColour(juce::Colour(0xff14171e));
         g.drawHorizontalLine(24, bounds.getX() + 14.0f, bounds.getRight() - 14.0f);
@@ -2537,7 +2674,7 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
     juce::StringArray b4 = {
         "• PUNCHY KICK: Voice 1 Carrier in MIDI mode (pitch ~36), Sine shape; Pitch Env fast decay (25ms), Depth +36st; Pre-Amp Wavefolder (Fold 2-4) + Drive (30%); Post-Limiter ON.",
         "• METALLIC SNARE: Voice 1 snappy body; Transients metallic noise with Filter 3 set to BPF (2kHz); Post-Amp Comb Filter or Chorus for stereo width.",
-        "• MODULATIONS: Map Velocity, Key Tracking, and analog Slop on top row; 3 freely assignable Mod Envelopes on bottom row targetable to any parameter.",
+        "• MODULATIONS: 3 freely assignable Mod Envelopes on top row targetable to any parameter; Map Velocity, Key Tracking, and analog Slop on bottom row.",
         "• AUDITION HIT: Click the AUDITION HIT button in the top-right header at any time to audition the sound at full velocity."
     };
     drawPanel(p4, "4. SOUND DESIGN RECIPES & TIPS", juce::Colour(0xff00e5ff), b4);
@@ -2776,13 +2913,19 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     cardFilterEnv1->setKnob(3, "Post-Drive", &filterEnv1PostDriveSlider);
     addChildComponent(cardFilterEnv1.get());
 
+    // Voice 2 colors (swapped accent and complementary colors from Voice 1)
+    const auto carrier2Colour = juce::Colour(0xff00d2ff).withRotatedHue(0.5f);
+    const auto mod2Colour     = juce::Colour(0xffff7043).withRotatedHue(0.5f);
+    const auto pitchEnv2Colour= juce::Colour(0xffffab00).withRotatedHue(0.5f);
+    const auto filter2Colour  = juce::Colour(0xff7c4dff).withRotatedHue(0.5f);
+
     // 6. Carrier 2
-    cardCarrier2 = std::make_unique<ModuleCardComponent>("Carrier 2", juce::Colour(0xff00d2ff));
+    cardCarrier2 = std::make_unique<ModuleCardComponent>("Carrier 2", carrier2Colour);
     setupBox(carrier2TrackingBox);
     bindSelector(carrier2TrackingSelector, carrier2TrackingBox, "carrier2_tracking", { "MIDI", "Freq", "Note" }, 3);
     cardCarrier2->setLedSelector(&carrier2TrackingSelector);
 
-    setupKnob(carrier2PitchSlider, juce::Colour(0xff00d2ff), true, 0.5);
+    setupKnob(carrier2PitchSlider, carrier2Colour, true, 0.5);
     carrier2PitchSlider.customFormatText = [this](double val) {
         int mode = carrier2TrackingBox.getSelectedItemIndex();
         if (mode == 0) return formatSemi24(val);
@@ -2799,10 +2942,10 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         updateCarrier2Controls();
     };
 
-    setupKnob(carrier2ShapeSlider, juce::Colour(0xff00d2ff), false, 0.0);
+    setupKnob(carrier2ShapeSlider, carrier2Colour, false, 0.0);
     carrier2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
 
-    setupKnob(carrier2DepthSlider, juce::Colour(0xff00d2ff), true, 0.5);
+    setupKnob(carrier2DepthSlider, carrier2Colour, true, 0.5);
     carrier2DepthSlider.customFormatText = formatBipolarPercent;
     carrier2DepthSlider.customParseText  = parseBipolarPercent;
 
@@ -2813,7 +2956,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     updateCarrier2Controls();
 
     // 7. Modulator 2
-    cardMod2 = std::make_unique<ModuleCardComponent>("Modulator 2", juce::Colour(0xffff7043));
+    cardMod2 = std::make_unique<ModuleCardComponent>("Modulator 2", mod2Colour);
     setupBox(mod2TrackBox);
     bindSelector(mod2TrackSelector, mod2TrackBox, "mod2_track", { "Fixed", "Follow", "FM" }, 3);
     setupBox(mod2TypeBox);
@@ -2821,7 +2964,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     cardMod2->setLedSelector(&mod2TrackSelector);
     cardMod2->setSecondLedSelector(&mod2TypeSelector);
 
-    setupKnob(mod2ShapeSlider, juce::Colour(0xffff7043), false, 0.0);
+    setupKnob(mod2ShapeSlider, mod2Colour, false, 0.0);
     mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
     mod2ShapeSlider.customFormatText = [this](double val) {
         if (mod2TypeBox.getSelectedItemIndex() == 1) return formatBipolarPercent(val);
@@ -2834,7 +2977,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         return parsePercent(text);
     };
 
-    setupKnob(mod2SpeedSlider, juce::Colour(0xffff7043), false, 0.50934);
+    setupKnob(mod2SpeedSlider, mod2Colour, false, 0.50934);
     mod2SpeedSlider.customFormatText = [this](double val) {
         if (mod2TrackBox.getSelectedItemIndex() == 2) return formatRatio(val);
         if (mod2TrackBox.getSelectedItemIndex() == 1) return formatSemi(val);
@@ -2851,22 +2994,22 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     addChildComponent(cardMod2.get());
 
     // 8. Pitch Envelope 2
-    cardPitchEnv2 = std::make_unique<ModuleCardComponent>("Pitch Env 2", juce::Colour(0xffffab00));
+    cardPitchEnv2 = std::make_unique<ModuleCardComponent>("Pitch Env 2", pitchEnv2Colour);
     setupBox(pitchEnv2TargetBox);
     bindSelector(pitchEnv2TargetSelector, pitchEnv2TargetBox, "pitchenv2_target", { "Car", "Mod", "Both", "Opp" }, 4);
     cardPitchEnv2->setSelectorAtBottom(true);
     cardPitchEnv2->setLedSelector(&pitchEnv2TargetSelector);
 
-    setupKnob(pitchEnv2SlopeSlider, juce::Colour(0xffffab00), false, 0.5886);
+    setupKnob(pitchEnv2SlopeSlider, pitchEnv2Colour, false, 0.5886);
     pitchEnv2SlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     pitchEnv2SlopeSlider.customFormatText = formatSlope;
     pitchEnv2SlopeSlider.customParseText  = parseSlope;
 
-    setupKnob(pitchEnv2DepthSlider, juce::Colour(0xffffab00), true, 0.5);
+    setupKnob(pitchEnv2DepthSlider, pitchEnv2Colour, true, 0.5);
     pitchEnv2DepthSlider.customFormatText = formatOctaves;
     pitchEnv2DepthSlider.customParseText  = parseOctaves;
 
-    setupKnob(pitchEnv2DecaySlider, juce::Colour(0xffffab00), false, 0.3806);
+    setupKnob(pitchEnv2DecaySlider, pitchEnv2Colour, false, 0.3806);
     pitchEnv2DecaySlider.customFormatText = formatTimeMs;
     pitchEnv2DecaySlider.customParseText  = parseTimeMs;
 
@@ -2876,7 +3019,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     addChildComponent(cardPitchEnv2.get());
 
     // 9. Filter 2
-    cardFilter2 = std::make_unique<ModuleCardComponent>("Filter 2", juce::Colour(0xff7c4dff));
+    cardFilter2 = std::make_unique<ModuleCardComponent>("Filter 2", filter2Colour);
     setupBox(filter2TypeBox);
     bindSelector(filter2TypeSelector, filter2TypeBox, "filter2_type", { "LPF", "BPF", "HPF", "BRF" }, 4);
     setupBox(filter2SlopeBox);
@@ -2884,11 +3027,11 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     cardFilter2->setLedSelector(&filter2TypeSelector);
     cardFilter2->setSecondLedSelector(&filter2SlopeSelector);
 
-    setupKnob(filter2CutoffSlider, juce::Colour(0xff7c4dff), false, 1.0);
+    setupKnob(filter2CutoffSlider, filter2Colour, false, 1.0);
     filter2CutoffSlider.customFormatText = formatFreqHz;
     filter2CutoffSlider.customParseText  = parseFreqHz;
 
-    setupKnob(filter2ResonanceSlider, juce::Colour(0xff7c4dff), false, 0.0);
+    setupKnob(filter2ResonanceSlider, filter2Colour, false, 0.0);
     filter2ResonanceSlider.customFormatText = formatPercent;
     filter2ResonanceSlider.customParseText  = parsePercent;
 
@@ -2897,21 +3040,21 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     addChildComponent(cardFilter2.get());
 
     // 10. Filter Envelope 2
-    cardFilterEnv2 = std::make_unique<ModuleCardComponent>("Filter Env 2", juce::Colour(0xff7c4dff));
-    setupKnob(filterEnv2SlopeSlider, juce::Colour(0xff7c4dff), false, 0.5886);
+    cardFilterEnv2 = std::make_unique<ModuleCardComponent>("Filter Env 2", filter2Colour);
+    setupKnob(filterEnv2SlopeSlider, filter2Colour, false, 0.5886);
     filterEnv2SlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     filterEnv2SlopeSlider.customFormatText = formatSlope;
     filterEnv2SlopeSlider.customParseText  = parseSlope;
 
-    setupKnob(filterEnv2DepthSlider, juce::Colour(0xff7c4dff), true, 0.5);
+    setupKnob(filterEnv2DepthSlider, filter2Colour, true, 0.5);
     filterEnv2DepthSlider.customFormatText = formatFilterOctaves;
     filterEnv2DepthSlider.customParseText  = parseFilterOctaves;
 
-    setupKnob(filterEnv2DecaySlider, juce::Colour(0xff7c4dff), false, 0.3806);
+    setupKnob(filterEnv2DecaySlider, filter2Colour, false, 0.3806);
     filterEnv2DecaySlider.customFormatText = formatTimeMs;
     filterEnv2DecaySlider.customParseText  = parseTimeMs;
 
-    setupKnob(filterEnv2PostDriveSlider, juce::Colour(0xff7c4dff), false, 0.5);
+    setupKnob(filterEnv2PostDriveSlider, filter2Colour, false, 0.5);
     filterEnv2PostDriveSlider.customFormatText = formatDb;
     filterEnv2PostDriveSlider.customParseText  = parseDb;
 
@@ -3255,160 +3398,161 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     setupModEnvCard(cardModEnv1, "Mod Env 1", modEnv1SlopeSlider, modEnv1DepthSlider, modEnv1DecaySlider, modEnv1TargetBox);
     setupModEnvCard(cardModEnv2, "Mod Env 2", modEnv2SlopeSlider, modEnv2DepthSlider, modEnv2DecaySlider, modEnv2TargetBox);
     setupModEnvCard(cardModEnv3, "Mod Env 3", modEnv3SlopeSlider, modEnv3DepthSlider, modEnv3DecaySlider, modEnv3TargetBox);
+    updateModTargetBoxItems();
 
     // --- APVTS PARAMETER ATTACHMENTS ---
 
     // 1. Carrier 1
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "carrier1_tracking", carrier1TrackingBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier1_pitch", carrier1PitchSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier1_shape", carrier1ShapeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier1_depth", carrier1DepthSlider));
+    bindSlider("carrier1_pitch", carrier1PitchSlider);
+    bindSlider("carrier1_shape", carrier1ShapeSlider);
+    bindSlider("carrier1_depth", carrier1DepthSlider);
 
     // 2. Modulator 1
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "mod1_track", mod1TrackBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "mod1_type", mod1TypeBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mod1_shape", mod1ShapeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mod1_speed", mod1SpeedSlider));
+    bindSlider("mod1_shape", mod1ShapeSlider);
+    bindSlider("mod1_speed", mod1SpeedSlider);
 
     // 3. Pitch Envelope 1
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "pitchenv1_target", pitchEnv1TargetBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv1_slope", pitchEnv1SlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv1_depth", pitchEnv1DepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv1_decay", pitchEnv1DecaySlider));
+    bindSlider("pitchenv1_slope", pitchEnv1SlopeSlider);
+    bindSlider("pitchenv1_depth", pitchEnv1DepthSlider);
+    bindSlider("pitchenv1_decay", pitchEnv1DecaySlider);
 
     // 4. Filter 1
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter1_type", filter1TypeBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter1_slope", filter1SlopeBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter1_cutoff", filter1CutoffSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter1_resonance", filter1ResonanceSlider));
+    bindSlider("filter1_cutoff", filter1CutoffSlider);
+    bindSlider("filter1_resonance", filter1ResonanceSlider);
 
     // 5. Filter Envelope 1
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv1_slope", filterEnv1SlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv1_depth", filterEnv1DepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv1_decay", filterEnv1DecaySlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv1_postdrive", filterEnv1PostDriveSlider));
+    bindSlider("filterenv1_slope", filterEnv1SlopeSlider);
+    bindSlider("filterenv1_depth", filterEnv1DepthSlider);
+    bindSlider("filterenv1_decay", filterEnv1DecaySlider);
+    bindSlider("filterenv1_postdrive", filterEnv1PostDriveSlider);
 
     // 6. Carrier 2
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "carrier2_tracking", carrier2TrackingBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier2_pitch", carrier2PitchSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier2_shape", carrier2ShapeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "carrier2_depth", carrier2DepthSlider));
+    bindSlider("carrier2_pitch", carrier2PitchSlider);
+    bindSlider("carrier2_shape", carrier2ShapeSlider);
+    bindSlider("carrier2_depth", carrier2DepthSlider);
 
     // 7. Modulator 2
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "mod2_track", mod2TrackBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "mod2_type", mod2TypeBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mod2_shape", mod2ShapeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mod2_speed", mod2SpeedSlider));
+    bindSlider("mod2_shape", mod2ShapeSlider);
+    bindSlider("mod2_speed", mod2SpeedSlider);
 
     // 8. Pitch Envelope 2
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "pitchenv2_target", pitchEnv2TargetBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv2_slope", pitchEnv2SlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv2_depth", pitchEnv2DepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pitchenv2_decay", pitchEnv2DecaySlider));
+    bindSlider("pitchenv2_slope", pitchEnv2SlopeSlider);
+    bindSlider("pitchenv2_depth", pitchEnv2DepthSlider);
+    bindSlider("pitchenv2_decay", pitchEnv2DecaySlider);
 
     // 9. Filter 2
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter2_type", filter2TypeBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter2_slope", filter2SlopeBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter2_cutoff", filter2CutoffSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter2_resonance", filter2ResonanceSlider));
+    bindSlider("filter2_cutoff", filter2CutoffSlider);
+    bindSlider("filter2_resonance", filter2ResonanceSlider);
 
     // 10. Filter Envelope 2
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv2_slope", filterEnv2SlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv2_depth", filterEnv2DepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv2_decay", filterEnv2DecaySlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv2_postdrive", filterEnv2PostDriveSlider));
+    bindSlider("filterenv2_slope", filterEnv2SlopeSlider);
+    bindSlider("filterenv2_depth", filterEnv2DepthSlider);
+    bindSlider("filterenv2_decay", filterEnv2DecaySlider);
+    bindSlider("filterenv2_postdrive", filterEnv2PostDriveSlider);
 
     // 11. Noise Transient
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "noise_sh_rate", noiseShRateSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "noise_filter", noiseFilterSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "noise_drive", noiseDriveSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "noise_decay", noiseDecaySlider));
+    bindSlider("noise_sh_rate", noiseShRateSlider);
+    bindSlider("noise_filter", noiseFilterSlider);
+    bindSlider("noise_drive", noiseDriveSlider);
+    bindSlider("noise_decay", noiseDecaySlider);
 
     // 12. Filter 3 (Transients Filter)
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter3_type", filter3TypeBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "filter3_slope", filter3SlopeBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter3_cutoff", filter3CutoffSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filter3_resonance", filter3ResonanceSlider));
+    bindSlider("filter3_cutoff", filter3CutoffSlider);
+    bindSlider("filter3_resonance", filter3ResonanceSlider);
 
     // 13. Filter Envelope 3 (Transients Filter Env)
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv3_slope", filterEnv3SlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv3_depth", filterEnv3DepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv3_decay", filterEnv3DecaySlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "filterenv3_postdrive", filterEnv3PostDriveSlider));
+    bindSlider("filterenv3_slope", filterEnv3SlopeSlider);
+    bindSlider("filterenv3_depth", filterEnv3DepthSlider);
+    bindSlider("filterenv3_decay", filterEnv3DecaySlider);
+    bindSlider("filterenv3_postdrive", filterEnv3PostDriveSlider);
 
     // 14. Mixer
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_carrier1_level", mixerCarrier1LevelSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_carrier2_level", mixerCarrier2LevelSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_ringmod", mixerRingModSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "mixer_noise_level", mixerNoiseLevelSlider));
+    bindSlider("mixer_carrier1_level", mixerCarrier1LevelSlider);
+    bindSlider("mixer_carrier2_level", mixerCarrier2LevelSlider);
+    bindSlider("mixer_ringmod", mixerRingModSlider);
+    bindSlider("mixer_noise_level", mixerNoiseLevelSlider);
 
     // Multi-Instance FX Slot Knobs Attachments
     for (int s = 0; s < 4; ++s) {
         for (int p = 0; p < 4; ++p) {
             juce::String preParamId = "pre_fx_" + juce::String(s + 1) + "_p" + juce::String(p + 1);
-            sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, preParamId, preFXCards[s]->getKnob(p)));
+            bindSlider(preParamId, preFXCards[s]->getKnob(p));
 
             juce::String postParamId = "post_fx_" + juce::String(s + 1) + "_p" + juce::String(p + 1);
-            sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, postParamId, postFXCards[s]->getKnob(p)));
+            bindSlider(postParamId, postFXCards[s]->getKnob(p));
         }
     }
 
     // 24. Amp
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_level", ampLevelSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_pan", ampPanSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "amp_drive", ampDriveSlider));
+    bindSlider("amp_level", ampLevelSlider);
+    bindSlider("amp_pan", ampPanSlider);
+    bindSlider("amp_drive", ampDriveSlider);
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "amp_limiter", ampLimiterBox));
 
     // 25. Amp Envelope
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_claps", ampEnvClapsSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_clapspeed", ampEnvClapSpeedSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_slope", ampEnvSlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "ampenv_decay", ampEnvDecaySlider));
+    bindSlider("ampenv_claps", ampEnvClapsSlider);
+    bindSlider("ampenv_clapspeed", ampEnvClapSpeedSlider);
+    bindSlider("ampenv_slope", ampEnvSlopeSlider);
+    bindSlider("ampenv_decay", ampEnvDecaySlider);
 
     // 26. Pre-Amp Limiter
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "pre_limiter_enable", preLimiterEnableBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pre_limiter_gain", preLimiterGainSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pre_limiter_thresh", preLimiterThreshSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "pre_limiter_release", preLimiterReleaseSlider));
+    bindSlider("pre_limiter_gain", preLimiterGainSlider);
+    bindSlider("pre_limiter_thresh", preLimiterThreshSlider);
+    bindSlider("pre_limiter_release", preLimiterReleaseSlider);
 
     // 27. Post-Amp Limiter
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "post_limiter_enable", postLimiterEnableBox));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "post_limiter_gain", postLimiterGainSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "post_limiter_thresh", postLimiterThreshSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "post_limiter_release", postLimiterReleaseSlider));
+    bindSlider("post_limiter_gain", postLimiterGainSlider);
+    bindSlider("post_limiter_thresh", postLimiterThreshSlider);
+    bindSlider("post_limiter_release", postLimiterReleaseSlider);
 
     // 28. Velocity
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_slope", velSlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_depth", velDepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_decay", velDecaySlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "vel_volume", velVolumeSlider));
+    bindSlider("vel_slope", velSlopeSlider);
+    bindSlider("vel_depth", velDepthSlider);
+    bindSlider("vel_decay", velDecaySlider);
+    bindSlider("vel_volume", velVolumeSlider);
 
     // 29. Key Tracking
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "key_slope", keySlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "key_depth", keyDepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "key_decay", keyDecaySlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "key_volume", keyVolumeSlider));
+    bindSlider("key_slope", keySlopeSlider);
+    bindSlider("key_depth", keyDepthSlider);
+    bindSlider("key_decay", keyDecaySlider);
+    bindSlider("key_volume", keyVolumeSlider);
 
     // 30. Slop
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_freq", slopFreqSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_depth", slopDepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_decay", slopDecaySlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "slop_pan", slopPanSlider));
+    bindSlider("slop_freq", slopFreqSlider);
+    bindSlider("slop_depth", slopDepthSlider);
+    bindSlider("slop_decay", slopDecaySlider);
+    bindSlider("slop_pan", slopPanSlider);
 
     // 31. Mod Envelopes 1..3
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "modenv1_slope", modEnv1SlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "modenv1_depth", modEnv1DepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "modenv1_decay", modEnv1DecaySlider));
+    bindSlider("modenv1_slope", modEnv1SlopeSlider);
+    bindSlider("modenv1_depth", modEnv1DepthSlider);
+    bindSlider("modenv1_decay", modEnv1DecaySlider);
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "modenv1_target", modEnv1TargetBox));
 
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "modenv2_slope", modEnv2SlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "modenv2_depth", modEnv2DepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "modenv2_decay", modEnv2DecaySlider));
+    bindSlider("modenv2_slope", modEnv2SlopeSlider);
+    bindSlider("modenv2_depth", modEnv2DepthSlider);
+    bindSlider("modenv2_decay", modEnv2DecaySlider);
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "modenv2_target", modEnv2TargetBox));
 
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "modenv3_slope", modEnv3SlopeSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "modenv3_depth", modEnv3DepthSlider));
-    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, "modenv3_decay", modEnv3DecaySlider));
+    bindSlider("modenv3_slope", modEnv3SlopeSlider);
+    bindSlider("modenv3_depth", modEnv3DepthSlider);
+    bindSlider("modenv3_decay", modEnv3DecaySlider);
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "modenv3_target", modEnv3TargetBox));
 
     // --- FX PICKERS SETUP & ATTACHMENTS ---
@@ -3440,6 +3584,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
                 audioProcessor.getEngine().setPreFXType(i, choice);
                 preFXCards[i]->configureForType(choice);
                 updatePageLayout();
+                updateModTargetBoxItems();
             }
         };
 
@@ -3453,6 +3598,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
                 audioProcessor.getEngine().setPostFXType(i, choice);
                 postFXCards[i]->configureForType(choice);
                 updatePageLayout();
+                updateModTargetBoxItems();
             }
         };
 
@@ -3549,6 +3695,15 @@ void TheKlangFarmerAudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juc
     slider.setRange(0.0, 1.0, 0.0005);
     slider.setDoubleClickReturnValue(true, defaultVal);
     slider.getDefaultValue = [defaultVal]() { return defaultVal; };
+}
+
+void TheKlangFarmerAudioProcessorEditor::bindSlider(const juce::String& paramId, RotaryKnobSlider& slider) {
+    slider.setParamId(paramId);
+    slider.getModInfoFunc = [this](const juce::String& pid) {
+        return audioProcessor.getParamModulationInfo(pid);
+    };
+    registeredSliders.push_back(&slider);
+    sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, paramId, slider));
 }
 
 void TheKlangFarmerAudioProcessorEditor::setupBox(juce::ComboBox& box) {
@@ -3768,12 +3923,12 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
             break;
 
         case 6: // MODULATIONS
-            slotComponents[0] = cardVelocity.get();
-            slotComponents[1] = cardKeyTrack.get();
-            slotComponents[2] = cardSlop.get();
-            slotComponents[3] = cardModEnv1.get();
-            slotComponents[4] = cardModEnv2.get();
-            slotComponents[5] = cardModEnv3.get();
+            slotComponents[0] = cardModEnv1.get();
+            slotComponents[1] = cardModEnv2.get();
+            slotComponents[2] = cardModEnv3.get();
+            slotComponents[3] = cardVelocity.get();
+            slotComponents[4] = cardKeyTrack.get();
+            slotComponents[5] = cardSlop.get();
             break;
     }
 
@@ -3826,9 +3981,32 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
                 vizCard.setVisualizedBlock(blk, name);
                 break;
             }
-            case 6: vizCard.setVisualizedBlock(TbdAudio::ModularDrumEngine::BLK_VELOCITY, "VELOCITY"); break;
+            case 6: vizCard.setVisualizedBlock(TbdAudio::ModularDrumEngine::BLK_MODENV1, "MOD ENV 1"); break;
         }
     }
+}
+
+void TheKlangFarmerAudioProcessorEditor::updateModTargetBoxItems() {
+    const auto& destinations = TheKlangFarmerAudioProcessor::getModDestinations();
+    auto updateBox = [&](juce::ComboBox& box) {
+        for (size_t i = 0; i < destinations.size(); ++i) {
+            const auto& d = destinations[i];
+            int itemId = static_cast<int>(i + 2); // 1 is "None", so i=0 is itemId 2
+            if (d.type == TheKlangFarmerAudioProcessor::ModTargetType::PreFX) {
+                int fxType = audioProcessor.getEngine().getPreFXType(d.blockOrSlot);
+                juce::String name = TheKlangFarmerAudioProcessor::getFXParamDisplayName(false, d.blockOrSlot, fxType, d.paramIndex);
+                box.changeItemText(itemId, name);
+            } else if (d.type == TheKlangFarmerAudioProcessor::ModTargetType::PostFX) {
+                int fxType = audioProcessor.getEngine().getPostFXType(d.blockOrSlot);
+                juce::String name = TheKlangFarmerAudioProcessor::getFXParamDisplayName(true, d.blockOrSlot, fxType, d.paramIndex);
+                box.changeItemText(itemId, name);
+            }
+        }
+    };
+
+    updateBox(modEnv1TargetBox);
+    updateBox(modEnv2TargetBox);
+    updateBox(modEnv3TargetBox);
 }
 
 void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
@@ -3918,10 +4096,40 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
         if (preFXCards[s]) preFXCards[s]->updateDynamicControls();
         if (postFXCards[s]) postFXCards[s]->updateDynamicControls();
     }
+
+    bool fxTypesChanged = false;
+    for (int s = 0; s < 4; ++s) {
+        int curPre = audioProcessor.getEngine().getPreFXType(s);
+        if (curPre != lastPreFXTypes[s]) {
+            lastPreFXTypes[s] = curPre;
+            fxTypesChanged = true;
+        }
+        int curPost = audioProcessor.getEngine().getPostFXType(s);
+        if (curPost != lastPostFXTypes[s]) {
+            lastPostFXTypes[s] = curPost;
+            fxTypesChanged = true;
+        }
+    }
+    if (fxTypesChanged) {
+        updateModTargetBoxItems();
+    }
 }
 
 void TheKlangFarmerAudioProcessorEditor::timerCallback() {
     updateDynamicControls();
+
+    for (auto* s : registeredSliders) {
+        if (!s || s->getParamId().isEmpty()) continue;
+        if (!s->isShowing()) continue;
+
+        auto info = audioProcessor.getParamModulationInfo(s->getParamId());
+        RotaryKnobSlider::ModulationVisual mv;
+        mv.isModulated = info.isModulated;
+        mv.rangeMinNorm = info.rangeMinNorm;
+        mv.rangeMaxNorm = info.rangeMaxNorm;
+        mv.currentNorm = info.currentNorm;
+        s->setModulation(mv);
+    }
 
     int activeBlock = vizCard.getCurrentBlockIndex();
     if (activeBlock < 0) return;
@@ -4030,7 +4238,7 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
 #ifdef JucePlugin_VersionString
     juce::String verStr = "v" JucePlugin_VersionString;
 #else
-    juce::String verStr = "v0.1.3";
+    juce::String verStr = "v0.1.4";
 #endif
     g.drawText(verStr, 196, 0, 48, 36, juce::Justification::centredLeft);
 

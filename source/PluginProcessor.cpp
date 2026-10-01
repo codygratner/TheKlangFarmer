@@ -234,11 +234,43 @@ void TheKlangFarmerAudioProcessor::prepareToPlay(double sampleRate, int /*sample
 void TheKlangFarmerAudioProcessor::releaseResources() {
 }
 
+juce::String TheKlangFarmerAudioProcessor::getFXParamDisplayName(bool isPost, int slotIndex, int fxType, int paramIndex) {
+    juce::String prefix = isPost ? "Post FX " : "Pre FX ";
+    prefix += juce::String(slotIndex + 1);
+
+    struct FXInfo {
+        const char* name;
+        const char* p[4];
+    };
+    static const FXInfo infos[14] = {
+        { "Empty",        { "Empty", "Empty", "Empty", "Empty" } },
+        { "Bell EQ",      { "Freq", "Width", "Gain", "DJ Filter" } },
+        { "Chorus",       { "Rate", "Depth", "Feedback", "Mix" } },
+        { "Comb Filter",  { "Dampening", "Cutoff", "Resonance", "Mix" } },
+        { "Phase Smear",  { "Order", "Amount", "Cutoff", "Resonance" } },
+        { "Drive",        { "Drive", "Bias", "Filter", "Limiter" } },
+        { "FX Filter",    { "Type", "Slope", "Cutoff", "Resonance" } },
+        { "Flanger",      { "Rate", "Depth", "Feedback", "Mix" } },
+        { "Freq Shift",   { "Shift", "Range", "Blend", "Width" } },
+        { "Grit FX",      { "Bit Rate", "Sample Rate", "Low", "High" } },
+        { "Phaser",       { "Rate", "Depth", "Feedback", "Mix" } },
+        { "RingMod",      { "Waveform", "Rate", "Amount", "Width" } },
+        { "Tempo Delay",  { "Division", "Feedback", "Tone", "Mix" } },
+        { "Wave Folder",  { "Enable", "Fold", "Bias", "Filter" } }
+    };
+
+    int typeIdx = (fxType >= 0 && fxType <= 13) ? fxType : 0;
+    int pIdx = (paramIndex >= 0 && paramIndex < 4) ? paramIndex : 0;
+    const auto& info = infos[typeIdx];
+
+    return prefix + " [" + info.name + "]: Param " + juce::String(pIdx + 1) + " [" + info.p[pIdx] + "]";
+}
+
 const std::vector<TheKlangFarmerAudioProcessor::ModDestDescriptor>& TheKlangFarmerAudioProcessor::getModDestinations() {
     using MDE = TbdAudio::ModularDrumEngine;
     static const std::vector<ModDestDescriptor> destinations = []() {
         std::vector<ModDestDescriptor> list = {
-            // Voice 1
+            // Voice 1 (14 params)
             { "carrier1_pitch", "Carrier 1: Pitch / Freq", ModTargetType::PageBlock, MDE::BLK_CARRIER1, 1 },
             { "carrier1_shape", "Carrier 1: Shape", ModTargetType::PageBlock, MDE::BLK_CARRIER1, 2 },
             { "carrier1_depth", "Carrier 1: Modulation Depth", ModTargetType::PageBlock, MDE::BLK_CARRIER1, 3 },
@@ -247,8 +279,14 @@ const std::vector<TheKlangFarmerAudioProcessor::ModDestDescriptor>& TheKlangFarm
             { "pitchenv1_slope", "PitchEnv 1: Slope", ModTargetType::PageBlock, MDE::BLK_PITCHENV1, 0 },
             { "pitchenv1_depth", "PitchEnv 1: Depth", ModTargetType::PageBlock, MDE::BLK_PITCHENV1, 1 },
             { "pitchenv1_decay", "PitchEnv 1: Decay", ModTargetType::PageBlock, MDE::BLK_PITCHENV1, 2 },
+            { "filter1_cutoff", "Filter 1: Cutoff", ModTargetType::PageBlock, MDE::BLK_FILTER1, 2 },
+            { "filter1_resonance", "Filter 1: Resonance", ModTargetType::PageBlock, MDE::BLK_FILTER1, 3 },
+            { "filterenv1_slope", "FilterEnv 1: Slope", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 0 },
+            { "filterenv1_depth", "FilterEnv 1: Depth", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 1 },
+            { "filterenv1_decay", "FilterEnv 1: Decay", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 2 },
+            { "filterenv1_postdrive", "FilterEnv 1: Post-Drive", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 3 },
 
-            // Voice 2
+            // Voice 2 (14 params)
             { "carrier2_pitch", "Carrier 2: Pitch / Freq", ModTargetType::PageBlock, MDE::BLK_CARRIER2, 1 },
             { "carrier2_shape", "Carrier 2: Shape", ModTargetType::PageBlock, MDE::BLK_CARRIER2, 2 },
             { "carrier2_depth", "Carrier 2: Modulation Depth", ModTargetType::PageBlock, MDE::BLK_CARRIER2, 3 },
@@ -257,43 +295,30 @@ const std::vector<TheKlangFarmerAudioProcessor::ModDestDescriptor>& TheKlangFarm
             { "pitchenv2_slope", "PitchEnv 2: Slope", ModTargetType::PageBlock, MDE::BLK_PITCHENV2, 0 },
             { "pitchenv2_depth", "PitchEnv 2: Depth", ModTargetType::PageBlock, MDE::BLK_PITCHENV2, 1 },
             { "pitchenv2_decay", "PitchEnv 2: Decay", ModTargetType::PageBlock, MDE::BLK_PITCHENV2, 2 },
-
-            // Transients & Mixer
-            { "noise_sh_rate", "Noise: S&H Rate", ModTargetType::PageBlock, MDE::BLK_NOISE, 0 },
-            { "noise_filter", "Noise: Filter", ModTargetType::PageBlock, MDE::BLK_NOISE, 1 },
-            { "noise_drive", "Noise: Drive", ModTargetType::PageBlock, MDE::BLK_NOISE, 2 },
-            { "noise_decay", "Noise: Decay", ModTargetType::PageBlock, MDE::BLK_NOISE, 3 },
-            { "mixer_carrier1_level", "Mixer: Carrier 1 Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 0 },
-            { "mixer_carrier2_level", "Mixer: Carrier 2 Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 1 },
-            { "mixer_ringmod", "Mixer: Ring Mod Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 2 },
-            { "mixer_noise_level", "Mixer: Noise Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 3 },
-
-            // Drive & Filters
-            { "drive_amount", "Drive: Amount", ModTargetType::PageBlock, MDE::BLK_DRIVE, 0 },
-            { "drive_bias", "Drive: Bias", ModTargetType::PageBlock, MDE::BLK_DRIVE, 1 },
-            { "drive_filter", "Drive: Filter", ModTargetType::PageBlock, MDE::BLK_DRIVE, 2 },
-            { "filter1_cutoff", "Filter 1: Cutoff", ModTargetType::PageBlock, MDE::BLK_FILTER1, 2 },
-            { "filter1_resonance", "Filter 1: Resonance", ModTargetType::PageBlock, MDE::BLK_FILTER1, 3 },
-            { "filterenv1_slope", "FilterEnv 1: Slope", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 0 },
-            { "filterenv1_depth", "FilterEnv 1: Depth", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 1 },
-            { "filterenv1_decay", "FilterEnv 1: Decay", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 2 },
-            { "filterenv1_postdrive", "FilterEnv 1: Post-Drive", ModTargetType::PageBlock, MDE::BLK_FILTERENV1, 3 },
             { "filter2_cutoff", "Filter 2: Cutoff", ModTargetType::PageBlock, MDE::BLK_FILTER2, 2 },
             { "filter2_resonance", "Filter 2: Resonance", ModTargetType::PageBlock, MDE::BLK_FILTER2, 3 },
             { "filterenv2_slope", "FilterEnv 2: Slope", ModTargetType::PageBlock, MDE::BLK_FILTERENV2, 0 },
             { "filterenv2_depth", "FilterEnv 2: Depth", ModTargetType::PageBlock, MDE::BLK_FILTERENV2, 1 },
             { "filterenv2_decay", "FilterEnv 2: Decay", ModTargetType::PageBlock, MDE::BLK_FILTERENV2, 2 },
             { "filterenv2_postdrive", "FilterEnv 2: Post-Drive", ModTargetType::PageBlock, MDE::BLK_FILTERENV2, 3 },
+
+            // Transients & Mixer (14 params)
+            { "noise_sh_rate", "Noise: S&H Rate", ModTargetType::PageBlock, MDE::BLK_NOISE, 0 },
+            { "noise_filter", "Noise: Filter", ModTargetType::PageBlock, MDE::BLK_NOISE, 1 },
+            { "noise_drive", "Noise: Drive", ModTargetType::PageBlock, MDE::BLK_NOISE, 2 },
+            { "noise_decay", "Noise: Decay", ModTargetType::PageBlock, MDE::BLK_NOISE, 3 },
             { "filter3_cutoff", "Filter 3: Cutoff", ModTargetType::PageBlock, MDE::BLK_FILTER3, 2 },
             { "filter3_resonance", "Filter 3: Resonance", ModTargetType::PageBlock, MDE::BLK_FILTER3, 3 },
             { "filterenv3_slope", "FilterEnv 3: Slope", ModTargetType::PageBlock, MDE::BLK_FILTERENV3, 0 },
             { "filterenv3_depth", "FilterEnv 3: Depth", ModTargetType::PageBlock, MDE::BLK_FILTERENV3, 1 },
             { "filterenv3_decay", "FilterEnv 3: Decay", ModTargetType::PageBlock, MDE::BLK_FILTERENV3, 2 },
             { "filterenv3_postdrive", "FilterEnv 3: Post-Drive", ModTargetType::PageBlock, MDE::BLK_FILTERENV3, 3 },
-            { "fxfilter_cutoff", "FX Filter: Cutoff", ModTargetType::PageBlock, MDE::BLK_FXFILTER, 2 },
-            { "fxfilter_resonance", "FX Filter: Resonance", ModTargetType::PageBlock, MDE::BLK_FXFILTER, 3 },
+            { "mixer_carrier1_level", "Mixer: Carrier 1 Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 0 },
+            { "mixer_carrier2_level", "Mixer: Carrier 2 Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 1 },
+            { "mixer_ringmod", "Mixer: Ring Mod Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 2 },
+            { "mixer_noise_level", "Mixer: Noise Level", ModTargetType::PageBlock, MDE::BLK_MIXER, 3 },
 
-            // Limiters
+            // Limiters (6 params)
             { "pre_limiter_gain", "Pre-Limiter: Input Gain", ModTargetType::PageBlock, MDE::BLK_PRE_LIMITER, 1 },
             { "pre_limiter_thresh", "Pre-Limiter: Threshold", ModTargetType::PageBlock, MDE::BLK_PRE_LIMITER, 2 },
             { "pre_limiter_release", "Pre-Limiter: Release", ModTargetType::PageBlock, MDE::BLK_PRE_LIMITER, 3 },
@@ -302,7 +327,7 @@ const std::vector<TheKlangFarmerAudioProcessor::ModDestDescriptor>& TheKlangFarm
             { "post_limiter_release", "Post-Limiter: Release", ModTargetType::PageBlock, MDE::BLK_POST_LIMITER, 3 }
         };
 
-        // 32 Pre & Post FX parameters (matching exact createParameterLayout order)
+        // 16 Pre FX parameters
         static const char* preIds[4][4] = {
             { "pre_fx_1_p1", "pre_fx_1_p2", "pre_fx_1_p3", "pre_fx_1_p4" },
             { "pre_fx_2_p1", "pre_fx_2_p2", "pre_fx_2_p3", "pre_fx_2_p4" },
@@ -321,6 +346,7 @@ const std::vector<TheKlangFarmerAudioProcessor::ModDestDescriptor>& TheKlangFarm
             }
         }
 
+        // 16 Post FX parameters
         static const char* postIds[4][4] = {
             { "post_fx_1_p1", "post_fx_1_p2", "post_fx_1_p3", "post_fx_1_p4" },
             { "post_fx_2_p1", "post_fx_2_p2", "post_fx_2_p3", "post_fx_2_p4" },
@@ -339,34 +365,8 @@ const std::vector<TheKlangFarmerAudioProcessor::ModDestDescriptor>& TheKlangFarm
             }
         }
 
-        // Remaining Standalone FX, Amp, Modulations
+        // Amplifier & Modulations (28 params)
         std::vector<ModDestDescriptor> remaining = {
-            { "wavefolder_fold", "WaveFolder: Fold", ModTargetType::PageBlock, MDE::BLK_WAVEFOLDER, 1 },
-            { "wavefolder_bias", "WaveFolder: Bias", ModTargetType::PageBlock, MDE::BLK_WAVEFOLDER, 2 },
-            { "wavefolder_filter", "WaveFolder: Filter", ModTargetType::PageBlock, MDE::BLK_WAVEFOLDER, 3 },
-            { "ringmod_shape", "RingMod: Waveform", ModTargetType::PageBlock, MDE::BLK_RINGMOD, 0 },
-            { "ringmod_rate", "RingMod: Rate", ModTargetType::PageBlock, MDE::BLK_RINGMOD, 1 },
-            { "ringmod_amount", "RingMod: Amount", ModTargetType::PageBlock, MDE::BLK_RINGMOD, 2 },
-            { "ringmod_width", "RingMod: Width", ModTargetType::PageBlock, MDE::BLK_RINGMOD, 3 },
-            { "freqshift_shift", "FreqShift: Shift", ModTargetType::PageBlock, MDE::BLK_FREQSHIFT, 0 },
-            { "freqshift_range", "FreqShift: Range", ModTargetType::PageBlock, MDE::BLK_FREQSHIFT, 1 },
-            { "freqshift_blend", "FreqShift: Blend", ModTargetType::PageBlock, MDE::BLK_FREQSHIFT, 2 },
-            { "freqshift_width", "FreqShift: Width", ModTargetType::PageBlock, MDE::BLK_FREQSHIFT, 3 },
-            { "grit_bits", "Grit: Bit Reduction", ModTargetType::PageBlock, MDE::BLK_GRIT, 0 },
-            { "grit_rate", "Grit: Sample Rate", ModTargetType::PageBlock, MDE::BLK_GRIT, 1 },
-            { "grit_low", "Grit: Low Shelf", ModTargetType::PageBlock, MDE::BLK_GRIT, 2 },
-            { "grit_high", "Grit: High Shelf", ModTargetType::PageBlock, MDE::BLK_GRIT, 3 },
-            { "comb_dampening", "Comb: Dampening", ModTargetType::PageBlock, MDE::BLK_COMB, 0 },
-            { "comb_cutoff", "Comb: Cutoff", ModTargetType::PageBlock, MDE::BLK_COMB, 1 },
-            { "comb_resonance", "Comb: Resonance", ModTargetType::PageBlock, MDE::BLK_COMB, 2 },
-            { "comb_mix", "Comb: Mix", ModTargetType::PageBlock, MDE::BLK_COMB, 3 },
-            { "disperser_amount", "Phase Smear: Amount", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 1 },
-            { "disperser_cutoff", "Phase Smear: Cutoff", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 2 },
-            { "disperser_resonance", "Phase Smear: Resonance", ModTargetType::PageBlock, MDE::BLK_DISPERSER, 3 },
-            { "eq_freq", "EQ: Frequency", ModTargetType::PageBlock, MDE::BLK_EQ, 0 },
-            { "eq_width", "EQ: Width", ModTargetType::PageBlock, MDE::BLK_EQ, 1 },
-            { "eq_gain", "EQ: Gain", ModTargetType::PageBlock, MDE::BLK_EQ, 2 },
-            { "eq_filter", "EQ: DJ Filter", ModTargetType::PageBlock, MDE::BLK_EQ, 3 },
             { "amp_level", "Amp: Level", ModTargetType::PageBlock, MDE::BLK_AMP, 0 },
             { "amp_pan", "Amp: Pan", ModTargetType::PageBlock, MDE::BLK_AMP, 1 },
             { "amp_drive", "Amp: Drive", ModTargetType::PageBlock, MDE::BLK_AMP, 2 },
@@ -407,7 +407,15 @@ juce::StringArray TheKlangFarmerAudioProcessor::getModDestinationChoices() {
     juce::StringArray choices;
     choices.add("None");
     for (const auto& d : getModDestinations()) {
-        choices.add(d.name);
+        if (d.type == ModTargetType::PreFX) {
+            static const int defPre[4] = { 5, 13, 11, 8 };
+            choices.add(getFXParamDisplayName(false, d.blockOrSlot, defPre[d.blockOrSlot], d.paramIndex));
+        } else if (d.type == ModTargetType::PostFX) {
+            static const int defPost[4] = { 9, 3, 4, 1 };
+            choices.add(getFXParamDisplayName(true, d.blockOrSlot, defPost[d.blockOrSlot], d.paramIndex));
+        } else {
+            choices.add(d.name);
+        }
     }
     return choices;
 }
@@ -1127,6 +1135,132 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
         modChoices, 0));
 
     return layout;
+}
+
+TheKlangFarmerAudioProcessor::ParamModulationInfo TheKlangFarmerAudioProcessor::getParamModulationInfo(const juce::String& paramId) const {
+    ParamModulationInfo info;
+    auto* param = apvts.getParameter(paramId);
+    if (!param) return info;
+
+    float baseNorm = param->getValue();
+    float totalPeakOffset = 0.0f;
+    float totalCurrOffset = 0.0f;
+
+    // 1. Mod Envelopes 1..3
+    const auto& destinations = getModDestinations();
+    auto checkModEnv = [&](int envIdx, juce::AudioParameterChoice* targetParam, juce::AudioParameterFloat* depthParam, float envVal) {
+        if (!targetParam || !depthParam) return;
+        int t = targetParam->getIndex();
+        if (t <= 0 || t > static_cast<int>(destinations.size())) return;
+        const auto& dest = destinations[t - 1];
+        if (paramId == dest.id) {
+            float d = (depthParam->get() - 0.5f) * 2.0f;
+            if (std::abs(d) >= 0.005f) {
+                totalPeakOffset += d;
+                totalCurrOffset += envVal;
+                int pct = static_cast<int>(std::round(d * 100.0f));
+                info.sources.push_back({ "Mod Env " + juce::String(envIdx + 1), (pct > 0 ? "+" : "") + juce::String(pct) + "%" });
+            }
+        }
+    };
+
+    checkModEnv(0, modEnv1TargetParam, modEnv1DepthParam, engine.getModEnvValue(0));
+    checkModEnv(1, modEnv2TargetParam, modEnv2DepthParam, engine.getModEnvValue(1));
+    checkModEnv(2, modEnv3TargetParam, modEnv3DepthParam, engine.getModEnvValue(2));
+
+    // 2. Filter Envelopes 1..3
+    constexpr float filterOctToNorm = 0.559513f; // 10.0 / log2(240000)
+    if (paramId == "filter1_cutoff" && filterEnv1DepthParam) {
+        float d = (filterEnv1DepthParam->get() - 0.5f) * 2.0f;
+        if (std::abs(d) >= 0.005f) {
+            totalPeakOffset += d * filterOctToNorm;
+            totalCurrOffset += engine.getFilterEnvValue(1) * filterOctToNorm;
+            float oct = d * 10.0f;
+            info.sources.push_back({ "Filter Env 1", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+        }
+    } else if (paramId == "filter2_cutoff" && filterEnv2DepthParam) {
+        float d = (filterEnv2DepthParam->get() - 0.5f) * 2.0f;
+        if (std::abs(d) >= 0.005f) {
+            totalPeakOffset += d * filterOctToNorm;
+            totalCurrOffset += engine.getFilterEnvValue(2) * filterOctToNorm;
+            float oct = d * 10.0f;
+            info.sources.push_back({ "Filter Env 2", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+        }
+    } else if (paramId == "filter3_cutoff" && filterEnv3DepthParam) {
+        float d = (filterEnv3DepthParam->get() - 0.5f) * 2.0f;
+        if (std::abs(d) >= 0.005f) {
+            totalPeakOffset += d * filterOctToNorm;
+            totalCurrOffset += engine.getFilterEnvValue(3) * filterOctToNorm;
+            float oct = d * 10.0f;
+            info.sources.push_back({ "Filter Env 3", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+        }
+    }
+
+    // 3. Pitch Envelopes 1..2
+    constexpr float pitchOctToNorm = 0.34363f; // 5.0 / log2(24000)
+    if (paramId == "carrier1_pitch" && pitchEnv1DepthParam && pitchEnv1TargetParam) {
+        int t = pitchEnv1TargetParam->getIndex();
+        if (t == 0 || t == 2 || t == 3) {
+            float d = (pitchEnv1DepthParam->get() - 0.5f) * 2.0f;
+            if (std::abs(d) >= 0.005f) {
+                totalPeakOffset += d * pitchOctToNorm;
+                totalCurrOffset += engine.getPitchEnvValue(1) * pitchOctToNorm;
+                float oct = d * 5.0f;
+                info.sources.push_back({ "Pitch Env 1", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+            }
+        }
+    } else if (paramId == "mod1_speed" && pitchEnv1DepthParam && pitchEnv1TargetParam) {
+        int t = pitchEnv1TargetParam->getIndex();
+        if (t == 1 || t == 2 || t == 3) {
+            float sign = (t == 3) ? -1.0f : 1.0f;
+            float d = (pitchEnv1DepthParam->get() - 0.5f) * 2.0f * sign;
+            if (std::abs(d) >= 0.005f) {
+                totalPeakOffset += d * pitchOctToNorm;
+                totalCurrOffset += engine.getPitchEnvValue(1) * sign * pitchOctToNorm;
+                float oct = d * 5.0f;
+                info.sources.push_back({ "Pitch Env 1", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+            }
+        }
+    } else if (paramId == "carrier2_pitch" && pitchEnv2DepthParam && pitchEnv2TargetParam) {
+        int t = pitchEnv2TargetParam->getIndex();
+        if (t == 0 || t == 2 || t == 3) {
+            float d = (pitchEnv2DepthParam->get() - 0.5f) * 2.0f;
+            if (std::abs(d) >= 0.005f) {
+                totalPeakOffset += d * pitchOctToNorm;
+                totalCurrOffset += engine.getPitchEnvValue(2) * pitchOctToNorm;
+                float oct = d * 5.0f;
+                info.sources.push_back({ "Pitch Env 2", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+            }
+        }
+    } else if (paramId == "mod2_speed" && pitchEnv2DepthParam && pitchEnv2TargetParam) {
+        int t = pitchEnv2TargetParam->getIndex();
+        if (t == 1 || t == 2 || t == 3) {
+            float sign = (t == 3) ? -1.0f : 1.0f;
+            float d = (pitchEnv2DepthParam->get() - 0.5f) * 2.0f * sign;
+            if (std::abs(d) >= 0.005f) {
+                totalPeakOffset += d * pitchOctToNorm;
+                totalCurrOffset += engine.getPitchEnvValue(2) * sign * pitchOctToNorm;
+                float oct = d * 5.0f;
+                info.sources.push_back({ "Pitch Env 2", (oct > 0 ? "+" : "") + juce::String(oct, 1) + " oct" });
+            }
+        }
+    }
+
+    if (info.sources.empty() || std::abs(totalPeakOffset) < 0.002f) {
+        info.isModulated = false;
+        return info;
+    }
+
+    info.isModulated = true;
+    float peakNorm = std::clamp(baseNorm + totalPeakOffset, 0.0f, 1.0f);
+    float currNorm = std::clamp(baseNorm + totalCurrOffset, 0.0f, 1.0f);
+    info.rangeMinNorm = std::min(baseNorm, peakNorm);
+    info.rangeMaxNorm = std::max(baseNorm, peakNorm);
+    info.currentNorm = currNorm;
+    info.rangeText = param->getText(baseNorm, 16) + " " + juce::String(juce::CharPointer_UTF8("\xe2\x86\x92")) + " " + param->getText(peakNorm, 16);
+    info.liveValueText = param->getText(currNorm, 16);
+
+    return info;
 }
 
 // JUCE plugin entry point factory

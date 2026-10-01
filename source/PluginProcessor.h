@@ -272,6 +272,24 @@ public:
 
     static const std::vector<ModDestDescriptor>& getModDestinations();
     static juce::StringArray getModDestinationChoices();
+    static juce::String getFXParamDisplayName(bool isPost, int slotIndex, int fxType, int paramIndex);
+
+    struct ModSourceDetail {
+        juce::String name;
+        juce::String depthText;
+    };
+
+    struct ParamModulationInfo {
+        bool isModulated = false;
+        float rangeMinNorm = 0.0f;
+        float rangeMaxNorm = 0.0f;
+        float currentNorm = 0.0f;
+        juce::String rangeText;
+        juce::String liveValueText;
+        std::vector<ModSourceDetail> sources;
+    };
+
+    ParamModulationInfo getParamModulationInfo(const juce::String& paramId) const;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangFarmerAudioProcessor)
 };
