@@ -902,6 +902,11 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
         float fc = std::clamp(filterCutoff, 0.1f, 24000.0f);
         float qVal = 0.707f + filterResonance * 18.0f;
         if (filterSlope == 0) qVal = 0.5f + filterResonance * 5.0f;
+        if (filterType == 3) {
+            constexpr float minBrfQ = 0.25f;
+            qVal = minBrfQ + filterResonance * (18.0f - minBrfQ);
+            if (filterSlope == 0) qVal = minBrfQ + filterResonance * 5.0f;
+        }
 
         for (int i = 0; i < numSteps; ++i) {
             float u = static_cast<float>(i) / static_cast<float>(numSteps - 1);
@@ -929,7 +934,11 @@ void MiniOscilloscopeComponent::paint(juce::Graphics& g) {
                 else if (filterSlope == 3) mag = ((r * r) / std::max(d, 1e-4f)) * ((r * r) / std::max(d, 1e-4f));
                 else                       mag = std::pow((r * r) / std::max(d, 1e-4f), 3.0f);
             } else if (filterType == 3) { // BRF (Notch)
-                mag = std::abs(1.0f - r * r) / std::max(d, 1e-4f);
+                float singleMag = std::abs(1.0f - r * r) / std::max(d, 1e-4f);
+                if (filterSlope <= 1) mag = singleMag;
+                else if (filterSlope == 2) mag = singleMag;
+                else if (filterSlope == 3) mag = singleMag * singleMag;
+                else                       mag = singleMag * singleMag * singleMag;
             }
             float gainDb = 20.0f * std::log10(std::clamp(mag, 1e-4f, 16.0f));
 

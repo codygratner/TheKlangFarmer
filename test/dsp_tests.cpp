@@ -1190,6 +1190,22 @@ int main() {
         planter.processStereo(pL.data(), pR.data(), 256);
         assert(planter.getLimiterActivity() > 0.05f);
         std::cout << "PASS: Limiter activity detection registers gain reduction." << std::endl;
+
+        // 7. MIDI Pitch Tracking
+        planter.noteOn(69, 1.0f); // A4 = 440 Hz
+        assert(std::abs(planter.getContext().currentPitchHz - 440.0f) < 0.01f);
+        planter.noteOn(60, 1.0f); // C4 = ~261.63 Hz
+        assert(std::abs(planter.getContext().currentPitchHz - 261.6256f) < 0.1f);
+        planter.noteOn(36, 1.0f); // C2 = ~65.41 Hz
+        assert(std::abs(planter.getContext().currentPitchHz - 65.4064f) < 0.1f);
+        std::cout << "PASS: The Klang Planter MIDI note pitch tracking verified." << std::endl;
+
+        // 8. Noise Decay & Crossfader parameter independence
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 2, 0.85f);
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 3, 0.15f);
+        assert(std::abs(planter.getBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 2) - 0.85f) < 0.001f);
+        assert(std::abs(planter.getBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 3) - 0.15f) < 0.001f);
+        std::cout << "PASS: Noise Decay & Crossfader parameter decoupling verified." << std::endl;
     }
 
     std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;

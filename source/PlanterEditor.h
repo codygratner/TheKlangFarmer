@@ -113,7 +113,7 @@ private:
     void bindSlider(const juce::String& paramId, RotaryKnobSlider& slider);
     void bindSelector(LedSelectorComponent& sel, juce::ComboBox& box, const juce::String& paramId,
                       const juce::StringArray& items, int columns = 2);
-    void syncSelector(juce::ComboBox& box, LedSelectorComponent& sel, const juce::String& paramId, int& lastVal);
+    int syncSelector(juce::ComboBox& box, LedSelectorComponent& sel, const juce::String& paramId, int& lastVal);
     void updateCarrierControls();
     void updateModControls();
 

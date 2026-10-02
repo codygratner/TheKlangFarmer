@@ -143,6 +143,10 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardCarrier->setPanelTintBaseColour(colCyan);
     setupBox(carrierTrackingBox);
     bindSelector(carrierTrackingSelector, carrierTrackingBox, "planter_carrier_tracking", { "MIDI", "Freq", "Note" }, 3);
+    carrierTrackingBox.onChange = [this]() {
+        carrierTrackingSelector.setSelectedIndex(carrierTrackingBox.getSelectedItemIndex(), juce::dontSendNotification);
+        updateCarrierControls();
+    };
     cardCarrier->setLedSelector(&carrierTrackingSelector);
 
     setupKnob(carrierPitchSlider, colRed, true, 0.5);
@@ -178,15 +182,31 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardMod->setPanelTintBaseColour(colRed);
     setupBox(modTrackBox);
     bindSelector(modTrackSelector, modTrackBox, "planter_mod_track", { "Fixed", "Follow", "FM" }, 3);
+    modTrackBox.onChange = [this]() {
+        modTrackSelector.setSelectedIndex(modTrackBox.getSelectedItemIndex(), juce::dontSendNotification);
+        updateModControls();
+    };
     setupBox(modTypeBox);
     bindSelector(modTypeSelector, modTypeBox, "planter_mod_type", { "Osc", "Cyclic", "Noise" }, 3);
+    modTypeBox.onChange = [this]() {
+        modTypeSelector.setSelectedIndex(modTypeBox.getSelectedItemIndex(), juce::dontSendNotification);
+        updateModControls();
+    };
     cardMod->setLedSelector(&modTrackSelector);
     cardMod->setSecondLedSelector(&modTypeSelector);
 
     setupKnob(modShapeSlider, colCyan, false, 0.0);
     modShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
-    modShapeSlider.customFormatText = formatPercent;
-    modShapeSlider.customParseText  = parsePercent;
+    modShapeSlider.customFormatText = [this](double val) {
+        int t = modTypeBox.getSelectedItemIndex();
+        if (t == 1 || t == 2) return formatBipolarPercent(val);
+        return formatPercent(val);
+    };
+    modShapeSlider.customParseText = [this](const juce::String& text) {
+        int t = modTypeBox.getSelectedItemIndex();
+        if (t == 1 || t == 2) return parseBipolarPercent(text);
+        return parsePercent(text);
+    };
 
     setupKnob(modSpeedSlider, colCyan, false, 0.5);
     modSpeedSlider.customFormatText = [this](double val) {
@@ -255,10 +275,9 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     noiseDecaySlider.customFormatText = formatNoiseTimeMs;
     noiseDecaySlider.customParseText  = parseNoiseTimeMs;
 
-    // Knob 4: FM / NOISE Crossfader (Highlight accent, default 1.0 = +100% FM, dbl-click 0.5 = 0% Both)
-    const juce::Colour colXfade(0xffeceff1);
-    setupKnob(noiseCrossfadeSlider, colXfade, true, 1.0);
-    noiseCrossfadeSlider.setLightTrough(true);
+    // Knob 4: FM / NOISE Crossfader (Inverse colors like Pitch Env: Silver accent, dark trough)
+    setupKnob(noiseCrossfadeSlider, colSilver, true, 1.0);
+    noiseCrossfadeSlider.setLightTrough(false);
     noiseCrossfadeSlider.getDefaultValue = []() { return 0.5; }; // Double-click resets to 0% Both (0.5)
     noiseCrossfadeSlider.customFormatText = formatCrossfade;
     noiseCrossfadeSlider.customParseText  = parseCrossfade;
@@ -332,7 +351,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardFilterEnv->setKnob(0, "Slope", &filterEnvSlopeSlider);
     cardFilterEnv->setKnob(1, "Depth", &filterEnvDepthSlider);
     cardFilterEnv->setKnob(2, "Decay", &filterEnvDecaySlider);
-    cardFilterEnv->setKnob(3, "Drive", &filterEnvDriveSlider);
+    cardFilterEnv->setKnob(3, "Pre-Filter Drive", &filterEnvDriveSlider);
     addAndMakeVisible(cardFilterEnv.get());
 
     // --- PAIR 4: AMPLIFIER (Green) & AMP ENVELOPE (Magenta) ---
@@ -369,7 +388,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     ampVelFloorSlider.customFormatText = formatVelocityFloor;
     ampVelFloorSlider.customParseText  = parseVelocityFloor;
 
-    cardAmp->setKnob(0, "Drive", &ampDriveSlider);
+    cardAmp->setKnob(0, "Pre-Limiter Drive", &ampDriveSlider);
     cardAmp->setKnob(1, "Pan", &ampPanSlider);
     cardAmp->setKnob(2, "Vel Slope", &ampVelSlopeSlider);
     cardAmp->setKnob(3, "Velocity", &ampVelFloorSlider);
@@ -447,6 +466,8 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     setResizable(true, true);
     setResizeLimits(800, 560, 2400, 1600);
 
+    updateCarrierControls();
+    updateModControls();
     startTimerHz(60);
 }
 
@@ -490,7 +511,7 @@ void TheKlangPlanterAudioProcessorEditor::bindSelector(LedSelectorComponent& sel
     };
 }
 
-void TheKlangPlanterAudioProcessorEditor::syncSelector(juce::ComboBox& box, LedSelectorComponent& sel,
+int TheKlangPlanterAudioProcessorEditor::syncSelector(juce::ComboBox& box, LedSelectorComponent& sel,
                                                        const juce::String& paramId, int& lastVal) {
     if (auto* param = audioProcessor.apvts.getParameter(paramId)) {
         int curVal = static_cast<int>(std::round(param->getValue() * static_cast<float>(sel.getNumItems() - 1)));
@@ -498,8 +519,86 @@ void TheKlangPlanterAudioProcessorEditor::syncSelector(juce::ComboBox& box, LedS
             lastVal = curVal;
             sel.setSelectedIndex(curVal, juce::dontSendNotification);
             box.setSelectedItemIndex(curVal, juce::dontSendNotification);
+            return curVal;
         }
     }
+    return -1;
+}
+
+void TheKlangPlanterAudioProcessorEditor::updateCarrierControls() {
+    int mode = carrierTrackingBox.getSelectedItemIndex();
+    if (mode == 0) { // MIDI
+        cardCarrier->setKnobLabel(0, "Offset");
+        carrierPitchSlider.setBipolar(true);
+        carrierPitchSlider.getDefaultValue = []() { return 0.5; };
+    } else if (mode == 1) { // Freq
+        cardCarrier->setKnobLabel(0, "Frequency");
+        carrierPitchSlider.setBipolar(false);
+        carrierPitchSlider.getDefaultValue = []() {
+            return static_cast<double>(std::log(55.0f / 20.0f) / std::log(24000.0f / 20.0f));
+        };
+    } else { // Note
+        cardCarrier->setKnobLabel(0, "Note");
+        carrierPitchSlider.setBipolar(false);
+        carrierPitchSlider.getDefaultValue = []() { return 33.0 / 127.0; };
+    }
+    carrierPitchSlider.setDoubleClickReturnValue(true, carrierPitchSlider.getDefaultValue());
+    carrierPitchSlider.repaint();
+    carrierPitchSlider.updateText();
+}
+
+void TheKlangPlanterAudioProcessorEditor::updateModControls() {
+    int curType = modTypeBox.getSelectedItemIndex();
+    int curTrack = modTrackBox.getSelectedItemIndex();
+
+    if (curType == 0) {
+        // Oscillator: Shape is Waveform, Speed is Frequency or Ratio
+        cardMod->setKnobLabel(0, "Shape");
+        modShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
+        modShapeSlider.setBipolar(false);
+        modShapeSlider.getDefaultValue = []() { return 0.0; };
+        modShapeSlider.setDoubleClickReturnValue(true, 0.0);
+
+        cardMod->setKnobLabel(1, "Speed");
+        if (curTrack == 0) {
+            modSpeedSlider.getDefaultValue = []() { return 0.50934; }; // 55 Hz
+            modSpeedSlider.setDoubleClickReturnValue(true, 0.50934);
+        } else {
+            modSpeedSlider.getDefaultValue = []() { return 0.5; };
+            modSpeedSlider.setDoubleClickReturnValue(true, 0.5);
+        }
+    } else if (curType == 1) {
+        // Cyclic: Shape is DJ Filter (bipolar), Speed is Sine Pitch (Hz / semitones / ratio)
+        cardMod->setKnobLabel(0, "DJ Filter");
+        modShapeSlider.diagramType = RotaryKnobSlider::DiagramType::None;
+        modShapeSlider.setBipolar(true);
+        modShapeSlider.getDefaultValue = []() { return 0.5; };
+        modShapeSlider.setDoubleClickReturnValue(true, 0.5);
+
+        cardMod->setKnobLabel(1, "Speed");
+        if (curTrack == 0) {
+            modSpeedSlider.getDefaultValue = []() { return 0.50934; };
+            modSpeedSlider.setDoubleClickReturnValue(true, 0.50934);
+        } else {
+            modSpeedSlider.getDefaultValue = []() { return 0.5; };
+            modSpeedSlider.setDoubleClickReturnValue(true, 0.5);
+        }
+    } else {
+        // Noise (curType == 2): Shape is DJ Filter (bipolar), Speed is S&H Rate (Hz)
+        cardMod->setKnobLabel(0, "DJ Filter");
+        modShapeSlider.diagramType = RotaryKnobSlider::DiagramType::None;
+        modShapeSlider.setBipolar(true);
+        modShapeSlider.getDefaultValue = []() { return 0.5; };
+        modShapeSlider.setDoubleClickReturnValue(true, 0.5);
+
+        cardMod->setKnobLabel(1, "S&H Rate");
+        modSpeedSlider.getDefaultValue = []() { return 1.0; }; // 24 kHz
+        modSpeedSlider.setDoubleClickReturnValue(true, 1.0);
+    }
+    modShapeSlider.repaint();
+    modShapeSlider.updateText();
+    modSpeedSlider.repaint();
+    modSpeedSlider.updateText();
 }
 
 void TheKlangPlanterAudioProcessorEditor::paint(juce::Graphics& g) {
@@ -566,9 +665,17 @@ void TheKlangPlanterAudioProcessorEditor::resized() {
 
 void TheKlangPlanterAudioProcessorEditor::timerCallback() {
     // 1. Sync selectors
-    syncSelector(carrierTrackingBox, carrierTrackingSelector, "planter_carrier_tracking", lastCarrierTracking);
-    syncSelector(modTrackBox, modTrackSelector, "planter_mod_track", lastModTrack);
-    syncSelector(modTypeBox, modTypeSelector, "planter_mod_type", lastModType);
+    int curCarrierTrack = syncSelector(carrierTrackingBox, carrierTrackingSelector, "planter_carrier_tracking", lastCarrierTracking);
+    if (curCarrierTrack >= 0) {
+        updateCarrierControls();
+    }
+
+    int curModTrack = syncSelector(modTrackBox, modTrackSelector, "planter_mod_track", lastModTrack);
+    int curModType  = syncSelector(modTypeBox, modTypeSelector, "planter_mod_type", lastModType);
+    if (curModType >= 0 || curModTrack >= 0) {
+        updateModControls();
+    }
+
     syncSelector(pitchEnvTargetBox, pitchEnvTargetSelector, "planter_pitchenv_target", lastPitchEnvTarget);
     syncSelector(filterTypeBox, filterTypeSelector, "planter_filter_type", lastFilterType);
     syncSelector(filterSlopeBox, filterSlopeSelector, "planter_filter_slope", lastFilterSlope);

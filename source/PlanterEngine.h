@@ -101,6 +101,72 @@ private:
     std::atomic<float> limiterActivity { 0.0f };
 };
 
+// Dedicated Noise Transient block for The Klang Planter
+// Parameters:
+//   [0]: S&H Rate (0.1 Hz to 24 kHz)
+//   [1]: DJ Filter (-100% LPF to 0% Flat to +100% HPF)
+//   [2]: Decay (5-point warp: 1ms, 50ms, 1s, 5s, 60s)
+//   [3]: Crossfade (FM vs Noise, processed in PlanterDrumEngine::processStereo)
+class PlanterNoiseTransientBlock : public DSPBlock {
+public:
+    void init(const BlockContext& c) override {
+        invSr = c.invSr;
+        sampleRate = c.sampleRate;
+        timeSinceTrigger = 1000.0f;
+        shPhase = 0.0f;
+        shVal = 0.0f;
+        djFilter.reset();
+    }
+
+    void trigger(float) override {
+        timeSinceTrigger = 0.0f;
+        shPhase = 0.0f;
+    }
+
+    void process(float* buffer, int numSamples, BlockContext& ctx) override {
+        processStereo(buffer, nullptr, numSamples, ctx);
+    }
+
+    void processStereo(float* left, float* right, int numSamples, BlockContext& /*ctx*/) override {
+        float shParam = std::clamp(params[0], 0.0f, 1.0f);
+        float shRate = 0.1f * std::pow(24000.0f / 0.1f, shParam);
+
+        float filterKnob = std::clamp(params[1], 0.0f, 1.0f);
+
+        float decayParam = std::clamp(params[2], 0.0f, 1.0f);
+        float decayTime = warpNoiseDecayTime(decayParam);
+        decayTime = std::max(decayTime, 0.0005f);
+
+        for (int i = 0; i < numSamples; ++i) {
+            shPhase += shRate * invSr;
+            if (shPhase >= 1.0f) {
+                shPhase -= 1.0f;
+                shVal = fastRng(rngState);
+            }
+
+            float env = std::exp(-timeSinceTrigger / decayTime);
+            timeSinceTrigger += invSr;
+
+            float sample = shVal * env;
+            float outL = sample;
+            float outR = sample;
+            djFilter.process(outL, outR, filterKnob, sampleRate);
+
+            if (left)  left[i]  = outL;
+            if (right) right[i] = outR;
+        }
+    }
+
+private:
+    float invSr = 1.0f / 44100.0f;
+    float sampleRate = 44100.0f;
+    float timeSinceTrigger = 1000.0f;
+    float shPhase = 0.0f;
+    float shVal = 0.0f;
+    uint32_t rngState = 123456789;
+    DJFilter djFilter;
+};
+
 // --- THE KLANG PLANTER SYNTHESIS ENGINE ---
 class PlanterDrumEngine {
 public:
@@ -127,7 +193,7 @@ public:
         carrier   = std::make_unique<CarrierBlock>(1);
         modulator = std::make_unique<ModulatorBlock>(1);
         pitchEnv  = std::make_unique<PitchEnvelopeBlock>(1);
-        noise     = std::make_unique<NoiseTransientBlock>();
+        noise     = std::make_unique<PlanterNoiseTransientBlock>();
         filter    = std::make_unique<FilterBlock>(1);
         filterEnv = std::make_unique<FilterEnvelopeBlock>(1);
         amp       = std::make_unique<PlanterAmpBlock>();
@@ -236,6 +302,7 @@ public:
     void noteOn(int midiNote, float velocity = 1.0f) {
         ctx.isTriggered = true;
         ctx.currentMidiNote = midiNote;
+        ctx.currentPitchHz = 440.0f * std::pow(2.0f, (static_cast<float>(midiNote) - 69.0f) / 12.0f);
         ctx.triggerVelocity = velocity;
 
         pitchEnv->trigger(velocity);
@@ -396,7 +463,7 @@ private:
     std::unique_ptr<CarrierBlock> carrier;
     std::unique_ptr<ModulatorBlock> modulator;
     std::unique_ptr<PitchEnvelopeBlock> pitchEnv;
-    std::unique_ptr<NoiseTransientBlock> noise;
+    std::unique_ptr<PlanterNoiseTransientBlock> noise;
     std::unique_ptr<FilterBlock> filter;
     std::unique_ptr<FilterEnvelopeBlock> filterEnv;
     std::unique_ptr<PlanterAmpBlock> amp;

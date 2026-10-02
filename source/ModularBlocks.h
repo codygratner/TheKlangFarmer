@@ -809,6 +809,16 @@ public:
             stageQ[2] = 0.7071f;
         }
 
+        if (type == 3) {
+            // BRF (Band Reject / Notch): wider bandwidth at 0% resonance matching bell width
+            constexpr float minBrfQ = 0.25f;
+            float brfQ = minBrfQ + rawRes * (targetPeak - minBrfQ);
+            stageQ[0] = brfQ;
+            stageQ[1] = brfQ;
+            stageQ[2] = brfQ;
+            if (slopeIdx == 0) stageQ[0] = minBrfQ + rawRes * 5.0f;
+        }
+
         float preDrive = predriveGain;
 
         const std::vector<float>* envSig = nullptr;

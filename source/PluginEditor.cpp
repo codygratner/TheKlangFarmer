@@ -1026,7 +1026,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     cardFilterEnv1->setKnob(0, "Slope", &filterEnv1SlopeSlider);
     cardFilterEnv1->setKnob(1, "Depth", &filterEnv1DepthSlider);
     cardFilterEnv1->setKnob(2, "Decay", &filterEnv1DecaySlider);
-    cardFilterEnv1->setKnob(3, "Post-Drive", &filterEnv1PostDriveSlider);
+    cardFilterEnv1->setKnob(3, "Pre-Filter Drive", &filterEnv1PostDriveSlider);
     addChildComponent(cardFilterEnv1.get());
 
     // Voice 2 colors (swapped accent and complementary colors from Voice 1)
@@ -1191,7 +1191,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     cardFilterEnv2->setKnob(0, "Slope", &filterEnv2SlopeSlider);
     cardFilterEnv2->setKnob(1, "Depth", &filterEnv2DepthSlider);
     cardFilterEnv2->setKnob(2, "Decay", &filterEnv2DecaySlider);
-    cardFilterEnv2->setKnob(3, "Post-Drive", &filterEnv2PostDriveSlider);
+    cardFilterEnv2->setKnob(3, "Pre-Filter Drive", &filterEnv2PostDriveSlider);
     addChildComponent(cardFilterEnv2.get());
 
     // 11. Noise Transient
@@ -1261,7 +1261,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     cardFilterEnv3->setKnob(0, "Slope", &filterEnv3SlopeSlider);
     cardFilterEnv3->setKnob(1, "Depth", &filterEnv3DepthSlider);
     cardFilterEnv3->setKnob(2, "Decay", &filterEnv3DecaySlider);
-    cardFilterEnv3->setKnob(3, "Post-Drive", &filterEnv3PostDriveSlider);
+    cardFilterEnv3->setKnob(3, "Pre-Filter Drive", &filterEnv3PostDriveSlider);
     addChildComponent(cardFilterEnv3.get());
 
     // 14. Mixer
@@ -1329,7 +1329,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     cardAmp->setKnob(0, "Level", &ampLevelSlider);
     cardAmp->setKnob(1, "Pan", &ampPanSlider);
-    cardAmp->setKnob(2, "Drive", &ampDriveSlider);
+    cardAmp->setKnob(2, "Pre-Limiter Drive", &ampDriveSlider);
     addChildComponent(cardAmp.get());
 
     // 25. Amp Envelope
