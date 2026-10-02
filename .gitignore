@@ -6,3 +6,6 @@ JUCE/
 
 # releases
 /releases/
+
+# deployment scripts
+deploy_vst3.bat

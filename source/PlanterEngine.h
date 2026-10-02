@@ -245,7 +245,8 @@ public:
         setBlockParameter(BLK_PITCHENV, 0, 0.5886f);
         setBlockParameter(BLK_PITCHENV, 1, 0.5f);
         setBlockParameter(BLK_PITCHENV, 2, 0.3806f);
-        ctx.pitchEnv1Target = 1;
+        setBlockParameter(BLK_PITCHENV, 3, 0.0f);
+        ctx.pitchEnv1Target = 0;
 
         // Noise Transient (24kHz S&H, 50% flat DJ, 30ms decay, Crossfader +100% FM = 1.0)
         setBlockParameter(BLK_NOISE, 0, 1.0f);
@@ -292,6 +293,7 @@ public:
 
     void setPitchEnvTarget(int targetIndex) {
         ctx.pitchEnv1Target = std::clamp(targetIndex, 0, 3);
+        setBlockParameter(BLK_PITCHENV, 3, static_cast<float>(ctx.pitchEnv1Target) / 3.0f);
     }
     int getPitchEnvTarget() const { return ctx.pitchEnv1Target; }
 
@@ -320,6 +322,9 @@ public:
     void processStereo(float* left, float* right, int numSamples) {
         if (numSamples <= 0) return;
         ensureBufferSize(numSamples);
+
+        // Update carrier base pitch for modulator tracking (Following and FM ratio)
+        ctx.carrier1PitchHz = carrier->getBasePitch(ctx);
 
         // 1. Pitch Envelope
         pitchEnv->processStereo(nullptr, nullptr, numSamples, ctx);

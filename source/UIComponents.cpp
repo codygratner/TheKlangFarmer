@@ -1820,7 +1820,7 @@ void ModuleCardComponent::setKnobsLightTrough(bool lightTrough) {
     knobsLightTrough = lightTrough;
     for (int i = 0; i < 4; ++i) {
         if (knobs[i]) {
-            knobs[i]->setLightTrough(knobsLightTrough);
+            knobs[i]->setLightTrough(customKnobLightTrough[i].value_or(knobsLightTrough));
         }
     }
     repaint();
@@ -1830,7 +1830,7 @@ void ModuleCardComponent::setPanelStyle(PanelStyle style) {
     panelStyle = style;
     for (int i = 0; i < 4; ++i) {
         if (knobs[i]) {
-            knobs[i]->setLightTrough(knobsLightTrough);
+            knobs[i]->setLightTrough(customKnobLightTrough[i].value_or(knobsLightTrough));
         }
     }
     repaint();
@@ -1857,15 +1857,18 @@ void ModuleCardComponent::setSelector(juce::ComboBox* box) {
     if (selectorBox) addAndMakeVisible(selectorBox);
 }
 
-void ModuleCardComponent::setKnob(int slotIndex, const juce::String& label, RotaryKnobSlider* slider) {
+void ModuleCardComponent::setKnob(int slotIndex, const juce::String& label, RotaryKnobSlider* slider,
+                                  std::optional<juce::Colour> customAccent,
+                                  std::optional<bool> customLightTrough) {
     if (slotIndex >= 0 && slotIndex < 4) {
         knobs[slotIndex] = slider;
+        customKnobLightTrough[slotIndex] = customLightTrough;
         labels[slotIndex].setText(label, juce::dontSendNotification);
         labels[slotIndex].setVisible(false);
         if (slider) {
             slider->setLabel(label);
-            slider->setAccentColour(accent);
-            slider->setLightTrough(knobsLightTrough);
+            slider->setAccentColour(customAccent.value_or(accent));
+            slider->setLightTrough(customLightTrough.value_or(knobsLightTrough));
             addAndMakeVisible(slider);
         }
     }

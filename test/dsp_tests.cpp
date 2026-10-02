@@ -1206,6 +1206,26 @@ int main() {
         assert(std::abs(planter.getBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 2) - 0.85f) < 0.001f);
         assert(std::abs(planter.getBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 3) - 0.15f) < 0.001f);
         std::cout << "PASS: Noise Decay & Crossfader parameter decoupling verified." << std::endl;
+
+        // 9. Pitch Envelope Destination Targets and Carrier Pitch Context Sync
+        planter.setDefaultParameters();
+        assert(planter.getPitchEnvTarget() == 0);
+        assert(std::abs(planter.getBlockParameter(TbdAudio::PlanterDrumEngine::BLK_PITCHENV, 3) - 0.0f) < 0.001f);
+
+        for (int tgt = 0; tgt <= 3; ++tgt) {
+            planter.setPitchEnvTarget(tgt);
+            assert(planter.getPitchEnvTarget() == tgt);
+            float expectedParam3 = static_cast<float>(tgt) / 3.0f;
+            assert(std::abs(planter.getBlockParameter(TbdAudio::PlanterDrumEngine::BLK_PITCHENV, 3) - expectedParam3) < 0.001f);
+
+            // Trigger and process audio, verifying ctx.pitchEnv1Target is retained and NOT overwritten
+            planter.trigger(1.0f);
+            planter.processStereo(pL.data(), pR.data(), 256);
+            assert(planter.getContext().pitchEnv1Target == tgt);
+            // Verify carrier base pitch is published to context for modulator following & FM tracking
+            assert(planter.getContext().carrier1PitchHz > 20.0f);
+        }
+        std::cout << "PASS: Pitch Envelope target destinations and carrier pitch context sync verified." << std::endl;
     }
 
     std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;

@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <optional>
 #include <cmath>
 #include <cctype>
 
@@ -333,7 +334,9 @@ public:
     void setSelector(juce::ComboBox* box);
     void setSelectorAtBottom(bool atBottom);
     void setKnobsLightTrough(bool lightTrough);
-    void setKnob(int slotIndex, const juce::String& label, RotaryKnobSlider* slider);
+    void setKnob(int slotIndex, const juce::String& label, RotaryKnobSlider* slider,
+                 std::optional<juce::Colour> customAccent = std::nullopt,
+                 std::optional<bool> customLightTrough = std::nullopt);
     void setKnobLabel(int slotIndex, const juce::String& label);
     void setNumActiveKnobs(int count) { numActiveKnobs = count; }
 
@@ -354,6 +357,7 @@ private:
     juce::ComboBox* selectorBox = nullptr;
     bool selectorAtBottom = false;
     bool knobsLightTrough = false;
+    std::optional<bool> customKnobLightTrough[4];
     juce::Label labels[4];
     RotaryKnobSlider* knobs[4] = {};
     int numActiveKnobs = 4;

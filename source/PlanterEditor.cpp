@@ -285,7 +285,9 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardNoise->setKnob(0, "S&H Rate", &noiseShRateSlider);
     cardNoise->setKnob(1, "DJ Filter", &noiseFilterSlider);
     cardNoise->setKnob(2, "Decay", &noiseDecaySlider);
-    cardNoise->setKnob(3, "FM / NOISE", &noiseCrossfadeSlider);
+    cardNoise->setKnob(3, "FM / NOISE", &noiseCrossfadeSlider, colSilver, false);
+    noiseCrossfadeSlider.setAccentColour(colSilver);
+    noiseCrossfadeSlider.setLightTrough(false);
     addAndMakeVisible(cardNoise.get());
 
     // --- PAIR 3: FILTER (Blue) & FILTER ENV (Amber) ---
