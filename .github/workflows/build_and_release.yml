@@ -43,7 +43,7 @@ jobs:
 
       - name: Build Plugins & Standalone
         run: |
-          cmake --build build --config Release --parallel --target TheKlangFarmer_VST3 TheKlangFarmer_AU TheKlangFarmer_Standalone dsp_tests
+          cmake --build build --config Release --parallel --target TheKlangFarmer_VST3 TheKlangFarmer_AU TheKlangFarmer_Standalone TheKlangPlanter_VST3 TheKlangPlanter_AU TheKlangPlanter_Standalone dsp_tests
 
       - name: Run DSP Unit Tests
         run: |
@@ -61,6 +61,9 @@ jobs:
           find build/TheKlangFarmer_artefacts -name "The Klang Farmer.vst3" -exec cp -R -P {} macos_dist/ \;
           find build/TheKlangFarmer_artefacts -name "The Klang Farmer.component" -exec cp -R -P {} macos_dist/ \;
           find build/TheKlangFarmer_artefacts -name "The Klang Farmer.app" -exec cp -R -P {} macos_dist/ \;
+          find build/TheKlangPlanter_artefacts -name "The Klang Planter.vst3" -exec cp -R -P {} macos_dist/ \;
+          find build/TheKlangPlanter_artefacts -name "The Klang Planter.component" -exec cp -R -P {} macos_dist/ \;
+          find build/TheKlangPlanter_artefacts -name "The Klang Planter.app" -exec cp -R -P {} macos_dist/ \;
           cd macos_dist
           zip -r -y "../${ZIP_NAME}" *
           cd ..
@@ -121,7 +124,7 @@ jobs:
 
       - name: Build Plugins & Standalone
         run: |
-          cmake --build build --config Release --parallel --target TheKlangFarmer_VST3 TheKlangFarmer_Standalone dsp_tests
+          cmake --build build --config Release --parallel --target TheKlangFarmer_VST3 TheKlangFarmer_Standalone TheKlangPlanter_VST3 TheKlangPlanter_Standalone dsp_tests
 
       - name: Run DSP Unit Tests
         run: |
@@ -138,6 +141,8 @@ jobs:
           mkdir -p linux_dist
           find build/TheKlangFarmer_artefacts -name "The Klang Farmer.vst3" -exec cp -r {} linux_dist/ \;
           find build/TheKlangFarmer_artefacts -name "The Klang Farmer" -type f -exec cp {} linux_dist/ \;
+          find build/TheKlangPlanter_artefacts -name "The Klang Planter.vst3" -exec cp -r {} linux_dist/ \;
+          find build/TheKlangPlanter_artefacts -name "The Klang Planter" -type f -exec cp {} linux_dist/ \;
           cd linux_dist
           zip -r "../${ZIP_NAME}" *
           cd ..
@@ -176,7 +181,7 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build Plugins & Standalone
-        run: cmake --build build --config Release --parallel --target TheKlangFarmer_VST3 TheKlangFarmer_Standalone dsp_tests
+        run: cmake --build build --config Release --parallel --target TheKlangFarmer_VST3 TheKlangFarmer_Standalone TheKlangPlanter_VST3 TheKlangPlanter_Standalone dsp_tests
 
       - name: Run DSP Unit Tests
         run: .\build\Release\dsp_tests.exe
@@ -189,6 +194,8 @@ jobs:
           New-Item -ItemType Directory -Path win_dist
           Copy-Item -Recurse "build/TheKlangFarmer_artefacts/Release/VST3/The Klang Farmer.vst3" win_dist/
           Copy-Item "build/TheKlangFarmer_artefacts/Release/Standalone/The Klang Farmer.exe" win_dist/
+          Copy-Item -Recurse "build/TheKlangPlanter_artefacts/Release/VST3/The Klang Planter.vst3" win_dist/
+          Copy-Item "build/TheKlangPlanter_artefacts/Release/Standalone/The Klang Planter.exe" win_dist/
           Compress-Archive -Path win_dist/* -DestinationPath $ZIP_NAME
           Get-Item $ZIP_NAME
 

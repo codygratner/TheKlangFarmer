@@ -1,7 +1,7 @@
-# The Klang Farmer
+# The Klang Farmer & The Klang Planter
 
-> **A 22-Module Paged Modular Dual-FM Synthesis Drum Voice**  
-> Built in modern C++20 with JUCE 8. Available as a **VST3 Plugin** and **Standalone Application**.
+> **Modular Dual-FM & Compact Percussion Synthesis System**  
+> Built in modern C++20 with JUCE 8. Available as **VST3 Plugins** and **Standalone Applications**.
 
 [![Release](https://img.shields.io/github/v/release/codygratner/TheKlangFarmer?color=4a9eff&label=Release)](https://github.com/codygratner/TheKlangFarmer/releases)
 [![Standard](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
@@ -11,17 +11,26 @@
 
 > [!NOTE]
 > **AI / Pair-Programming Note**:  
-> **The Klang Farmer was vibe-coded with Google Gemini using Antigravity.** From initial DSP architecture and modular voice routing to real-time oscilloscopes, Bode plots, zero-allocation real-time audio threads, and hardware-style UI ergonomics, the entire project was designed, implemented, and iteratively refined through autonomous pair-programming with Gemini in Antigravity.
+> **The Klang Farmer and The Klang Planter were vibe-coded with Google Gemini using Antigravity.** From initial DSP architecture and modular voice routing to real-time oscilloscopes, Bode plots, zero-allocation real-time audio threads, and hardware-style UI ergonomics, the entire project was designed, implemented, and iteratively refined through autonomous pair-programming with Gemini in Antigravity.
 
 ---
 
+### The Klang Farmer (22-Module Paged Modular Drum Synthesizer)
 ![The Klang Farmer GUI](screenshots/TheKlangFarmer_GUI.png)
+
+---
+
+### The Klang Planter (Compact 8-Module Single-Voice FM Drum Synthesizer)
+![The Klang Planter GUI](screenshots/TheKlangPlanter_GUI.png)
 
 ---
 
 ## Overview
 
-**The Klang Farmer** is a boutique digital/analog hybrid percussion synthesizer designed to replicate the tactile immediacy, aggressive harmonic palette, and raw sonic punch of modular Eurorack drum synthesizers (such as the *Noise Engineering Basimilus Iteritas Alter* and *Korg Electribe ER-1*).
+This repository provides two complementary synthesizers sharing a unified, high-performance DSP and UI architecture:
+
+1. **The Klang Farmer**: A flagship 22-module paged modular dual-FM percussion synthesizer with 8 assignable multi-instance FX slots, dual voice engines, ring modulation, 3 modulation envelopes, analog slop emulation, and deep Bode/oscilloscope visualizers.
+2. **The Klang Planter**: A stripped-down, laser-focused 8-module single-voice FM drum synthesizer in a direct 2x4 rack layout. Features a dedicated FM synthesis pair, percussive pitch envelope, S&H noise transient, pre-filter crossfader, multimode filter with pre-filter drive, amplifier with velocity curve/floor controls, and master limiting with live visualizer reduction metering.
 
 It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-column (2x4)** modular rack (1040 &times; 740 px). The interface provides immediate access to dual FM voice pairs, multimode filters, noise and burst transients, 8 multi-instance FX slots, analog drift emulation, and real-time phase-locked visualizers.
 
@@ -146,9 +155,14 @@ cmake --build build --config Release --parallel
 ```
 
 Compiled binaries will be generated at:
-- **VST3**: `build/TheKlangFarmer_artefacts/Release/VST3/The Klang Farmer.vst3`
-- **Standalone**: `build/TheKlangFarmer_artefacts/Release/Standalone/The Klang Farmer.exe`
+- **The Klang Farmer (VST3)**: `build/TheKlangFarmer_artefacts/Release/VST3/The Klang Farmer.vst3`
+- **The Klang Farmer (Standalone)**: `build/TheKlangFarmer_artefacts/Release/Standalone/The Klang Farmer.exe`
+- **The Klang Planter (VST3)**: `build/TheKlangPlanter_artefacts/Release/VST3/The Klang Planter.vst3`
+- **The Klang Planter (Standalone)**: `build/TheKlangPlanter_artefacts/Release/Standalone/The Klang Planter.exe`
 - **Test Runner**: `build/Release/dsp_tests.exe`
+
+### Deploying VST3 Plugins Locally (Windows)
+Run [`deploy_vst3.bat`](deploy_vst3.bat) as Administrator (or double-click to prompt for UAC elevation) to automatically copy both plugins to `C:\Program Files\Common Files\VST3\`.
 
 ### Running DSP Verification Tests
 ```bash

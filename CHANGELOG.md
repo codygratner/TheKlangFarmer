@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.6] - 2026-10-01
+
+### Added
+- **The Klang Planter**: A compact, dedicated 8-module single-voice FM drum synthesizer companion plugin and standalone application built alongside The Klang Farmer in a unified dual-target CMake build:
+  - **Top Row Modules**: Carrier (Red/Cyan), Modulator (Cyan/Red), Pitch Envelope (Silver/Dark Grey), Noise Transient (Dark Grey/Silver).
+  - **Bottom Row Modules**: Filter (Blue/Amber), Filter Envelope (Amber/Blue), Amplifier (Green/Magenta), Amp Envelope (Magenta/Green).
+  - **FM / NOISE Pre-Filter Crossfader**: Dedicated bipolar crossfader on Noise Transient Knob 4 (-100% Noise only, 0% Both signals at full volume, +100% FM pair only) feeding directly into the filter stage, with inverted visual styling matching Pitch Envelope sliders.
+  - **Amplifier Velocity Controls**: Knob 3 controls Velocity Slope (Linear default, Exponential double-click); Knob 4 controls Velocity Floor (1% to 100%, 50% default).
+  - **Permanent Master Limiter & Visualizer LIMIT Badge**: Permanent transparent soft-saturation brickwall limiting on the master output with an illuminated real-time warning badge on the header mini-oscilloscope.
+  - **Dynamic Modulator Controls**: S&H Rate and DJ Filter dynamically mapped for Cyclic and Noise modes.
+- **Pre-Filter Drive across Both Plugins**: Converted filter drive in both The Klang Farmer and The Klang Planter to pre-filter saturation (`tanh`), driving harmonics into the SVF stages rather than post-filter clipping. Labeled `"Pre-Filter Drive"` on the Filter Envelope card and `"Pre-Limiter Drive"` on the Amplifier card.
+- **True FM Ratio Calibration**: Re-calibrated FM ratios across both plugins to standard operator range: `1:32.0` to `1:1` to `32.0:1` with exact `1:1` center detent.
+- **Widened Band Reject Filter Base Q**: Calibrated 0% resonance notch base Q from 0.707 down to 0.25 for a noticeably deeper, wider band reject notch scoop across both plugins.
+- **Admin Deployment Batch Script**: Added `deploy_vst3.bat` with automatic UAC self-elevation to reliably install builds to `C:\Program Files\Common Files\VST3\`.
+
+---
+
 ## [0.1.5] - 2026-10-01
 
 ### Added

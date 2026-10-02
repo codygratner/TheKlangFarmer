@@ -501,12 +501,67 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 ## 5. Versioning & Release Management
 
 - **Semantic Versioning Standard (`MAJOR.MINOR.PATCH`)**:
-  - The plugin and standalone binary adhere strictly to 3-part SemVer (e.g. `0.1.1`).
+  - The plugins and standalone binaries adhere strictly to 3-part SemVer (e.g. `0.1.6`), with both **The Klang Farmer** and **The Klang Planter** sharing unified version numbering.
   - Major and minor numbers are bumped for architectural milestones and major features.
   - The patch number increments with each tagged release and distribution build.
 - **Header Display**:
-  - The active version is dynamically displayed in the top header bar next to "THE KLANG FARMER" as an accent badge (e.g. `v0.1.1`), linked directly to JUCE's `JucePlugin_VersionString`.
+  - The active version is dynamically displayed in the top header bar next to plugin titles as an accent badge (e.g. `v0.1.6`), linked directly to JUCE's `JucePlugin_VersionString`.
 - **Release Packaging**:
-  - Distributed via GitHub Releases with separate standalone zip archives:
-    - `TheKlangFarmer-v<version>-VST3.zip`: contains `The Klang Farmer.vst3` bundle
-    - `TheKlangFarmer-v<version>-Standalone.zip`: contains `The Klang Farmer.exe` standalone executable
+  - Distributed via GitHub Releases with multi-platform zip archives:
+    - `TheKlangFarmer-v<version>-Windows.zip`: contains `The Klang Farmer.vst3`, `The Klang Planter.vst3`, and standalone executables.
+    - `TheKlangFarmer-v<version>-macOS.zip`: Universal binaries for Apple Silicon & Intel (AU, VST3, Standalone).
+    - `TheKlangFarmer-v<version>-Linux.zip`: x86_64 VST3 and Standalone binaries.
+
+---
+
+## 6. The Klang Planter — Compact FM Percussion Synthesizer
+
+"The Klang Planter" is the streamlined, single-voice companion drum synthesizer built alongside The Klang Farmer. It distills the core FM and noise drum synthesis capabilities into an immediate, non-paged 2x4 rack layout.
+
+### 2x4 Module Architecture
+```
++---------------------------------------------------------------------------------------------------+
+| THE KLANG PLANTER  v0.1.6    [Live Mini-Oscilloscope] [LIMIT] [Peak Meters]    [INIT]   [TRIGGER] |
++---------------------------+---------------------------+-----------------------+-------------------+
+| [1] CARRIER               | [2] MODULATOR             | [3] PITCH ENV         | [4] NOISE TRANS   |
+| Accent: Red               | Accent: Cyan              | Accent: Silver        | Accent: Dark Grey |
+| Panel:  Cyan Tint         | Panel:  Red Tint          | Panel:  Dark Grey Tint| Panel:  Silver    |
+| [MIDI] [Freq] [Note]      | [Fixed][Follow][FM]       |                       |                   |
+|                           | [Osc] [Cyclic][Noise]     |                       |                   |
+| 1. Offset                 | 1. Shape / DJ Filter      | 1. Slope              | 1. S&H Rate       |
+| 2. Shape                  | 2. Speed / S&H Rate       | 2. Depth              | 2. DJ Filter      |
+| 3. Mod Depth              |                           | 3. Decay              | 3. Decay          |
+|                           |                           | Target: Car/Mod/../Opp| 4. FM/NOISE (Inv) |
++---------------------------+---------------------------+-----------------------+-------------------+
+| [5] FILTER                | [6] FILTER ENV            | [7] AMPLIFIER         | [8] AMP ENVELOPE  |
+| Accent: Blue              | Accent: Amber             | Accent: Green         | Accent: Magenta   |
+| Panel:  Amber Tint        | Panel:  Blue Tint         | Panel:  Magenta Tint  | Panel:  Green Tint|
+| [LPF][BPF][HPF][BRF]      |                           |                       |                   |
+| [ 6 ][ 12][ 18][ 24][ 36] |                           |                       |                   |
+| 1. Cutoff                 | 1. Slope                  | 1. Pre-Limiter Drive  | 1. Claps          |
+| 2. Resonance              | 2. Depth                  | 2. Pan                | 2. Clap Speed     |
+|                           | 3. Decay                  | 3. Vel Slope (LIN/EXP)| 3. Slope          |
+|                           | 4. Pre-Filter Drive       | 4. Velocity (1%..100%)| 4. Decay          |
++---------------------------+---------------------------+-----------------------+-------------------+
+```
+
+### Signal Flow & Key Features
+1. **FM Synthesis Pair**:
+   - Carrier tracks incoming MIDI pitch ($\pm 24$ st), continuous frequency ($20\,\text{Hz} - 24\,\text{kHz}$), or fixed note.
+   - Modulator operates in `Fixed`, `Follow`, or calibrated `FM Operator` ratio mode (`1:32.0` to `1:1` to `32.0:1`).
+   - Waveform morphing from Sine $\to$ Triangle $\to$ Saw $\to$ Square with anti-aliased tanh shaping.
+2. **Noise Transient Generator**:
+   - Dedicated S&H clock rate ($0.1\,\text{Hz} - 24\,\text{kHz}$), bipolar DJ filter, and independent 5-point warp decay envelope ($1\,\text{ms} - 60\,\text{s}$).
+3. **Pre-Filter Crossfader (Knob 4 on Noise Transient)**:
+   - Sets the relative mix between the FM synthesis pair and the Noise Transient before entering the filter.
+   - Bipolar curve: $-100\%$ (Noise only) $\leftrightarrow$ $0\%$ (Both at full volume) $\leftrightarrow$ $+100\%$ (FM pair only).
+   - Inverted visual styling: dark recessed trough with bright silver fill and crisp light text, matching the Pitch Envelope sliders.
+4. **Filter Stage with Pre-Filter Drive**:
+   - The mixed audio passes through a pre-filter saturation stage (`tanh` drive from $-6\,\text{dB}$ to $+24\,\text{dB}$, controlled on Filter Env Knob 4).
+   - Multimode cascaded SVF: LPF, BPF, HPF, and wide BRF (0.25 base Q) with 6, 12, 18, 24, 36 dB/oct slopes.
+5. **Amplifier & Velocity Dynamics**:
+   - Knob 1: **Pre-Limiter Drive** ($-\infty\,\text{dB}$ to $+24\,\text{dB}$, with $0\,\text{dB}$ at center 50%).
+   - Knob 2: **Stereo Pan** ($100\%\,\text{L} \dots \text{Center} \dots 100\%\,\text{R}$).
+   - Knob 3: **Vel Slope**: Controls the curvature of velocity sensitivity (default Linear, double-click Exponential).
+   - Knob 4: **Velocity Floor**: Sets the volume floor at velocity 1 from $1\%$ to $100\%$ (default 50%).
+   - Permanent transparent master brickwall limiter with live `LIMIT` reduction warning indicator on the header oscilloscope.
