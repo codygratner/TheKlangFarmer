@@ -4,17 +4,18 @@
 #include "PlanterProcessor.h"
 #include "UIComponents.h"
 
-// Compact Header Oscilloscope and Peak Meter for The Klang Planter
+// Compact Header Oscilloscope, Limiter Warning Badge, and Peak Meters for The Klang Planter
 class PlanterHeaderVisualizer : public juce::Component {
 public:
     PlanterHeaderVisualizer();
-    void updateData(const float* scopeData, int numPoints, float peakL, float peakR);
+    void updateData(const float* scopeData, int numPoints, float peakL, float peakR, float limiterActivity);
     void paint(juce::Graphics& g) override;
 
 private:
     std::vector<float> points;
     float livePeakL = 0.0f;
     float livePeakR = 0.0f;
+    float liveLimiterAct = 0.0f;
 };
 
 class TheKlangPlanterAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::Timer {
@@ -67,11 +68,11 @@ private:
     RotaryKnobSlider pitchEnvDepthSlider;
     RotaryKnobSlider pitchEnvDecaySlider;
 
-    // Noise Transient Controls
+    // Noise Transient Controls (S&H Rate, DJ Filter, Decay, Crossfade)
     RotaryKnobSlider noiseShRateSlider;
     RotaryKnobSlider noiseFilterSlider;
-    RotaryKnobSlider noiseDriveSlider;
     RotaryKnobSlider noiseDecaySlider;
+    RotaryKnobSlider noiseCrossfadeSlider;
 
     // Filter Controls
     juce::ComboBox filterTypeBox;
@@ -81,18 +82,17 @@ private:
     RotaryKnobSlider filterCutoffSlider;
     RotaryKnobSlider filterResoSlider;
 
-    // Filter Envelope Controls (Knob 4 is Pre-Filter Crossfade)
+    // Filter Envelope Controls (Slope, Depth, Decay, Pre-Filter Drive)
     RotaryKnobSlider filterEnvSlopeSlider;
     RotaryKnobSlider filterEnvDepthSlider;
     RotaryKnobSlider filterEnvDecaySlider;
-    RotaryKnobSlider filterEnvCrossfadeSlider;
+    RotaryKnobSlider filterEnvDriveSlider;
 
-    // Amplifier Controls (Limiter selector is bypass / limit, Level is 0..200%)
-    juce::ComboBox ampLimiterBox;
-    LedSelectorComponent ampLimiterSelector;
-    RotaryKnobSlider ampLevelSlider;
-    RotaryKnobSlider ampPanSlider;
+    // Amplifier Controls (Drive, Pan, Vel Slope, Velocity)
     RotaryKnobSlider ampDriveSlider;
+    RotaryKnobSlider ampPanSlider;
+    RotaryKnobSlider ampVelSlopeSlider;
+    RotaryKnobSlider ampVelFloorSlider;
 
     // Amp Envelope Controls
     RotaryKnobSlider ampEnvClapsSlider;
@@ -123,7 +123,6 @@ private:
     int lastPitchEnvTarget = -1;
     int lastFilterType = -1;
     int lastFilterSlope = -1;
-    int lastAmpLimiter = -1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangPlanterAudioProcessorEditor)
 };

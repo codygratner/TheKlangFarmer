@@ -847,7 +847,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
         juce::ParameterID("mod1_type", 1), "Modulator 1: Type",
         juce::StringArray{ "Osc", "Cyclic", "Noise" }, 0));
     layout.add(makeFloatParam("mod1_shape", "Modulator 1: Shape", 0.0f));          // Sine (0%)
-    layout.add(makeFloatParam("mod1_speed", "Modulator 1: Speed", 0.50934f));      // 55 Hz (0.50934)
+    layout.add(makeFloatParam("mod1_speed", "Modulator 1: Speed", 0.5f));          // 1:1 ratio (0.5)
 
     // --- 3. PITCH ENVELOPE 1 ---
     layout.add(makeFloatParam("pitchenv1_slope", "PitchEnv 1: Slope", 0.5886f));   // Exponential (def)
@@ -873,7 +873,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
         juce::ParameterID("mod2_type", 1), "Modulator 2: Type",
         juce::StringArray{ "Osc", "Cyclic", "Noise" }, 0));
     layout.add(makeFloatParam("mod2_shape", "Modulator 2: Shape", 0.0f));          // Sine (0%)
-    layout.add(makeFloatParam("mod2_speed", "Modulator 2: Speed", 0.50934f));      // 55 Hz (0.50934)
+    layout.add(makeFloatParam("mod2_speed", "Modulator 2: Speed", 0.5f));          // 1:1 ratio (0.5)
 
     // --- 6. PITCH ENVELOPE 2 ---
     layout.add(makeFloatParam("pitchenv2_slope", "PitchEnv 2: Slope", 0.5886f));   // Exponential (def)

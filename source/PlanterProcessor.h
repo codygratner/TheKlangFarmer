@@ -38,6 +38,8 @@ public:
     juce::AudioProcessorValueTreeState apvts;
     TbdAudio::PlanterDrumEngine& getEngine() { return engine; }
 
+    float getLimiterActivity() const { return engine.getLimiterActivity(); }
+
     using ModSourceDetail = ::ModSourceDetail;
     using ParamModulationInfo = ::ParamModulationInfo;
     ParamModulationInfo getParamModulationInfo(const juce::String& paramId) const;
@@ -64,11 +66,11 @@ private:
     juce::AudioParameterFloat*  pitchEnvDepthParam   = nullptr;
     juce::AudioParameterFloat*  pitchEnvDecayParam   = nullptr;
 
-    // 4. Noise Transient
+    // 4. Noise Transient (S&H, DJ Filter, Decay, Crossfade)
     juce::AudioParameterFloat*  noiseShRateParam     = nullptr;
     juce::AudioParameterFloat*  noiseFilterParam     = nullptr;
-    juce::AudioParameterFloat*  noiseDriveParam      = nullptr;
     juce::AudioParameterFloat*  noiseDecayParam      = nullptr;
+    juce::AudioParameterFloat*  noiseCrossfadeParam  = nullptr;
 
     // 5. Filter
     juce::AudioParameterChoice* filterTypeParam      = nullptr;
@@ -76,17 +78,17 @@ private:
     juce::AudioParameterFloat*  filterCutoffParam    = nullptr;
     juce::AudioParameterFloat*  filterResoParam      = nullptr;
 
-    // 6. Filter Envelope
+    // 6. Filter Envelope (Slope, Depth, Decay, Pre-Filter Drive)
     juce::AudioParameterFloat*  filterEnvSlopeParam  = nullptr;
     juce::AudioParameterFloat*  filterEnvDepthParam  = nullptr;
     juce::AudioParameterFloat*  filterEnvDecayParam  = nullptr;
-    juce::AudioParameterFloat*  filterEnvCrossfadeParam = nullptr;
+    juce::AudioParameterFloat*  filterEnvDriveParam  = nullptr;
 
-    // 7. Amplifier
-    juce::AudioParameterFloat*  ampLevelParam        = nullptr;
-    juce::AudioParameterFloat*  ampPanParam          = nullptr;
+    // 7. Amplifier (Drive, Pan, Vel Slope, Vel Floor)
     juce::AudioParameterFloat*  ampDriveParam        = nullptr;
-    juce::AudioParameterChoice* ampLimiterParam      = nullptr;
+    juce::AudioParameterFloat*  ampPanParam          = nullptr;
+    juce::AudioParameterFloat*  ampVelSlopeParam     = nullptr;
+    juce::AudioParameterFloat*  ampVelFloorParam     = nullptr;
 
     // 8. Amp Envelope
     juce::AudioParameterFloat*  ampEnvClapsParam     = nullptr;

@@ -60,6 +60,10 @@ juce::String formatEqFreqHz(double val);
 double parseEqFreqHz(const juce::String& text);
 juce::String formatDb(double val);
 double parseDb(const juce::String& text);
+juce::String formatAmpDriveDb(double val);
+double parseAmpDriveDb(const juce::String& text);
+juce::String formatVelocityFloor(double val);
+double parseVelocityFloor(const juce::String& text);
 juce::String formatBipolarDb(double val);
 double parseBipolarDb(const juce::String& text);
 juce::String formatWetDry(double val);
@@ -316,6 +320,9 @@ public:
 
     void setPanelStyle(PanelStyle style);
     PanelStyle getPanelStyle() const { return panelStyle; }
+    void setPanelTintBaseColour(juce::Colour c) { panelTintBaseColour = c; repaint(); }
+    void setAccentColour(juce::Colour c) { accent = c; repaint(); }
+    juce::Colour getAccentColour() const { return accent; }
 
     void updateScope(const float* data, int numSamples);
     void setPlotMode(MiniOscilloscopeComponent::PlotMode mode);
@@ -338,6 +345,7 @@ public:
 private:
     juce::String moduleTitle;
     juce::Colour accent;
+    juce::Colour panelTintBaseColour;
     PanelStyle panelStyle = PanelStyle::StandardDark;
     MiniOscilloscopeComponent oscilloscope;
 

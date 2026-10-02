@@ -4,15 +4,36 @@
 namespace TbdAudio {
 
 // Dedicated Amp block for The Klang Planter
-// Features: Level up to 200% before limiter, Drive before limiter, Limiter (bypass/limit), Pan post-limiter.
+// Features: Drive (-inf..0dB..+24dB), Pan, Velocity Slope, Velocity Floor (1%..100%), permanent tanh Limiter.
 class PlanterAmpBlock : public DSPBlock {
 public:
     void init(const BlockContext& c) override {
         sampleRate = c.sampleRate;
+        velGain = 1.0f;
+        limiterActivity.store(0.0f, std::memory_order_relaxed);
     }
 
     void trigger(float velocity) override {
-        vel = velocity;
+        float vNorm = std::clamp(velocity, 0.0f, 1.0f);
+        float s = params[2]; // Vel Slope (0.75 = LIN, < 0.70 = EXP, > 0.80 = LOG)
+        float vCurved = vNorm;
+        if (s >= 0.73f && s <= 0.77f) {
+            vCurved = vNorm;
+        } else if (s < 0.75f) {
+            float k = 1.0f + (0.75f - s) * 4.0f;
+            vCurved = std::pow(vNorm, k);
+        } else {
+            float k = 1.0f / (1.0f + (s - 0.75f) * 4.0f);
+            vCurved = std::pow(vNorm, k);
+        }
+
+        // Vel Floor: 1% (at 0.0) to 50% (at 0.5) to 100% (at 1.0)
+        float floorVal = (params[3] <= 0.5f)
+            ? (0.01f + params[3] * 0.98f)
+            : (0.50f + (params[3] - 0.5f) * 1.0f);
+        floorVal = std::clamp(floorVal, 0.01f, 1.0f);
+
+        velGain = floorVal + (1.0f - floorVal) * vCurved;
     }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
@@ -20,50 +41,64 @@ public:
     }
 
     void processStereo(float* left, float* right, int numSamples, BlockContext& ctx) override {
-        // 1. Level: 0% to 200% (normalized 0.0 to 1.0, where 0.5 = 100% / 0 dB, 1.0 = 200% / +6 dB)
-        float level = params[0] * 2.0f;
+        // 1. Amp Drive: -inf dB to 0dB (at 0.5) to +24dB (at 1.0)
+        float v = params[0];
+        float driveGain = 1.0f;
+        if (v < 0.001f) {
+            driveGain = 0.0f;
+        } else if (v <= 0.5f) {
+            float db = (v / 0.5f - 1.0f) * 60.0f;
+            driveGain = std::pow(10.0f, db / 20.0f);
+        } else {
+            float db = ((v - 0.5f) / 0.5f) * 24.0f;
+            driveGain = std::pow(10.0f, db / 20.0f);
+        }
 
         // 2. Pan: 100% L to Center to 100% R (def Center = 0.5)
         float pan = std::clamp(params[1], 0.0f, 1.0f);
         float gainL = std::cos(pan * 1.57079632679f);
         float gainR = std::sin(pan * 1.57079632679f);
 
-        // 3. Drive: -6dB to +24dB (def 0.5 = +9dB) - comes before limiter
-        float driveDb = normToDriveDb(params[2]);
-        float driveGain = normToDriveGain(params[2]);
-        bool hasDrive = (std::abs(driveDb) > 0.05f);
-
-        // 4. Limiter: 0=Bypass, 1=Limit (def Limit = 1.0) - comes after Level & Drive
-        bool hasLimiter = (params[3] >= 0.5f);
+        float blockMaxReduction = 0.0f;
 
         for (int i = 0; i < numSamples; ++i) {
             float envVal = (i < static_cast<int>(ctx.ampEnvSignal.size())) ? ctx.ampEnvSignal[i] : 1.0f;
             float inL = left ? left[i] : 0.0f;
             float inR = right ? right[i] : inL;
 
-            // Apply amp envelope, output gain (Level) and drive before limiter
-            float curL = inL * envVal * level;
-            float curR = inR * envVal * level;
+            // Apply envelope, velocity scaling, and amp drive
+            float curL = inL * envVal * velGain * driveGain;
+            float curR = inR * envVal * velGain * driveGain;
 
-            if (hasDrive) {
-                curL *= driveGain;
-                curR *= driveGain;
-            }
+            // Limiter is permanently enabled: smooth tanh soft-saturation
+            float limL = std::tanh(curL);
+            float limR = std::tanh(curR);
 
-            if (hasLimiter) {
-                curL = std::tanh(curL);
-                curR = std::tanh(curR);
-            }
+            float redL = std::max(0.0f, std::abs(curL) - std::abs(limL));
+            float redR = std::max(0.0f, std::abs(curR) - std::abs(limR));
+            blockMaxReduction = std::max(blockMaxReduction, std::max(redL, redR));
 
             // Pan post-limiter to preserve exact stereo balance
-            if (left)  left[i]  = curL * gainL;
-            if (right) right[i] = curR * gainR;
+            if (left)  left[i]  = limL * gainL;
+            if (right) right[i] = limR * gainR;
         }
+
+        // Smooth limiter reduction activity with ~60ms decay
+        float curAct = limiterActivity.load(std::memory_order_relaxed);
+        float newAct = std::max(blockMaxReduction, curAct * 0.90f);
+        limiterActivity.store(newAct, std::memory_order_relaxed);
     }
+
+    float getLimiterActivity() const {
+        return limiterActivity.load(std::memory_order_relaxed);
+    }
+
+    float getVelGain() const { return velGain; }
 
 private:
     float sampleRate = 44100.0f;
-    float vel = 1.0f;
+    float velGain = 1.0f;
+    std::atomic<float> limiterActivity { 0.0f };
 };
 
 // --- THE KLANG PLANTER SYNTHESIS ENGINE ---
@@ -134,23 +169,23 @@ public:
         setBlockParameter(BLK_CARRIER, 2, 0.0f);
         setBlockParameter(BLK_CARRIER, 3, 0.5f);
 
-        // Modulator (FM track, Osc type, Sine, 55Hz ratio)
+        // Modulator (FM track, Osc type, Sine, 1:1 Ratio = 0.5)
         setBlockParameter(BLK_MODULATOR, 0, 2.0f / 2.0f);
         setBlockParameter(BLK_MODULATOR, 1, 0.0f);
         setBlockParameter(BLK_MODULATOR, 2, 0.0f);
-        setBlockParameter(BLK_MODULATOR, 3, 0.50934f);
+        setBlockParameter(BLK_MODULATOR, 3, 0.5f);
 
-        // Pitch Envelope (Carrier target, Exp slope, 0 oct depth, 333ms decay)
+        // Pitch Envelope (Carrier target, Exp slope, 0 oct depth, 177ms decay)
         setBlockParameter(BLK_PITCHENV, 0, 0.5886f);
         setBlockParameter(BLK_PITCHENV, 1, 0.5f);
         setBlockParameter(BLK_PITCHENV, 2, 0.3806f);
         ctx.pitchEnv1Target = 1;
 
-        // Noise Transient (24kHz S&H, 50% flat DJ, 0dB drive, 100ms decay)
+        // Noise Transient (24kHz S&H, 50% flat DJ, 30ms decay, Crossfader +100% FM = 1.0)
         setBlockParameter(BLK_NOISE, 0, 1.0f);
         setBlockParameter(BLK_NOISE, 1, 0.5f);
-        setBlockParameter(BLK_NOISE, 2, 0.5f);
-        setBlockParameter(BLK_NOISE, 3, 0.3078f);
+        setBlockParameter(BLK_NOISE, 2, 0.3078f); // Decay
+        setBlockParameter(BLK_NOISE, 3, 1.0f);    // Crossfade: 100% FM
 
         // Filter (LPF, 12dB, 24kHz, 0% res)
         setBlockParameter(BLK_FILTER, 0, 0.0f);
@@ -158,19 +193,19 @@ public:
         setBlockParameter(BLK_FILTER, 2, 1.0f);
         setBlockParameter(BLK_FILTER, 3, 0.0f);
 
-        // Filter Envelope (Exp slope, 0 oct depth, 333ms decay, Crossfader 0% Center = 0.5)
+        // Filter Envelope (Exp slope, 0 oct depth, 177ms decay, Pre-Filter Drive 0dB = 0.5)
         setBlockParameter(BLK_FILTERENV, 0, 0.5886f);
         setBlockParameter(BLK_FILTERENV, 1, 0.5f);
         setBlockParameter(BLK_FILTERENV, 2, 0.3806f);
-        setBlockParameter(BLK_FILTERENV, 3, 0.5f); // 0% Both FM & Noise full volume
+        setBlockParameter(BLK_FILTERENV, 3, 0.5f); // Pre-Filter Drive: 0.0 dB
 
-        // Amp (100% Level = 0.5, Center Pan = 0.5, 0dB Drive = 0.5, Limiter Limit = 1.0)
-        setBlockParameter(BLK_AMP, 0, 0.5f);
-        setBlockParameter(BLK_AMP, 1, 0.5f);
-        setBlockParameter(BLK_AMP, 2, 0.5f);
-        setBlockParameter(BLK_AMP, 3, 1.0f);
+        // Amp (0dB Drive = 0.5, Center Pan = 0.5, LIN Vel Slope = 0.75, 50% Vel Floor = 0.5)
+        setBlockParameter(BLK_AMP, 0, 0.5f);  // Drive: 0.0 dB
+        setBlockParameter(BLK_AMP, 1, 0.5f);  // Pan: Center
+        setBlockParameter(BLK_AMP, 2, 0.75f); // Vel Slope: Linear
+        setBlockParameter(BLK_AMP, 3, 0.5f);  // Velocity Floor: 50%
 
-        // Amp Envelope (0 claps, 3ms speed, Exp slope, 333ms decay)
+        // Amp Envelope (0 claps, 3ms speed, Exp slope, 177ms decay)
         setBlockParameter(BLK_AMPENV, 0, 0.0f);
         setBlockParameter(BLK_AMPENV, 1, 2.0f / 14.0f);
         setBlockParameter(BLK_AMPENV, 2, 0.5886f);
@@ -230,7 +265,7 @@ public:
         std::fill(tempFMR.begin(), tempFMR.begin() + numSamples, 0.0f);
         carrier->processStereo(tempFML.data(), tempFMR.data(), numSamples, ctx);
 
-        // 4. Noise Transient
+        // 4. Noise Transient (S&H Rate, DJ Filter, Decay)
         std::fill(tempNoiseL.begin(), tempNoiseL.begin() + numSamples, 0.0f);
         std::fill(tempNoiseR.begin(), tempNoiseR.begin() + numSamples, 0.0f);
         noise->processStereo(tempNoiseL.data(), tempNoiseR.data(), numSamples, ctx);
@@ -238,9 +273,9 @@ public:
         // 5. Filter Envelope
         filterEnv->processStereo(nullptr, nullptr, numSamples, ctx);
 
-        // 6. Pre-Filter Crossfade (from Filter Envelope knob 4: params[3])
+        // 6. Pre-Filter Crossfade (from Noise Transient knob 4: params[3])
         // Bipolar: -100% (Noise only) to 0% (Both full volume) to +100% (FM pair only)
-        float crossfadeNorm = filterEnv->getParam(3);
+        float crossfadeNorm = noise->getParam(3);
         float x = (crossfadeNorm - 0.5f) * 2.0f; // -1.0f to +1.0f
         float fmGain = 1.0f;
         float noiseGain = 1.0f;
@@ -258,10 +293,22 @@ public:
             tempMixR[i] = tempFMR[i] * fmGain + tempNoiseR[i] * noiseGain;
         }
 
-        // 7. Filter (shapes both FM and Noise together!)
+        // 7. Pre-Filter Drive (from Filter Envelope knob 4: params[3])
+        // -6dB to 0dB (at 0.5) to +24dB
+        float pDrive = filterEnv->getParam(3);
+        float preDriveDb = (pDrive <= 0.5f) ? (-6.0f + pDrive * 12.0f) : ((pDrive - 0.5f) * 48.0f);
+        float preDriveGain = std::pow(10.0f, preDriveDb / 20.0f);
+        if (std::abs(preDriveGain - 1.0f) > 0.01f) {
+            for (int i = 0; i < numSamples; ++i) {
+                tempMixL[i] = std::tanh(tempMixL[i] * preDriveGain);
+                tempMixR[i] = std::tanh(tempMixR[i] * preDriveGain);
+            }
+        }
+
+        // 8. Filter (shapes both FM and Noise together!)
         filter->processStereo(tempMixL.data(), tempMixR.data(), numSamples, ctx);
 
-        // 8. Amp Envelope & Amp (Level 0..200%, Drive, Limiter, Pan)
+        // 9. Amp Envelope & Amp (Drive, Pan, Vel Slope, Velocity Floor, Limiter)
         ampEnv->processStereo(nullptr, nullptr, numSamples, ctx);
         amp->processStereo(tempMixL.data(), tempMixR.data(), numSamples, ctx);
 
@@ -295,6 +342,9 @@ public:
 
     float getPeakL() const { return peakL.load(std::memory_order_relaxed); }
     float getPeakR() const { return peakR.load(std::memory_order_relaxed); }
+    float getLimiterActivity() const {
+        return amp ? amp->getLimiterActivity() : 0.0f;
+    }
 
     DSPBlock* getBlock(BlockID id) {
         switch (id) {
@@ -324,25 +374,25 @@ public:
         }
     }
 
+    PlanterAmpBlock* getAmpBlock() { return amp.get(); }
+
 private:
     void ensureBufferSize(int numSamples) {
         if (static_cast<int>(tempFML.size()) < numSamples) {
-            tempFML.resize(numSamples);
-            tempFMR.resize(numSamples);
-            tempNoiseL.resize(numSamples);
-            tempNoiseR.resize(numSamples);
-            tempMixL.resize(numSamples);
-            tempMixR.resize(numSamples);
-
-            ctx.mod1Signal.resize(numSamples);
-            ctx.pitchEnv1Signal.resize(numSamples);
-            ctx.filterEnv1Signal.resize(numSamples);
-            ctx.ampEnvSignal.resize(numSamples);
+            tempFML.resize(numSamples, 0.0f);
+            tempFMR.resize(numSamples, 0.0f);
+            tempNoiseL.resize(numSamples, 0.0f);
+            tempNoiseR.resize(numSamples, 0.0f);
+            tempMixL.resize(numSamples, 0.0f);
+            tempMixR.resize(numSamples, 0.0f);
+            ctx.mod1Signal.resize(numSamples, 0.0f);
+            ctx.pitchEnv1Signal.resize(numSamples, 0.0f);
+            ctx.filterEnv1Signal.resize(numSamples, 0.0f);
+            ctx.ampEnvSignal.resize(numSamples, 0.0f);
         }
     }
 
     BlockContext ctx;
-
     std::unique_ptr<CarrierBlock> carrier;
     std::unique_ptr<ModulatorBlock> modulator;
     std::unique_ptr<PitchEnvelopeBlock> pitchEnv;
@@ -357,8 +407,8 @@ private:
     std::vector<float> tempMixL, tempMixR;
 
     VisualScope masterScope;
-    std::atomic<float> peakL{ 0.0f };
-    std::atomic<float> peakR{ 0.0f };
+    std::atomic<float> peakL { 0.0f };
+    std::atomic<float> peakR { 0.0f };
 };
 
 } // namespace TbdAudio

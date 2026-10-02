@@ -23,8 +23,8 @@ TheKlangPlanterAudioProcessor::TheKlangPlanterAudioProcessor()
 
     noiseShRateParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_noise_sh_rate"));
     noiseFilterParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_noise_filter"));
-    noiseDriveParam      = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_noise_drive"));
     noiseDecayParam      = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_noise_decay"));
+    noiseCrossfadeParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_noise_crossfade"));
 
     filterTypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("planter_filter_type"));
     filterSlopeParam     = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("planter_filter_slope"));
@@ -34,12 +34,12 @@ TheKlangPlanterAudioProcessor::TheKlangPlanterAudioProcessor()
     filterEnvSlopeParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_filterenv_slope"));
     filterEnvDepthParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_filterenv_depth"));
     filterEnvDecayParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_filterenv_decay"));
-    filterEnvCrossfadeParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_filterenv_crossfade"));
+    filterEnvDriveParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_filterenv_drive"));
 
-    ampLevelParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_amp_level"));
-    ampPanParam          = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_amp_pan"));
     ampDriveParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_amp_drive"));
-    ampLimiterParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("planter_amp_limiter"));
+    ampPanParam          = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_amp_pan"));
+    ampVelSlopeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_amp_vel_slope"));
+    ampVelFloorParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_amp_vel_floor"));
 
     ampEnvClapsParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_ampenv_claps"));
     ampEnvClapSpeedParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_ampenv_clapspeed"));
@@ -70,7 +70,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangPlanterAudioProcesso
         juce::ParameterID("planter_mod_type", 1), "Modulator: Type",
         juce::StringArray{ "Osc", "Cyclic", "Noise" }, 0));
     layout.add(makeFloatParam("planter_mod_shape", "Modulator: Shape", 0.0f));
-    layout.add(makeFloatParam("planter_mod_speed", "Modulator: Speed", 0.50934f));
+    layout.add(makeFloatParam("planter_mod_speed", "Modulator: Speed", 0.5f)); // 1:1 ratio
 
     // 3. Pitch Envelope
     layout.add(std::make_unique<juce::AudioParameterChoice>(
@@ -80,11 +80,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangPlanterAudioProcesso
     layout.add(makeFloatParam("planter_pitchenv_depth", "PitchEnv: Depth", 0.5f));
     layout.add(makeFloatParam("planter_pitchenv_decay", "PitchEnv: Decay", 0.3806f));
 
-    // 4. Noise Transient
+    // 4. Noise Transient (S&H Rate, DJ Filter, Decay, FM/Noise Crossfader)
     layout.add(makeFloatParam("planter_noise_sh_rate", "Noise: S&H Rate", 1.0f));
     layout.add(makeFloatParam("planter_noise_filter", "Noise: DJ Filter", 0.5f));
-    layout.add(makeFloatParam("planter_noise_drive", "Noise: Drive", 0.5f));
     layout.add(makeFloatParam("planter_noise_decay", "Noise: Decay", 0.3078f));
+    layout.add(makeFloatParam("planter_noise_crossfade", "Noise: FM / Noise", 1.0f)); // default 1.0 = +100% FM
 
     // 5. Filter
     layout.add(std::make_unique<juce::AudioParameterChoice>(
@@ -96,19 +96,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangPlanterAudioProcesso
     layout.add(makeFloatParam("planter_filter_cutoff", "Filter: Cutoff", 1.0f));
     layout.add(makeFloatParam("planter_filter_reso", "Filter: Resonance", 0.0f));
 
-    // 6. Filter Envelope (Knob 4 is Pre-Filter Crossfader: -100% Noise to +100% FM)
+    // 6. Filter Envelope (Knob 4 is Pre-Filter Drive: -6dB to +24dB, 0dB at 0.5)
     layout.add(makeFloatParam("planter_filterenv_slope", "FilterEnv: Slope", 0.5886f));
     layout.add(makeFloatParam("planter_filterenv_depth", "FilterEnv: Depth", 0.5f));
     layout.add(makeFloatParam("planter_filterenv_decay", "FilterEnv: Decay", 0.3806f));
-    layout.add(makeFloatParam("planter_filterenv_crossfade", "FilterEnv: FM / Noise", 0.5f));
+    layout.add(makeFloatParam("planter_filterenv_drive", "FilterEnv: Drive", 0.5f));
 
-    // 7. Amplifier (Level is 0..200%, Limiter is bypass/limit)
-    layout.add(makeFloatParam("planter_amp_level", "Amp: Level", 0.5f));
-    layout.add(makeFloatParam("planter_amp_pan", "Amp: Pan", 0.5f));
+    // 7. Amplifier (Drive, Pan, Vel Slope, Vel Floor)
     layout.add(makeFloatParam("planter_amp_drive", "Amp: Drive", 0.5f));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("planter_amp_limiter", 1), "Amp: Limiter",
-        juce::StringArray{ "bypass", "limit" }, 1));
+    layout.add(makeFloatParam("planter_amp_pan", "Amp: Pan", 0.5f));
+    layout.add(makeFloatParam("planter_amp_vel_slope", "Amp: Vel Slope", 0.75f));
+    layout.add(makeFloatParam("planter_amp_vel_floor", "Amp: Velocity", 0.5f));
 
     // 8. Amp Envelope
     layout.add(makeFloatParam("planter_ampenv_claps", "AmpEnv: Claps", 0.0f));
@@ -155,29 +153,29 @@ void TheKlangPlanterAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     if (pitchEnvDepthParam)  engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_PITCHENV, 1, pitchEnvDepthParam->get());
     if (pitchEnvDecayParam)  engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_PITCHENV, 2, pitchEnvDecayParam->get());
 
-    // Noise Transient
-    if (noiseShRateParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 0, noiseShRateParam->get());
-    if (noiseFilterParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 1, noiseFilterParam->get());
-    if (noiseDriveParam)  engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 2, noiseDriveParam->get());
-    if (noiseDecayParam)  engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 3, noiseDecayParam->get());
+    // Noise Transient (S&H, DJ Filter, Decay, Crossfade)
+    if (noiseShRateParam)    engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 0, noiseShRateParam->get());
+    if (noiseFilterParam)    engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 1, noiseFilterParam->get());
+    if (noiseDecayParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 2, noiseDecayParam->get());
+    if (noiseCrossfadeParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 3, noiseCrossfadeParam->get());
 
     // Filter
-    if (filterTypeParam)  engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTER, 0, static_cast<float>(filterTypeParam->getIndex()) / 3.0f);
-    if (filterSlopeParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTER, 1, static_cast<float>(filterSlopeParam->getIndex()) / 4.0f);
+    if (filterTypeParam)   engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTER, 0, static_cast<float>(filterTypeParam->getIndex()) / 3.0f);
+    if (filterSlopeParam)  engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTER, 1, static_cast<float>(filterSlopeParam->getIndex()) / 4.0f);
     if (filterCutoffParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTER, 2, filterCutoffParam->get());
     if (filterResoParam)   engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTER, 3, filterResoParam->get());
 
-    // Filter Envelope (with Crossfader at param 3)
-    if (filterEnvSlopeParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 0, filterEnvSlopeParam->get());
-    if (filterEnvDepthParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 1, filterEnvDepthParam->get());
-    if (filterEnvDecayParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 2, filterEnvDecayParam->get());
-    if (filterEnvCrossfadeParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 3, filterEnvCrossfadeParam->get());
+    // Filter Envelope (with Pre-Filter Drive at param 3)
+    if (filterEnvSlopeParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 0, filterEnvSlopeParam->get());
+    if (filterEnvDepthParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 1, filterEnvDepthParam->get());
+    if (filterEnvDecayParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 2, filterEnvDecayParam->get());
+    if (filterEnvDriveParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 3, filterEnvDriveParam->get());
 
-    // Amp
-    if (ampLevelParam)   engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 0, ampLevelParam->get());
-    if (ampPanParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 1, ampPanParam->get());
-    if (ampDriveParam)   engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 2, ampDriveParam->get());
-    if (ampLimiterParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 3, static_cast<float>(ampLimiterParam->getIndex()));
+    // Amp (Drive, Pan, Vel Slope, Vel Floor)
+    if (ampDriveParam)    engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 0, ampDriveParam->get());
+    if (ampPanParam)      engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 1, ampPanParam->get());
+    if (ampVelSlopeParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 2, ampVelSlopeParam->get());
+    if (ampVelFloorParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 3, ampVelFloorParam->get());
 
     // Amp Envelope
     if (ampEnvClapsParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMPENV, 0, ampEnvClapsParam->get());

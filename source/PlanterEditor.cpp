@@ -6,7 +6,7 @@ PlanterHeaderVisualizer::PlanterHeaderVisualizer() {
     points.resize(128, 0.0f);
 }
 
-void PlanterHeaderVisualizer::updateData(const float* scopeData, int numPoints, float peakL, float peakR) {
+void PlanterHeaderVisualizer::updateData(const float* scopeData, int numPoints, float peakL, float peakR, float limiterActivity) {
     if (scopeData && numPoints > 0) {
         int targetPoints = 128;
         if (static_cast<int>(points.size()) != targetPoints) points.resize(targetPoints);
@@ -18,6 +18,7 @@ void PlanterHeaderVisualizer::updateData(const float* scopeData, int numPoints, 
     }
     livePeakL = peakL;
     livePeakR = peakR;
+    liveLimiterAct = limiterActivity;
     repaint();
 }
 
@@ -30,8 +31,8 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
     g.setColour(juce::Colour(0xff252b3b));
     g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
 
-    // Left area: Oscilloscope (width - 34px)
-    auto scopeArea = bounds.removeFromLeft(bounds.getWidth() - 34.0f).reduced(2.0f);
+    // 1. Left area: Oscilloscope
+    auto scopeArea = bounds.removeFromLeft(bounds.getWidth() - 76.0f).reduced(2.0f);
     g.setColour(juce::Colour(0x2200d2ff));
     g.drawHorizontalLine(static_cast<int>(scopeArea.getCentreY()), scopeArea.getX(), scopeArea.getRight());
 
@@ -52,7 +53,27 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
         g.strokePath(p, juce::PathStrokeType(1.4f, juce::PathStrokeType::curved));
     }
 
-    // Right area: Stereo Peak Meters (L & R)
+    // 2. Center area: LIMIT warning indicator badge
+    auto limitArea = bounds.removeFromLeft(38.0f).reduced(3.0f, 4.0f);
+    bool isLimiting = (liveLimiterAct > 0.01f);
+    if (isLimiting) {
+        float alpha = std::clamp(liveLimiterAct * 2.0f, 0.4f, 1.0f);
+        g.setColour(juce::Colour(0xffff1744).withAlpha(alpha * 0.35f));
+        g.fillRoundedRectangle(limitArea, 3.0f);
+        g.setColour(juce::Colour(0xffff1744).withAlpha(alpha));
+        g.drawRoundedRectangle(limitArea, 3.0f, 1.2f);
+        g.setColour(juce::Colours::white);
+    } else {
+        g.setColour(juce::Colour(0xff181b24));
+        g.fillRoundedRectangle(limitArea, 3.0f);
+        g.setColour(juce::Colour(0xff2a3040));
+        g.drawRoundedRectangle(limitArea, 3.0f, 1.0f);
+        g.setColour(juce::Colour(0x558899aa));
+    }
+    g.setFont(juce::FontOptions(10.0f, juce::Font::bold));
+    g.drawText("LIMIT", limitArea, juce::Justification::centred, false);
+
+    // 3. Right area: Stereo Peak Meters (L & R)
     auto meterArea = bounds.reduced(3.0f, 3.0f);
     float barW = (meterArea.getWidth() - 2.0f) * 0.5f;
 
@@ -79,13 +100,12 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
 
 TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlangPlanterAudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p),
-      carrierTrackingSelector(juce::Colour(0xff00d2ff)),
-      modTrackSelector(juce::Colour(0xffff7043)),
-      modTypeSelector(juce::Colour(0xffff7043)),
-      pitchEnvTargetSelector(juce::Colour(0xffffab00)),
-      filterTypeSelector(juce::Colour(0xff7c4dff)),
-      filterSlopeSelector(juce::Colour(0xff7c4dff)),
-      ampLimiterSelector(juce::Colour(0xffe53935))
+      carrierTrackingSelector(juce::Colour(0xffff3b30)),
+      modTrackSelector(juce::Colour(0xff00d2ff)),
+      modTypeSelector(juce::Colour(0xff00d2ff)),
+      pitchEnvTargetSelector(juce::Colour(0xffcfd8dc)),
+      filterTypeSelector(juce::Colour(0xff2979ff)),
+      filterSlopeSelector(juce::Colour(0xff2979ff))
 {
     setLookAndFeel(&knobLookAndFeel);
     scopeBuffer.resize(512, 0.0f);
@@ -98,31 +118,34 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     initButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffc5d1e8));
     initButton.onClick = [this]() {
         audioProcessor.getEngine().setDefaultParameters();
-        // Reset APVTS parameters to defaults
-        auto& state = audioProcessor.apvts;
         for (auto* param : audioProcessor.getParameters()) {
-            if (auto* p = dynamic_cast<juce::RangedAudioParameter*>(param)) {
-                p->setValueNotifyingHost(p->getDefaultValue());
+            if (auto* rp = dynamic_cast<juce::RangedAudioParameter*>(param)) {
+                rp->setValueNotifyingHost(rp->getDefaultValue());
             }
         }
     };
     addAndMakeVisible(initButton);
 
     // Header Audition Trigger Button
-    triggerButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff00d2ff));
+    triggerButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff00e5ff));
     triggerButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff0f1115));
     triggerButton.onClick = [this]() {
         audioProcessor.getEngine().trigger(1.0f);
     };
     addAndMakeVisible(triggerButton);
 
-    // --- 1. CARRIER ---
-    cardCarrier = std::make_unique<ModuleCardComponent>("Carrier", juce::Colour(0xff00d2ff));
+    // --- PAIR 1: CARRIER (Red) & MODULATOR (Cyan) ---
+    // Carrier: Red accent with Cyan panel tint
+    const juce::Colour colRed(0xffff3b30);
+    const juce::Colour colCyan(0xff00d2ff);
+
+    cardCarrier = std::make_unique<ModuleCardComponent>("Carrier", colRed);
+    cardCarrier->setPanelTintBaseColour(colCyan);
     setupBox(carrierTrackingBox);
     bindSelector(carrierTrackingSelector, carrierTrackingBox, "planter_carrier_tracking", { "MIDI", "Freq", "Note" }, 3);
     cardCarrier->setLedSelector(&carrierTrackingSelector);
 
-    setupKnob(carrierPitchSlider, juce::Colour(0xff00d2ff), true, 0.5);
+    setupKnob(carrierPitchSlider, colRed, true, 0.5);
     carrierPitchSlider.customFormatText = [this](double val) {
         int mode = carrierTrackingBox.getSelectedItemIndex();
         if (mode == 0) return formatSemi24(val);
@@ -136,12 +159,12 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
         return parseNoteDetail(text);
     };
 
-    setupKnob(carrierShapeSlider, juce::Colour(0xff00d2ff), false, 0.0);
+    setupKnob(carrierShapeSlider, colRed, false, 0.0);
     carrierShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
     carrierShapeSlider.customFormatText = formatPercent;
     carrierShapeSlider.customParseText  = parsePercent;
 
-    setupKnob(carrierDepthSlider, juce::Colour(0xff00d2ff), true, 0.5);
+    setupKnob(carrierDepthSlider, colRed, true, 0.5);
     carrierDepthSlider.customFormatText = formatBipolarPercent;
     carrierDepthSlider.customParseText  = parseBipolarPercent;
 
@@ -150,8 +173,9 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardCarrier->setKnob(2, "Mod Depth", &carrierDepthSlider);
     addAndMakeVisible(cardCarrier.get());
 
-    // --- 2. MODULATOR ---
-    cardMod = std::make_unique<ModuleCardComponent>("Modulator", juce::Colour(0xffff7043));
+    // Modulator: Cyan accent with Red panel tint
+    cardMod = std::make_unique<ModuleCardComponent>("Modulator", colCyan);
+    cardMod->setPanelTintBaseColour(colRed);
     setupBox(modTrackBox);
     bindSelector(modTrackSelector, modTrackBox, "planter_mod_track", { "Fixed", "Follow", "FM" }, 3);
     setupBox(modTypeBox);
@@ -159,12 +183,12 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardMod->setLedSelector(&modTrackSelector);
     cardMod->setSecondLedSelector(&modTypeSelector);
 
-    setupKnob(modShapeSlider, juce::Colour(0xffff7043), false, 0.0);
+    setupKnob(modShapeSlider, colCyan, false, 0.0);
     modShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
     modShapeSlider.customFormatText = formatPercent;
     modShapeSlider.customParseText  = parsePercent;
 
-    setupKnob(modSpeedSlider, juce::Colour(0xffff7043), false, 0.50934);
+    setupKnob(modSpeedSlider, colCyan, false, 0.5);
     modSpeedSlider.customFormatText = [this](double val) {
         if (modTypeBox.getSelectedItemIndex() == 2) return formatFreqHz(val);
         if (modTrackBox.getSelectedItemIndex() == 2) return formatRatio(val);
@@ -182,23 +206,28 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardMod->setKnob(1, "Speed", &modSpeedSlider);
     addAndMakeVisible(cardMod.get());
 
-    // --- 3. PITCH ENVELOPE ---
-    cardPitchEnv = std::make_unique<ModuleCardComponent>("Pitch Env", juce::Colour(0xffffab00));
+    // --- PAIR 2: PITCH ENV (Silver) & NOISE TRANSIENT (Dark/Silver) ---
+    // Pitch Env: Silver accent with Dark Grey panel tint
+    const juce::Colour colSilver(0xffcfd8dc);
+    const juce::Colour colDarkGrey(0xff263238);
+
+    cardPitchEnv = std::make_unique<ModuleCardComponent>("Pitch Env", colSilver);
+    cardPitchEnv->setPanelTintBaseColour(colDarkGrey);
     setupBox(pitchEnvTargetBox);
     bindSelector(pitchEnvTargetSelector, pitchEnvTargetBox, "planter_pitchenv_target", { "Car", "Mod", "Both", "Opp" }, 4);
     cardPitchEnv->setSelectorAtBottom(true);
     cardPitchEnv->setLedSelector(&pitchEnvTargetSelector);
 
-    setupKnob(pitchEnvSlopeSlider, juce::Colour(0xffffab00), false, 0.5886);
+    setupKnob(pitchEnvSlopeSlider, colSilver, false, 0.5886);
     pitchEnvSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     pitchEnvSlopeSlider.customFormatText = formatSlope;
     pitchEnvSlopeSlider.customParseText  = parseSlope;
 
-    setupKnob(pitchEnvDepthSlider, juce::Colour(0xffffab00), true, 0.5);
+    setupKnob(pitchEnvDepthSlider, colSilver, true, 0.5);
     pitchEnvDepthSlider.customFormatText = formatOctaves;
     pitchEnvDepthSlider.customParseText  = parseOctaves;
 
-    setupKnob(pitchEnvDecaySlider, juce::Colour(0xffffab00), false, 0.3806);
+    setupKnob(pitchEnvDecaySlider, colSilver, false, 0.3806);
     pitchEnvDecaySlider.customFormatText = formatTimeMs;
     pitchEnvDecaySlider.customParseText  = parseTimeMs;
 
@@ -207,32 +236,46 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardPitchEnv->setKnob(2, "Decay", &pitchEnvDecaySlider);
     addAndMakeVisible(cardPitchEnv.get());
 
-    // --- 4. NOISE TRANSIENT ---
-    cardNoise = std::make_unique<ModuleCardComponent>("Noise Transient", juce::Colour(0xff90a4ae));
-    setupKnob(noiseShRateSlider, juce::Colour(0xff90a4ae), false, 1.0);
+    // Noise Transient: Silver panel (DoepferSilver), Dark Grey accent, with Silver highlight Crossfader at Knob 4
+    cardNoise = std::make_unique<ModuleCardComponent>("Noise Transient", colDarkGrey, ModuleCardComponent::PanelStyle::DoepferSilver);
+    cardNoise->setKnobsLightTrough(true);
+
+    setupKnob(noiseShRateSlider, colDarkGrey, false, 1.0);
+    noiseShRateSlider.setLightTrough(true);
     noiseShRateSlider.customFormatText = formatFreqHz;
     noiseShRateSlider.customParseText  = parseFreqHz;
 
-    setupKnob(noiseFilterSlider, juce::Colour(0xff90a4ae), true, 0.5);
+    setupKnob(noiseFilterSlider, colDarkGrey, true, 0.5);
+    noiseFilterSlider.setLightTrough(true);
     noiseFilterSlider.customFormatText = formatBipolarPercent;
     noiseFilterSlider.customParseText  = parseBipolarPercent;
 
-    setupKnob(noiseDriveSlider, juce::Colour(0xff90a4ae), false, 0.5);
-    noiseDriveSlider.customFormatText = formatDb;
-    noiseDriveSlider.customParseText  = parseDb;
-
-    setupKnob(noiseDecaySlider, juce::Colour(0xff90a4ae), false, 0.3078);
+    setupKnob(noiseDecaySlider, colDarkGrey, false, 0.3078);
+    noiseDecaySlider.setLightTrough(true);
     noiseDecaySlider.customFormatText = formatNoiseTimeMs;
     noiseDecaySlider.customParseText  = parseNoiseTimeMs;
 
+    // Knob 4: FM / NOISE Crossfader (Highlight accent, default 1.0 = +100% FM, dbl-click 0.5 = 0% Both)
+    const juce::Colour colXfade(0xffeceff1);
+    setupKnob(noiseCrossfadeSlider, colXfade, true, 1.0);
+    noiseCrossfadeSlider.setLightTrough(true);
+    noiseCrossfadeSlider.getDefaultValue = []() { return 0.5; }; // Double-click resets to 0% Both (0.5)
+    noiseCrossfadeSlider.customFormatText = formatCrossfade;
+    noiseCrossfadeSlider.customParseText  = parseCrossfade;
+
     cardNoise->setKnob(0, "S&H Rate", &noiseShRateSlider);
     cardNoise->setKnob(1, "DJ Filter", &noiseFilterSlider);
-    cardNoise->setKnob(2, "Drive", &noiseDriveSlider);
-    cardNoise->setKnob(3, "Decay", &noiseDecaySlider);
+    cardNoise->setKnob(2, "Decay", &noiseDecaySlider);
+    cardNoise->setKnob(3, "FM / NOISE", &noiseCrossfadeSlider);
     addAndMakeVisible(cardNoise.get());
 
-    // --- 5. FILTER ---
-    cardFilter = std::make_unique<ModuleCardComponent>("Filter", juce::Colour(0xff7c4dff));
+    // --- PAIR 3: FILTER (Blue) & FILTER ENV (Amber) ---
+    const juce::Colour colBlue(0xff2979ff);
+    const juce::Colour colAmber(0xffffa000);
+
+    // Filter: Blue accent with Amber panel tint
+    cardFilter = std::make_unique<ModuleCardComponent>("Filter", colBlue);
+    cardFilter->setPanelTintBaseColour(colAmber);
     setupBox(filterTypeBox);
     bindSelector(filterTypeSelector, filterTypeBox, "planter_filter_type", { "LPF", "BPF", "HPF", "BRF" }, 4);
     setupBox(filterSlopeBox);
@@ -240,11 +283,11 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardFilter->setLedSelector(&filterTypeSelector);
     cardFilter->setSecondLedSelector(&filterSlopeSelector);
 
-    setupKnob(filterCutoffSlider, juce::Colour(0xff7c4dff), false, 1.0);
+    setupKnob(filterCutoffSlider, colBlue, false, 1.0);
     filterCutoffSlider.customFormatText = formatFreqHz;
     filterCutoffSlider.customParseText  = parseFreqHz;
 
-    setupKnob(filterResoSlider, juce::Colour(0xff7c4dff), false, 0.0);
+    setupKnob(filterResoSlider, colBlue, false, 0.0);
     filterResoSlider.customFormatText = formatPercent;
     filterResoSlider.customParseText  = parsePercent;
 
@@ -252,43 +295,61 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardFilter->setKnob(1, "Resonance", &filterResoSlider);
     addAndMakeVisible(cardFilter.get());
 
-    // --- 6. FILTER ENVELOPE (with Crossfader at Knob 4) ---
-    cardFilterEnv = std::make_unique<ModuleCardComponent>("Filter Env", juce::Colour(0xff7c4dff));
-    setupKnob(filterEnvSlopeSlider, juce::Colour(0xff7c4dff), false, 0.5886);
+    // Filter Env: Amber accent with Blue panel tint (Knob 4 is Pre-Filter Drive)
+    cardFilterEnv = std::make_unique<ModuleCardComponent>("Filter Env", colAmber);
+    cardFilterEnv->setPanelTintBaseColour(colBlue);
+    setupKnob(filterEnvSlopeSlider, colAmber, false, 0.5886);
     filterEnvSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     filterEnvSlopeSlider.customFormatText = formatSlope;
     filterEnvSlopeSlider.customParseText  = parseSlope;
 
-    setupKnob(filterEnvDepthSlider, juce::Colour(0xff7c4dff), true, 0.5);
+    setupKnob(filterEnvDepthSlider, colAmber, true, 0.5);
     filterEnvDepthSlider.customFormatText = formatFilterOctaves;
     filterEnvDepthSlider.customParseText  = parseFilterOctaves;
 
-    setupKnob(filterEnvDecaySlider, juce::Colour(0xff7c4dff), false, 0.3806);
+    setupKnob(filterEnvDecaySlider, colAmber, false, 0.3806);
     filterEnvDecaySlider.customFormatText = formatTimeMs;
     filterEnvDecaySlider.customParseText  = parseTimeMs;
 
-    setupKnob(filterEnvCrossfadeSlider, juce::Colour(0xff7c4dff), true, 0.5);
-    filterEnvCrossfadeSlider.customFormatText = formatCrossfade;
-    filterEnvCrossfadeSlider.customParseText  = parseCrossfade;
+    setupKnob(filterEnvDriveSlider, colAmber, false, 0.5);
+    filterEnvDriveSlider.customFormatText = [](double val) {
+        float db = (val <= 0.5) ? static_cast<float>(-6.0 + val * 12.0)
+                                : static_cast<float>((val - 0.5) * 48.0);
+        if (std::abs(db) < 0.05f) return juce::String("0.0 dB");
+        return (db > 0.0f ? "+" : "") + juce::String(db, 1) + " dB";
+    };
+    filterEnvDriveSlider.customParseText  = [](const juce::String& text) {
+        double db = parseNumberSafe(text, 0.0);
+        if (db <= 0.0) {
+            db = std::clamp(db, -6.0, 0.0);
+            return (db + 6.0) / 12.0;
+        } else {
+            db = std::clamp(db, 0.0, 24.0);
+            return 0.5 + (db / 48.0);
+        }
+    };
 
     cardFilterEnv->setKnob(0, "Slope", &filterEnvSlopeSlider);
     cardFilterEnv->setKnob(1, "Depth", &filterEnvDepthSlider);
     cardFilterEnv->setKnob(2, "Decay", &filterEnvDecaySlider);
-    cardFilterEnv->setKnob(3, "FM / Noise", &filterEnvCrossfadeSlider);
+    cardFilterEnv->setKnob(3, "Drive", &filterEnvDriveSlider);
     addAndMakeVisible(cardFilterEnv.get());
 
-    // --- 7. AMPLIFIER (Level 0..200%, Limiter bypass/limit) ---
-    cardAmp = std::make_unique<ModuleCardComponent>("Amplifier", juce::Colour(0xff00e5ff));
-    setupBox(ampLimiterBox);
-    bindSelector(ampLimiterSelector, ampLimiterBox, "planter_amp_limiter", { "bypass", "limit" }, 2);
-    ampLimiterSelector.setAccent(juce::Colour(0xffe53935));
-    cardAmp->setLedSelector(&ampLimiterSelector);
+    // --- PAIR 4: AMPLIFIER (Green) & AMP ENVELOPE (Magenta) ---
+    const juce::Colour colGreen(0xff00e676);
+    const juce::Colour colMagenta(0xffe040fb);
 
-    setupKnob(ampLevelSlider, juce::Colour(0xff00e5ff), false, 0.5);
-    ampLevelSlider.customFormatText = formatPercent200;
-    ampLevelSlider.customParseText  = parsePercent200;
+    // Amplifier: Green accent with Magenta panel tint
+    cardAmp = std::make_unique<ModuleCardComponent>("Amplifier", colGreen);
+    cardAmp->setPanelTintBaseColour(colMagenta);
 
-    setupKnob(ampPanSlider, juce::Colour(0xff00e5ff), true, 0.5);
+    // Knob 0: Amp Drive (-inf..0..+24dB, default 0dB = 0.5)
+    setupKnob(ampDriveSlider, colGreen, false, 0.5);
+    ampDriveSlider.customFormatText = formatAmpDriveDb;
+    ampDriveSlider.customParseText  = parseAmpDriveDb;
+
+    // Knob 1: Pan (Center = 0.5)
+    setupKnob(ampPanSlider, colGreen, true, 0.5);
     ampPanSlider.customFormatText = [](double val) {
         int p = static_cast<int>(std::round((val - 0.5) * 200.0));
         if (p == 0) return juce::String("Center");
@@ -296,31 +357,41 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     };
     ampPanSlider.customParseText = parseBipolarPercent;
 
-    setupKnob(ampDriveSlider, juce::Colour(0xff00e5ff), false, 0.5);
-    ampDriveSlider.customFormatText = formatDb;
-    ampDriveSlider.customParseText  = parseDb;
+    // Knob 2: Vel Slope (default LIN 0.75, double-click EXP 0.5886)
+    setupKnob(ampVelSlopeSlider, colGreen, false, 0.75);
+    ampVelSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
+    ampVelSlopeSlider.getDefaultValue = []() { return 0.5886; }; // double-click sets EXP
+    ampVelSlopeSlider.customFormatText = formatSlope;
+    ampVelSlopeSlider.customParseText  = parseSlope;
 
-    cardAmp->setKnob(0, "Level", &ampLevelSlider);
+    // Knob 3: Velocity Floor (1%..100%, default 50% = 0.5, dbl-click 50%)
+    setupKnob(ampVelFloorSlider, colGreen, false, 0.5);
+    ampVelFloorSlider.customFormatText = formatVelocityFloor;
+    ampVelFloorSlider.customParseText  = parseVelocityFloor;
+
+    cardAmp->setKnob(0, "Drive", &ampDriveSlider);
     cardAmp->setKnob(1, "Pan", &ampPanSlider);
-    cardAmp->setKnob(2, "Drive", &ampDriveSlider);
+    cardAmp->setKnob(2, "Vel Slope", &ampVelSlopeSlider);
+    cardAmp->setKnob(3, "Velocity", &ampVelFloorSlider);
     addAndMakeVisible(cardAmp.get());
 
-    // --- 8. AMP ENVELOPE ---
-    cardAmpEnv = std::make_unique<ModuleCardComponent>("Amp Envelope", juce::Colour(0xff00e5ff));
-    setupKnob(ampEnvClapsSlider, juce::Colour(0xff00e5ff), false, 0.0);
+    // Amp Envelope: Magenta accent with Green panel tint
+    cardAmpEnv = std::make_unique<ModuleCardComponent>("Amp Envelope", colMagenta);
+    cardAmpEnv->setPanelTintBaseColour(colGreen);
+    setupKnob(ampEnvClapsSlider, colMagenta, false, 0.0);
     ampEnvClapsSlider.customFormatText = formatClaps;
     ampEnvClapsSlider.customParseText  = parseClaps;
 
-    setupKnob(ampEnvClapSpeedSlider, juce::Colour(0xff00e5ff), false, 2.0 / 14.0);
+    setupKnob(ampEnvClapSpeedSlider, colMagenta, false, 2.0 / 14.0);
     ampEnvClapSpeedSlider.customFormatText = formatClapSpeed;
     ampEnvClapSpeedSlider.customParseText  = parseClapSpeed;
 
-    setupKnob(ampEnvSlopeSlider, juce::Colour(0xff00e5ff), false, 0.5886);
+    setupKnob(ampEnvSlopeSlider, colMagenta, false, 0.5886);
     ampEnvSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     ampEnvSlopeSlider.customFormatText = formatSlope;
     ampEnvSlopeSlider.customParseText  = parseSlope;
 
-    setupKnob(ampEnvDecaySlider, juce::Colour(0xff00e5ff), false, 0.3806);
+    setupKnob(ampEnvDecaySlider, colMagenta, false, 0.3806);
     ampEnvDecaySlider.customFormatText = formatTimeMs;
     ampEnvDecaySlider.customParseText  = parseTimeMs;
 
@@ -344,8 +415,8 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
     bindSlider("planter_noise_sh_rate", noiseShRateSlider);
     bindSlider("planter_noise_filter", noiseFilterSlider);
-    bindSlider("planter_noise_drive", noiseDriveSlider);
     bindSlider("planter_noise_decay", noiseDecaySlider);
+    bindSlider("planter_noise_crossfade", noiseCrossfadeSlider);
 
     bindSlider("planter_filter_cutoff", filterCutoffSlider);
     bindSlider("planter_filter_reso", filterResoSlider);
@@ -353,11 +424,12 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     bindSlider("planter_filterenv_slope", filterEnvSlopeSlider);
     bindSlider("planter_filterenv_depth", filterEnvDepthSlider);
     bindSlider("planter_filterenv_decay", filterEnvDecaySlider);
-    bindSlider("planter_filterenv_crossfade", filterEnvCrossfadeSlider);
+    bindSlider("planter_filterenv_drive", filterEnvDriveSlider);
 
-    bindSlider("planter_amp_level", ampLevelSlider);
-    bindSlider("planter_amp_pan", ampPanSlider);
     bindSlider("planter_amp_drive", ampDriveSlider);
+    bindSlider("planter_amp_pan", ampPanSlider);
+    bindSlider("planter_amp_vel_slope", ampVelSlopeSlider);
+    bindSlider("planter_amp_vel_floor", ampVelFloorSlider);
 
     bindSlider("planter_ampenv_claps", ampEnvClapsSlider);
     bindSlider("planter_ampenv_clapspeed", ampEnvClapSpeedSlider);
@@ -370,7 +442,6 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_pitchenv_target", pitchEnvTargetBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_filter_type", filterTypeBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_filter_slope", filterSlopeBox));
-    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_amp_limiter", ampLimiterBox));
 
     setSize(1040, 740);
     setResizable(true, true);
@@ -476,7 +547,7 @@ void TheKlangPlanterAudioProcessorEditor::resized() {
     };
 
     // Header controls
-    headerViz.setBounds(getWidth() - 436, 5, 180, 26);
+    headerViz.setBounds(getWidth() - 466, 5, 210, 26);
     initButton.setBounds(getWidth() - 246, 5, 90, 26);
     triggerButton.setBounds(getWidth() - 146, 5, 136, 26);
 
@@ -501,12 +572,12 @@ void TheKlangPlanterAudioProcessorEditor::timerCallback() {
     syncSelector(pitchEnvTargetBox, pitchEnvTargetSelector, "planter_pitchenv_target", lastPitchEnvTarget);
     syncSelector(filterTypeBox, filterTypeSelector, "planter_filter_type", lastFilterType);
     syncSelector(filterSlopeBox, filterSlopeSelector, "planter_filter_slope", lastFilterSlope);
-    syncSelector(ampLimiterBox, ampLimiterSelector, "planter_amp_limiter", lastAmpLimiter);
 
     // 2. Fetch live oscilloscope data & peak levels
     audioProcessor.getEngine().getScopeData(scopeBuffer.data(), static_cast<int>(scopeBuffer.size()));
     float peakL = audioProcessor.getEngine().getPeakL();
     float peakR = audioProcessor.getEngine().getPeakR();
+    float limAct = audioProcessor.getLimiterActivity();
 
-    headerViz.updateData(scopeBuffer.data(), static_cast<int>(scopeBuffer.size()), peakL, peakR);
+    headerViz.updateData(scopeBuffer.data(), static_cast<int>(scopeBuffer.size()), peakL, peakR, limAct);
 }

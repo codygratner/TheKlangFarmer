@@ -809,7 +809,7 @@ public:
             stageQ[2] = 0.7071f;
         }
 
-        float postDrive = postdriveGain;
+        float preDrive = predriveGain;
 
         const std::vector<float>* envSig = nullptr;
         if (voiceIndex == 1) envSig = &ctx.filterEnv1Signal;
@@ -819,6 +819,12 @@ public:
         for (int i = 0; i < numSamples; ++i) {
             float inL = left ? left[i] : 0.0f;
             float inR = right ? right[i] : inL;
+
+            // Pre-filter drive: saturates signal into the filter stages
+            if (std::abs(preDrive - 1.0f) > 0.01f) {
+                inL = std::tanh(inL * preDrive);
+                inR = std::tanh(inR * preDrive);
+            }
 
             // Cutoff modulated by Filter Envelope: depth is +/- 10 octaves
             float fEnv = (envSig && i < static_cast<int>(envSig->size())) ? (*envSig)[i] : 0.0f;
@@ -864,24 +870,19 @@ public:
                 }
             }
 
-            // Post-drive: drives the filter output
-            if (std::abs(postDrive - 1.0f) > 0.01f) {
-                inL = std::tanh(inL * postDrive);
-                inR = std::tanh(inR * postDrive);
-            }
-
             if (left) left[i] = inL;
             if (right) right[i] = inR;
         }
     }
 
-    void setPostDriveGain(float g) { postdriveGain = g; }
+    void setPreDriveGain(float g) { predriveGain = g; }
+    void setPostDriveGain(float g) { predriveGain = g; } // Backward compatibility alias
 
 private:
     int voiceIndex = 1;
     float invSr = 1.0f / 44100.0f;
     float sampleRate = 44100.0f;
-    float postdriveGain = 1.0f;
+    float predriveGain = 1.0f;
 
     float s1L[4] = { 0.0f }, s2L[4] = { 0.0f };
     float s1R[4] = { 0.0f }, s2R[4] = { 0.0f };

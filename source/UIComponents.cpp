@@ -181,12 +181,89 @@ double parseNoteDetail(const juce::String& text) {
 }
 
 juce::String formatRatio(double val) {
-    float r = static_cast<float>(val) * 16.0f;
-    return juce::String(r, 2) + "x";
+    if (val <= 0.5) {
+        float denom = 32.0f - static_cast<float>(val * 2.0) * 31.0f;
+        if (std::abs(denom - 1.0f) < 0.05f) return "1:1";
+        return "1:" + juce::String(denom, 1);
+    } else {
+        float num = 1.0f + static_cast<float>((val - 0.5) * 2.0) * 31.0f;
+        if (std::abs(num - 1.0f) < 0.05f) return "1:1";
+        return juce::String(num, 1) + ":1";
+    }
 }
+
 double parseRatio(const juce::String& text) {
-    double r = parseNumberSafe(text, 1.0);
-    return std::clamp(r / 16.0, 0.0, 1.0);
+    juce::String t = text.trim();
+    if (t.containsChar(':')) {
+        auto parts = juce::StringArray::fromTokens(t, ":", "");
+        if (parts.size() >= 2) {
+            double left = parseNumberSafe(parts[0], 1.0);
+            double right = parseNumberSafe(parts[1], 1.0);
+            if (right <= 0.0) right = 1.0;
+            double ratio = left / right;
+            if (ratio <= 1.0) {
+                double denom = (ratio > 0.0) ? (1.0 / ratio) : 32.0;
+                denom = std::clamp(denom, 1.0, 32.0);
+                return std::clamp((32.0 - denom) / 62.0, 0.0, 0.5);
+            } else {
+                ratio = std::clamp(ratio, 1.0, 32.0);
+                return std::clamp(0.5 + (ratio - 1.0) / 62.0, 0.5, 1.0);
+            }
+        }
+    }
+    double r = parseNumberSafe(t, 1.0);
+    if (r <= 0.0) return 0.0;
+    if (r <= 1.0) {
+        double denom = 1.0 / r;
+        denom = std::clamp(denom, 1.0, 32.0);
+        return std::clamp((32.0 - denom) / 62.0, 0.0, 0.5);
+    } else {
+        r = std::clamp(r, 1.0, 32.0);
+        return std::clamp(0.5 + (r - 1.0) / 62.0, 0.5, 1.0);
+    }
+}
+
+juce::String formatAmpDriveDb(double val) {
+    if (val < 0.001) return "-inf dB";
+    if (std::abs(val - 0.5) < 0.002) return "0.0 dB";
+    if (val < 0.5) {
+        float db = static_cast<float>((val / 0.5 - 1.0) * 60.0);
+        return juce::String(db, 1) + " dB";
+    }
+    float db = static_cast<float>(((val - 0.5) / 0.5) * 24.0);
+    return "+" + juce::String(db, 1) + " dB";
+}
+
+double parseAmpDriveDb(const juce::String& text) {
+    juce::String t = text.trim();
+    if (t.containsIgnoreCase("-inf") || t.containsIgnoreCase("inf")) return 0.0;
+    double db = parseNumberSafe(t, 0.0);
+    if (std::abs(db) < 0.01) return 0.5;
+    if (db < 0.0) {
+        db = std::clamp(db, -60.0, 0.0);
+        return std::clamp((db / 60.0 + 1.0) * 0.5, 0.0, 0.5);
+    }
+    db = std::clamp(db, 0.0, 24.0);
+    return std::clamp(0.5 + (db / 24.0) * 0.5, 0.5, 1.0);
+}
+
+juce::String formatVelocityFloor(double val) {
+    if (val <= 0.0) return "1%";
+    if (val >= 1.0) return "100%";
+    if (std::abs(val - 0.5) < 0.01) return "50%";
+    float pct = (val <= 0.5)
+        ? static_cast<float>(1.0 + val * 98.0)
+        : static_cast<float>(50.0 + (val - 0.5) * 100.0);
+    return juce::String(static_cast<int>(std::round(pct))) + "%";
+}
+
+double parseVelocityFloor(const juce::String& text) {
+    double p = parseNumberSafe(text, 50.0);
+    p = std::clamp(p, 1.0, 100.0);
+    if (p <= 50.0) {
+        return std::clamp((p - 1.0) / 98.0, 0.0, 0.5);
+    }
+    return std::clamp(0.5 + (p - 50.0) / 100.0, 0.5, 1.0);
 }
 
 juce::String formatPercent(double val) {
@@ -1873,9 +1950,9 @@ void ModuleCardComponent::paint(juce::Graphics& g) {
         return;
     }
 
-    auto compColour = accent.withRotatedHue(0.5f);
-    auto panelBg = juce::Colour(0xff151821).interpolatedWith(compColour, 0.12f);
-    auto panelBorder = juce::Colour(0xff222736).interpolatedWith(compColour, 0.15f);
+    auto compColour = panelTintBaseColour.isTransparent() ? accent.withRotatedHue(0.5f) : panelTintBaseColour;
+    auto panelBg = juce::Colour(0xff13161f).interpolatedWith(compColour, 0.16f);
+    auto panelBorder = juce::Colour(0xff222736).interpolatedWith(compColour, 0.20f);
 
     g.setColour(panelBg);
     g.fillRoundedRectangle(bounds, 6.0f);

@@ -1127,10 +1127,11 @@ int main() {
         assert(planterHasAudio);
         std::cout << "PASS: The Klang Planter basic trigger & audio generation." << std::endl;
 
-        // 2. Pre-filter Crossfader test
+        // 2. Pre-filter Crossfader test on Noise Transient (BLK_NOISE param 3)
         // At -100% (0.0): Noise only, FM silent
-        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 3, 0.0f); // -100% Noise only
-        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 3, 0.0f); // 0ms decay
+        planter.setDefaultParameters();
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 3, 0.0f); // -100% Noise only
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 2, 0.0f); // 0ms decay
         planter.trigger(1.0f);
         for (int b = 0; b < 10; ++b) planter.processStereo(pL.data(), pR.data(), 256);
         planter.processStereo(pL.data(), pR.data(), 256);
@@ -1141,29 +1142,54 @@ int main() {
 
         // At +100% (1.0): FM only, Noise silent
         planter.setDefaultParameters();
-        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 3, 1.0f); // +100% FM only
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_NOISE, 3, 1.0f); // +100% FM only
         std::cout << "PASS: Pre-Filter Crossfader +100% (FM only, Noise silent)." << std::endl;
 
-        // 3. Amp Limiter & 200% Level test
+        // 3. Pre-Filter Drive on Filter Env (BLK_FILTERENV param 3)
         planter.setDefaultParameters();
-        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 0, 1.0f); // 200% Level
-        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 2, 1.0f); // +24dB drive
-        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 3, 1.0f); // Limiter ON (limit)
-        planter.trigger(1.0f);
-        planter.processStereo(pL.data(), pR.data(), 256);
-        for (float s : pL) {
-            assert(std::abs(s) <= 1.01f); // Tanh soft limiting strictly bounds output
-        }
-        std::cout << "PASS: Amp Limiter 'limit' soft-limits boosted 200% output to <= 1.0." << std::endl;
-
-        // Limiter Bypass
-        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 3, 0.0f); // Limiter Bypass
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_FILTERENV, 3, 1.0f); // +24dB pre-filter drive
         planter.trigger(1.0f);
         planter.processStereo(pL.data(), pR.data(), 256);
         float maxVal = 0.0f;
         for (float s : pL) maxVal = std::max(maxVal, std::abs(s));
-        assert(maxVal > 1.0f); // Uncompressed signal exceeds 1.0 cleanly
-        std::cout << "PASS: Amp Limiter 'bypass' cleanly passes signal above 1.0 without clipping." << std::endl;
+        assert(maxVal > 0.05f);
+        std::cout << "PASS: Pre-Filter Drive saturation into filter verified." << std::endl;
+
+        // 4. Amp Drive (-inf at 0.0, 0dB at 0.5, +24dB at 1.0)
+        planter.setDefaultParameters();
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 0, 0.0f); // -inf dB drive
+        planter.trigger(1.0f);
+        planter.processStereo(pL.data(), pR.data(), 256);
+        float silentSum = 0.0f;
+        for (float s : pL) silentSum += std::abs(s);
+        assert(silentSum < 0.00001f); // Absolute silence
+        std::cout << "PASS: Amp Drive -inf dB produces absolute silence." << std::endl;
+
+        // 5. Velocity Controls (Vel Slope & Vel Floor)
+        // At Vel Floor = 1.0 (100%), velocity 0.01 plays full volume
+        planter.setDefaultParameters();
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 3, 1.0f); // Vel Floor = 100%
+        planter.trigger(0.01f);
+        assert(std::abs(planter.getAmpBlock()->getVelGain() - 1.0f) < 0.01f);
+
+        // At Vel Floor = 0.0 (1%), velocity 0.0 plays 1% volume
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 3, 0.0f); // Vel Floor = 1%
+        planter.trigger(0.0f);
+        assert(std::abs(planter.getAmpBlock()->getVelGain() - 0.01f) < 0.01f);
+
+        // At Vel Floor = 0.5 (50%), velocity 0.0 plays 50% volume
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 3, 0.5f); // Vel Floor = 50%
+        planter.trigger(0.0f);
+        assert(std::abs(planter.getAmpBlock()->getVelGain() - 0.50f) < 0.01f);
+        std::cout << "PASS: Velocity slope and floor scaling verified." << std::endl;
+
+        // 6. Limiter Activity Detection
+        planter.setDefaultParameters();
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 0, 1.0f); // +24dB amp drive
+        planter.trigger(1.0f);
+        planter.processStereo(pL.data(), pR.data(), 256);
+        assert(planter.getLimiterActivity() > 0.05f);
+        std::cout << "PASS: Limiter activity detection registers gain reduction." << std::endl;
     }
 
     std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;
