@@ -106,7 +106,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
     selector1.setVisible(false);
     selector2.setVisible(false);
 
-    auto setupK = [this](int kIdx, const juce::String& name, bool bipolar,
+    auto setupK = [this, fxType](int kIdx, const juce::String& name, bool bipolar,
                          std::function<juce::String(double)> fmt,
                          std::function<double(const juce::String&)> prs) {
         knobs[kIdx].setVisible(true);
@@ -126,6 +126,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             knobs[kIdx].setDoubleClickReturnValue(true, 0.0);
             knobs[kIdx].getDefaultValue = []() { return 0.0; };
         }
+        knobs[kIdx].setTooltip(TooltipHelper::getFxKnobTooltip(fxType, kIdx));
         knobs[kIdx].repaint();
         knobs[kIdx].updateText();
     };
@@ -166,6 +167,8 @@ void FXSlotCardComponent::configureForType(int fxType) {
             selector1.setVisible(true);
             selector1.setAccent(accent);
             selector1.setItems({ "Off", "On" }, 2);
+            selector1.setItemTooltips(TooltipHelper::getLedSelectorItemTooltips("toggle"));
+            selector1.setTooltip("DRIVE LIMITER: Output brickwall safety limiter toggle.");
             selector1.onChange = [this](int idx) {
                 knobs[3].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
             };
@@ -182,12 +185,16 @@ void FXSlotCardComponent::configureForType(int fxType) {
             selector1.setVisible(true);
             selector1.setAccent(accent);
             selector1.setItems({ "LPF", "BPF", "HPF", "BRF" }, 4);
+            selector1.setItemTooltips(TooltipHelper::getLedSelectorItemTooltips("filter_type"));
+            selector1.setTooltip("FILTER TYPE: Low-Pass, Band-Pass, High-Pass, or Notch.");
             selector1.onChange = [this](int idx) {
                 knobs[0].setValue(idx / 3.0, juce::sendNotification);
             };
             selector2.setVisible(true);
             selector2.setAccent(accent);
             selector2.setItems({ "6", "12", "18", "24", "36" }, 5);
+            selector2.setItemTooltips(TooltipHelper::getLedSelectorItemTooltips("filter_slope_5"));
+            selector2.setTooltip("FILTER SLOPE: Attenuation slope from 6 to 36 dB/oct.");
             selector2.onChange = [this](int idx) {
                 knobs[1].setValue(idx * 0.25, juce::sendNotification);
             };
@@ -240,6 +247,8 @@ void FXSlotCardComponent::configureForType(int fxType) {
             selector1.setVisible(true);
             selector1.setAccent(accent);
             selector1.setItems({ "2nd", "4th" }, 2);
+            selector1.setItemTooltips(TooltipHelper::getLedSelectorItemTooltips("phase_smear"));
+            selector1.setTooltip("ALL-PASS ORDER: 2nd-order or 4th-order dispersion networks.");
             selector1.onChange = [this](int idx) {
                 knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
             };
@@ -282,6 +291,8 @@ void FXSlotCardComponent::configureForType(int fxType) {
             selector1.setVisible(true);
             selector1.setAccent(accent);
             selector1.setItems({ "Off", "On" }, 2);
+            selector1.setItemTooltips(TooltipHelper::getLedSelectorItemTooltips("toggle"));
+            selector1.setTooltip("WAVEFOLDER LIMITER: Output brickwall safety limiter toggle.");
             selector1.onChange = [this](int idx) {
                 knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
             };
@@ -297,6 +308,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
         }
     }
 
+    setTooltip(TooltipHelper::getFxAlgorithmTooltip(fxType));
     resized();
     repaint();
 }
@@ -366,9 +378,19 @@ void BlankPlateComponent::paint(juce::Graphics& g) {
 // --- NAVIGATION CARD COMPONENT ---
 
 NavigationCardComponent::NavigationCardComponent() {
+    const juce::String pageTips[7] = {
+        "PAGE 1: VOICE 1 — Carrier 1, Modulator 1, Pitch Envelope 1, Filter 1, and Filter Envelope 1.",
+        "PAGE 2: VOICE 2 — Carrier 2, Modulator 2, Pitch Envelope 2, Filter 2, and Filter Envelope 2.",
+        "PAGE 3: TRANSIENTS — Sample-and-Hold Noise Generator, Filter 3, and Transient Envelopes.",
+        "PAGE 4: PRE-AMP FX — Modular FX Slots 1–4 inserted before the Master Amplifier.",
+        "PAGE 5: AMPLIFIER — Master Saturation Drive, Stereo Pan, Master Level, Voice Mixer, and Clap Generator.",
+        "PAGE 6: POST-AMP FX — Modular FX Slots 1–4 inserted after the Master Amplifier.",
+        "PAGE 7: MODULATIONS — Modulation Matrix, Analog Slop / Drift, and Multi-Wave LFO."
+    };
     for (int i = 0; i < pageNames.size(); ++i) {
         auto btn = std::make_unique<juce::TextButton>(pageNames[i]);
         btn->setClickingTogglesState(false);
+        if (i < 7) btn->setTooltip(pageTips[i]);
         int pageIdx = i;
         btn->onClick = [this, pageIdx]() {
             setSelectedPage(pageIdx);
@@ -377,6 +399,7 @@ NavigationCardComponent::NavigationCardComponent() {
         addAndMakeVisible(btn.get());
         buttons.push_back(std::move(btn));
     }
+    setTooltip("NAVIGATION: Select active rack page (Pages 1 to 7) to access modules.");
     setSelectedPage(0);
 }
 
@@ -442,6 +465,7 @@ FXPickerCardComponent::FXPickerCardComponent(const juce::String& titleText, juce
         boxes[i].setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff2c3240));
         boxes[i].setColour(juce::ComboBox::textColourId, juce::Colour(0xffe8edf5));
         boxes[i].setColour(juce::ComboBox::arrowColourId, juce::Colour(0xff8b95a8));
+        boxes[i].setTooltip("FX ALGORITHM SELECTOR: Choose an effect module (0 to 13) for Slot " + juce::String(i + 1) + ".");
         addAndMakeVisible(boxes[i]);
     }
 }
@@ -509,6 +533,18 @@ void VisualizationCardComponent::setVisualizedBlock(int blockIndex, const juce::
     currentBlockIndex = blockIndex;
     currentBlockName = blockName.toUpperCase();
     repaint();
+}
+
+juce::String VisualizationCardComponent::getTooltip() {
+    if (isOffHovered) {
+        return isOff ? "DISPLAY OFF: Visualizer rendering suspended to conserve CPU. Click to resume."
+                     : "DISPLAY ON: Visualizer actively rendering real-time waveform / Bode plot. Click to suspend.";
+    }
+    if (isLockHovered) {
+        return isLocked ? "VISUALIZER LOCKED: Pinned to current module. Click to unlock auto-tracking."
+                        : "VISUALIZER UNLOCKED: Follows currently selected module. Click to pin.";
+    }
+    return "VISUALIZER: High-speed real-time waveform oscilloscope and XY filter frequency response plot.";
 }
 
 void VisualizationCardComponent::mouseDown(const juce::MouseEvent& e) {
@@ -804,10 +840,14 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
       vizCard(juce::Colour(0xff00d2ff))
 {
     setLookAndFeel(&knobLookAndFeel);
+    tooltipWindow.setLookAndFeel(&knobLookAndFeel);
+    tooltipWindow.setOpaque(false);
+    tooltipWindow.setInterceptsMouseClicks(false, false);
 
     // Setup Header Quickstart Guide Button
     guideButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1f2430));
     guideButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff00d2ff));
+    guideButton.setTooltip("QUICKSTART GUIDE — Display synthesized drum architecture overview and recipes.");
     guideButton.onClick = [this]() {
         quickstartGuide.setVisible(true);
         quickstartGuide.toFront(true);
@@ -820,6 +860,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // Setup Header Initialize Button
     initButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff222736));
     initButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffc5d1e8));
+    initButton.setTooltip("INITIALIZE — Reset parameters to factory default or clean FX state.");
     initButton.onClick = [this]() {
         auto* alert = new juce::AlertWindow("Initialize Preset",
                                            "Select initialization preset mode:\n\nDefault: Restores factory synthesis and default FX rack.\nClean: Restores factory synthesis with empty FX slots.",
@@ -843,12 +884,14 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     // Setup Header Audition Trigger Button
     triggerButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff00d2ff));
     triggerButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff0f1115));
+    triggerButton.setTooltip("AUDITION HIT — Fire a manual audition drum hit at full velocity.");
     triggerButton.onClick = [this]() {
         audioProcessor.getEngine().trigger(1.0f);
     };
     addAndMakeVisible(triggerButton);
 
     // Permanent Slot 1 and Slot 8
+    navCard.setTooltip("NAVIGATION — Select rack page 1 through 7 to view and edit synthesizer modules.");
     navCard.onPageSelected = [this](int pageIndex) {
         setPage(pageIndex);
     };
@@ -872,6 +915,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 1. Carrier 1
     cardCarrier1 = std::make_unique<ModuleCardComponent>("Carrier 1", juce::Colour(0xff00d2ff));
+    cardCarrier1->setTooltip("CARRIER 1: Primary tonal FM oscillator with morphable sine/tri/saw/pulse waveforms.");
     setupBox(carrier1TrackingBox);
     bindSelector(carrier1TrackingSelector, carrier1TrackingBox, "carrier1_tracking", { "MIDI", "Freq", "Note" }, 3);
     cardCarrier1->setLedSelector(&carrier1TrackingSelector);
@@ -908,6 +952,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 2. Modulator 1
     cardMod1 = std::make_unique<ModuleCardComponent>("Modulator 1", juce::Colour(0xffff7043));
+    cardMod1->setTooltip("MODULATOR 1: Frequency modulation oscillator in Fixed Hz, Pitch Follow, or Harmonic Ratio modes.");
     setupBox(mod1TrackBox);
     bindSelector(mod1TrackSelector, mod1TrackBox, "mod1_track", { "Fixed", "Follow", "FM" }, 3);
     setupBox(mod1TypeBox);
@@ -960,6 +1005,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 3. Pitch Envelope 1
     cardPitchEnv1 = std::make_unique<ModuleCardComponent>("Pitch Env 1", juce::Colour(0xffffab00));
+    cardPitchEnv1->setTooltip("PITCH ENV 1: High-speed exponential pitch envelope routable to Carrier, Modulator, or Both.");
     setupBox(pitchEnv1TargetBox);
     bindSelector(pitchEnv1TargetSelector, pitchEnv1TargetBox, "pitchenv1_target", { "Car", "Mod", "Both", "Opp" }, 4);
     cardPitchEnv1->setSelectorAtBottom(true);
@@ -985,6 +1031,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 4. Filter 1
     cardFilter1 = std::make_unique<ModuleCardComponent>("Filter 1", juce::Colour(0xff7c4dff));
+    cardFilter1->setTooltip("FILTER 1: Voice 1 multi-mode resonant filter with selectable 6-36 dB/oct slope.");
     setupBox(filter1TypeBox);
     bindSelector(filter1TypeSelector, filter1TypeBox, "filter1_type", { "LPF", "BPF", "HPF", "BRF" }, 4);
     setupBox(filter1SlopeBox);
@@ -1006,6 +1053,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 5. Filter Envelope 1
     cardFilterEnv1 = std::make_unique<ModuleCardComponent>("Filter Env 1", juce::Colour(0xff7c4dff));
+    cardFilterEnv1->setTooltip("FILTER ENV 1: Voice 1 filter cutoff modulation envelope and pre-filter overdrive.");
     setupKnob(filterEnv1SlopeSlider, juce::Colour(0xff7c4dff), false, 0.5886);
     filterEnv1SlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     filterEnv1SlopeSlider.customFormatText = formatSlope;
@@ -1037,6 +1085,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 6. Carrier 2
     cardCarrier2 = std::make_unique<ModuleCardComponent>("Carrier 2", carrier2Colour);
+    cardCarrier2->setTooltip("CARRIER 2: Secondary tonal FM oscillator for layered drum bodies and sub harmonics.");
     setupBox(carrier2TrackingBox);
     bindSelector(carrier2TrackingSelector, carrier2TrackingBox, "carrier2_tracking", { "MIDI", "Freq", "Note" }, 3);
     cardCarrier2->setLedSelector(&carrier2TrackingSelector);
@@ -1073,6 +1122,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 7. Modulator 2
     cardMod2 = std::make_unique<ModuleCardComponent>("Modulator 2", mod2Colour);
+    cardMod2->setTooltip("MODULATOR 2: Secondary modulation source (Oscillator, Cyclic LFO, or Noise).");
     setupBox(mod2TrackBox);
     bindSelector(mod2TrackSelector, mod2TrackBox, "mod2_track", { "Fixed", "Follow", "FM" }, 3);
     setupBox(mod2TypeBox);
@@ -1125,6 +1175,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 8. Pitch Envelope 2
     cardPitchEnv2 = std::make_unique<ModuleCardComponent>("Pitch Env 2", pitchEnv2Colour);
+    cardPitchEnv2->setTooltip("PITCH ENV 2: Voice 2 pitch envelope for transient attack sweeps.");
     setupBox(pitchEnv2TargetBox);
     bindSelector(pitchEnv2TargetSelector, pitchEnv2TargetBox, "pitchenv2_target", { "Car", "Mod", "Both", "Opp" }, 4);
     cardPitchEnv2->setSelectorAtBottom(true);
@@ -1150,6 +1201,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 9. Filter 2
     cardFilter2 = std::make_unique<ModuleCardComponent>("Filter 2", filter2Colour);
+    cardFilter2->setTooltip("FILTER 2: Voice 2 multi-mode resonant filter.");
     setupBox(filter2TypeBox);
     bindSelector(filter2TypeSelector, filter2TypeBox, "filter2_type", { "LPF", "BPF", "HPF", "BRF" }, 4);
     setupBox(filter2SlopeBox);
@@ -1171,6 +1223,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 10. Filter Envelope 2
     cardFilterEnv2 = std::make_unique<ModuleCardComponent>("Filter Env 2", filter2Colour);
+    cardFilterEnv2->setTooltip("FILTER ENV 2: Voice 2 cutoff modulation envelope and pre-filter overdrive.");
     setupKnob(filterEnv2SlopeSlider, filter2Colour, false, 0.5886);
     filterEnv2SlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     filterEnv2SlopeSlider.customFormatText = formatSlope;
@@ -1196,6 +1249,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 11. Noise Transient
     cardNoise = std::make_unique<ModuleCardComponent>("Noise Transient", juce::Colour(0xff90a4ae));
+    cardNoise->setTooltip("NOISE TRANSIENT: Metallic transient generator with sample-and-hold clock and center frequency filter.");
     setupKnob(noiseShRateSlider, juce::Colour(0xff90a4ae), false, 1.0);
     noiseShRateSlider.customFormatText = formatFreqHz;
     noiseShRateSlider.customParseText  = parseFreqHz;
@@ -1220,6 +1274,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 12. Filter 3 (Transients Filter)
     cardFilter3 = std::make_unique<ModuleCardComponent>("Filter 3", juce::Colour(0xff7c4dff));
+    cardFilter3->setTooltip("FILTER 3: Dedicated multi-mode filter processing the Noise transient burst.");
     setupBox(filter3TypeBox);
     bindSelector(filter3TypeSelector, filter3TypeBox, "filter3_type", { "LPF", "BPF", "HPF", "BRF" }, 4);
     setupBox(filter3SlopeBox);
@@ -1241,6 +1296,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 13. Filter Envelope 3 (Transients Filter Env)
     cardFilterEnv3 = std::make_unique<ModuleCardComponent>("Filter Env 3", juce::Colour(0xff7c4dff));
+    cardFilterEnv3->setTooltip("FILTER ENV 3: Envelope shaping Noise filter cutoff modulation and pre-filter drive.");
     setupKnob(filterEnv3SlopeSlider, juce::Colour(0xff7c4dff), false, 0.5886);
     filterEnv3SlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     filterEnv3SlopeSlider.customFormatText = formatSlope;
@@ -1266,6 +1322,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 14. Mixer
     cardMixer = std::make_unique<ModuleCardComponent>("Mixer", juce::Colour(0xffe53935), ModuleCardComponent::PanelStyle::DoepferSilver);
+    cardMixer->setTooltip("MIXER: 4-channel analog summing mixer blending Carrier 1, Carrier 2, Ring Mod, and Noise.");
     setupKnob(mixerCarrier1LevelSlider, juce::Colour(0xffe53935), false, 0.5);
     mixerCarrier1LevelSlider.setLightTrough(true);
     mixerCarrier1LevelSlider.customFormatText = formatMixerLevel;
@@ -1306,6 +1363,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 24. Amp
     cardAmp = std::make_unique<ModuleCardComponent>("Amplifier", juce::Colour(0xff00e5ff));
+    cardAmp->setTooltip("AMPLIFIER: Master output gain stage with stereo panning and pre-limiter saturation drive.");
     setupBox(ampLimiterBox);
     bindSelector(ampLimiterSelector, ampLimiterBox, "amp_limiter", { "Off", "On" }, 2);
     ampLimiterSelector.setAccent(juce::Colour(0xffe53935));
@@ -1334,6 +1392,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 25. Amp Envelope
     cardAmpEnv = std::make_unique<ModuleCardComponent>("Amp Envelope", juce::Colour(0xff00e5ff));
+    cardAmpEnv->setTooltip("AMP ENVELOPE: Master amplitude decay envelope with integrated multi-burst clap generator.");
     setupKnob(ampEnvClapsSlider, juce::Colour(0xff00e5ff), false, 0.0);
     ampEnvClapsSlider.customFormatText = formatClaps;
     ampEnvClapsSlider.customParseText  = parseClaps;
@@ -1359,6 +1418,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 26. Pre-Amp Limiter
     cardPreLimiter = std::make_unique<ModuleCardComponent>("Pre Limiter", juce::Colour(0xffe53935), ModuleCardComponent::PanelStyle::DoepferSilver);
+    cardPreLimiter->setTooltip("PRE LIMITER: Pre-saturation brickwall safety limiter and gain booster.");
     cardPreLimiter->setKnobsLightTrough(false);
     setupBox(preLimiterEnableBox);
     bindSelector(preLimiterEnableSelector, preLimiterEnableBox, "pre_limiter_enable", { "Off", "On" }, 2);
@@ -1384,6 +1444,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 27. Post-Amp Limiter
     cardPostLimiter = std::make_unique<ModuleCardComponent>("Post Limiter", juce::Colour(0xffe53935), ModuleCardComponent::PanelStyle::DoepferSilver);
+    cardPostLimiter->setTooltip("POST LIMITER: Master output brickwall peak limiter with auto soft-knee release.");
     cardPostLimiter->setKnobsLightTrough(false);
     setupBox(postLimiterEnableBox);
     bindSelector(postLimiterEnableSelector, postLimiterEnableBox, "post_limiter_enable", { "Off", "On" }, 2);
@@ -1409,6 +1470,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 28. Velocity
     cardVelocity = std::make_unique<ModuleCardComponent>("Velocity", juce::Colour(0xff29b6f6));
+    cardVelocity->setTooltip("VELOCITY: Global MIDI velocity modulation matrix mapping strike force to synth parameters.");
     setupKnob(velSlopeSlider, juce::Colour(0xff29b6f6), false, 0.5886);
     velSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::VelocitySlope;
     velSlopeSlider.customFormatText = formatVelocitySlope;
@@ -1437,6 +1499,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 29. Key Tracking
     cardKeyTrack = std::make_unique<ModuleCardComponent>("Key Track", juce::Colour(0xff26a69a));
+    cardKeyTrack->setTooltip("KEY TRACK: MIDI pitch-tracking matrix scaling cutoff, decay, and level across keyboard.");
     setupKnob(keySlopeSlider, juce::Colour(0xff26a69a), false, 0.5886);
     keySlopeSlider.diagramType = RotaryKnobSlider::DiagramType::VelocitySlope;
     keySlopeSlider.customFormatText = formatVelocitySlope;
@@ -1465,6 +1528,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     // 30. Slop
     cardSlop = std::make_unique<ModuleCardComponent>("Slop", juce::Colour(0xffab47bc));
+    cardSlop->setTooltip("SLOP: Analog pitch, decay, and pan micro-drift simulation for organic acoustic variation.");
     setupKnob(slopFreqSlider, juce::Colour(0xffab47bc), false, 0.0);
     slopFreqSlider.customFormatText = formatSlop;
     slopFreqSlider.customParseText  = parseSlop;
@@ -1491,18 +1555,20 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     const auto modChoices = TheKlangFarmerAudioProcessor::getModDestinationChoices();
 
     auto setupModEnvCard = [this, &modChoices](std::unique_ptr<ModuleCardComponent>& card,
-                                               const juce::String& title,
-                                               RotaryKnobSlider& slope,
-                                               RotaryKnobSlider& depth,
-                                               RotaryKnobSlider& decay,
-                                               juce::ComboBox& targetBox) {
+                                                const juce::String& title,
+                                                RotaryKnobSlider& slope,
+                                                RotaryKnobSlider& depth,
+                                                RotaryKnobSlider& decay,
+                                                juce::ComboBox& targetBox) {
         card = std::make_unique<ModuleCardComponent>(title, juce::Colour(0xffffb300));
+        card->setTooltip(title.toUpperCase() + ": Freely assignable modulation envelope routable to any synthesizer parameter.");
         targetBox.clear();
         targetBox.addItemList(modChoices, 1);
         targetBox.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff161922));
         targetBox.setColour(juce::ComboBox::textColourId, juce::Colour(0xffe8edf5));
         targetBox.setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff2d3342));
         targetBox.setJustificationType(juce::Justification::centredLeft);
+        targetBox.setTooltip("MOD DESTINATION: Select the synthesizer parameter modulated by this envelope.");
         card->setSelector(&targetBox);
         card->setSelectorAtBottom(true);
 
@@ -1808,6 +1874,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
 TheKlangFarmerAudioProcessorEditor::~TheKlangFarmerAudioProcessorEditor() {
     stopTimer();
+    tooltipWindow.setLookAndFeel(nullptr);
     setLookAndFeel(nullptr);
 }
 
@@ -1827,11 +1894,137 @@ void TheKlangFarmerAudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juc
     slider.getDefaultValue = [defaultVal]() { return defaultVal; };
 }
 
+static juce::String getFarmerParamDescription(const juce::String& paramId, bool& isBipolar) {
+    isBipolar = false;
+    // Carrier 1
+    if (paramId == "carrier1_pitch") return "Carrier 1 pitch transpose / frequency offset";
+    if (paramId == "carrier1_shape") return "Carrier 1 waveform shape morphing (Sine -> Triangle -> Saw -> Pulse)";
+    if (paramId == "carrier1_depth") { isBipolar = true; return "Frequency modulation depth from Modulator 1"; }
+
+    // Modulator 1
+    if (paramId == "mod1_shape") return "Modulator 1 waveform shape / symmetry";
+    if (paramId == "mod1_speed") return "Modulator 1 frequency / semitone offset / FM ratio";
+
+    // Pitch Env 1
+    if (paramId == "pitchenv1_slope") return "Pitch envelope decay curve tension from punchy exponential to linear";
+    if (paramId == "pitchenv1_depth") { isBipolar = true; return "Bipolar pitch envelope modulation depth in semitones"; }
+    if (paramId == "pitchenv1_decay") return "Pitch envelope decay duration";
+
+    // Filter 1
+    if (paramId == "filter1_cutoff") return "Filter 1 cutoff corner / center frequency (20 Hz - 24 kHz)";
+    if (paramId == "filter1_resonance") return "Filter 1 resonance / Q sharpness boost at cutoff";
+
+    // Filter Env 1
+    if (paramId == "filterenv1_slope") return "Filter envelope decay curve tension";
+    if (paramId == "filterenv1_depth") { isBipolar = true; return "Cutoff modulation depth in octaves (-10 to +10 oct)"; }
+    if (paramId == "filterenv1_decay") return "Filter envelope decay duration";
+    if (paramId == "filterenv1_postdrive") return "Pre-filter analog saturation drive gain (-6 to +24 dB)";
+
+    // Carrier 2
+    if (paramId == "carrier2_pitch") return "Carrier 2 pitch transpose / frequency offset";
+    if (paramId == "carrier2_shape") return "Carrier 2 waveform shape morphing";
+    if (paramId == "carrier2_depth") { isBipolar = true; return "Frequency modulation depth from Modulator 2"; }
+
+    // Modulator 2
+    if (paramId == "mod2_shape") return "Modulator 2 waveform shape / symmetry";
+    if (paramId == "mod2_speed") return "Modulator 2 frequency / semitone offset / FM ratio";
+
+    // Pitch Env 2
+    if (paramId == "pitchenv2_slope") return "Voice 2 pitch envelope decay curve tension";
+    if (paramId == "pitchenv2_depth") { isBipolar = true; return "Voice 2 pitch envelope modulation depth in semitones"; }
+    if (paramId == "pitchenv2_decay") return "Voice 2 pitch envelope decay duration";
+
+    // Filter 2
+    if (paramId == "filter2_cutoff") return "Filter 2 cutoff corner / center frequency";
+    if (paramId == "filter2_resonance") return "Filter 2 resonance / Q sharpness boost at cutoff";
+
+    // Filter Env 2
+    if (paramId == "filterenv2_slope") return "Filter 2 envelope decay curve tension";
+    if (paramId == "filterenv2_depth") { isBipolar = true; return "Filter 2 cutoff modulation depth in octaves"; }
+    if (paramId == "filterenv2_decay") return "Filter 2 envelope decay duration";
+    if (paramId == "filterenv2_postdrive") return "Filter 2 pre-filter saturation drive gain";
+
+    // Noise Transient
+    if (paramId == "noise_sh_rate") return "Sample-and-hold downsampling clock rate for metallic textures";
+    if (paramId == "noise_filter") return "Transient noise band-pass / center frequency color";
+    if (paramId == "noise_drive") return "Transient noise saturation drive gain";
+    if (paramId == "noise_decay") return "Transient noise burst decay time";
+
+    // Filter 3 (Transients Filter)
+    if (paramId == "filter3_cutoff") return "Filter 3 cutoff corner / center frequency";
+    if (paramId == "filter3_resonance") return "Filter 3 resonance / Q sharpness boost at cutoff";
+
+    // Filter Env 3
+    if (paramId == "filterenv3_slope") return "Filter 3 envelope decay curve tension";
+    if (paramId == "filterenv3_depth") { isBipolar = true; return "Filter 3 cutoff modulation depth in octaves"; }
+    if (paramId == "filterenv3_decay") return "Filter 3 envelope decay duration";
+    if (paramId == "filterenv3_postdrive") return "Filter 3 pre-filter saturation drive gain";
+
+    // Mixer
+    if (paramId == "mixer_carrier1_level") return "Carrier 1 voice output volume level";
+    if (paramId == "mixer_carrier2_level") return "Carrier 2 voice output volume level";
+    if (paramId == "mixer_ringmod") return "Ring modulator (Carrier 1 x Carrier 2) mix level";
+    if (paramId == "mixer_noise_level") return "Transients noise generator mix level";
+
+    // Amp
+    if (paramId == "amp_level") return "Master amplifier output volume level";
+    if (paramId == "amp_pan") { isBipolar = true; return "Stereo panorama position (Left <-> Right)"; }
+    if (paramId == "amp_drive") return "Pre-limiter analog saturation drive gain";
+
+    // Amp Env
+    if (paramId == "ampenv_claps") return "Pre-decay transient hand-clap burst count (0 to 32 bursts)";
+    if (paramId == "ampenv_clapspeed") return "Time spacing interval between clap bursts (1 to 15 ms)";
+    if (paramId == "ampenv_slope") return "Master amplitude envelope decay curve tension";
+    if (paramId == "ampenv_decay") return "Master amplitude envelope decay duration";
+
+    // Pre-Limiter
+    if (paramId == "pre_limiter_gain") return "Input boost gain into the pre-limiter";
+    if (paramId == "pre_limiter_thresh") return "Ceiling threshold for pre-limiter peak reduction";
+    if (paramId == "pre_limiter_release") return "Release recovery time for the pre-limiter";
+
+    // Post-Limiter
+    if (paramId == "post_limiter_gain") return "Input boost gain into the master post-limiter";
+    if (paramId == "post_limiter_thresh") return "Master ceiling threshold for peak limiting";
+    if (paramId == "post_limiter_release") return "Release recovery time for the master limiter";
+
+    // Velocity
+    if (paramId == "vel_slope") return "MIDI velocity dynamic response curve";
+    if (paramId == "vel_depth") { isBipolar = true; return "Velocity scaling of modulation envelope depth"; }
+    if (paramId == "vel_decay") { isBipolar = true; return "Velocity scaling of envelope decay durations"; }
+    if (paramId == "vel_volume") return "Minimum volume floor attenuation at zero velocity";
+
+    // Key Track
+    if (paramId == "key_slope") return "MIDI note keyboard tracking response curve";
+    if (paramId == "key_depth") { isBipolar = true; return "Key tracking scaling of modulation envelope depth"; }
+    if (paramId == "key_decay") { isBipolar = true; return "Key tracking scaling of envelope decay durations"; }
+    if (paramId == "key_volume") return "Key tracking scaling of voice output volume";
+
+    // Slop
+    if (paramId == "slop_freq") return "Analog frequency drift / random pitch fluctuation amount";
+    if (paramId == "slop_depth") return "Analog envelope depth fluctuation amount";
+    if (paramId == "slop_decay") return "Analog envelope decay time fluctuation amount";
+    if (paramId == "slop_pan") return "Subtle stereo position wander per note strike";
+
+    // Mod Envelopes
+    if (paramId.startsWith("modenv") && paramId.endsWith("_slope")) return "Modulation envelope decay curve tension";
+    if (paramId.startsWith("modenv") && paramId.endsWith("_depth")) { isBipolar = true; return "Bipolar modulation envelope depth to assigned target"; }
+    if (paramId.startsWith("modenv") && paramId.endsWith("_decay")) return "Modulation envelope decay duration";
+
+    return "";
+}
+
 void TheKlangFarmerAudioProcessorEditor::bindSlider(const juce::String& paramId, RotaryKnobSlider& slider) {
     slider.setParamId(paramId);
     slider.getModInfoFunc = [this](const juce::String& pid) {
         return audioProcessor.getParamModulationInfo(pid);
     };
+
+    if (!paramId.startsWith("pre_fx_") && !paramId.startsWith("post_fx_")) {
+        bool isBipolar = false;
+        juce::String desc = getFarmerParamDescription(paramId, isBipolar);
+        slider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, paramId, desc, isBipolar));
+    }
+
     registeredSliders.push_back(&slider);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, paramId, slider));
 }
@@ -1858,6 +2051,8 @@ void TheKlangFarmerAudioProcessorEditor::updateCarrier1Controls() {
         carrier1PitchSlider.getDefaultValue = []() { return 33.0 / 127.0; };
     }
     carrier1PitchSlider.setDoubleClickReturnValue(true, carrier1PitchSlider.getDefaultValue());
+    juce::String desc = (mode == 0 ? "Pitch transpose offset in semitones" : (mode == 1 ? "Carrier base frequency in Hertz" : "Base musical note pitch"));
+    carrier1PitchSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "carrier1_pitch", desc, mode == 0));
     carrier1PitchSlider.repaint();
     carrier1PitchSlider.updateText();
 }
@@ -1880,6 +2075,8 @@ void TheKlangFarmerAudioProcessorEditor::updateCarrier2Controls() {
         carrier2PitchSlider.getDefaultValue = []() { return 33.0 / 127.0; };
     }
     carrier2PitchSlider.setDoubleClickReturnValue(true, carrier2PitchSlider.getDefaultValue());
+    juce::String desc = (mode == 0 ? "Pitch transpose offset in semitones" : (mode == 1 ? "Carrier base frequency in Hertz" : "Base musical note pitch"));
+    carrier2PitchSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "carrier2_pitch", desc, mode == 0));
     carrier2PitchSlider.repaint();
     carrier2PitchSlider.updateText();
 }
@@ -1933,6 +2130,15 @@ void TheKlangFarmerAudioProcessorEditor::bindSelector(LedSelectorComponent& sele
     box.addItemList(items, 1);
     box.setVisible(false);
     selector.setItems(items, numColumns);
+    selector.setItemTooltips(TooltipHelper::getLedSelectorItemTooltips(paramId));
+    if (paramId.contains("carrier") && paramId.contains("tracking")) selector.setTooltip("CARRIER TRACKING: Select pitch tracking mode (MIDI note, Fixed Hz, or Semitone Note).");
+    else if (paramId.contains("mod") && paramId.contains("track")) selector.setTooltip("MODULATOR TRACKING: Select tracking mode (Fixed Hz, Follow semitones, or FM Ratio).");
+    else if (paramId.contains("mod") && paramId.contains("type")) selector.setTooltip("MODULATOR TYPE: Select modulator waveform type (Osc, Cyclic, or Noise).");
+    else if (paramId.contains("target")) selector.setTooltip("PITCH ENV ROUTING: Select modulation routing destination (Carrier, Modulator, Both, or Opposite).");
+    else if (paramId.contains("filter") && paramId.contains("type")) selector.setTooltip("FILTER TYPE: Select filter characteristic (Low-Pass, Band-Pass, High-Pass, Notch).");
+    else if (paramId.contains("filter") && paramId.contains("slope")) selector.setTooltip("FILTER SLOPE: Select filter attenuation roll-off from 6 to 36 dB/oct.");
+    else if (paramId.contains("limiter")) selector.setTooltip("LIMITER TOGGLE: Enable or bypass brickwall safety limiter.");
+
     selector.onChange = [this, &box, paramId](int idx) {
         box.setSelectedId(idx + 1, juce::sendNotification);
         if (auto* param = audioProcessor.apvts.getParameter(paramId)) {

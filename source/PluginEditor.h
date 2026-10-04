@@ -8,7 +8,8 @@
 #include <functional>
 
 // Dynamic Card component representing an independent FX slot
-class FXSlotCardComponent : public juce::Component {
+class FXSlotCardComponent : public juce::Component,
+                            public juce::SettableTooltipClient {
 public:
     FXSlotCardComponent(int slotIndex, bool isPostRack);
     void paint(juce::Graphics& g) override;
@@ -50,7 +51,8 @@ public:
 };
 
 // Permanent Slot 1: Navigation Block
-class NavigationCardComponent : public juce::Component {
+class NavigationCardComponent : public juce::Component,
+                                public juce::SettableTooltipClient {
 public:
     NavigationCardComponent();
     void paint(juce::Graphics& g) override;
@@ -90,11 +92,14 @@ private:
 };
 
 // Permanent Slot 8: Visualizations Block with auto-switching, module title, and lock icon
-class VisualizationCardComponent : public juce::Component {
+class VisualizationCardComponent : public juce::Component,
+                                   public juce::SettableTooltipClient {
 public:
     VisualizationCardComponent(juce::Colour accentColour);
     void paint(juce::Graphics& g) override;
     void resized() override;
+
+    juce::String getTooltip() override;
 
     void setVisualizedBlock(int blockIndex, const juce::String& blockName);
     int getCurrentBlockIndex() const { return currentBlockIndex; }
@@ -166,6 +171,7 @@ public:
 private:
     TheKlangFarmerAudioProcessor& audioProcessor;
     RotaryKnobLookAndFeel knobLookAndFeel;
+    juce::TooltipWindow tooltipWindow { this, 300 };
 
     // Header buttons
     juce::TextButton guideButton { "GUIDE" };

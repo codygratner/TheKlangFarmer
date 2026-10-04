@@ -5,7 +5,7 @@
 #include "UIComponents.h"
 
 // Compact Header Oscilloscope, Limiter Warning Badge, and Peak Meters for The Klang Planter
-class PlanterHeaderVisualizer : public juce::Component {
+class PlanterHeaderVisualizer : public juce::Component, public juce::SettableTooltipClient {
 public:
     PlanterHeaderVisualizer();
     void updateData(const float* scopeData, int numPoints, float peakL, float peakR, float limiterActivity);
@@ -30,6 +30,7 @@ public:
 private:
     TheKlangPlanterAudioProcessor& audioProcessor;
     RotaryKnobLookAndFeel knobLookAndFeel;
+    juce::TooltipWindow tooltipWindow { this, 300 };
 
     // Header Components
     PlanterHeaderVisualizer headerViz;

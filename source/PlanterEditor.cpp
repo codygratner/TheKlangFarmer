@@ -4,6 +4,7 @@
 
 PlanterHeaderVisualizer::PlanterHeaderVisualizer() {
     points.resize(128, 0.0f);
+    setTooltip("MASTER MONITOR: Real-time stereo output oscilloscope, peak level meters, and brickwall limiter activity indicator.");
 }
 
 void PlanterHeaderVisualizer::updateData(const float* scopeData, int numPoints, float peakL, float peakR, float limiterActivity) {
@@ -108,6 +109,9 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
       filterSlopeSelector(juce::Colour(0xff2979ff))
 {
     setLookAndFeel(&knobLookAndFeel);
+    tooltipWindow.setLookAndFeel(&knobLookAndFeel);
+    tooltipWindow.setOpaque(false);
+    tooltipWindow.setInterceptsMouseClicks(false, false);
     scopeBuffer.resize(512, 0.0f);
 
     // Header Visualizer
@@ -116,6 +120,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     // Header Initialize Button
     initButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff222736));
     initButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffc5d1e8));
+    initButton.setTooltip("INIT — Reset all parameters to a clean default drum patch.");
     initButton.onClick = [this]() {
         audioProcessor.getEngine().setDefaultParameters();
         for (auto* param : audioProcessor.getParameters()) {
@@ -129,6 +134,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     // Header Audition Trigger Button
     triggerButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff00e5ff));
     triggerButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff0f1115));
+    triggerButton.setTooltip("TRIGGER — Fire a manual audition drum hit at full velocity.");
     triggerButton.onClick = [this]() {
         audioProcessor.getEngine().trigger(1.0f);
     };
@@ -141,6 +147,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
     cardCarrier = std::make_unique<ModuleCardComponent>("Carrier", colRed);
     cardCarrier->setPanelTintBaseColour(colCyan);
+    cardCarrier->setTooltip("CARRIER: Main pitched tonal oscillator with shape morphing and tracking modes.");
     setupBox(carrierTrackingBox);
     bindSelector(carrierTrackingSelector, carrierTrackingBox, "planter_carrier_tracking", { "MIDI", "Freq", "Note" }, 3);
     carrierTrackingBox.onChange = [this]() {
@@ -180,6 +187,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     // Modulator: Cyan accent with Red panel tint
     cardMod = std::make_unique<ModuleCardComponent>("Modulator", colCyan);
     cardMod->setPanelTintBaseColour(colRed);
+    cardMod->setTooltip("MODULATOR: FM modulation oscillator providing frequency and timbre modulation.");
     setupBox(modTrackBox);
     bindSelector(modTrackSelector, modTrackBox, "planter_mod_track", { "Fixed", "Follow", "FM" }, 3);
     modTrackBox.onChange = [this]() {
@@ -233,6 +241,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
     cardPitchEnv = std::make_unique<ModuleCardComponent>("Pitch Env", colSilver);
     cardPitchEnv->setPanelTintBaseColour(colDarkGrey);
+    cardPitchEnv->setTooltip("PITCH ENV: Dedicated pitch modulation envelope with routing destinations.");
     setupBox(pitchEnvTargetBox);
     bindSelector(pitchEnvTargetSelector, pitchEnvTargetBox, "planter_pitchenv_target", { "Car", "Mod", "Both", "Opp" }, 4);
     pitchEnvTargetSelector.setItemStyle(0, { colRed,  std::nullopt, std::nullopt }); // Car:  Carrier Red accent
@@ -263,6 +272,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     // Noise Transient: Silver panel (DoepferSilver), Dark Grey accent, with Silver highlight Crossfader at Knob 4
     cardNoise = std::make_unique<ModuleCardComponent>("Noise Transient", colDarkGrey, ModuleCardComponent::PanelStyle::DoepferSilver);
     cardNoise->setKnobsLightTrough(true);
+    cardNoise->setTooltip("TRANSIENTS: Tuned sample-and-hold noise generator with transient envelope.");
 
     setupKnob(noiseShRateSlider, colDarkGrey, false, 1.0);
     noiseShRateSlider.setLightTrough(true);
@@ -301,6 +311,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     // Filter: Blue accent with Amber panel tint
     cardFilter = std::make_unique<ModuleCardComponent>("Filter", colBlue);
     cardFilter->setPanelTintBaseColour(colAmber);
+    cardFilter->setTooltip("FILTER: State-variable resonant filter with multiple types and slopes.");
     setupBox(filterTypeBox);
     bindSelector(filterTypeSelector, filterTypeBox, "planter_filter_type", { "LPF", "BPF", "HPF", "BRF" }, 4);
     setupBox(filterSlopeBox);
@@ -323,6 +334,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     // Filter Env: Amber accent with Blue panel tint (Knob 4 is Pre-Filter Drive)
     cardFilterEnv = std::make_unique<ModuleCardComponent>("Filter Env", colAmber);
     cardFilterEnv->setPanelTintBaseColour(colBlue);
+    cardFilterEnv->setTooltip("FILTER ENV: Cutoff sweep envelope and pre-filter overdrive.");
     setupKnob(filterEnvSlopeSlider, colAmber, false, 0.5886);
     filterEnvSlopeSlider.diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
     filterEnvSlopeSlider.customFormatText = formatSlope;
@@ -367,6 +379,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     // Amplifier: Green accent with Magenta panel tint
     cardAmp = std::make_unique<ModuleCardComponent>("Amplifier", colGreen);
     cardAmp->setPanelTintBaseColour(colMagenta);
+    cardAmp->setTooltip("AMPLIFIER: Master saturation drive, stereo panning, and velocity scaling.");
 
     // Knob 0: Amp Drive (-inf..0..+24dB, default 0dB = 0.5)
     setupKnob(ampDriveSlider, colGreen, false, 0.5);
@@ -403,6 +416,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     // Amp Envelope: Magenta accent with Green panel tint
     cardAmpEnv = std::make_unique<ModuleCardComponent>("Amp Envelope", colMagenta);
     cardAmpEnv->setPanelTintBaseColour(colGreen);
+    cardAmpEnv->setTooltip("AMP ENV: Master percussive amplitude decay envelope and clap burst generator.");
     setupKnob(ampEnvClapsSlider, colMagenta, false, 0.0);
     ampEnvClapsSlider.customFormatText = formatClaps;
     ampEnvClapsSlider.customParseText  = parseClaps;
@@ -468,6 +482,41 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_filter_type", filterTypeBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_filter_slope", filterSlopeBox));
 
+    // Wire parameter tooltips
+    carrierPitchSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_carrier_pitch", "Carrier oscillator pitch or frequency depending on tracking mode", true));
+    carrierShapeSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_carrier_shape", "Morph carrier waveform from sine through triangle and saw to pulse/square", false));
+    carrierDepthSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_carrier_depth", "Bipolar FM modulation index/depth from Modulator into Carrier", true));
+
+    modShapeSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_mod_shape", "Modulator oscillator waveform shape morphing", false));
+    modSpeedSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_mod_speed", "Modulator rate, harmonic ratio, or note pitch offset", false));
+
+    pitchEnvSlopeSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_pitchenv_slope", "Pitch decay curve contour (exponential drop to linear glide)", false));
+    pitchEnvDepthSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_pitchenv_depth", "Bipolar pitch envelope modulation depth", true));
+    pitchEnvDecaySlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_pitchenv_decay", "Pitch envelope decay duration", false));
+
+    noiseShRateSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_noise_sh_rate", "Sample-and-hold clock rate / granular transient pitch", false));
+    noiseFilterSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_noise_filter", "Noise center frequency and tonal color tilt", true));
+    noiseDecaySlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_noise_decay", "Transient noise burst decay time", false));
+    noiseCrossfadeSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_noise_crossfade", "Blend balance between FM tonal voice and noise burst", true));
+
+    filterCutoffSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_filter_cutoff", "Master filter corner or center frequency", false));
+    filterResoSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_filter_reso", "Resonance / Q factor emphasis at cutoff frequency", false));
+
+    filterEnvSlopeSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_filterenv_slope", "Filter envelope decay curve contour", false));
+    filterEnvDepthSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_filterenv_depth", "Bipolar cutoff modulation sweep depth in octaves", true));
+    filterEnvDecaySlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_filterenv_decay", "Filter envelope decay duration", false));
+    filterEnvDriveSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_filterenv_drive", "Pre-filter saturation drive and harmonic distortion", false));
+
+    ampDriveSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_amp_drive", "Master output saturation drive and soft-clipping gain", false));
+    ampPanSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_amp_pan", "Stereo output pan position", true));
+    ampVelSlopeSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_amp_vel_slope", "MIDI velocity response curve (exponential, linear, logarithmic)", false));
+    ampVelFloorSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_amp_vel_floor", "Minimum volume floor at lowest MIDI velocity (1% to 100%)", false));
+
+    ampEnvClapsSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_ampenv_claps", "Number of pre-decay transient handclap bursts (0 = disabled)", false));
+    ampEnvClapSpeedSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_ampenv_clapspeed", "Time interval spacing between handclap bursts", false));
+    ampEnvSlopeSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_ampenv_slope", "Master amplitude decay curve contour", false));
+    ampEnvDecaySlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_ampenv_decay", "Master amplitude decay duration", false));
+
     setSize(1040, 740);
     setResizable(true, true);
     setResizeLimits(800, 560, 2400, 1600);
@@ -479,6 +528,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
 TheKlangPlanterAudioProcessorEditor::~TheKlangPlanterAudioProcessorEditor() {
     stopTimer();
+    tooltipWindow.setLookAndFeel(nullptr);
     setLookAndFeel(nullptr);
 }
 
@@ -503,12 +553,20 @@ void TheKlangPlanterAudioProcessorEditor::bindSlider(const juce::String& paramId
 }
 
 void TheKlangPlanterAudioProcessorEditor::bindSelector(LedSelectorComponent& sel, juce::ComboBox& box,
-                                                       const juce::String& /*paramId*/, const juce::StringArray& items, int columns) {
+                                                       const juce::String& paramId, const juce::StringArray& items, int columns) {
     box.clear(juce::dontSendNotification);
     for (int i = 0; i < items.size(); ++i) {
         box.addItem(items[i], i + 1);
     }
     sel.setItems(items, columns);
+    if (paramId.isNotEmpty()) {
+        juce::String cat = paramId;
+        if (paramId.contains("slope") && items.size() == 5) {
+            cat = "filter_slope_5";
+        }
+        auto itemTips = TooltipHelper::getLedSelectorItemTooltips(cat);
+        sel.setItemTooltips(itemTips);
+    }
     sel.onChange = [&box](int index) {
         box.setSelectedItemIndex(index, juce::sendNotification);
     };

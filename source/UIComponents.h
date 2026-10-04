@@ -126,6 +126,14 @@ public:
     juce::Font getTextButtonFont(juce::TextButton&, int buttonHeight) override;
     juce::Font getComboBoxFont(juce::ComboBox&) override;
     juce::Font getPopupMenuFont() override;
+
+    juce::Rectangle<int> getTooltipBounds(const juce::String& tipText,
+                                          juce::Point<int> screenPos,
+                                          juce::Rectangle<int> parentArea) override;
+    void drawTooltip(juce::Graphics& g,
+                     const juce::String& text,
+                     int width,
+                     int height) override;
 };
 
 // Mini Oscilloscope or Frequency-Gain Plot widget
@@ -279,7 +287,8 @@ private:
 };
 
 // Sleek hardware-style LED list selector
-class LedSelectorComponent : public juce::Component {
+class LedSelectorComponent : public juce::Component,
+                             public juce::SettableTooltipClient {
 public:
     struct ItemStyle {
         juce::Colour primaryAccent;
@@ -298,6 +307,10 @@ public:
     void setItemStyle(int index, const ItemStyle& style);
     void clearItemStyles();
 
+    void setItemTooltips(const juce::StringArray& tooltips);
+    void setItemTooltip(int index, const juce::String& tooltip);
+    juce::String getTooltip() override;
+
     std::function<void(int)> onChange;
 
     void paint(juce::Graphics& g) override;
@@ -307,6 +320,7 @@ public:
 
 private:
     juce::StringArray items;
+    juce::StringArray itemTooltips;
     std::vector<std::optional<ItemStyle>> itemStyles;
     int selectedIndex = 0;
     int hoveredIndex = -1;
@@ -318,7 +332,8 @@ private:
 };
 
 // Card component representing one modular block in the rack
-class ModuleCardComponent : public juce::Component {
+class ModuleCardComponent : public juce::Component,
+                            public juce::SettableTooltipClient {
 public:
     enum class PanelStyle {
         StandardDark,
@@ -372,3 +387,20 @@ private:
     RotaryKnobSlider* knobs[4] = {};
     int numActiveKnobs = 4;
 };
+
+// Centralized Tooltip Formatting & Metadata Helpers
+namespace TooltipHelper {
+    juce::String makeKnobTooltip(const juce::String& title,
+                                 const juce::String& description,
+                                 const juce::String& defaultAndUnits = {},
+                                 bool isBipolar = false);
+
+    juce::String makeKnobTooltipFromParam(juce::AudioProcessorValueTreeState& apvts,
+                                          const juce::String& paramId,
+                                          const juce::String& description,
+                                          bool isBipolar = false);
+
+    juce::StringArray getLedSelectorItemTooltips(const juce::String& selectorCategory);
+    juce::String getFxAlgorithmTooltip(int fxIndex);
+    juce::String getFxKnobTooltip(int fxIndex, int knobIndex);
+}
