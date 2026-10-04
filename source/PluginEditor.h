@@ -172,11 +172,11 @@ private:
     TheKlangFarmerAudioProcessor& audioProcessor;
     RotaryKnobLookAndFeel knobLookAndFeel;
     std::unique_ptr<juce::TooltipWindow> tooltipWindow;
-    bool tooltipsEnabled = true;
+    bool tooltipsEnabled = false;
     void setTooltipsEnabled(bool enabled);
 
     // Header buttons
-    juce::TextButton tooltipsButton { "TIPS: ON" };
+    juce::TextButton tooltipsButton { "TIPS: OFF" };
     juce::TextButton guideButton { "GUIDE" };
     juce::TextButton initButton { "INIT" };
     juce::TextButton triggerButton { "AUDITION HIT" };

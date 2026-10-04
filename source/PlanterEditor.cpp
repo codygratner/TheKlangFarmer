@@ -117,7 +117,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
         setTooltipsEnabled(!tooltipsEnabled);
     };
     addAndMakeVisible(tooltipsButton);
-    setTooltipsEnabled(true);
+    setTooltipsEnabled(false);
 
     // Header Visualizer
     addAndMakeVisible(headerViz);

@@ -847,7 +847,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         setTooltipsEnabled(!tooltipsEnabled);
     };
     addAndMakeVisible(tooltipsButton);
-    setTooltipsEnabled(true);
+    setTooltipsEnabled(false);
 
     // Setup Header Quickstart Guide Button
     guideButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1f2430));
