@@ -281,6 +281,12 @@ private:
 // Sleek hardware-style LED list selector
 class LedSelectorComponent : public juce::Component {
 public:
+    struct ItemStyle {
+        juce::Colour primaryAccent;
+        std::optional<juce::Colour> secondaryAccent = std::nullopt;
+        std::optional<juce::Colour> textColour      = std::nullopt;
+    };
+
     explicit LedSelectorComponent(juce::Colour activeAccent);
 
     void setItems(const juce::StringArray& newItems, int numColumns = 2);
@@ -288,6 +294,9 @@ public:
     int getSelectedIndex() const { return selectedIndex; }
     int getNumItems() const { return items.size(); }
     void setAccent(juce::Colour col) { accent = col; repaint(); }
+
+    void setItemStyle(int index, const ItemStyle& style);
+    void clearItemStyles();
 
     std::function<void(int)> onChange;
 
@@ -298,6 +307,7 @@ public:
 
 private:
     juce::StringArray items;
+    std::vector<std::optional<ItemStyle>> itemStyles;
     int selectedIndex = 0;
     int hoveredIndex = -1;
     int columns = 2;

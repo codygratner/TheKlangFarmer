@@ -168,13 +168,13 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     carrierShapeSlider.customFormatText = formatPercent;
     carrierShapeSlider.customParseText  = parsePercent;
 
-    setupKnob(carrierDepthSlider, colRed, true, 0.5);
+    setupKnob(carrierDepthSlider, colCyan, true, 0.5);
     carrierDepthSlider.customFormatText = formatBipolarPercent;
     carrierDepthSlider.customParseText  = parseBipolarPercent;
 
     cardCarrier->setKnob(0, "Offset", &carrierPitchSlider);
     cardCarrier->setKnob(1, "Shape", &carrierShapeSlider);
-    cardCarrier->setKnob(2, "Mod Depth", &carrierDepthSlider);
+    cardCarrier->setKnob(2, "Mod Depth", &carrierDepthSlider, colCyan);
     addAndMakeVisible(cardCarrier.get());
 
     // Modulator: Cyan accent with Red panel tint
@@ -235,6 +235,10 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardPitchEnv->setPanelTintBaseColour(colDarkGrey);
     setupBox(pitchEnvTargetBox);
     bindSelector(pitchEnvTargetSelector, pitchEnvTargetBox, "planter_pitchenv_target", { "Car", "Mod", "Both", "Opp" }, 4);
+    pitchEnvTargetSelector.setItemStyle(0, { colRed,  std::nullopt, std::nullopt }); // Car:  Carrier Red accent
+    pitchEnvTargetSelector.setItemStyle(1, { colCyan, std::nullopt, std::nullopt }); // Mod:  Modulator Cyan accent
+    pitchEnvTargetSelector.setItemStyle(2, { colCyan, colRed,       colRed       }); // Both: Red text, Cyan outline, dual halo
+    pitchEnvTargetSelector.setItemStyle(3, { colRed,  colCyan,      colCyan      }); // Opp:  Cyan text, Red outline, dual halo
     cardPitchEnv->setSelectorAtBottom(true);
     cardPitchEnv->setLedSelector(&pitchEnvTargetSelector);
 
@@ -332,7 +336,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     filterEnvDecaySlider.customFormatText = formatTimeMs;
     filterEnvDecaySlider.customParseText  = parseTimeMs;
 
-    setupKnob(filterEnvDriveSlider, colAmber, false, 0.5);
+    setupKnob(filterEnvDriveSlider, colBlue, false, 0.5);
     filterEnvDriveSlider.customFormatText = [](double val) {
         float db = (val <= 0.5) ? static_cast<float>(-6.0 + val * 12.0)
                                 : static_cast<float>((val - 0.5) * 48.0);
@@ -353,7 +357,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardFilterEnv->setKnob(0, "Slope", &filterEnvSlopeSlider);
     cardFilterEnv->setKnob(1, "Depth", &filterEnvDepthSlider);
     cardFilterEnv->setKnob(2, "Decay", &filterEnvDecaySlider);
-    cardFilterEnv->setKnob(3, "Pre-Filter Drive", &filterEnvDriveSlider);
+    cardFilterEnv->setKnob(3, "Pre-Filter Drive", &filterEnvDriveSlider, colBlue);
     addAndMakeVisible(cardFilterEnv.get());
 
     // --- PAIR 4: AMPLIFIER (Green) & AMP ENVELOPE (Magenta) ---
@@ -393,7 +397,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardAmp->setKnob(0, "Pre-Limiter Drive", &ampDriveSlider);
     cardAmp->setKnob(1, "Pan", &ampPanSlider);
     cardAmp->setKnob(2, "Vel Slope", &ampVelSlopeSlider);
-    cardAmp->setKnob(3, "Velocity", &ampVelFloorSlider);
+    cardAmp->setKnob(3, "Vel Min Level", &ampVelFloorSlider);
     addAndMakeVisible(cardAmp.get());
 
     // Amp Envelope: Magenta accent with Green panel tint

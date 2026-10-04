@@ -1674,6 +1674,21 @@ LedSelectorComponent::LedSelectorComponent(juce::Colour activeAccent)
 void LedSelectorComponent::setItems(const juce::StringArray& newItems, int numColumns) {
     items = newItems;
     columns = std::max(1, numColumns);
+    itemStyles.assign(static_cast<size_t>(items.size()), std::nullopt);
+    repaint();
+}
+
+void LedSelectorComponent::setItemStyle(int index, const ItemStyle& style) {
+    if (juce::isPositiveAndBelow(index, items.size())) {
+        if (itemStyles.size() < static_cast<size_t>(items.size()))
+            itemStyles.resize(static_cast<size_t>(items.size()), std::nullopt);
+        itemStyles[static_cast<size_t>(index)] = style;
+        repaint();
+    }
+}
+
+void LedSelectorComponent::clearItemStyles() {
+    std::fill(itemStyles.begin(), itemStyles.end(), std::nullopt);
     repaint();
 }
 
@@ -1722,28 +1737,45 @@ void LedSelectorComponent::paint(juce::Graphics& g) {
     int n = items.size();
     if (n == 0) return;
 
+    const juce::Colour baseIdleBorder(0xff2b3140);
+    const juce::Colour baseHoverBorder(0xff3f495e);
+    const juce::Colour baseIdleText(0xffb0bdd0);
+    const juce::Colour baseHoverText(0xffe6edf8);
+
     for (int i = 0; i < n; ++i) {
         auto r = getItemBounds(i).toFloat().reduced(2.0f, 1.0f);
         bool isSel = (i == selectedIndex);
         bool isHov = (i == hoveredIndex);
 
+        const bool hasCustom = (static_cast<size_t>(i) < itemStyles.size() && itemStyles[static_cast<size_t>(i)].has_value());
+        const juce::Colour primaryCol = hasCustom ? itemStyles[static_cast<size_t>(i)]->primaryAccent : accent;
+        const bool hasSecondary = hasCustom && itemStyles[static_cast<size_t>(i)]->secondaryAccent.has_value();
+        const juce::Colour secondaryCol = hasSecondary ? *itemStyles[static_cast<size_t>(i)]->secondaryAccent : primaryCol;
+        const bool hasCustomText = hasCustom && itemStyles[static_cast<size_t>(i)]->textColour.has_value();
+
         // Tactile button background & border
         if (isSel) {
-            juce::ColourGradient grad(accent.withAlpha(0.24f), r.getX(), r.getY(),
-                                      accent.withAlpha(0.10f), r.getX(), r.getBottom(), false);
-            g.setGradientFill(grad);
+            if (hasSecondary) {
+                juce::ColourGradient grad(secondaryCol.withAlpha(0.22f), r.getX(), r.getY(),
+                                          primaryCol.withAlpha(0.22f), r.getRight(), r.getBottom(), false);
+                g.setGradientFill(grad);
+            } else {
+                juce::ColourGradient grad(primaryCol.withAlpha(0.24f), r.getX(), r.getY(),
+                                          primaryCol.withAlpha(0.10f), r.getX(), r.getBottom(), false);
+                g.setGradientFill(grad);
+            }
             g.fillRoundedRectangle(r, 4.0f);
-            g.setColour(accent.withAlpha(0.70f));
+            g.setColour(primaryCol.withAlpha(0.85f));
             g.drawRoundedRectangle(r, 4.0f, 1.2f);
         } else if (isHov) {
             g.setColour(juce::Colour(0xff222733));
             g.fillRoundedRectangle(r, 4.0f);
-            g.setColour(juce::Colour(0xff3f495e));
+            g.setColour(hasCustom ? baseHoverBorder.interpolatedWith(primaryCol, 0.50f) : baseHoverBorder);
             g.drawRoundedRectangle(r, 4.0f, 1.0f);
         } else {
             g.setColour(juce::Colour(0xff181b23));
             g.fillRoundedRectangle(r, 4.0f);
-            g.setColour(juce::Colour(0xff2b3140));
+            g.setColour(hasCustom ? baseIdleBorder.interpolatedWith(primaryCol, 0.28f) : baseIdleBorder);
             g.drawRoundedRectangle(r, 4.0f, 1.0f);
         }
 
@@ -1754,22 +1786,49 @@ void LedSelectorComponent::paint(juce::Graphics& g) {
         auto ledBounds = juce::Rectangle<float>(ledX, ledY, ledSize, ledSize);
 
         if (isSel) {
-            g.setColour(accent.withAlpha(0.40f));
-            g.fillEllipse(ledBounds.expanded(2.0f));
-            g.setColour(accent);
-            g.fillEllipse(ledBounds);
+            if (hasSecondary) {
+                // Dual LED halo: outer secondary glow + inner primary ring + gradient core
+                g.setColour(secondaryCol.withAlpha(0.45f));
+                g.fillEllipse(ledBounds.expanded(2.8f));
+                g.setColour(primaryCol.withAlpha(0.55f));
+                g.fillEllipse(ledBounds.expanded(1.4f));
+
+                juce::ColourGradient ledGrad(secondaryCol, ledBounds.getTopLeft(),
+                                             primaryCol, ledBounds.getBottomRight(), false);
+                g.setGradientFill(ledGrad);
+                g.fillEllipse(ledBounds);
+            } else {
+                g.setColour(primaryCol.withAlpha(0.40f));
+                g.fillEllipse(ledBounds.expanded(2.0f));
+                g.setColour(primaryCol);
+                g.fillEllipse(ledBounds);
+            }
             g.setColour(juce::Colours::white);
             g.fillEllipse(ledBounds.reduced(1.2f));
         } else {
             g.setColour(juce::Colour(0xff20242e));
             g.fillEllipse(ledBounds);
-            g.setColour(juce::Colour(0xff353d4c));
+            juce::Colour idleLedRing(0xff353d4c);
+            g.setColour(hasCustom ? idleLedRing.interpolatedWith(secondaryCol, 0.35f) : idleLedRing);
             g.drawEllipse(ledBounds, 0.8f);
         }
 
         auto textBounds = r.withTrimmedLeft(14.0f).withTrimmedRight(2.0f);
         g.setFont(juce::FontOptions(isSel ? 13.5f : 13.0f, juce::Font::bold));
-        g.setColour(isSel ? juce::Colours::white : (isHov ? juce::Colour(0xffe6edf8) : juce::Colour(0xffb0bdd0)));
+
+        if (hasCustomText) {
+            juce::Colour customTextCol = *itemStyles[static_cast<size_t>(i)]->textColour;
+            if (isSel) {
+                g.setColour(customTextCol.brighter(0.25f));
+            } else if (isHov) {
+                g.setColour(baseHoverText.interpolatedWith(customTextCol, 0.55f));
+            } else {
+                g.setColour(baseIdleText.interpolatedWith(customTextCol, 0.38f));
+            }
+        } else {
+            g.setColour(isSel ? juce::Colours::white : (isHov ? baseHoverText : baseIdleText));
+        }
+
         g.drawFittedText(items[i], textBounds.toNearestInt(), juce::Justification::centredLeft, 1);
     }
 }

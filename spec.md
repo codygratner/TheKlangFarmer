@@ -530,8 +530,8 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 |                           | [Osc] [Cyclic][Noise]     |                       |                   |
 | 1. Offset                 | 1. Shape / DJ Filter      | 1. Slope              | 1. S&H Rate       |
 | 2. Shape                  | 2. Speed / S&H Rate       | 2. Depth              | 2. DJ Filter      |
-| 3. Mod Depth              |                           | 3. Decay              | 3. Decay          |
-|                           |                           | Target: Car/Mod/../Opp| 4. FM/NOISE (Inv) |
+| 3. Mod Depth (Cyan)       |                           | 3. Decay              | 3. Decay          |
+|                           |                           | [Car][Mod][Both][Opp] | 4. FM/NOISE (Inv) |
 +---------------------------+---------------------------+-----------------------+-------------------+
 | [5] FILTER                | [6] FILTER ENV            | [7] AMPLIFIER         | [8] AMP ENVELOPE  |
 | Accent: Blue              | Accent: Amber             | Accent: Green         | Accent: Magenta   |
@@ -541,7 +541,7 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 | 1. Cutoff                 | 1. Slope                  | 1. Pre-Limiter Drive  | 1. Claps          |
 | 2. Resonance              | 2. Depth                  | 2. Pan                | 2. Clap Speed     |
 |                           | 3. Decay                  | 3. Vel Slope (LIN/EXP)| 3. Slope          |
-|                           | 4. Pre-Filter Drive       | 4. Velocity (1%..100%)| 4. Decay          |
+|                           | 4. Pre-Filter Drive (Blue)| 4. Vel Min Level      | 4. Decay          |
 +---------------------------+---------------------------+-----------------------+-------------------+
 ```
 
@@ -550,6 +550,7 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
    - Carrier tracks incoming MIDI pitch ($\pm 24$ st), continuous frequency ($20\,\text{Hz} - 24\,\text{kHz}$), or fixed note.
    - Modulator operates in `Fixed`, `Follow`, or calibrated `FM Operator` ratio mode (`1:32.0` to `1:1` to `32.0:1`).
    - Waveform morphing from Sine $\to$ Triangle $\to$ Saw $\to$ Square with anti-aliased tanh shaping.
+   - Knob 3 on Carrier (`Mod Depth`) is routed in **Modulator Cyan** (`#00d2ff`) to clearly communicate that it attenuates modulation received from the Modulator module.
 2. **Noise Transient Generator**:
    - Dedicated S&H clock rate ($0.1\,\text{Hz} - 24\,\text{kHz}$), bipolar DJ filter, and independent 5-point warp decay envelope ($1\,\text{ms} - 60\,\text{s}$).
 3. **Pre-Filter Crossfader (Knob 4 on Noise Transient)**:
@@ -557,11 +558,18 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
    - Bipolar curve: $-100\%$ (Noise only) $\leftrightarrow$ $0\%$ (Both at full volume) $\leftrightarrow$ $+100\%$ (FM pair only).
    - Inverted visual styling: dark recessed trough with bright silver fill and crisp light text, matching the Pitch Envelope sliders.
 4. **Filter Stage with Pre-Filter Drive**:
-   - The mixed audio passes through a pre-filter saturation stage (`tanh` drive from $-6\,\text{dB}$ to $+24\,\text{dB}$, controlled on Filter Env Knob 4).
+   - The mixed audio passes through a pre-filter saturation stage (`tanh` drive from $-6\,\text{dB}$ to $+24\,\text{dB}$, controlled on Filter Env Knob 4, styled in **Filter Blue** `#2979ff` to communicate that it feeds the Filter stage).
    - Multimode cascaded SVF: LPF, BPF, HPF, and wide BRF (0.25 base Q) with 6, 12, 18, 24, 36 dB/oct slopes.
 5. **Amplifier & Velocity Dynamics**:
    - Knob 1: **Pre-Limiter Drive** ($-\infty\,\text{dB}$ to $+24\,\text{dB}$, with $0\,\text{dB}$ at center 50%).
    - Knob 2: **Stereo Pan** ($100\%\,\text{L} \dots \text{Center} \dots 100\%\,\text{R}$).
    - Knob 3: **Vel Slope**: Controls the curvature of velocity sensitivity (default Linear, double-click Exponential).
-   - Knob 4: **Velocity Floor**: Sets the volume floor at velocity 1 from $1\%$ to $100\%$ (default 50%).
+   - Knob 4: **Vel Min Level**: Sets the volume floor at velocity 1 from $1\%$ to $100\%$ (default 50%, double-click snaps to 50%).
    - Permanent transparent master brickwall limiter with live `LIMIT` reduction warning indicator on the header oscilloscope.
+6. **Multi-Color Pitch Envelope Destination Buttons**:
+   - The Pitch Envelope destination selector (`[Car]`, `[Mod]`, `[Both]`, `[Opp]`) features per-button color routing:
+     - `Car`: Carrier Red accent (`#ff3b30`).
+     - `Mod`: Modulator Cyan accent (`#00d2ff`).
+     - `Both`: Carrier Red text with Modulator Cyan outline and dual Red/Cyan LED halo.
+     - `Opp`: Modulator Cyan text with Carrier Red outline and dual Cyan/Red LED halo.
+     - Unselected states maintain 28% border tint and 38% text tint against `#b0bdd0`, preserving crisp readability.
