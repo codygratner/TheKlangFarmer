@@ -48,16 +48,16 @@ public:
             driveGain = 0.0f;
         } else if (v <= 0.5f) {
             float db = (v / 0.5f - 1.0f) * 60.0f;
-            driveGain = std::pow(10.0f, db / 20.0f);
+            driveGain = FastMath::fastDbToGain(db);
         } else {
             float db = ((v - 0.5f) / 0.5f) * 24.0f;
-            driveGain = std::pow(10.0f, db / 20.0f);
+            driveGain = FastMath::fastDbToGain(db);
         }
 
         // 2. Pan: 100% L to Center to 100% R (def Center = 0.5)
         float pan = std::clamp(params[1], 0.0f, 1.0f);
-        float gainL = std::cos(pan * 1.57079632679f);
-        float gainR = std::sin(pan * 1.57079632679f);
+        float gainL = FastMath::fastCos(pan * 1.57079632679f);
+        float gainR = FastMath::fastSin(pan * 1.57079632679f);
 
         float blockMaxReduction = 0.0f;
 
@@ -71,8 +71,8 @@ public:
             float curR = inR * envVal * velGain * driveGain;
 
             // Limiter is permanently enabled: smooth tanh soft-saturation
-            float limL = std::tanh(curL);
-            float limR = std::tanh(curR);
+            float limL = FastMath::fastTanh(curL);
+            float limR = FastMath::fastTanh(curR);
 
             float redL = std::max(0.0f, std::abs(curL) - std::abs(limL));
             float redR = std::max(0.0f, std::abs(curR) - std::abs(limR));
@@ -144,7 +144,7 @@ public:
                 shVal = fastRng(rngState);
             }
 
-            float env = std::exp(-timeSinceTrigger / decayTime);
+            float env = FastMath::fastExp(-timeSinceTrigger / decayTime);
             timeSinceTrigger += invSr;
 
             float sample = shVal * env;
@@ -304,7 +304,7 @@ public:
     void noteOn(int midiNote, float velocity = 1.0f) {
         ctx.isTriggered = true;
         ctx.currentMidiNote = midiNote;
-        ctx.currentPitchHz = 440.0f * std::pow(2.0f, (static_cast<float>(midiNote) - 69.0f) / 12.0f);
+        ctx.currentPitchHz = 440.0f * FastMath::fastPow2((static_cast<float>(midiNote) - 69.0f) / 12.0f);
         ctx.triggerVelocity = velocity;
 
         pitchEnv->trigger(velocity);
@@ -369,11 +369,11 @@ public:
         // -6dB to 0dB (at 0.5) to +24dB
         float pDrive = filterEnv->getParam(3);
         float preDriveDb = (pDrive <= 0.5f) ? (-6.0f + pDrive * 12.0f) : ((pDrive - 0.5f) * 48.0f);
-        float preDriveGain = std::pow(10.0f, preDriveDb / 20.0f);
+        float preDriveGain = FastMath::fastDbToGain(preDriveDb);
         if (std::abs(preDriveGain - 1.0f) > 0.01f) {
             for (int i = 0; i < numSamples; ++i) {
-                tempMixL[i] = std::tanh(tempMixL[i] * preDriveGain);
-                tempMixR[i] = std::tanh(tempMixR[i] * preDriveGain);
+                tempMixL[i] = FastMath::fastTanh(tempMixL[i] * preDriveGain);
+                tempMixR[i] = FastMath::fastTanh(tempMixR[i] * preDriveGain);
             }
         }
 

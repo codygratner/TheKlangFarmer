@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <cassert>
+#include "FastMath.h"
 #include "ModularBlocks.h"
 #include "PlanterEngine.h"
 
@@ -1262,6 +1263,72 @@ int main() {
             assert(planter.getContext().carrier1PitchHz > 20.0f);
         }
         std::cout << "PASS: Pitch Envelope target destinations and carrier pitch context sync verified." << std::endl;
+    }
+
+    // -------------------------------------------------------------
+    // FastMath Core Accuracy & Edge Cases Test
+    // -------------------------------------------------------------
+    {
+        using namespace TbdAudio::FastMath;
+
+        // 1. fastPow2 accuracy (< 0.05% relative error across [-10, 10])
+        for (float x = -10.0f; x <= 10.0f; x += 0.05f) {
+            float expected = std::pow(2.0f, x);
+            float actual = fastPow2(x);
+            float relErr = std::abs((actual - expected) / expected) * 100.0f;
+            assert(relErr < 0.05f);
+        }
+        // Underflow / overflow bounds
+        assert(fastPow2(-130.0f) == 0.0f);
+        assert(fastPow2(130.0f) > 1e30f);
+
+        // 2. fastExp accuracy
+        for (float x = -8.0f; x <= 8.0f; x += 0.05f) {
+            float expected = std::exp(x);
+            float actual = fastExp(x);
+            float relErr = std::abs((actual - expected) / expected) * 100.0f;
+            assert(relErr < 0.05f);
+        }
+
+        // 3. fastSinNorm & fastCosNorm periodic continuity and accuracy (< 0.0005 peak error)
+        for (float p = -2.0f; p <= 2.0f; p += 0.002f) {
+            float expectedSin = std::sin(p * TWO_PI);
+            float actualSin = fastSinNorm(p);
+            assert(std::abs(actualSin - expectedSin) < 0.0005f);
+
+            float expectedCos = std::cos(p * TWO_PI);
+            float actualCos = fastCosNorm(p);
+            assert(std::abs(actualCos - expectedCos) < 0.0005f);
+        }
+
+        // 4. fastTanh bounds and saturation
+        assert(fastTanh(0.0f) == 0.0f);
+        assert(fastTanh(3.0f) == 1.0f);
+        assert(fastTanh(-3.0f) == -1.0f);
+        assert(fastTanh(10.0f) == 1.0f);
+        assert(fastTanh(-10.0f) == -1.0f);
+        for (float x = -3.0f; x <= 3.0f; x += 0.1f) {
+            float t = fastTanh(x);
+            assert(t >= -1.0f && t <= 1.0f);
+        }
+
+        // 5. fastDbToGain
+        assert(std::abs(fastDbToGain(0.0f) - 1.0f) < 0.0005f);
+        assert(std::abs(fastDbToGain(-6.0206f) - 0.5f) < 0.002f);
+        assert(std::abs(fastDbToGain(-20.0f) - 0.1f) < 0.001f);
+
+        // 6. PhaseAccumulator32 stepping and wrapping
+        PhaseAccumulator32 acc;
+        assert(acc.getPhaseNorm() == 0.0f);
+        acc.step(PhaseAccumulator32::calcInc(440.0f, 1.0f / 44100.0f));
+        assert(acc.getPhaseNorm() > 0.0f && acc.getPhaseNorm() < 0.1f);
+
+        acc.setPhaseNorm(0.999f);
+        acc.step(PhaseAccumulator32::calcInc(100.0f, 1.0f / 44100.0f));
+        // Must wrap around without nan or negative values
+        assert(acc.getPhaseNorm() >= 0.0f && acc.getPhaseNorm() < 1.0f);
+
+        std::cout << "PASS: FastMath core accuracy, bounds, and PhaseAccumulator32 verified." << std::endl;
     }
 
     std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;

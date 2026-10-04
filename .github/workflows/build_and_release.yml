@@ -53,6 +53,13 @@ jobs:
             ./build/Release/dsp_tests
           fi
 
+      - name: Codesign macOS Binaries (Ad-hoc)
+        run: |
+          find build -name "*.vst3" -o -name "*.component" -o -name "*.app" | while read -r item; do
+            echo "Ad-hoc codesigning: $item"
+            codesign --force --deep -s - "$item"
+          done
+
       - name: Package macOS Universal Binaries
         run: |
           TAG="${{ steps.tag.outputs.tag }}"
@@ -64,6 +71,9 @@ jobs:
           find build/TheKlangPlanter_artefacts -name "The Klang Planter.vst3" -exec cp -R -P {} macos_dist/ \;
           find build/TheKlangPlanter_artefacts -name "The Klang Planter.component" -exec cp -R -P {} macos_dist/ \;
           find build/TheKlangPlanter_artefacts -name "The Klang Planter.app" -exec cp -R -P {} macos_dist/ \;
+          cp scripts/mac/Unlock_and_Install_Mac.command macos_dist/
+          cp scripts/mac/README_MAC_INSTALL.txt macos_dist/
+          chmod +x macos_dist/Unlock_and_Install_Mac.command
           cd macos_dist
           zip -r -y "../${ZIP_NAME}" *
           cd ..

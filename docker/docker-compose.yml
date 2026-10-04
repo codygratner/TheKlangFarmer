@@ -1,0 +1,20 @@
+services:
+  tkf-linux-builder:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.linux
+    volumes:
+      - ..:/workspace
+    working_dir: /workspace
+    command: >
+      bash -c "
+        if [ ! -d JUCE ]; then
+          git clone --depth 1 --branch 9.0.3 https://github.com/juce-framework/JUCE.git JUCE
+        fi &&
+        cmake -B build-linux -G Ninja -DCMAKE_BUILD_TYPE=Release &&
+        cmake --build build-linux --config Release --target TheKlangFarmer_VST3 TheKlangPlanter_VST3 dsp_tests &&
+        ./build-linux/dsp_tests &&
+        echo 'Testing with pluginval under Xvfb...' &&
+        xvfb-run -a /usr/local/bin/pluginval --strictness-level 5 --validate-in-process --timeout-ms 60000 'build-linux/TheKlangFarmer_artefacts/The Klang Farmer.vst3' &&
+        xvfb-run -a /usr/local/bin/pluginval --strictness-level 5 --validate-in-process --timeout-ms 60000 'build-linux/TheKlangPlanter_artefacts/The Klang Planter.vst3'
+      "

@@ -4,6 +4,51 @@ This document serves as the permanent historical record of completed engineering
 
 ---
 
+## 🏆 Release v0.1.8 (2026-10-04)
+
+### 1. FastMath.h SIMD Acceleration Core (Desktop & Embedded)
+- **Linear Issue:** [THE-8](https://linear.app/the-klang-farmer/issue/THE-8/fastmathh-and-simd-accelerated-dsp-core-desktop-and-embedded)
+- **Summary & Technical Design**:
+  - Author pure C++ `source/FastMath.h` (`TbdAudio::FastMath`):
+    - `fastPow2(float x)`: IEEE 754 exponent bit-manipulation with 3rd-order minimax polynomial correction (< 0.015% error, **3.38x faster** than CRT `std::pow(2.0f, x)`).
+    - `fastExp(float x)`: Fast percussive decay curve generator (< 0.015% error).
+    - `fastSinNorm(float phase)` & `fastCosNorm(float phase)`: Normalized phase branchless polynomial approximations (< 0.016% error, **2.08x faster** than `std::sin`).
+    - `fastTanh(float x)`: Padé rational saturation approximation $\frac{x \cdot (27 + x^2)}{27 + 9x^2}$ (**9.34x faster** than `std::tanh`).
+    - `fastTanhPrecise(float x)`: Padé [7/6] saturation approximation (< 0.002% peak error).
+    - `fastDbToGain(float db)`: Direct 2-cycle dB-to-linear conversion via `fastPow2(db * 0.1660964f)`.
+    - `PhaseAccumulator32`: Branchless 32-bit integer accumulator with natural overflow wrapping.
+  - Integrated into all inner DSP loops across `source/ModularBlocks.h` and `source/PlanterEngine.h` (Carrier, Modulator, Drive, Filter, Saturation, Limiters, Chorus, Phaser, Flanger, Comb Filter, Frequency Shifter).
+  - Built `test/benchmark_dsp.cpp` (`benchmark_dsp.exe`) to measure cycle counts, verify accuracy, and compare with CRT standard math.
+- **Verification**:
+  - Zero audio-thread violations detected via `audiothread-guard`.
+  - All 34 unit tests in `dsp_tests.exe` passed cleanly.
+  - Full VST3 plugin builds validated.
+
+---
+
+### 2. Mac & Linux Compatibility Hardening, Dynamic Host Loading CI (`pluginval` & `auval`), & Docker Linux Container
+- **Linear Issue:** [THE-5](https://linear.app/the-klang-farmer/issue/THE-5/mac-and-linux-compatibility-dynamic-host-loading-ci-and-dockerization)
+- **Summary & Technical Design**:
+  - `CMakeLists.txt` Cross-Platform Declarations:
+    - Declared `CMAKE_OSX_DEPLOYMENT_TARGET="11.0"` and `CMAKE_OSX_ARCHITECTURES="arm64;x86_64"` **before** `project(TheKlangFarmer ...)` so Apple Clang initializes the macOS 11.0 SDK target triple prior to compiler detection.
+    - Added Linux static runtime linking `-static-libstdc++ -static-libgcc` to prevent `GLIBCXX` mismatches across distributions.
+    - Set `VST3_AUTO_MANIFEST FALSE` on `TheKlangFarmer` and `TheKlangPlanter`.
+    - Declared `JUCE_VST3_CAN_REPLACE_VST2=0`, `JUCE_WEB_BROWSER=0`, and `JUCE_USE_CURL=0` globally on plugin targets.
+  - macOS Gatekeeper Quarantine & Packaging:
+    - Added ad-hoc codesigning (`codesign --force --deep -s -`) across all macOS bundles.
+    - Shipped `scripts/mac/Unlock_and_Install_Mac.command` (with `xattr -cr`, component copy, and CoreAudio reload) and `scripts/mac/README_MAC_INSTALL.txt` inside release archives.
+  - Automated Multi-Platform CI Workflow (`.github/workflows/ci.yml`):
+    - Runs CMake build, `dsp_tests`, and `pluginval` v1.0.4 host validation across macOS, Linux (under `Xvfb`), and Windows on every push and pull request.
+    - Added native macOS `auval` verification (`auval -v aumu Tkf1 Rlyh` and `Tkp1`).
+  - Docker Multi-Platform Container:
+    - Created `docker/Dockerfile.linux` and `docker/docker-compose.yml` with pre-installed `ninja`, `xvfb`, and `pluginval` v1.0.4.
+    - Provided `scripts/test_docker_linux.bat` for single-command verification on Windows.
+- **Verification**:
+  - Full compatibility audit passed (`compat-check`).
+  - CMake configuration and build verified on Windows.
+
+---
+
 ## 🏆 Release v0.1.7 (2026-10-04)
 
 ### 1. The Klang Planter UI Color Routing & "Vel Min Level" Label Polish

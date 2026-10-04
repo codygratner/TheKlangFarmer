@@ -1,0 +1,40 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    ninja-build \
+    git \
+    curl \
+    zip \
+    unzip \
+    pkg-config \
+    libasound2-dev \
+    libjack-jackd2-dev \
+    libfreetype6-dev \
+    libx11-dev \
+    libxcomposite-dev \
+    libxcursor-dev \
+    libxext-dev \
+    libxinerama-dev \
+    libxrandr-dev \
+    libxrender-dev \
+    libxi-dev \
+    libglu1-mesa-dev \
+    mesa-common-dev \
+    libgl1-mesa-dev \
+    libfontconfig1-dev \
+    xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Tracktion pluginval v1.0.4
+RUN curl -L -o /tmp/pluginval.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Linux.zip \
+    && unzip /tmp/pluginval.zip -d /usr/local/bin \
+    && chmod +x /usr/local/bin/pluginval \
+    && rm /tmp/pluginval.zip
+
+WORKDIR /workspace
+
+CMD ["/bin/bash"]

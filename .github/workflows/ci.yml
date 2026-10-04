@@ -1,0 +1,176 @@
+name: Multi-Platform CI & Plugin Host Validation
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  test-macos:
+    name: macOS (AU / VST3 / Unit Tests / auval / pluginval)
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Clone JUCE 9.0.3
+        run: git clone --depth 1 --branch 9.0.3 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Build Plugins & Tests
+        run: |
+          cmake --build build --config Release --parallel --target \
+            TheKlangFarmer_VST3 TheKlangFarmer_AU \
+            TheKlangPlanter_VST3 TheKlangPlanter_AU \
+            dsp_tests capture_screenshot capture_planter_screenshot
+
+      - name: Run DSP Unit Tests
+        run: |
+          if [ -f "./build/dsp_tests" ]; then
+            ./build/dsp_tests
+          elif [ -f "./build/Release/dsp_tests" ]; then
+            ./build/Release/dsp_tests
+          fi
+
+      - name: Codesign macOS Plugins (Ad-hoc)
+        run: |
+          find build -name "*.vst3" -o -name "*.component" | while read -r item; do
+            codesign --force --deep -s - "$item"
+          done
+
+      - name: Install & Run Native auval Test
+        run: |
+          mkdir -p "$HOME/Library/Audio/Plug-Ins/Components"
+          find build/TheKlangFarmer_artefacts -name "The Klang Farmer.component" -exec cp -R -P {} "$HOME/Library/Audio/Plug-Ins/Components/" \;
+          find build/TheKlangPlanter_artefacts -name "The Klang Planter.component" -exec cp -R -P {} "$HOME/Library/Audio/Plug-Ins/Components/" \;
+          killall -9 coreaudiod 2>/dev/null || true
+          sleep 2
+          echo "Running auval on The Klang Farmer..."
+          auval -v aumu Tkf1 Rlyh || true
+          echo "Running auval on The Klang Planter..."
+          auval -v aumu Tkp1 Rlyh || true
+
+      - name: Download & Run Tracktion pluginval
+        run: |
+          curl -L -o pluginval.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_macOS.zip
+          unzip -q pluginval.zip
+          chmod +x pluginval.app/Contents/MacOS/pluginval
+          TKF_VST3=$(find build/TheKlangFarmer_artefacts -name "The Klang Farmer.vst3" | head -n 1)
+          TKP_VST3=$(find build/TheKlangPlanter_artefacts -name "The Klang Planter.vst3" | head -n 1)
+          echo "Validating $TKF_VST3 with pluginval..."
+          pluginval.app/Contents/MacOS/pluginval --strictness-level 5 --validate-in-process --timeout-ms 60000 "$TKF_VST3" || true
+          echo "Validating $TKP_VST3 with pluginval..."
+          pluginval.app/Contents/MacOS/pluginval --strictness-level 5 --validate-in-process --timeout-ms 60000 "$TKP_VST3" || true
+
+  test-linux:
+    name: Linux x86_64 (VST3 / Unit Tests / Xvfb / pluginval)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libasound2-dev \
+            libjack-jackd2-dev \
+            libfreetype6-dev \
+            libx11-dev \
+            libxcomposite-dev \
+            libxcursor-dev \
+            libxext-dev \
+            libxinerama-dev \
+            libxrandr-dev \
+            libxrender-dev \
+            libxi-dev \
+            libglu1-mesa-dev \
+            mesa-common-dev \
+            libgl1-mesa-dev \
+            libfontconfig1-dev \
+            xvfb \
+            curl \
+            unzip
+
+      - name: Clone JUCE 9.0.3
+        run: git clone --depth 1 --branch 9.0.3 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Plugins & Tests
+        run: |
+          cmake --build build --config Release --parallel --target \
+            TheKlangFarmer_VST3 TheKlangPlanter_VST3 \
+            dsp_tests capture_screenshot capture_planter_screenshot
+
+      - name: Run DSP Unit Tests
+        run: |
+          if [ -f "./build/dsp_tests" ]; then
+            ./build/dsp_tests
+          elif [ -f "./build/Release/dsp_tests" ]; then
+            ./build/Release/dsp_tests
+          fi
+
+      - name: Run Headless UI Capture
+        run: |
+          if [ -f "./build/capture_screenshot" ]; then
+            xvfb-run -a ./build/capture_screenshot
+            xvfb-run -a ./build/capture_planter_screenshot
+          fi
+
+      - name: Download & Run Tracktion pluginval
+        run: |
+          curl -L -o pluginval.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Linux.zip
+          unzip -q pluginval.zip
+          chmod +x pluginval
+          TKF_VST3=$(find build/TheKlangFarmer_artefacts -name "The Klang Farmer.vst3" | head -n 1)
+          TKP_VST3=$(find build/TheKlangPlanter_artefacts -name "The Klang Planter.vst3" | head -n 1)
+          echo "Validating $TKF_VST3 under Xvfb..."
+          xvfb-run -a ./pluginval --strictness-level 5 --validate-in-process --timeout-ms 60000 "$TKF_VST3" || true
+          echo "Validating $TKP_VST3 under Xvfb..."
+          xvfb-run -a ./pluginval --strictness-level 5 --validate-in-process --timeout-ms 60000 "$TKP_VST3" || true
+
+  test-windows:
+    name: Windows x64 (VST3 / Unit Tests / pluginval)
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Clone JUCE 9.0.3
+        run: git clone --depth 1 --branch 9.0.3 https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Plugins & Tests
+        run: |
+          cmake --build build --config Release --parallel --target `
+            TheKlangFarmer_VST3 TheKlangPlanter_VST3 `
+            dsp_tests capture_screenshot capture_planter_screenshot
+
+      - name: Run DSP Unit Tests
+        run: .\build\Release\dsp_tests.exe
+
+      - name: Run UI Screenshot Captures
+        run: |
+          .\build\Release\capture_screenshot.exe
+          .\build\Release\capture_planter_screenshot.exe
+
+      - name: Download & Run Tracktion pluginval
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Windows.zip" -OutFile "pluginval.zip"
+          Expand-Archive -Path "pluginval.zip" -DestinationPath "."
+          .\pluginval.exe --strictness-level 5 --validate-in-process --timeout-ms 60000 "build\TheKlangFarmer_artefacts\Release\VST3\The Klang Farmer.vst3"
+          .\pluginval.exe --strictness-level 5 --validate-in-process --timeout-ms 60000 "build\TheKlangPlanter_artefacts\Release\VST3\The Klang Planter.vst3"

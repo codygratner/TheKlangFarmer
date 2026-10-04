@@ -3,62 +3,21 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized items below:
-> 1. **Priority #1 (Core DSP)**: `FastMath.h` & SIMD-Accelerated DSP Core ([THE-8](https://linear.app/the-klang-farmer/issue/THE-8/fastmathh-and-simd-accelerated-dsp-core-desktop-and-embedded)) — 2x–4x CPU speedup.
-> 2. **Priority #2 (Compatibility & CI)**: Mac Compatibility Investigation, Docker Multi-Platform Build Testing, & GitHub Actions CI `pluginval` Validation ([THE-5](https://linear.app/the-klang-farmer/issue/THE-5/mac-and-linux-compatibility-dynamic-host-loading-ci-and-dockerization)).
-> 3. **Priority #3 (UX Standardization)**: Amp Drive Default Standardization (0 dB reset).
-> 4. **Priority #4 (DSP / FX Architecture)**: Universal Dual-Mode FX Mix Knob Architecture & Parameter Uniformity Audit.
+> 1. **Priority #1 (UX Standardization)**: Amp Drive Default Standardization (0 dB reset).
+> 2. **Priority #2 (DSP / FX Architecture)**: Universal Dual-Mode FX Mix Knob Architecture & Parameter Uniformity Audit.
+> 3. **Priority #3 (Engine & Synthesis Features)**: APF (All-Pass Filter) Mode for Voice 1, Voice 2, and Noise Filters.
+> 4. **Priority #4 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
 
 ---
 
 ## 📌 Top Priorities for Upcoming Sessions
 
-### 1. [PRIORITY #1] `FastMath.h` & SIMD-Accelerated DSP Core (Desktop & Embedded)
-Tracked in Linear: **[THE-8](https://linear.app/the-klang-farmer/issue/THE-8/fastmathh-and-simd-accelerated-dsp-core-desktop-and-embedded)**  
-Implement the pure C++ `FastMath.h` acceleration core:
-- **Core Math Approximations**:
-  - `fast_pow2(float x)`: 2–3 cycle IEEE 754 exponent bit-manipulation with 2nd-order Chebyshev correction polynomial ($< 0.05\%$ max error). Replaces heavy `std::pow(2.0f, x)` across Carrier, Modulator, and Filter sweeps.
-  - `fast_sin(float phase)`: 4th-order minimax parabolic polynomial or 1024-point LUT. Replaces `std::sin(phase * TWO_PI)`.
-  - `fast_tanh(float x)`: Padé rational saturation approximation $\frac{x \cdot (27 + x^2)}{27 + 9x^2}$ for pre-filter drive, carrier shaping, and limiter stages. Replaces `std::tanh(x)`.
-  - `fast_exp(float x)`: Fast percussive decay curve generator.
-  - `uint32_t` integer phase accumulators: Branchless natural 32-bit phase wrapping, eliminating `float` floor and conditional branches in inner oscillator loops.
-- **Desktop Benefits**:
-  - Unlocks MSVC/Clang auto-vectorization (AVX2/SSE) across sample loops.
-  - Provides a **2x to 4x reduction in raw DSP CPU cycles** on desktop, lowering CPU load for dense polyphonic DAW projects and low-latency buffer settings (32–64 samples).
-  - **Hybrid Architecture**: Branchless fixed-point integers (`uint32_t`) for phase accumulators + single-cycle 32-bit hardware float for audio/FPU processing.
-- **Embedded Portability**:
-  - Zero dependencies on standard runtime transcendental routines, enabling the exact same DSP code to run seamlessly on low-power microcontrollers.
-- **Verification**:
-  - Build `test/benchmark_dsp.cpp` (`benchmark_dsp.exe`) to measure cycle counts, verify $< 0.05\%$ accuracy against `std::math`, and run all 33 unit tests in `dsp_tests.exe`.
-
----
-
-### 2. [PRIORITY #2] Mac Compatibility Diagnostics, GitHub Actions CI Dynamic Host Loading Tests (`pluginval` & `auval`), & Docker Linux Container
-Tracked in Linear: **[THE-5](https://linear.app/the-klang-farmer/issue/THE-5/mac-and-linux-compatibility-dynamic-host-loading-ci-and-dockerization)**  
-- **Diagnose & Fix Mac Loading Failures**:
-  - **Missing `CMAKE_OSX_DEPLOYMENT_TARGET`**: Declare `CMAKE_OSX_DEPLOYMENT_TARGET="11.0"` and `CMAKE_OSX_ARCHITECTURES="arm64;x86_64"` **before** `project(TheKlangFarmer ...)` in `CMakeLists.txt` so Apple Clang initializes the macOS 11.0 SDK target triple prior to compiler detection.
-  - **Gatekeeper Quarantine**: Apply ad-hoc codesigning (`codesign --force --deep -s -`) to all macOS bundles. Ship both `README_MAC_INSTALL.txt` and a double-clickable `Unlock_and_Install_Mac.command` one-click script in the release `.zip` (`zip -r -y`) to strip `com.apple.quarantine` (`xattr -cr`), install to `~/Library/Audio/Plug-Ins/`, and refresh CoreAudio.
-- **JUCE 9.0.3 Linux Build & Portability Hygiene**:
-  - Statically link `libstdc++` and `libgcc` on Linux (`-static-libstdc++ -static-libgcc`) so compiled `.vst3` bundles load without `GLIBCXX` version mismatches across distros.
-  - Set `VST3_AUTO_MANIFEST FALSE` on both plugin targets to avoid `juce_vst3_helper` hanging/crashing in headless CI.
-  - Define `JUCE_VST3_CAN_REPLACE_VST2=0`, `JUCE_WEB_BROWSER=0`, and `JUCE_USE_CURL=0` globally.
-  - Guard against JUCE 9.0.3 issue `#1696`: audit `stopTimer()` as first line in editor destructors.
-- **Dynamic Plugin Host Loading Verification in CI (`.github/workflows/ci.yml`)**:
-  - **Tracktion `pluginval` v1.0.4**: Run `--strictness-level 5 --validate-in-process` against `.vst3` across macOS, Linux (under `xvfb-run -a`), and Windows to test audio bus negotiation, thread safety, automation sweeps, and memory leaks.
-  - **macOS Native `auval`**: Run `auval -v aumu Tkf1 Rlyh` and `auval -v aumu Tkp1 Rlyh` in CI to guarantee Logic Pro / GarageBand host acceptance.
-  - **Headless GUI Instantiation**: Run `capture_screenshot` and `capture_planter_screenshot` under `Xvfb` on Linux/Docker.
-  - **PR Test Artifacts**: Upload test binaries automatically on every PR.
-- **Docker Multi-Platform Container (`docker/Dockerfile.linux` & `docker-compose.yml`)**:
-  - Reproducible Ubuntu 22.04 container with `ninja-build`, `xvfb`, and `pluginval` v1.0.4 pre-installed.
-  - Run via `scripts/test_docker_linux.bat` for single-command verification on Windows.
-
----
-
-### 3. [PRIORITY #3] Amp Drive Default Standardization
+### 1. [PRIORITY #1] Amp Drive Default Standardization
 - Change `amp_drive` default from +6 dB to **0 dB** (with double-click reset to 0 dB) in `createParameterLayout()` and UI initialization.
 
 ---
 
-### 4. [PRIORITY #4] Universal Dual-Mode FX Mix Knob Architecture & Parameter Uniformity Audit
+### 2. [PRIORITY #2] Universal Dual-Mode FX Mix Knob Architecture & Parameter Uniformity Audit
 - **Universal Dual-Mode Mix Behavior**: Standardize the Mix knob across **ALL** FX processors to a single bipolar range (`-100%` ↔ `0%` ↔ `+100%`):
   - **Negative Range (`-100%` to `0%` — Wet Crossfade)**: Classic crossfade where dry fades out as wet increases. At `-100%`, signal is 100% wet (0% dry). At `0%`, signal is 100% dry (0% wet).
   - **Center (`0%` — Pure Dry)**: 100% Dry signal, 0% Wet. Default and double-click reset value.

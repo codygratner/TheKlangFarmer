@@ -1,5 +1,6 @@
 #pragma once
 #include "DSPBlock.h"
+#include "FastMath.h"
 #include <cmath>
 #include <vector>
 #include <memory>
@@ -21,7 +22,7 @@ inline float fastRng(uint32_t& state) {
 // 0%: Sine -> 20%: Tri -> 40%: Saw -> 60%: Square -> 100%: PWM 0%
 inline float evaluateWaveform(float phase, float shape) {
     float p = phase - std::floor(phase);
-    float s = std::sin(p * TWO_PI);
+    float s = FastMath::fastSinNorm(p);
     float tri = (p < 0.5f) ? (4.0f * p - 1.0f) : (3.0f - 4.0f * p);
     float saw = 2.0f * p - 1.0f;
     float sq = (p < 0.5f) ? 1.0f : -1.0f;
@@ -118,7 +119,7 @@ inline float driveDbToNorm(float db) {
 }
 
 inline float normToDriveGain(float norm) {
-    return std::pow(10.0f, normToDriveDb(norm) / 20.0f);
+    return FastMath::fastDbToGain(normToDriveDb(norm));
 }
 
 // Frequency Shifter Range mapping: 0 Hz to 5 kHz (cubic curve for fine sub-Hz to multi-kHz control)
@@ -320,14 +321,14 @@ public:
         if (style == 0) {
             // MIDI pitch: offset from -24 to +24 semitones (def 0 = 0.5f)
             float offset = std::round((pitchParam - 0.5f) * 48.0f);
-            return ctx.currentPitchHz * std::pow(2.0f, offset / 12.0f);
+            return ctx.currentPitchHz * FastMath::fastPow2(offset / 12.0f);
         } else if (style == 1) {
             // Fixed freq: 20 Hz to 24 kHz (def 55 Hz)
             return 20.0f * std::pow(24000.0f / 20.0f, pitchParam);
         } else {
             // Fixed note: MIDI note 0 to 127 (def A1 33 = 55 Hz)
             float note = std::round(pitchParam * 127.0f);
-            return 440.0f * std::pow(2.0f, (note - 69.0f) / 12.0f);
+            return 440.0f * FastMath::fastPow2((note - 69.0f) / 12.0f);
         }
     }
 
@@ -351,7 +352,7 @@ public:
 
             // Pitch Envelope modulates carrier pitch: 5 octaves sweep up/down
             // Modulator frequency modulates carrier scaled by modDepth (-200% to +200%)
-            float instFreq = baseFreq * std::pow(2.0f, pitchEnv * 5.0f) * std::pow(2.0f, fmMod * modDepth * 4.0f);
+            float instFreq = baseFreq * FastMath::fastPow2(pitchEnv * 5.0f + fmMod * modDepth * 4.0f);
             instFreq = std::clamp(instFreq, 1.0f, sampleRate * 0.48f);
 
             phase += instFreq * invSr;
@@ -421,7 +422,7 @@ public:
             } else if (tracking == 1) {
                 // Following offset: -64 to +64 semitones (def 0)
                 float noteOffset = (speed - 0.5f) * 128.0f;
-                oscFreq = carrierPitch * std::pow(2.0f, noteOffset / 12.0f);
+                oscFreq = carrierPitch * FastMath::fastPow2(noteOffset / 12.0f);
             } else {
                 // FM ratio: 1:32 to 1:1 to 32:1 (def 1:1)
                 float ratio = (speed <= 0.5f) ? (1.0f / (32.0f - (speed * 2.0f) * 31.0f))
@@ -441,7 +442,7 @@ public:
 
         for (int i = 0; i < numSamples; ++i) {
             float pitchEnv = (applyPitchEnv && i < static_cast<int>(peSig.size())) ? (peSig[i] * pitchEnvSign) : 0.0f;
-            float instFreq = oscFreq * std::pow(2.0f, pitchEnv * 5.0f);
+            float instFreq = oscFreq * FastMath::fastPow2(pitchEnv * 5.0f);
             instFreq = std::clamp(instFreq, 0.05f, sampleRate * 0.48f);
 
             phase += instFreq * invSr;
@@ -453,14 +454,14 @@ public:
                 val = evaluateWaveform(phase, shape);
             } else if (type == 1) {
                 // Cyclic: Sine * Noise ring-mod with white noise DJ filter
-                float sinVal = std::sin(phase * TWO_PI);
+                float sinVal = FastMath::fastSinNorm(phase);
                 float rawNoise = fastRng(rngState);
                 float dummyR = rawNoise;
                 djFilter.process(rawNoise, dummyR, shape, sampleRate);
                 val = sinVal * rawNoise;
             } else {
                 // Noise: S&H Noise clocked at shRate modulated by pitch envelope
-                float instShRate = shRate * std::pow(2.0f, pitchEnv * 5.0f);
+                float instShRate = shRate * FastMath::fastPow2(pitchEnv * 5.0f);
                 instShRate = std::clamp(instShRate, 0.05f, sampleRate * 0.48f);
                 noisePhase += instShRate * invSr;
                 if (noisePhase >= 1.0f) {
@@ -589,8 +590,8 @@ public:
             inL += bias;
             inR += bias;
 
-            inL = std::tanh(inL * satGain);
-            inR = std::tanh(inR * satGain);
+            inL = FastMath::fastTanh(inL * satGain);
+            inR = FastMath::fastTanh(inR * satGain);
 
             inL -= bias * 0.5f;
             inR -= bias * 0.5f;
@@ -600,8 +601,8 @@ public:
 
             // Limiter after drive and filter
             if (hasLimiter) {
-                inL = std::tanh(inL);
-                inR = std::tanh(inR);
+                inL = FastMath::fastTanh(inL);
+                inR = FastMath::fastTanh(inR);
             }
 
             if (left) left[i] = inL;
@@ -660,11 +661,11 @@ public:
                 shVal = fastRng(rngState);
             }
 
-            float env = std::exp(-timeSinceTrigger / decayTime);
+            float env = FastMath::fastExp(-timeSinceTrigger / decayTime);
             timeSinceTrigger += invSr;
 
             float rawNoise = shVal * env * gain;
-            noiseOut = (gain > 1.0f) ? std::tanh(rawNoise) : rawNoise;
+            noiseOut = (gain > 1.0f) ? FastMath::fastTanh(rawNoise) : rawNoise;
 
             float outL = noiseOut;
             float outR = noiseOut;
@@ -832,13 +833,13 @@ public:
 
             // Pre-filter drive: saturates signal into the filter stages
             if (std::abs(preDrive - 1.0f) > 0.01f) {
-                inL = std::tanh(inL * preDrive);
-                inR = std::tanh(inR * preDrive);
+                inL = FastMath::fastTanh(inL * preDrive);
+                inR = FastMath::fastTanh(inR * preDrive);
             }
 
             // Cutoff modulated by Filter Envelope: depth is +/- 10 octaves
             float fEnv = (envSig && i < static_cast<int>(envSig->size())) ? (*envSig)[i] : 0.0f;
-            float cutoff = baseCutoff * std::pow(2.0f, fEnv * 10.0f);
+            float cutoff = baseCutoff * FastMath::fastPow2(fEnv * 10.0f);
             cutoff = std::clamp(cutoff, 0.1f, sampleRate * 0.485f);
 
             // SVF filter cascade
@@ -1222,8 +1223,8 @@ public:
             float inL = left ? left[i] : 0.0f;
             float inR = right ? right[i] : inL;
 
-            float lfoL = std::sin(lfoPhase * TWO_PI);
-            float lfoR = std::cos(lfoPhase * TWO_PI);
+            float lfoL = FastMath::fastSinNorm(lfoPhase);
+            float lfoR = FastMath::fastCosNorm(lfoPhase);
 
             lfoPhase += phaseInc;
             if (lfoPhase >= 1.0f) lfoPhase -= 1.0f;
@@ -1243,8 +1244,8 @@ public:
             float wetL = readInterp(bufL, writeIdx, dL, maxDelay);
             float wetR = readInterp(bufR, writeIdx, dR, maxDelay);
 
-            bufL[writeIdx] = inL + std::tanh(wetL * fb);
-            bufR[writeIdx] = inR + std::tanh(wetR * fb);
+            bufL[writeIdx] = inL + FastMath::fastTanh(wetL * fb);
+            bufR[writeIdx] = inR + FastMath::fastTanh(wetR * fb);
             writeIdx = (writeIdx + 1) % maxDelay;
 
             if (left)  left[i]  = dry * inL + mix * wetL;
@@ -1301,8 +1302,8 @@ public:
             float inL = left ? left[i] : 0.0f;
             float inR = right ? right[i] : inL;
 
-            float lfoL = 0.5f * (1.0f + std::sin(lfoPhase * TWO_PI));
-            float lfoR = 0.5f * (1.0f + std::cos(lfoPhase * TWO_PI));
+            float lfoL = 0.5f * (1.0f + FastMath::fastSinNorm(lfoPhase));
+            float lfoR = 0.5f * (1.0f + FastMath::fastCosNorm(lfoPhase));
 
             lfoPhase += phaseInc;
             if (lfoPhase >= 1.0f) lfoPhase -= 1.0f;
@@ -1319,7 +1320,7 @@ public:
             float aR = (wR - 1.0f) / (wR + 1.0f);
 
             // Channel 0: Left
-            float x0 = inL + std::tanh(lastFb[0] * fb);
+            float x0 = inL + FastMath::fastTanh(lastFb[0] * fb);
             for (int s = 0; s < 6; ++s) {
                 float y = aL * x0 + apfX[0][s] - aL * apfY[0][s];
                 apfX[0][s] = x0;
@@ -1330,7 +1331,7 @@ public:
             float wetL = x0;
 
             // Channel 1: Right
-            float x1 = inR + std::tanh(lastFb[1] * fb);
+            float x1 = inR + FastMath::fastTanh(lastFb[1] * fb);
             for (int s = 0; s < 6; ++s) {
                 float y = aR * x1 + apfX[1][s] - aR * apfY[1][s];
                 apfX[1][s] = x1;
@@ -1393,8 +1394,8 @@ public:
             float inL = left ? left[i] : 0.0f;
             float inR = right ? right[i] : inL;
 
-            float lfoL = 0.5f * (1.0f + std::sin(lfoPhase * TWO_PI));
-            float lfoR = 0.5f * (1.0f + std::cos(lfoPhase * TWO_PI));
+            float lfoL = 0.5f * (1.0f + FastMath::fastSinNorm(lfoPhase));
+            float lfoR = 0.5f * (1.0f + FastMath::fastCosNorm(lfoPhase));
 
             lfoPhase += phaseInc;
             if (lfoPhase >= 1.0f) lfoPhase -= 1.0f;
@@ -1414,8 +1415,8 @@ public:
             float wetL = readInterp(bufL, writeIdx, dL, maxDelay);
             float wetR = readInterp(bufR, writeIdx, dR, maxDelay);
 
-            bufL[writeIdx] = inL + std::tanh(wetL * fb);
-            bufR[writeIdx] = inR + std::tanh(wetR * fb);
+            bufL[writeIdx] = inL + FastMath::fastTanh(wetL * fb);
+            bufR[writeIdx] = inR + FastMath::fastTanh(wetR * fb);
             writeIdx = (writeIdx + 1) % maxDelay;
 
             if (left)  left[i]  = dry * inL + mix * wetL;
@@ -1497,8 +1498,8 @@ public:
             dampL += dampAlpha * (wetL - dampL);
             dampR += dampAlpha * (wetR - dampR);
 
-            bufL[writeIdx] = inL + std::tanh((0.75f * dampL + 0.25f * dampR) * fb);
-            bufR[writeIdx] = inR + std::tanh((0.75f * dampR + 0.25f * dampL) * fb);
+            bufL[writeIdx] = inL + FastMath::fastTanh((0.75f * dampL + 0.25f * dampR) * fb);
+            bufR[writeIdx] = inR + FastMath::fastTanh((0.75f * dampR + 0.25f * dampL) * fb);
             writeIdx = (writeIdx + 1) % maxDelay;
 
             if (left)  left[i]  = dry * inL + mix * wetL;
@@ -1786,12 +1787,12 @@ public:
 
             // Quadrature carrier modulation
             // shift > 0 shifts frequency UP; shift < 0 shifts frequency DOWN
-            float cosL = std::cos(phaseL * TWO_PI);
-            float sinL = std::sin(phaseL * TWO_PI);
+            float cosL = FastMath::fastCosNorm(phaseL);
+            float sinL = FastMath::fastSinNorm(phaseL);
             float shiftedL = iL * cosL - qL * sinL;
 
-            float cosR = std::cos(phaseR * TWO_PI);
-            float sinR = std::sin(phaseR * TWO_PI);
+            float cosR = FastMath::fastCosNorm(phaseR);
+            float sinR = FastMath::fastSinNorm(phaseR);
             float shiftedR = iR * cosR - qR * sinR;
 
             float outL = inL * (1.0f - wetAmount) + (shiftedL * wetSign) * wetAmount;
@@ -1988,8 +1989,8 @@ public:
             }
 
             if (hasLimiter) {
-                curL = std::tanh(curL);
-                curR = std::tanh(curR);
+                curL = FastMath::fastTanh(curL);
+                curR = FastMath::fastTanh(curR);
             }
 
             if (left)  left[i]  = curL * gainL;
@@ -2790,7 +2791,7 @@ public:
 
     void setMidiPitch(int noteNumber) {
         ctx.currentMidiNote = noteNumber;
-        ctx.currentPitchHz = 440.0f * std::pow(2.0f, (static_cast<float>(noteNumber) - 69.0f) / 12.0f);
+        ctx.currentPitchHz = 440.0f * FastMath::fastPow2((static_cast<float>(noteNumber) - 69.0f) / 12.0f);
     }
 
     void setPageParameter(BlockID block, int knobIndex, float value) {
