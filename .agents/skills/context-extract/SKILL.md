@@ -1,17 +1,18 @@
 ---
 name: context-extract
-description: Extracts a lightweight Markdown snapshot of target files, schemas, directory layout, spec doc, and Linear issue context for external LLM planning. Automatically handles feature discovery, compiles context_snapshot.md, manages browser launching and clipboard copying, and reminds the user to select the Pro model in Gemini Web. Supports flags --clipboard (-c) and --open (-o). Triggers on `/contextextract`.
+description: Extracts a lightweight Markdown snapshot of target files, schemas, directory layout, spec doc, and Linear issue context for external LLM planning. Automatically handles feature discovery, compiles context_snapshot.md, manages browser launching and clipboard copying, and reminds the user to select the Pro model in Gemini Web. Explicitly instructs Gemini Web not to invoke Linear.app extensions. Supports flags --clipboard (-c) and --open (-o). Triggers on `/contextextract`.
 ---
 
 # Context Extractor for External Planning
 
 ## Goal
-Assemble a clean, condensed snapshot of relevant code, interfaces, directory layout, primary project spec, and Linear issue details into `context_snapshot.md`, then manage clipboard copying and launching the external planning workspace.
+Assemble a clean, condensed snapshot of relevant code, interfaces, directory layout, primary project spec, and Linear issue details into `context_snapshot.md`, explicitly instruct external LLMs to avoid connecting Linear extensions, then manage clipboard copying and launching the external planning workspace.
 
 ## Operational Constraints
 - **Strictly No Implementation:** Do not propose architectures or write feature code. Act strictly as an extraction compiler.
 - **Single Process:** Do not launch parallel sub-agents or background test runs.
 - **Token-Efficient Discovery:** Never perform unbounded whole-repo reads. Use fast indexing (`rg`, `find`, glob) with hard match caps.
+- **Suppress External Linear Extensions:** Explicitly forbid external LLMs from attempting to connect to or query Linear.app, as all Linear actions are strictly managed by Antigravity in the local IDE.
 
 ## Workflow
 
@@ -19,8 +20,8 @@ Assemble a clean, condensed snapshot of relevant code, interfaces, directory lay
 Inspect the invocation:
 - Flag `--clipboard` or `-c`: Auto-copy markdown to OS clipboard.
 - Flag `--open` or `-o`: Auto-launch `https://gemini.google.com` in default browser.
-- Detect any Linear issue key pattern (`[A-Z]+-[0-9]+`, e.g. `THE-7`). If found:
-  1. Call Linear MCP (`linear_get_issue` or `linear_search_issues`) to fetch the title, description, and status.
+- Detect any Linear issue key pattern (`[A-Z]+-[0-9]+`, e.g. `THE-9`). If found:
+  1. Call Linear MCP or `linear_sync.py` to fetch the title, description, and status.
   2. Reserve this context to prepend in Section 1 of the snapshot under `## 0. Linear Task Context`.
   3. Strip the issue ID and flags from the remaining search query.
 
@@ -45,8 +46,14 @@ Read the identified files, stripping boilerplate license headers to preserve tok
 Create or overwrite `context_snapshot.md` at project root:
 
 # Planning Context Snapshot
-**Timestamp:** <YYYY-MM-DD HH:MM>
+**Timestamp:** <YYYY-MM-DD HH:MM>  
 **Linear Issue:** <Issue Key & Title if present, else None>
+
+> [!IMPORTANT]
+> **PLANNING INSTRUCTIONS FOR GEMINI:**
+> - **DO NOT connect to or use Linear.app tools or extensions.**
+> - All Linear issue tracking, comments, and status updates are managed automatically by Antigravity in the local IDE.
+> - The task context below is 100% self-contained. Focus solely on producing a clean, phased implementation plan for Antigravity's `/pasteplan` skill.
 
 ## 0. Linear Task Context
 <Linear issue description and acceptance criteria if fetched>
@@ -64,7 +71,7 @@ Create or overwrite `context_snapshot.md` at project root:
 
 ## 3. Core Schemas, Structs & Interfaces
 ```cpp
-<Extracted enums, layout parameter structs, typedefs,>
+<Extracted enums, layout parameter structs, typedefs>
 ```
 
 ## 4. Source Files
@@ -92,11 +99,4 @@ Always display this visual banner:
 - If `--clipboard` and `--open` were supplied: Execute both, display banner, confirm.
 - If only `--clipboard`: Execute copy, display banner, confirm.
 - If only `--open`: Launch browser, display banner, confirm.
-- If neither flag was supplied: Display banner and prompt:
-  > `context_snapshot.md` compiled (Spec + `[N]` files).
-  > How would you like to proceed?
-  > 1. Yes, open the web and copy the markdown file to your clipboard
-  > 2. Yes, open the webpage, but don't alter the clipboard
-  > 3. Just copy the markdown to the clipboard
-  > 4. No thanks
-  > Execute the corresponding helper command upon user selection.
+- If neither flag was supplied: Display banner and prompt user for clipboard/browser actions.

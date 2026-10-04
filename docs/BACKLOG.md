@@ -3,16 +3,34 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized items below:
-> 1. **Priority #1 (UX Standardization)**: Amp Drive Default Standardization (0 dB reset).
-> 2. **Priority #2 (DSP / FX Architecture)**: Universal Dual-Mode FX Mix Knob Architecture & Parameter Uniformity Audit.
-> 3. **Priority #3 (Engine & Synthesis Features)**: APF (All-Pass Filter) Mode for Voice 1, Voice 2, and Noise Filters.
-> 4. **Priority #4 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
+> 1. **Priority #1 (UX / Tooltips)**: Control Tooltips on Hover for The Klang Farmer & The Klang Planter ([THE-9](https://linear.app/the-klang-farmer/issue/THE-9/control-tooltips-on-hover-the-klang-farmer-and-the-klang-planter)).
+> 2. **Priority #2 (UX Standardization)**: Amp Drive Default Standardization (0 dB reset).
+> 3. **Priority #3 (DSP / FX Architecture)**: Universal Dual-Mode FX Mix Knob Architecture & Parameter Uniformity Audit.
+> 4. **Priority #4 (Engine & Synthesis Features)**: APF (All-Pass Filter) Mode for Voice 1, Voice 2, and Noise Filters.
+> 5. **Priority #5 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
 
 ---
 
 ## 📌 Top Priorities for Upcoming Sessions
 
-### 1. [PRIORITY #1] Amp Drive Default Standardization
+### 1. [PRIORITY #1] Control Tooltips on Hover (The Klang Farmer & The Klang Planter)
+Tracked in Linear: **[THE-9](https://linear.app/the-klang-farmer/issue/THE-9/control-tooltips-on-hover-the-klang-farmer-and-the-klang-planter)**  
+Implement comprehensive, styled hover tooltips across all interactive controls in both plugins:
+- **Tooltip Infrastructure**:
+  - Instantiate and manage `juce::TooltipWindow` (or custom hardware-styled popup overlay) across main plugin editors.
+  - Set rich, informative tooltips (`setTooltip(...)`) on:
+    - Sliders & Rotary Knobs (parameter description, default value, musical units).
+    - LedSelector buttons (routing explanations for `Car`, `Mod`, `Both`, `Opp`, Slopes, Filter types).
+    - ComboBoxes (FX algorithm selections and visualizer modes).
+    - Section cards and headers (signal flow context).
+- **Aesthetic & UX Hygiene**:
+  - Adhere to synth industrial aesthetic: deep slate background (`#101722`), high-contrast crisp text, subtle accent borders.
+  - Snappy hover timing (~300–400ms delay) to avoid visual clutter during rapid sound design.
+  - Ensure zero interference with DAW automation recording and host mouse drag gestures.
+
+---
+
+### 2. [PRIORITY #2] Amp Drive Default Standardization
 - Change `amp_drive` default from +6 dB to **0 dB** (with double-click reset to 0 dB) in `createParameterLayout()` and UI initialization.
 
 ---
