@@ -3,64 +3,54 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized items below:
-> 1. **Priority #1 (UX / Tooltips)**: Control Tooltips on Hover for The Klang Farmer & The Klang Planter ([THE-9](https://linear.app/the-klang-farmer/issue/THE-9/control-tooltips-on-hover-the-klang-farmer-and-the-klang-planter)).
-> 2. **Priority #2 (UX Standardization)**: Amp Drive Default Standardization (0 dB reset).
-> 3. **Priority #3 (DSP / FX Architecture)**: Universal Dual-Mode FX Mix Knob Architecture & Parameter Uniformity Audit.
-> 4. **Priority #4 (Engine & Synthesis Features)**: APF (All-Pass Filter) Mode for Voice 1, Voice 2, and Noise Filters.
-> 5. **Priority #5 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
+> 1. **Priority #1 (UX / Modal & Tooltips)**: Quick-Snap Presets & Tooltips in Edit Modal (`SliderCalloutComponent`).
+> 2. **Priority #2 (Refactoring / Architecture)**: Extract Tooltips & Text into JSON (`StringManager` & CMake `juce_add_binary_data`).
+> 3. **Priority #3 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
 
 ---
 
 ## 📌 Top Priorities for Upcoming Sessions
 
-### 1. [PRIORITY #1] Control Tooltips on Hover (The Klang Farmer & The Klang Planter)
-Tracked in Linear: **[THE-9](https://linear.app/the-klang-farmer/issue/THE-9/control-tooltips-on-hover-the-klang-farmer-and-the-klang-planter)**  
-Implement comprehensive, styled hover tooltips across all interactive controls in both plugins:
-- **Tooltip Infrastructure**:
-  - Instantiate and manage `juce::TooltipWindow` (or custom hardware-styled popup overlay) across main plugin editors.
-  - Set rich, informative tooltips (`setTooltip(...)`) on:
-    - Sliders & Rotary Knobs (parameter description, default value, musical units).
-    - LedSelector buttons (routing explanations for `Car`, `Mod`, `Both`, `Opp`, Slopes, Filter types).
-    - ComboBoxes (FX algorithm selections and visualizer modes).
-    - Section cards and headers (signal flow context).
-- **Aesthetic & UX Hygiene**:
-  - Adhere to synth industrial aesthetic: deep slate background (`#101722`), high-contrast crisp text, subtle accent borders.
-  - Snappy hover timing (~300–400ms delay) to avoid visual clutter during rapid sound design.
-  - Ensure zero interference with DAW automation recording and host mouse drag gestures.
+### 1. [PRIORITY #1] Quick-Snap Presets & Tooltips in Edit Modal (`SliderCalloutComponent`)
+Inject dynamic parameter tooltips and contextual quick-snap preset buttons directly into the right-click `SliderCalloutComponent` modal:
+- **Phase 1: Header Additions (`source/UIComponents.h`)**:
+  - Add state variables to hold tooltip string (`tooltipText`) and text layout (`tooltipLayout` for height measurement).
+  - Add `QuickPreset` struct (`juce::String label`, `juce::String valueStr`) and active presets vector (`std::vector<QuickPreset> activePresets`).
+  - Add custom `PresetButtonLookAndFeel` for sleek preset "pills" (`drawButtonBackground`, `drawButtonText`).
+  - Add button storage: `PresetButtonLookAndFeel presetBtnLaf; juce::OwnedArray<juce::TextButton> presetButtons;`.
+- **Phase 2: Contextual Presets & Layout (`source/UIComponents.cpp`)**:
+  - Dynamically populate `activePresets` based on target slider/parameter:
+    - **Waveshape**: Sine (`0.0`), Triangle (`0.25`), Saw (`0.5`), Square (`0.75` / `1.0`)
+    - **Pitch / Semitones / Coarse Tune**: `-24`, `-12`, `-7`, `0`, `+7`, `+12`, `+24`
+    - **Dual-Mode FX Mix Knobs**: `-100% (Wet)`, `0% (Dry)`, `+100% (Parallel)`
+    - **Filter Cutoff**: `60 Hz`, `250 Hz`, `1 kHz`, `3.5 kHz`, `10 kHz`
+    - **Filter Resonance / Q**: `0.5`, `0.707`, `1.414`, `4.0`, `10.0`
+    - **Envelopes (Decay / Release)**: `10 ms`, `60 ms`, `150 ms`, `600 ms`, `2.0 s`
+    - **Tempo Delay & Reverb Gate Times**: `1/16`, `1/8`, `1/8D`, `1/8T`, `1/4`
+    - **Stereo Enhancer / Width**: `0% (Mono)`, `100% (Normal)`, `200% (Wide)`, `400% (Hyper-Wide)`
+  - Layout: Dynamically compute height accommodating the tooltip, preset pill button bar, slider, and text editor.
+  - Clicking a preset pill updates the slider and active text box immediately.
 
 ---
 
-### 2. [PRIORITY #2] Amp Drive Default Standardization
-- Change `amp_drive` default from +6 dB to **0 dB** (with double-click reset to 0 dB) in `createParameterLayout()` and UI initialization.
+### 2. [PRIORITY #2] Extract Tooltips & Text into JSON (`StringManager` & CMake `juce_add_binary_data`)
+*Detailed Plan: [`docs/extract_tooltips_text_into_json_plan.md`](extract_tooltips_text_into_json_plan.md)*  
+Extract all hardcoded UI text, tooltips, and Quickstart Guide copywriting into a centralized JSON dictionary:
+- **Phase 1: Asset Creation & JSON Structure**:
+  - Create `assets/en_strings.json` as the single source of truth for copywriting (Quickstart guide, navigation pages, FX algorithms, FX knobs, LED selectors, parameter descriptions).
+- **Phase 2: CMake Binary Data Generation**:
+  - Configure `juce_add_binary_data(TkfAssets ...)` in `CMakeLists.txt` to bake `en_strings.json` directly into the binary.
+  - Link `TkfAssets` to `TheKlangFarmer`, `TheKlangPlanter`, and test binaries.
+- **Phase 3: Runtime String Manager**:
+  - Implement `StringManager` singleton (`source/StringManager.h`, `source/StringManager.cpp`) parsing JSON on startup and querying strings via dot-delimited key paths (`getString`, `getStringArray`, `getFxKnob`, `getVar`).
+- **Phase 4: Refactoring UI Components**:
+  - Refactor `TooltipHelper` in `source/UIComponents.cpp` to pull FX knob descriptions, algorithm descriptions, and LED selector tips dynamically from `StringManager`.
+- **Phase 5: Refactoring Plugin Editor**:
+  - Refactor `PluginEditor.cpp` to replace hardcoded strings in navigation buttons, parameter descriptions (`getFarmerParamDescription`), and `QuickstartGuideModalComponent` panels with dynamic `StringManager` fetches.
 
 ---
 
-### 2. [PRIORITY #2] Universal Dual-Mode FX Mix Knob Architecture & Parameter Uniformity Audit
-- **Universal Dual-Mode Mix Behavior**: Standardize the Mix knob across **ALL** FX processors to a single bipolar range (`-100%` ↔ `0%` ↔ `+100%`):
-  - **Negative Range (`-100%` to `0%` — Wet Crossfade)**: Classic crossfade where dry fades out as wet increases. At `-100%`, signal is 100% wet (0% dry). At `0%`, signal is 100% dry (0% wet).
-  - **Center (`0%` — Pure Dry)**: 100% Dry signal, 0% Wet. Default and double-click reset value.
-  - **Positive Range (`0%` to `+100%` — Parallel Blend)**: Dry signal remains pinned at 100% while wet signal is added on top up to 100% (true parallel processing without losing dry transient punch).
-- **Drive Effect**: Replace the Filter knob on the Drive effect with this standardized Mix control.
-- **Uniformity Audit**: Cross-reference all 13 (and new) FX processors to ensure the `Mix` parameter is uniformly located in the exact same parameter slot (e.g. Knob 4) across every effect for muscle memory and hardware surface mapping.
-
----
-
-## 🚀 Engine & Synthesis Features (Backlog)
-
-### 5. APF (All-Pass Filter) Mode for Voice 1, Voice 2, and Noise Filters
-- **New Filter Type**: Add `APF` to the filter type selectors alongside `LPF`, `BPF`, `HPF`, and `BRF`.
-- **Order Mapping**: Slopes `6`, `12`, `18`, `24`, `36` map to $N^\text{th}$-order APF stages:
-  - `6` → 1st Order APF
-  - `12` → 2nd Order APF
-  - `18` → 3rd Order APF
-  - `24` → 4th Order APF
-  - `36` → 6th Order APF
-- **Phase Response Visualizer**: When a filter is set to `APF`, the visualizer renders a dedicated **Phase Plot** (phase shift angle vs frequency, $20\,\text{Hz} - 24\,\text{kHz}$) instead of the magnitude response.
-- **Sound Design Target**: Exceptional for bass sound design, sub-frequency smearing, and phase dispersion before wavefolders and saturators.
-
----
-
-### 6. Dual Sample Players for Noise Transient Page (Plugin Only)
+### 3. [PRIORITY #3] Dual Sample Players for Noise Transient Page (Plugin Only)
 - Add two dedicated sample player modules to the Transients page (desktop plugin specific; not constrained to TBD-16 4-control limits).
 - **Controls per Player**:
   1. **File Picker**: File browser / drag-and-drop audio file loader.
