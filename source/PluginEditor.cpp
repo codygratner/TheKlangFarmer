@@ -2459,7 +2459,7 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
 #ifdef JucePlugin_VersionString
     juce::String verStr = "v" JucePlugin_VersionString;
 #else
-    juce::String verStr = "v0.1.6";
+    juce::String verStr = "v0.1.7";
 #endif
     g.drawText(verStr, 196, 0, 48, 36, juce::Justification::centredLeft);
 

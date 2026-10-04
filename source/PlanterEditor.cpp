@@ -625,7 +625,12 @@ void TheKlangPlanterAudioProcessorEditor::paint(juce::Graphics& g) {
     // Version
     g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff4a9eff));
-    g.drawText("v0.1.6", 206, 0, 48, 36, juce::Justification::centredLeft);
+#ifdef JucePlugin_VersionString
+    juce::String verStr = "v" JucePlugin_VersionString;
+#else
+    juce::String verStr = "v0.1.7";
+#endif
+    g.drawText(verStr, 206, 0, 48, 36, juce::Justification::centredLeft);
 
     // Subtitle
     int subtitleWidth = juce::jmax(0, getWidth() - 480 - 260);

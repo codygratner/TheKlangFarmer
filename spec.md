@@ -501,11 +501,11 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 ## 5. Versioning & Release Management
 
 - **Semantic Versioning Standard (`MAJOR.MINOR.PATCH`)**:
-  - The plugins and standalone binaries adhere strictly to 3-part SemVer (e.g. `0.1.6`), with both **The Klang Farmer** and **The Klang Planter** sharing unified version numbering.
+  - The plugins and standalone binaries adhere strictly to 3-part SemVer (e.g. `0.1.7`), with both **The Klang Farmer** and **The Klang Planter** sharing unified version numbering.
   - Major and minor numbers are bumped for architectural milestones and major features.
   - The patch number increments with each tagged release and distribution build.
 - **Header Display**:
-  - The active version is dynamically displayed in the top header bar next to plugin titles as an accent badge (e.g. `v0.1.6`), linked directly to JUCE's `JucePlugin_VersionString`.
+  - The active version is dynamically displayed in the top header bar next to plugin titles as an accent badge (e.g. `v0.1.7`), linked directly to JUCE's `JucePlugin_VersionString`.
 - **Release Packaging**:
   - Distributed via GitHub Releases with multi-platform zip archives:
     - `TheKlangFarmer-v<version>-Windows.zip`: contains `The Klang Farmer.vst3`, `The Klang Planter.vst3`, and standalone executables.
@@ -521,7 +521,7 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 ### 2x4 Module Architecture
 ```
 +---------------------------------------------------------------------------------------------------+
-| THE KLANG PLANTER  v0.1.6    [Live Mini-Oscilloscope] [LIMIT] [Peak Meters]    [INIT]   [TRIGGER] |
+| THE KLANG PLANTER  v0.1.7    [Live Mini-Oscilloscope] [LIMIT] [Peak Meters]    [INIT]   [TRIGGER] |
 +---------------------------+---------------------------+-----------------------+-------------------+
 | [1] CARRIER               | [2] MODULATOR             | [3] PITCH ENV         | [4] NOISE TRANS   |
 | Accent: Red               | Accent: Cyan              | Accent: Silver        | Accent: Dark Grey |
