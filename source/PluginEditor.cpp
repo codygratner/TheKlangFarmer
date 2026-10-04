@@ -840,9 +840,14 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
       vizCard(juce::Colour(0xff00d2ff))
 {
     setLookAndFeel(&knobLookAndFeel);
-    tooltipWindow.setLookAndFeel(&knobLookAndFeel);
-    tooltipWindow.setOpaque(false);
-    tooltipWindow.setInterceptsMouseClicks(false, false);
+
+    // Setup Header Tooltips Toggle Button
+    tooltipsButton.setTooltip("TOOLTIPS — Toggle hover parameter and control tooltips on or off.");
+    tooltipsButton.onClick = [this]() {
+        setTooltipsEnabled(!tooltipsEnabled);
+    };
+    addAndMakeVisible(tooltipsButton);
+    setTooltipsEnabled(true);
 
     // Setup Header Quickstart Guide Button
     guideButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1f2430));
@@ -1874,8 +1879,35 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
 TheKlangFarmerAudioProcessorEditor::~TheKlangFarmerAudioProcessorEditor() {
     stopTimer();
-    tooltipWindow.setLookAndFeel(nullptr);
+    if (tooltipWindow) {
+        tooltipWindow->setLookAndFeel(nullptr);
+        tooltipWindow.reset();
+    }
     setLookAndFeel(nullptr);
+}
+
+void TheKlangFarmerAudioProcessorEditor::setTooltipsEnabled(bool enabled) {
+    tooltipsEnabled = enabled;
+    if (enabled) {
+        if (!tooltipWindow) {
+            tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 300);
+            tooltipWindow->setLookAndFeel(&knobLookAndFeel);
+            tooltipWindow->setOpaque(false);
+            tooltipWindow->setInterceptsMouseClicks(false, false);
+        }
+        tooltipsButton.setButtonText("TIPS: ON");
+        tooltipsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1f2430));
+        tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff00d2ff));
+    } else {
+        if (tooltipWindow) {
+            tooltipWindow->hideTip();
+            tooltipWindow->setLookAndFeel(nullptr);
+            tooltipWindow.reset();
+        }
+        tooltipsButton.setButtonText("TIPS: OFF");
+        tooltipsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff151821));
+        tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff556070));
+    }
 }
 
 void TheKlangFarmerAudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar, double defaultVal) {
@@ -2667,15 +2699,23 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
 #else
     juce::String verStr = "v0.1.8";
 #endif
-    g.drawText(verStr, 196, 0, 48, 36, juce::Justification::centredLeft);
+#ifdef TKF_FEATURE_TAG
+    if (juce::String(TKF_FEATURE_TAG).isNotEmpty()) {
+        verStr += juce::String(TKF_FEATURE_TAG);
+    }
+#endif
+    int verWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), verStr) + 8;
+    g.drawText(verStr, 196, 0, verWidth, 36, juce::Justification::centredLeft);
 
-    int subtitleWidth = juce::jmax(0, getWidth() - 350 - 250);
+    int subX = 196 + verWidth + 8;
+    int subtitleWidth = juce::jmax(0, getWidth() - 434 - subX);
     g.setFont(juce::FontOptions(12.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("PAGED MODULAR DUAL FM SYNTHESIS DRUM VOICE", 250, 0, subtitleWidth, 36, juce::Justification::centredLeft);
+    g.drawText("PAGED MODULAR DUAL FM SYNTHESIS DRUM VOICE", subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangFarmerAudioProcessorEditor::resized() {
+    tooltipsButton.setBounds(getWidth() - 424, 5, 72, 26);
     guideButton.setBounds(getWidth() - 346, 5, 90, 26);
     initButton.setBounds(getWidth() - 246, 5, 90, 26);
     triggerButton.setBounds(getWidth() - 146, 5, 136, 26);

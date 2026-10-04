@@ -1,12 +1,12 @@
 ---
 name: paste-plan
-description: Ingests an implementation plan pasted by the user, writes it to PLAN.md, parses the phases, verifies Git branch safety against master/main, and coordinates execution through an automated audit, build, and task-finishing pipeline. Supports `--build` (-b) to run autonomously. Triggers on `/pasteplan`.
+description: Ingests an implementation plan pasted by the user, writes it to PLAN.md, parses the phases, verifies Git branch safety against master/main, bumps the patch version with a prerelease -[feature] tag, and coordinates execution through an automated audit, build, and task-finishing pipeline. Supports `--build` (-b) to run autonomously. Triggers on `/pasteplan`.
 ---
 
 # Paste Plan Ingestor & Pipeline Orchestrator
 
 ## Goal
-Capture an externally authored plan, persist it verbatim to `PLAN.md` at project root, guard against unintended execution on `master`, and execute the verification loop across every phase, terminating with `/task-finish`.
+Capture an externally authored plan, persist it verbatim to `PLAN.md` at project root, guard against unintended execution on `master`, bump the patch version with a prerelease feature tag for DAW cache busting, and execute the verification loop across every phase, terminating with `/task-finish`.
 
 ## Workflow
 
@@ -17,15 +17,15 @@ Capture an externally authored plan, persist it verbatim to `PLAN.md` at project
 
 ### 2. Parse Plan Structure
 Extract:
-1. **Linear Issue ID:** Search for `[A-Z]+-[0-9]+` in the title or headers (e.g., `THE-7`).
+1. **Linear Issue ID:** Search for `[A-Z]+-[0-9]+` in the title or headers (e.g., `THE-9`).
 2. **Core Objective & Phases:** List of numbered phases and acceptance criteria.
 3. **Phase 1 Action Items:** Target files and verification targets.
 
-### 3. Git Branch Safety Gate
+### 3. Git Branch Safety Gate & Feature Version Bump
 Check current active branch (`git branch --show-current`):
 - If the current branch is `master` or `main`:
   - Determine a clean branch name:
-    - If a Linear Issue ID was found: `feature/<ISSUE-ID>-<slug>` (e.g., `feature/THE-7-voice-allocation`).
+    - If a Linear Issue ID was found: `feature/<ISSUE-ID>-<slug>` (e.g., `feature/THE-9-tooltips`).
     - If no issue ID: `feature/<task-slug>`.
   - **HALT before touching any source code**, even if `--build` was passed.
   - Prompt the user:
@@ -35,14 +35,24 @@ Check current active branch (`git branch --show-current`):
     > How would you like to proceed?  
     > 1. **Make a new branch** (Recommended: `<suggested-branch-name>`)  
     > 2. **No, do this in master, I'm feeling fucking feisty**
-  - If user selects 1: execute `git checkout -b <suggested-branch-name>` and continue to Step 4.
-  - If user selects 2: log confirmation and continue to Step 4 on `master`.
+  - If user selects 1: execute `git checkout -b <suggested-branch-name>` and continue to Version Bump.
+  - If user selects 2: log confirmation and continue on `master`.
+
+#### Automated Feature Version Bump:
+1. Derive `<slug>` from the task or issue key (e.g., `tooltips`, `mix-knob`).
+2. Inspect `CMakeLists.txt` for `project(TheKlangFarmer VERSION X.Y.Z LANGUAGES C CXX)`.
+3. Increment patch version: `Z -> Z+1` (e.g. `0.1.8` -> `0.1.9`).
+4. Set feature tag in `CMakeLists.txt`:
+   `set(TKF_FEATURE_TAG "-<slug>" CACHE STRING "Prerelease feature tag for development builds")`
+5. Print notice:
+   `📦 [Version Bump] Set development build to vX.Y.(Z+1)-<slug> (forces DAW rescan and UI header badge update).`
 
 ### 4. Briefing & Execution Trigger
 Print summary:
 ```markdown
 # 📋 Plan Ingested & Saved to `PLAN.md`
 **Branch:** <Current Active Branch>
+**Version:** vX.Y.(Z+1)-<slug>
 **Linear Issue:** <Extracted ID or "None">
 **Objective:** <Objective>
 **Phases:** <N> Total Phases

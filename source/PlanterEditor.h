@@ -30,10 +30,13 @@ public:
 private:
     TheKlangPlanterAudioProcessor& audioProcessor;
     RotaryKnobLookAndFeel knobLookAndFeel;
-    juce::TooltipWindow tooltipWindow { this, 300 };
+    std::unique_ptr<juce::TooltipWindow> tooltipWindow;
+    bool tooltipsEnabled = true;
+    void setTooltipsEnabled(bool enabled);
 
     // Header Components
     PlanterHeaderVisualizer headerViz;
+    juce::TextButton tooltipsButton{ "TIPS: ON" };
     juce::TextButton initButton{ "INIT" };
     juce::TextButton triggerButton{ "TRIGGER" };
 

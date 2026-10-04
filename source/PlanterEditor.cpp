@@ -109,10 +109,15 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
       filterSlopeSelector(juce::Colour(0xff2979ff))
 {
     setLookAndFeel(&knobLookAndFeel);
-    tooltipWindow.setLookAndFeel(&knobLookAndFeel);
-    tooltipWindow.setOpaque(false);
-    tooltipWindow.setInterceptsMouseClicks(false, false);
     scopeBuffer.resize(512, 0.0f);
+
+    // Header Tooltips Toggle Button
+    tooltipsButton.setTooltip("TOOLTIPS — Toggle hover parameter and control tooltips on or off.");
+    tooltipsButton.onClick = [this]() {
+        setTooltipsEnabled(!tooltipsEnabled);
+    };
+    addAndMakeVisible(tooltipsButton);
+    setTooltipsEnabled(true);
 
     // Header Visualizer
     addAndMakeVisible(headerViz);
@@ -528,8 +533,35 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
 TheKlangPlanterAudioProcessorEditor::~TheKlangPlanterAudioProcessorEditor() {
     stopTimer();
-    tooltipWindow.setLookAndFeel(nullptr);
+    if (tooltipWindow) {
+        tooltipWindow->setLookAndFeel(nullptr);
+        tooltipWindow.reset();
+    }
     setLookAndFeel(nullptr);
+}
+
+void TheKlangPlanterAudioProcessorEditor::setTooltipsEnabled(bool enabled) {
+    tooltipsEnabled = enabled;
+    if (enabled) {
+        if (!tooltipWindow) {
+            tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 300);
+            tooltipWindow->setLookAndFeel(&knobLookAndFeel);
+            tooltipWindow->setOpaque(false);
+            tooltipWindow->setInterceptsMouseClicks(false, false);
+        }
+        tooltipsButton.setButtonText("TIPS: ON");
+        tooltipsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1f2430));
+        tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff00d2ff));
+    } else {
+        if (tooltipWindow) {
+            tooltipWindow->hideTip();
+            tooltipWindow->setLookAndFeel(nullptr);
+            tooltipWindow.reset();
+        }
+        tooltipsButton.setButtonText("TIPS: OFF");
+        tooltipsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff151821));
+        tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff556070));
+    }
 }
 
 void TheKlangPlanterAudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colour accent, bool bipolar, double defaultValue) {
@@ -688,13 +720,20 @@ void TheKlangPlanterAudioProcessorEditor::paint(juce::Graphics& g) {
 #else
     juce::String verStr = "v0.1.8";
 #endif
-    g.drawText(verStr, 206, 0, 48, 36, juce::Justification::centredLeft);
+#ifdef TKF_FEATURE_TAG
+    if (juce::String(TKF_FEATURE_TAG).isNotEmpty()) {
+        verStr += juce::String(TKF_FEATURE_TAG);
+    }
+#endif
+    int verWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), verStr) + 8;
+    g.drawText(verStr, 206, 0, verWidth, 36, juce::Justification::centredLeft);
 
     // Subtitle
-    int subtitleWidth = juce::jmax(0, getWidth() - 480 - 260);
+    int subX = 206 + verWidth + 8;
+    int subtitleWidth = juce::jmax(0, getWidth() - 554 - subX);
     g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("COMPACT FM PERCUSSION SYNTHESIZER", 260, 0, subtitleWidth, 36, juce::Justification::centredLeft);
+    g.drawText("COMPACT FM PERCUSSION SYNTHESIZER", subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangPlanterAudioProcessorEditor::resized() {
@@ -715,7 +754,8 @@ void TheKlangPlanterAudioProcessorEditor::resized() {
     };
 
     // Header controls
-    headerViz.setBounds(getWidth() - 466, 5, 210, 26);
+    headerViz.setBounds(getWidth() - 544, 5, 210, 26);
+    tooltipsButton.setBounds(getWidth() - 324, 5, 72, 26);
     initButton.setBounds(getWidth() - 246, 5, 90, 26);
     triggerButton.setBounds(getWidth() - 146, 5, 136, 26);
 

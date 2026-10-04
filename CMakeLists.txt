@@ -11,6 +11,10 @@ endif()
 # 1. Project definition
 project(TheKlangFarmer VERSION 0.1.8 LANGUAGES C CXX)
 
+# Feature branch build tag (e.g., "-tooltips"). Stripped upon merge back to master.
+set(TKF_FEATURE_TAG "" CACHE STRING "Prerelease feature tag for development builds")
+add_compile_definitions(TKF_FEATURE_TAG="${TKF_FEATURE_TAG}")
+
 # Enforce modern C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

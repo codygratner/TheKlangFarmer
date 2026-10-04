@@ -31,3 +31,7 @@
   5. Wait for user input:
      - If the user selects option 1 (or confirms branch creation): run `git checkout -b <suggested-branch-name>` and proceed.
      - If the user selects option 2 (or says "feisty" / confirms master): proceed directly on `master`.
+
+## Versioning & Build Hygiene Guardrail
+- **Feature Branch Version Bumping:** Whenever beginning work on a feature branch (via `/pasteplan`), immediately bump the patch version (e.g. `0.1.8` -> `0.1.9`) and set `TKF_FEATURE_TAG` to `"-<slug>"` (e.g. `"-tooltips"`) in `CMakeLists.txt`. This forces DAWs to rescan the new VST3 and visually confirms the active build in the header.
+- **Merge & Release Finalization:** Before finalizing a task in `/task-finish` and merging to `master`, always clear `TKF_FEATURE_TAG` (`set(TKF_FEATURE_TAG "")`), rebuild, and deploy the clean release version.

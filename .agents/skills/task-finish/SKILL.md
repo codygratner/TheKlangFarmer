@@ -16,6 +16,15 @@ Read `PLAN.md`. Verify that all phases are marked completed `[x]`. Halt if any t
 ### 2. Extract Issue Identifier
 Scan `PLAN.md` for a Linear issue key (`[A-Z]+-[0-9]+`, e.g., `THE-7`). If missing, check the current git branch name.
 
+### 2.5 Strip Feature Tag & Finalize Clean Release
+Before committing verified changes:
+1. In `CMakeLists.txt`, clear `TKF_FEATURE_TAG`:
+   ```cmake
+   set(TKF_FEATURE_TAG "" CACHE STRING "Prerelease feature tag for development builds")
+   ```
+2. Run `/build-validate` or compile locally to deploy the clean release VST3 binary (`vX.Y.Z`).
+3. Log: `[Version Finalize] Stripped feature tag -> Clean release vX.Y.Z ready for master`.
+
 ### 3. Git Commit
 - Run `git status` and `git diff --stat`.
 - Stage all verified changes.
