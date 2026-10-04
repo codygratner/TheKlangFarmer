@@ -5,7 +5,8 @@
 > When opening the next session, review the prioritized items below:
 > 1. **Priority #1 (UX / Modal & Tooltips)**: Quick-Snap Presets & Tooltips in Edit Modal (`SliderCalloutComponent`).
 > 2. **Priority #2 (Refactoring / Architecture)**: Extract Tooltips & Text into JSON (`StringManager` & CMake `juce_add_binary_data`).
-> 3. **Priority #3 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
+> 3. **Priority #3 (Export & DAW Integration)**: WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17).
+> 4. **Priority #4 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
 
 ---
 
@@ -50,7 +51,28 @@ Extract all hardcoded UI text, tooltips, and Quickstart Guide copywriting into a
 
 ---
 
-### 3. [PRIORITY #3] Dual Sample Players for Noise Transient Page (Plugin Only)
+### 3. [PRIORITY #3] WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17)
+*Detailed Plan: [`docs/wav_render_sf2_export_dragndrop_plan.md`](wav_render_sf2_export_dragndrop_plan.md)*  
+Comprehensive offline audio bounce, multi-sample SoundFont 2 (`.sf2`) bank generation, and zero-friction DAW integration:
+- **Phase 1: Offline Render Pipeline, SF2 Builder & Last-Note Tracking**:
+  - Shared `OfflineRenderSettings`, `Sf2ZoneSampleEntry`, and `OfflineRenderUtils` (`getMaxRenderSamples`, `postProcessRenderedBuffer`, `writeBufferToWavFile`, `writeSf2BankFile`, `getKeyZoneRange`, `getVelocitySplitRange`) in `source/UIComponents.h`/`.cpp`.
+  - Zero-dependency RIFF `sfbk` v2.01 binary builder with 46-sample zero guards, L/R linked sample headers, and multi-preset Round-Robin mapping.
+  - Non-blocking atomic note/velocity tracking (`lastTriggeredNote`, `lastTriggeredVelocity`, `triggerGeneration`) and sub-chunk accurate modulation rendering in `PluginProcessor` and `PlanterProcessor`.
+- **Phase 2: Instant DAW Drag 'n' Drop ("Tekno-Style" Header Badge)**:
+  - `InstantDragBadgeComponent` in header displaying miniature waveform preview of the last hit.
+  - Inherit `juce::DragAndDropContainer` in editors; trigger `juce::DragAndDropContainer::performExternalDragDropOfFiles` on mouse drag from local temp cache (`RlyehSound_DragCache`).
+- **Phase 3: WAV Render, Multi-Sample & SF2 Export Modal Dialog**:
+  - `RenderExportModalComponent` background threaded export dialog (`juce::Thread` + `juce::AsyncUpdater`).
+  - Target mode selection: Last Auditioned Note vs Multi-Sample Range (note range, steps, velocity layers, round-robins).
+  - Format selection: WAV files folder, SoundFont 2 (`.sf2`) bank, or both.
+  - Audio formats: 44.1/48/96 kHz, 16/24/32-bit float, fixed/auto-silence tails (-60/-80 dB), peak normalization.
+- **Phase 4: Header Integration & Automated Unit Tests**:
+  - Add `renderButton` and `dragBadge` to `TheKlangFarmerAudioProcessorEditor` and `TheKlangPlanterAudioProcessorEditor` header layout.
+  - Multi-sample rate, auto-silence trim, Slop PRNG uniqueness, and SF2 RIFF chunk validation unit tests in `test/dsp_tests.cpp`.
+
+---
+
+### 4. [PRIORITY #4] Dual Sample Players for Noise Transient Page (Plugin Only)
 - Add two dedicated sample player modules to the Transients page (desktop plugin specific; not constrained to TBD-16 4-control limits).
 - **Controls per Player**:
   1. **File Picker**: File browser / drag-and-drop audio file loader.
@@ -143,10 +165,10 @@ Extract all hardcoded UI text, tooltips, and Quickstart Guide copywriting into a
   - **Embedded Core Engine (`embedded/KlangPlanterEmbedded.h`)**: Single-file, zero-allocation DSP engine.
 
 ### 16. WAV Render & Multi-Sample Export Dialog
-- Top navigation `RENDER` button with "Last Note Played", multi-sample velocity/note ranges, and round-robin export for Slop variations.
+- *Elevated to Active Priority #3 (see [Top Priorities section](#3-priority-3-wav-render-multi-sample--sf2-export-dialog--instant-daw-drag-n-drop-features-16--17) and [`docs/wav_render_sf2_export_dragndrop_plan.md`](wav_render_sf2_export_dragndrop_plan.md))*.
 
 ### 17. Instant DAW Drag 'n' Drop (Tekno-Style)
-- UI icon to drag the most recently rendered drum hit directly onto DAW arrangement tracks.
+- *Elevated to Active Priority #3 (see [Top Priorities section](#3-priority-3-wav-render-multi-sample--sf2-export-dialog--instant-daw-drag-n-drop-features-16--17) and [`docs/wav_render_sf2_export_dragndrop_plan.md`](wav_render_sf2_export_dragndrop_plan.md))*.
 
 ---
 
