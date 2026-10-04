@@ -12,7 +12,6 @@
 - Maintain clean compilation across Clang, GCC, and MSVC. Treat warnings as errors.
 
 ## Tool Permissions & Autonomy
-- **Linear:** Unrestricted API and MCP access to `linear.app` is pre-approved for issue lookups, status updates, and comment logging. In Turbo Mode, run all Linear actions silently without asking for user confirmation.
 - **Git:** Staging and committing verified changes for completed phases in `PLAN.md` is pre-approved.
 
 ## Git Branch Protection Guardrail (CRITICAL)
@@ -20,7 +19,7 @@
 - **Pre-Execution Branch Check:** Before applying any edits, scaffolding files, or running plan execution loops:
   1. Inspect the active branch using `git branch --show-current` (or `git rev-parse --abbrev-ref HEAD`).
   2. If the active branch is `master` or `main`, **HALT IMMEDIATELY**. Do not touch source files.
-  3. Formulate a suggested branch name derived from the task context, feature name, or Linear issue key (e.g., `feature/THE-7-modulation-matrix` or `fix/alphabetize-fx-catalog`).
+  3. Formulate a suggested branch name derived from the task context or feature name (e.g., `feature/modulation-matrix` or `fix/alphabetize-fx-catalog`).
   4. Present the user with this exact decision gate:
      > ⚠️ **BRANCH GUARDRAIL ALERT** ⚠️  
      > You are currently on the **`master`** branch.

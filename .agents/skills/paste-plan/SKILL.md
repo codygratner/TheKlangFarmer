@@ -53,7 +53,6 @@ Print summary:
 # 📋 Plan Ingested & Saved to `PLAN.md`
 **Branch:** <Current Active Branch>
 **Version:** vX.Y.(Z+1)-<slug>
-**Linear Issue:** <Extracted ID or "None">
 **Objective:** <Objective>
 **Phases:** <N> Total Phases
 
