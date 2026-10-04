@@ -1,6 +1,6 @@
 ---
 name: paste-plan
-description: Ingests an implementation plan pasted by the user, writes it to PLAN.md, parses the phases, verifies Git branch safety against master/main, bumps the patch version with a prerelease -[feature] tag, and coordinates execution through an automated audit, build, and task-finishing pipeline. Supports `--build` (-b) to run autonomously. Triggers on `/pasteplan`.
+description: Ingests an implementation plan pasted by the user, writes it to PLAN.md, parses the phases, and either coordinates automated build execution, prompts for interactive action, or defers the plan directly to the project backlog. Supports `--build` (-b) to run autonomously and `--backlog` (-l) to defer to the backlog. Triggers on `/pasteplan`.
 ---
 
 # Paste Plan Ingestor & Pipeline Orchestrator
@@ -10,36 +10,50 @@ Capture an externally authored plan, persist it verbatim to `PLAN.md` at project
 
 ## Workflow
 
-### 1. Flag Detection & Ingest
-- Check for `--build` or `-b`. Set `AUTO_BUILD = true` if present, else `false`.
-- Strip `--build` and `-b` from the prompt text.
+### 1. Flag Detection & Command Parsing
+Inspect the invocation:
+- Flag `--build` or `-b`: Autonomous Build Mode (`AUTO_BUILD = true`).
+- Flag `--backlog` or `-l`: Backlog Deferment Mode (`DEFER_BACKLOG = true`).
+- Strip `--build`, `-b`, `--backlog`, and `-l` from the plan text.
 - Save the raw plan text directly to `PLAN.md` at project root.
 
 ### 2. Parse Plan Structure
 Extract:
-1. **Linear Issue ID:** Search for `[A-Z]+-[0-9]+` in the title or headers (e.g., `THE-9`).
+1. **Feature Slug:** Derive a short url-safe slug from the plan title (e.g., `tooltips`, `mix-knob`, `sf2-export`).
 2. **Core Objective & Phases:** List of numbered phases and acceptance criteria.
 3. **Phase 1 Action Items:** Target files and verification targets.
+
+### 2.5 Backlog Deferment Flow (If DEFER_BACKLOG == true)
+If the user supplied `--backlog` (`-l`) or selected Backlog Deferment in the decision gate:
+1. **Zero Premature Implementation:** Do NOT create a feature branch, do NOT bump versions in `CMakeLists.txt`, and do NOT modify source code or run builds.
+2. **Archive Plan:** Save the full plan text to `docs/<slug>_plan.md` so the complete architecture, structs, and steps are permanently preserved.
+3. **Update Backlog:** Add the feature to `docs/BACKLOG.md` and `future_backlog_and_reminders.md` under **Top Priorities for Upcoming Sessions** (at the priority requested or as the next active top priority).
+4. **Log Confirmation:**
+   ```markdown
+   # 📋 Plan Saved & Deferred to Backlog
+   - **Plan Preserved:** `docs/<slug>_plan.md`
+   - **Backlog Priority:** Added to `docs/BACKLOG.md` as Priority #<N>
+   - **Status:** Recorded only (no code modified, no builds executed).
+   ```
+5. **HALT Execution.** Stop calling tools and wait for explicit user direction.
 
 ### 3. Git Branch Safety Gate & Feature Version Bump
 Check current active branch (`git branch --show-current`):
 - If the current branch is `master` or `main`:
-  - Determine a clean branch name:
-    - If a Linear Issue ID was found: `feature/<ISSUE-ID>-<slug>` (e.g., `feature/THE-9-tooltips`).
-    - If no issue ID: `feature/<task-slug>`.
+  - Determine a clean branch name: `feature/<slug>`.
   - **HALT before touching any source code**, even if `--build` was passed.
   - Prompt the user:
     > ⚠️ **BRANCH GUARDRAIL ALERT** ⚠️  
     > You are currently on the **`master`** branch.
     >
     > How would you like to proceed?  
-    > 1. **Make a new branch** (Recommended: `<suggested-branch-name>`)  
+    > 1. **Make a new branch** (Recommended: `feature/<slug>`)  
     > 2. **No, do this in master, I'm feeling fucking feisty**
-  - If user selects 1: execute `git checkout -b <suggested-branch-name>` and continue to Version Bump.
+  - If user selects 1: execute `git checkout -b feature/<slug>` and continue to Version Bump.
   - If user selects 2: log confirmation and continue on `master`.
 
 #### Automated Feature Version Bump:
-1. Derive `<slug>` from the task or issue key (e.g., `tooltips`, `mix-knob`).
+1. Derive `<slug>` from the task or feature title (e.g., `tooltips`, `mix-knob`).
 2. Inspect `CMakeLists.txt` for `project(TheKlangFarmer VERSION X.Y.Z LANGUAGES C CXX)`.
 3. Increment patch version: `Z -> Z+1` (e.g. `0.1.8` -> `0.1.9`).
 4. Set feature tag in `CMakeLists.txt`:
@@ -47,7 +61,7 @@ Check current active branch (`git branch --show-current`):
 5. Print notice:
    `📦 [Version Bump] Set development build to vX.Y.(Z+1)-<slug> (forces DAW rescan and UI header badge update).`
 
-### 4. Briefing & Execution Trigger
+### 4. Briefing & Decision Gate
 Print summary:
 ```markdown
 # 📋 Plan Ingested & Saved to `PLAN.md`
@@ -62,12 +76,14 @@ Print summary:
 ```
 
 - If `AUTO_BUILD == true`: Print `[--build detected] Launching automated pipeline...` and begin Phase 1.
-- If `AUTO_BUILD == false`: Prompt:
-  > `PLAN.md` is locked and ready on `<branch>`.
-  > **Would you like to start the automated build pipeline for Phase 1 now?**
-  > 1. Yes, start Phase 1 pipeline
-  > 2. No, wait for manual instructions
-  > Proceed immediately if user selects 1 or confirms.
+- If `DEFER_BACKLOG == true`: Execute **Section 2.5 (Backlog Deferment Flow)**.
+- If neither flag was supplied: Present the user with an interactive decision:
+  > **How would you like to proceed with this plan?**
+  > 1. `(Recommended) Start Phase 1 pipeline`: Check branch safety, bump version with feature tag, and begin automated engineering loop.
+  > 2. `Defer to Backlog`: Save plan to `docs/<slug>_plan.md`, add as an active priority in `docs/BACKLOG.md`, and record without writing code or building.
+  > 3. `Review Only`: Keep `PLAN.md` at project root and wait for manual instructions.
+  >
+  > Proceed according to user selection.
 
 ### 5. Automated Execution Pipeline Loop (Per Phase)
 
