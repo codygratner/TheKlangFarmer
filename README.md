@@ -120,7 +120,7 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 Download the latest pre-compiled binaries from the **[Releases Page](https://github.com/codygratner/TheKlangFarmer/releases)**:
 
 ### VST3 Plugin (Windows)
-1. Download `TheKlangFarmer-v<version>-VST3.zip`.
+1. Download `TheKlangFarmer-v0.2.0-VST3.zip`.
 2. Extract `The Klang Farmer.vst3` into your standard VST3 folder:
    ```
    C:\Program Files\Common Files\VST3\
@@ -128,7 +128,7 @@ Download the latest pre-compiled binaries from the **[Releases Page](https://git
 3. Rescan plugins in your DAW (Ableton Live, FL Studio, Reaper, Cubase, Bitwig, Studio One, Renoise).
 
 ### Standalone Executable (Windows)
-1. Download `TheKlangFarmer-v<version>-Standalone.zip`.
+1. Download `TheKlangFarmer-v0.2.0-Standalone.zip`.
 2. Extract and run `The Klang Farmer.exe`.
 3. Select your audio device and MIDI input in the audio settings dialog.
 
