@@ -2414,12 +2414,12 @@ public:
             case 1:  return std::make_unique<EQBlock>();               // Bell EQ
             case 2:  return std::make_unique<ChorusBlock>();           // Chorus
             case 3:  return std::make_unique<CombFilterBlock>();       // Comb Filter
-            case 4:  return std::make_unique<DisperserBlock>();        // Disperser
-            case 5:  return std::make_unique<DriveBlock>();            // Drive
-            case 6:  return std::make_unique<FilterBlock>(0);          // Filter
-            case 7:  return std::make_unique<FlangerBlock>();          // Flanger
-            case 8:  return std::make_unique<FrequencyShifterBlock>(); // Frequency Shifter
-            case 9:  return std::make_unique<GritBlock>();             // Grit FX
+            case 4:  return std::make_unique<DriveBlock>();            // Drive
+            case 5:  return std::make_unique<FilterBlock>(0);          // Filter
+            case 6:  return std::make_unique<FlangerBlock>();          // Flanger
+            case 7:  return std::make_unique<FrequencyShifterBlock>(); // Frequency Shifter
+            case 8:  return std::make_unique<GritBlock>();             // Grit FX
+            case 9:  return std::make_unique<DisperserBlock>();        // Phase Smear
             case 10: return std::make_unique<PhaserBlock>();           // Phaser
             case 11: return std::make_unique<RingModBlock>();          // RingMod
             case 12: return std::make_unique<DelayBlock>();            // Tempo Delay
@@ -2676,15 +2676,15 @@ public:
         setPageParameter(BLK_MODENV3, 3, 0.0f);    // Target
 
         // Pre-Amp FX defaults
-        preFXTypes[0] = 5; preFXParams[0][0] = 0.4f; preFXParams[0][1] = 0.5f; preFXParams[0][2] = 0.5f; preFXParams[0][3] = 1.0f; // Drive: +6dB (0.4)
+        preFXTypes[0] = 4; preFXParams[0][0] = 0.4f; preFXParams[0][1] = 0.5f; preFXParams[0][2] = 0.5f; preFXParams[0][3] = 1.0f; // Drive: +6dB (0.4)
         preFXTypes[1] = 13; preFXParams[1][0] = 0.0f; preFXParams[1][1] = 0.0f; preFXParams[1][2] = 0.5f; preFXParams[1][3] = 0.5f; // WaveFolder
         preFXTypes[2] = 11; preFXParams[2][0] = 0.0f; preFXParams[2][1] = 0.50934f; preFXParams[2][2] = 0.0f; preFXParams[2][3] = 0.5f; // RingMod
-        preFXTypes[3] = 8; preFXParams[3][0] = 0.5f; preFXParams[3][1] = rangeHzToNorm(3.0f); preFXParams[3][2] = 0.75f; preFXParams[3][3] = 0.5f; // FreqShift: +50%:50% (0.75)
+        preFXTypes[3] = 7; preFXParams[3][0] = 0.5f; preFXParams[3][1] = rangeHzToNorm(3.0f); preFXParams[3][2] = 0.75f; preFXParams[3][3] = 0.5f; // FreqShift: +50%:50% (0.75)
 
         // Post-Amp FX defaults
-        postFXTypes[0] = 9; postFXParams[0][0] = 1.0f; postFXParams[0][1] = 1.0f; postFXParams[0][2] = 0.5f; postFXParams[0][3] = 0.5f; // Grit
+        postFXTypes[0] = 8; postFXParams[0][0] = 1.0f; postFXParams[0][1] = 1.0f; postFXParams[0][2] = 0.5f; postFXParams[0][3] = 0.5f; // Grit
         postFXTypes[1] = 3; postFXParams[1][0] = 1.0f; postFXParams[1][1] = 1.0f; postFXParams[1][2] = 0.5f; postFXParams[1][3] = 0.75f; // Comb: Damp 24k, Cut 24k, Res 0%, Mix +50%:50%
-        postFXTypes[2] = 4; postFXParams[2][0] = 0.0f; postFXParams[2][1] = 4.0f / 32.0f; postFXParams[2][2] = 0.62124f; postFXParams[2][3] = 0.5f; // Phase Smear: 2nd Order (0.0)
+        postFXTypes[2] = 9; postFXParams[2][0] = 0.0f; postFXParams[2][1] = 4.0f / 32.0f; postFXParams[2][2] = 0.62124f; postFXParams[2][3] = 0.5f; // Phase Smear: 2nd Order (0.0)
         postFXTypes[3] = 1; postFXParams[3][0] = 1.0f; postFXParams[3][1] = 0.0f; postFXParams[3][2] = 0.5f; postFXParams[3][3] = 0.5f; // Bell EQ
 
         for (int s = 0; s < 4; ++s) {
@@ -3228,8 +3228,8 @@ private:
     BlockContext ctx;
     std::vector<std::unique_ptr<DSPBlock>> allBlocks;
     VisualScope scopes[NUM_BLOCKS];
-    int preFXTypes[4] = { 5, 13, 11, 8 };
-    int postFXTypes[4] = { 9, 3, 4, 1 };
+    int preFXTypes[4] = { 4, 13, 11, 7 };
+    int postFXTypes[4] = { 8, 3, 9, 1 };
     std::unique_ptr<DSPBlock> preFXBlocks[4];
     std::unique_ptr<DSPBlock> postFXBlocks[4];
     float preFXParams[4][4] = { {0.0f} };

@@ -419,43 +419,43 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 - **Resonance (Continuous)**: Feedback $-100\%$ to $+100\%$ (default $0\%$).
 - **Mix (Continuous)**: Bipolar Wet/Dry balance: $-100\%:0\%$ to $0\%:100\%$ (dry) to $+100\%:0\%$ (default $+50\%:50\%$, double-click snaps to $0\%:100\%$ dry).
 
-### 4. Phase Smear
-- **Order (Selector)**: `2nd` (0, default, 2nd-order APF cascade), `4th` (1, 4th-order APF cascade for extreme phase dispersion).
-- **Amount (Continuous)**: Cascaded all-pass filter stages: 0 to 32 stages (default 4).
-- **Cutoff (Continuous)**: APF center frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $220\,\text{Hz}$).
-- **Resonance (Continuous)**: APF Q factor $-100\%$ to $+100\%$ (default $0\%$).
-
-### 5. Drive / Saturation
+### 4. Drive / Saturation
 - **Drive (Continuous)**: $-6\,\text{dB}$ to $+24\,\text{dB}$ (default $+6\,\text{dB}$, double-click snaps to $0\,\text{dB}$).
 - **Bias (Continuous)**: DC offset $-1.0$ to $+1.0$ (bipolar, default $0.0$).
 - **Post-Filter (Continuous)**: DJ-style bipolar filter ($20\,\text{Hz} - 24\,\text{kHz}$, default 50% flat).
 - **Limiter (Selector)**: `Off` (0), `On` (1, default, post-saturation hard clipper).
 
-### 6. Filter (Standalone Effect)
+### 5. Filter (Standalone Effect)
 - **Type (Selector)**: `LPF` (0, default), `BPF` (1), `HPF` (2), `BRF` (3). *(Off option removed; Filter is always active in one of 4 modes; use FX slot None to bypass).*
 - **Slope (Selector)**: `6` (0, 6 dB/oct), `12` (1, default, 12 dB/oct), `18` (2, 18 dB/oct), `24` (3, 24 dB/oct), `36` (4, 36 dB/oct).
 - **Cutoff (Continuous)**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Resonance (Continuous)**: $0\% - 100\%$ ($Q \approx 0.707 - 18.7$).
 - *Visualizer*: Real-time X-Y Frequency vs. Gain Bode magnitude plot.
 
-### 7. Flanger
+### 6. Flanger
 - **Rate (Continuous)**: LFO rate $0.05\,\text{Hz} - 5.0\,\text{Hz}$ (default $0.25\,\text{Hz}$).
 - **Depth (Continuous)**: Delay sweep excursion $0\% - 100\%$ ($0$ to $4\,\text{ms}$, default $70\%$).
 - **Feedback (Continuous)**: Resonant comb feedback $-95\%$ to $+95\%$ (bipolar, default $+70\%$; negative values create hollow subtractive flanging, positive values create full resonant jet swoosh).
 - **Mix (Continuous)**: Dry/Wet balance $0\% - 100\%$ (default $50\%$).
 - *Architecture*: Sub-millisecond fractional delay line ($0.2\,\text{ms} - 5.0\,\text{ms}$) with saturating feedback loop.
 
-### 8. Frequency Shifter
+### 7. Frequency Shifter
 - **Shift (Continuous)**: Bipolar shift $-X\,\text{Hz}$ to $0\,\text{Hz}$ to $+X\,\text{Hz}$ (default $0\,\text{Hz}$).
 - **Range (Continuous)**: Maximum shift range $0\,\text{Hz} - 5\,\text{kHz}$ (default $3\,\text{Hz}$).
 - **Blend (Continuous)**: Bipolar Wet/Dry balance: $-100\%:0\%$ to $0\%:100\%$ (dry) to $+100\%:0\%$ (default $+50\%:50\%$, double-click snaps to $0\%:100\%$ dry).
 - **Width (Continuous)**: Stereo quadrature phase width $-100\% - +100\%$ (default $0\%$).
 
-### 9. Grit FX (BitCrusher)
+### 8. Grit FX (BitCrusher)
 - **Bit Rate (Continuous)**: $1.0\,\text{bit} - 16.0\,\text{bit}$ (default $16.0\,\text{bit}$).
 - **Sample Rate (Continuous)**: $20\,\text{Hz} - 24\,\text{kHz}$ (default $24\,\text{kHz}$).
 - **Low (Continuous)**: Low shelf filter: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, default $0\,\text{dB}$).
 - **High (Continuous)**: High shelf filter: $-24\,\text{dB}$ to $+24\,\text{dB}$ (bipolar, default $0\,\text{dB}$).
+
+### 9. Phase Smear
+- **Order (Selector)**: `2nd` (0, default, 2nd-order APF cascade), `4th` (1, 4th-order APF cascade for extreme phase dispersion).
+- **Amount (Continuous)**: Cascaded all-pass filter stages: 0 to 32 stages (default 4).
+- **Cutoff (Continuous)**: APF center frequency $0.1\,\text{Hz} - 24\,\text{kHz}$ (default $220\,\text{Hz}$).
+- **Resonance (Continuous)**: APF Q factor $-100\%$ to $+100\%$ (default $0\%$).
 
 ### 10. Phaser
 - **Rate (Continuous)**: LFO sweep speed $0.05\,\text{Hz} - 8.0\,\text{Hz}$ (default $0.5\,\text{Hz}$).

@@ -160,21 +160,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             knobs[3].getDefaultValue = []() { return 0.5; };
             break;
         }
-        case 4: { // Phase Smear
-            title = "Phase Smear";
-            accent = juce::Colour(0xffec407a);
-            selector1.setVisible(true);
-            selector1.setAccent(accent);
-            selector1.setItems({ "2nd", "4th" }, 2);
-            selector1.onChange = [this](int idx) {
-                knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
-            };
-            setupK(1, "Amount", false, formatStages, parseStages);
-            setupK(2, "Cutoff", false, formatFreqHz, parseFreqHz);
-            setupK(3, "Resonance", true, formatBipolarPercent, parseBipolarPercent);
-            break;
-        }
-        case 5: { // Drive
+        case 4: { // Drive
             title = "Drive";
             accent = juce::Colour(0xffff4081);
             selector1.setVisible(true);
@@ -190,7 +176,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(2, "Filter", true, formatBipolarPercent, parseBipolarPercent);
             break;
         }
-        case 6: { // Filter
+        case 5: { // Filter
             title = "FX Filter";
             accent = juce::Colour(0xff7c4dff);
             selector1.setVisible(true);
@@ -209,7 +195,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(3, "Resonance", false, formatPercent, parsePercent);
             break;
         }
-        case 7: { // Flanger
+        case 6: { // Flanger
             title = "Flanger";
             accent = juce::Colour(0xffec4899);
             setupK(0, "Rate", false, formatFlangerRate, parseFlangerRate);
@@ -218,7 +204,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(3, "Mix", false, formatPercent, parsePercent);
             break;
         }
-        case 8: { // Frequency Shifter
+        case 7: { // Frequency Shifter
             title = "Freq Shifter";
             accent = juce::Colour(0xff00e676);
             auto fmtShift = [this](double val) {
@@ -239,13 +225,27 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(3, "Width", true, formatBipolarPercent, parseBipolarPercent);
             break;
         }
-        case 9: { // Grit FX
+        case 8: { // Grit FX
             title = "Grit FX";
             accent = juce::Colour(0xffff9100);
             setupK(0, "Bit Rate", false, formatBits, parseBits);
             setupK(1, "Sample Rate", false, formatFreqHz, parseFreqHz);
             setupK(2, "Low", true, formatBipolarDb, parseBipolarDb);
             setupK(3, "High", true, formatBipolarDb, parseBipolarDb);
+            break;
+        }
+        case 9: { // Phase Smear
+            title = "Phase Smear";
+            accent = juce::Colour(0xffec407a);
+            selector1.setVisible(true);
+            selector1.setAccent(accent);
+            selector1.setItems({ "2nd", "4th" }, 2);
+            selector1.onChange = [this](int idx) {
+                knobs[0].setValue(idx == 0 ? 0.0 : 1.0, juce::sendNotification);
+            };
+            setupK(1, "Amount", false, formatStages, parseStages);
+            setupK(2, "Cutoff", false, formatFreqHz, parseFreqHz);
+            setupK(3, "Resonance", true, formatBipolarPercent, parseBipolarPercent);
             break;
         }
         case 10: { // Phaser
@@ -302,13 +302,13 @@ void FXSlotCardComponent::configureForType(int fxType) {
 }
 
 void FXSlotCardComponent::updateDynamicControls() {
-    if (currentType == 5) { // Drive: knob 3 is Limiter Off/On
+    if (currentType == 4) { // Drive: knob 3 is Limiter Off/On
         int sel = (knobs[3].getValue() >= 0.5) ? 1 : 0;
         if (sel != lastSel1) {
             selector1.setSelectedIndex(sel, juce::dontSendNotification);
             lastSel1 = sel;
         }
-    } else if (currentType == 6) { // Filter: knob 0 is Type, knob 1 is Slope
+    } else if (currentType == 5) { // Filter: knob 0 is Type, knob 1 is Slope
         int sel1 = std::clamp(static_cast<int>(std::round(knobs[0].getValue() * 3.0)), 0, 3);
         if (sel1 != lastSel1) {
             selector1.setSelectedIndex(sel1, juce::dontSendNotification);
@@ -319,7 +319,7 @@ void FXSlotCardComponent::updateDynamicControls() {
             selector2.setSelectedIndex(sel2, juce::dontSendNotification);
             lastSel2 = sel2;
         }
-    } else if (currentType == 4) { // Phase Smear: knob 0 is Order (0: 2nd, 1: 4th)
+    } else if (currentType == 9) { // Phase Smear: knob 0 is Order (0: 2nd, 1: 4th)
         int sel = (knobs[0].getValue() >= 0.5) ? 1 : 0;
         if (sel != lastSel1) {
             selector1.setSelectedIndex(sel, juce::dontSendNotification);
@@ -763,7 +763,7 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
     juce::StringArray b3 = {
         "• 8 FX SLOTS: 4 Pre-Amp slots (pre-saturation) and 4 Post-Amp slots (post-saturation / spatial).",
         "• MULTI-INSTANCE: Assign ANY of the 13 effects to ANY slot. Stack up to 8 of the same effect in series if desired (e.g. multiple Wavefolders or cascading Filters)!",
-        "• 13 DSP PROCESSORS: Bell EQ, Chorus, Comb Filter, Phase Smear, Drive, Filter, Flanger, Frequency Shifter, Grit FX, Phaser, RingMod, Tempo Delay, Wave Folder.",
+        "• 13 DSP PROCESSORS: Bell EQ, Chorus, Comb Filter, Drive, Filter, Flanger, Frequency Shifter, Grit FX, Phase Smear, Phaser, RingMod, Tempo Delay, Wave Folder.",
         "• HARDWARE CONTROL: Standardized 4-knob tactile interface with illuminated LED button switches for quick, intuitive sound design."
     };
     drawPanel(p3, "3. MULTI-INSTANCE FX (13 EFFECTS)", juce::Colour(0xffff7043), b3);
@@ -1691,12 +1691,12 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         "Bell EQ",
         "Chorus",
         "Comb Filter",
-        "Phase Smear",
         "Drive",
         "Filter",
         "Flanger",
         "Frequency Shifter",
         "Grit FX",
+        "Phase Smear",
         "Phaser",
         "RingMod",
         "Tempo Delay",
@@ -1947,12 +1947,12 @@ void TheKlangFarmerAudioProcessorEditor::setFXSlotDefaults(int slot, bool isPost
         case 1:  defs[0] = 1.0f; defs[1] = 0.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // Bell EQ: 1kHz, 0.1 oct, 0dB, flat
         case 2:  defs[0] = 0.5398f; defs[1] = 0.60f; defs[2] = 0.60f; defs[3] = 0.50f; break; // Chorus: 1.2Hz, 60% depth, +20% fb, 50% mix
         case 3:  defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 0.5f; defs[3] = 0.75f; break; // Comb: Damp 24kHz, Cut 24kHz, Res 0%, Mix +50%:50%
-        case 4:  defs[0] = 0.0f; defs[1] = 4.0f / 32.0f; defs[2] = 0.62124f; defs[3] = 0.5f; break; // Phase Smear: 2nd Order, 4 stages, 1kHz, 0%
-        case 5:  defs[0] = 0.4f; defs[1] = 0.5f; defs[2] = 0.5f; defs[3] = 1.0f; break; // Drive: +6dB, 0 bias, 50% flat, Limiter On
-        case 6:  defs[0] = 0.0f; defs[1] = 0.25f; defs[2] = 1.0f; defs[3] = 0.0f; break; // Filter: LPF, -12dB, 24kHz, 0% res
-        case 7:  defs[0] = 0.3500f; defs[1] = 0.70f; defs[2] = 0.868f; defs[3] = 0.50f; break; // Flanger: 0.25Hz, 70% depth, +70% fb, 50% mix
-        case 8:  defs[0] = 0.5f; defs[1] = TbdAudio::rangeHzToNorm(3.0f); defs[2] = 0.75f; defs[3] = 0.5f; break; // FreqShift: 0 shift, 3Hz, Blend +50%:50%, center
-        case 9:  defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // Grit: 16 bit, 24kHz, 0dB, 0dB
+        case 4:  defs[0] = 0.4f; defs[1] = 0.5f; defs[2] = 0.5f; defs[3] = 1.0f; break; // Drive: +6dB, 0 bias, 50% flat, Limiter On
+        case 5:  defs[0] = 0.0f; defs[1] = 0.25f; defs[2] = 1.0f; defs[3] = 0.0f; break; // Filter: LPF, -12dB, 24kHz, 0% res
+        case 6:  defs[0] = 0.3500f; defs[1] = 0.70f; defs[2] = 0.868f; defs[3] = 0.50f; break; // Flanger: 0.25Hz, 70% depth, +70% fb, 50% mix
+        case 7:  defs[0] = 0.5f; defs[1] = TbdAudio::rangeHzToNorm(3.0f); defs[2] = 0.75f; defs[3] = 0.5f; break; // FreqShift: 0 shift, 3Hz, Blend +50%:50%, center
+        case 8:  defs[0] = 1.0f; defs[1] = 1.0f; defs[2] = 0.5f; defs[3] = 0.5f; break; // Grit: 16 bit, 24kHz, 0dB, 0dB
+        case 9:  defs[0] = 0.0f; defs[1] = 4.0f / 32.0f; defs[2] = 0.62124f; defs[3] = 0.5f; break; // Phase Smear: 2nd Order, 4 stages, 1kHz, 0%
         case 10: defs[0] = 0.4530f; defs[1] = 0.70f; defs[2] = 0.763f; defs[3] = 0.50f; break; // Phaser: 0.5Hz, 70% depth, +50% fb, 50% mix
         case 11: defs[0] = 0.0f; defs[1] = 0.50934f; defs[2] = 0.0f; defs[3] = 0.5f; break; // RingMod: sine, 1kHz, 0% amt, center
         case 12: defs[0] = 5.0f / 9.0f; defs[1] = 0.40f; defs[2] = 0.70f; defs[3] = 0.35f; break; // Tempo Delay: 1/8, 40% fb, 8kHz tone, 35% mix
@@ -2382,7 +2382,7 @@ void TheKlangFarmerAudioProcessorEditor::timerCallback() {
     } else if (activeBlock >= TbdAudio::ModularDrumEngine::BLK_PRE_FX_1 && activeBlock <= TbdAudio::ModularDrumEngine::BLK_PRE_FX_4) {
         int s = activeBlock - TbdAudio::ModularDrumEngine::BLK_PRE_FX_1;
         int fxType = audioProcessor.getEngine().getPreFXType(s);
-        if (fxType == 2 && preFXCards[s]) {
+        if (fxType == 5 && preFXCards[s]) {
             vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::FilterXY);
             float fCutNorm = static_cast<float>(preFXCards[s]->getKnob(2).getValue());
             float fCutHz = 0.1f * std::pow(24000.0f / 0.1f, fCutNorm);
@@ -2390,7 +2390,7 @@ void TheKlangFarmerAudioProcessorEditor::timerCallback() {
             int fType = static_cast<int>(std::round(preFXCards[s]->getKnob(0).getValue() * 3.0f));
             int fSlope = static_cast<int>(std::round(preFXCards[s]->getKnob(1).getValue() * 4.0f));
             vizCard.getOscilloscope().updateFilterParams(fType, fSlope, fCutHz, fRes);
-        } else if (fxType == 9 && preFXCards[s]) {
+        } else if (fxType == 1 && preFXCards[s]) {
             vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::EqXY);
             float eqFNorm = static_cast<float>(preFXCards[s]->getKnob(0).getValue());
             float eqFHz = 20.0f * std::pow(24000.0f / 20.0f, eqFNorm);
@@ -2408,7 +2408,7 @@ void TheKlangFarmerAudioProcessorEditor::timerCallback() {
     } else if (activeBlock >= TbdAudio::ModularDrumEngine::BLK_POST_FX_1 && activeBlock <= TbdAudio::ModularDrumEngine::BLK_POST_FX_4) {
         int s = activeBlock - TbdAudio::ModularDrumEngine::BLK_POST_FX_1;
         int fxType = audioProcessor.getEngine().getPostFXType(s);
-        if (fxType == 2 && postFXCards[s]) {
+        if (fxType == 5 && postFXCards[s]) {
             vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::FilterXY);
             float fCutNorm = static_cast<float>(postFXCards[s]->getKnob(2).getValue());
             float fCutHz = 0.1f * std::pow(24000.0f / 0.1f, fCutNorm);
@@ -2416,7 +2416,7 @@ void TheKlangFarmerAudioProcessorEditor::timerCallback() {
             int fType = static_cast<int>(std::round(postFXCards[s]->getKnob(0).getValue() * 3.0f));
             int fSlope = static_cast<int>(std::round(postFXCards[s]->getKnob(1).getValue() * 4.0f));
             vizCard.getOscilloscope().updateFilterParams(fType, fSlope, fCutHz, fRes);
-        } else if (fxType == 9 && postFXCards[s]) {
+        } else if (fxType == 1 && postFXCards[s]) {
             vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::EqXY);
             float eqFNorm = static_cast<float>(postFXCards[s]->getKnob(0).getValue());
             float eqFHz = 20.0f * std::pow(24000.0f / 20.0f, eqFNorm);

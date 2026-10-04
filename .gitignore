@@ -9,3 +9,7 @@ JUCE/
 
 # deployment scripts
 deploy_vst3.bat
+
+# Planning & Agent Scratchpads
+context_snapshot*.md
+PLAN_BACKUP*.md

@@ -805,13 +805,13 @@ int main() {
         fxEng.init(44100.0f);
 
         // Route Drive into Pre FX Slot 0 and Grit into Post FX Slot 0
-        fxEng.setPreFXType(0, 5);  // Drive
+        fxEng.setPreFXType(0, 4);  // Drive (alphabetical index 4)
         fxEng.setPreFXType(1, 0);  // Bypass
-        fxEng.setPostFXType(0, 9); // Grit FX
+        fxEng.setPostFXType(0, 8); // Grit FX (alphabetical index 8)
         fxEng.setPostFXType(1, 0); // Bypass
 
-        assert(fxEng.getPreFXType(0) == 5);
-        assert(fxEng.getPostFXType(0) == 9);
+        assert(fxEng.getPreFXType(0) == 4);
+        assert(fxEng.getPostFXType(0) == 8);
 
         fxEng.trigger(1.0f);
         std::vector<float> fxL(blockSize, 0.0f);
@@ -859,7 +859,7 @@ int main() {
         std::cout << "PASS: Multi-instance FX: 8 independent Wavefolders in series verified." << std::endl;
     }
 
-    // 19. Test New Effects: Chorus (2), Phaser (10), Flanger (7), and Tempo Delay (12)
+    // 19. Test New Effects: Chorus (2), Phaser (10), Flanger (6), and Tempo Delay (12)
     {
         TbdAudio::ModularDrumEngine modFxEng;
         modFxEng.init(44100.0f);
@@ -879,7 +879,7 @@ int main() {
         modFxEng.setPreFXParam(1, 2, 0.7f);
         modFxEng.setPreFXParam(1, 3, 0.5f);
 
-        modFxEng.setPostFXType(0, 7); // Flanger
+        modFxEng.setPostFXType(0, 6); // Flanger (alphabetical index 6)
         modFxEng.setPostFXParam(0, 0, 0.3f);
         modFxEng.setPostFXParam(0, 1, 0.7f);
         modFxEng.setPostFXParam(0, 2, 0.8f);
@@ -893,7 +893,7 @@ int main() {
 
         assert(modFxEng.getPreFXType(0) == 2);
         assert(modFxEng.getPreFXType(1) == 10);
-        assert(modFxEng.getPostFXType(0) == 7);
+        assert(modFxEng.getPostFXType(0) == 6);
         assert(modFxEng.getPostFXType(1) == 12);
 
         modFxEng.setMidiPitch(36);
@@ -1104,6 +1104,42 @@ int main() {
         }
 
         std::cout << "PASS: Mod Envelope trigger peak initialization and 32-sample sub-block sweep verified." << std::endl;
+    }
+
+    // 29. Test Alphabetical FX Catalog Ordering and Factory Default Slots (THE-6)
+    {
+        // Verify createFXBlock(1..13) instantiates canonical alphabetical DSPBlock types
+        assert(dynamic_cast<TbdAudio::EQBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(1).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::ChorusBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(2).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::CombFilterBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(3).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::DriveBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(4).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::FilterBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(5).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::FlangerBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(6).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::FrequencyShifterBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(7).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::GritBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(8).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::DisperserBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(9).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::PhaserBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(10).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::RingModBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(11).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::DelayBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(12).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::WaveFolderBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(13).get()) != nullptr);
+        assert(TbdAudio::ModularDrumEngine::createFXBlock(0) == nullptr);
+        assert(TbdAudio::ModularDrumEngine::createFXBlock(14) == nullptr);
+
+        // Verify ModularDrumEngine factory default FX slot mapping:
+        // Pre FX:  Drive (4), Wave Folder (13), RingMod (11), Frequency Shifter (7)
+        // Post FX: Grit FX (8), Comb Filter (3), Phase Smear (9), Bell EQ (1)
+        TbdAudio::ModularDrumEngine defEng;
+        defEng.init(44100.0f);
+        assert(defEng.getPreFXType(0) == 4);
+        assert(defEng.getPreFXType(1) == 13);
+        assert(defEng.getPreFXType(2) == 11);
+        assert(defEng.getPreFXType(3) == 7);
+        assert(defEng.getPostFXType(0) == 8);
+        assert(defEng.getPostFXType(1) == 3);
+        assert(defEng.getPostFXType(2) == 9);
+        assert(defEng.getPostFXType(3) == 1);
+
+        std::cout << "PASS: Alphabetical FX Catalog ordering (1..13) and factory slot defaults verified." << std::endl;
     }
 
     // --- THE KLANG PLANTER ENGINE TESTS ---

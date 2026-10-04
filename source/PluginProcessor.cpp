@@ -812,12 +812,43 @@ void TheKlangFarmerAudioProcessor::changeProgramName(int, const juce::String&) {
 void TheKlangFarmerAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
     auto state = apvts.copyState();
     std::unique_ptr<juce::XmlElement> xml(state.createXml());
-    copyXmlToBinary(*xml, destData);
+    if (xml.get() != nullptr) {
+        xml->setAttribute("fxCatalogVersion", 2);
+        copyXmlToBinary(*xml, destData);
+    }
 }
 
 void TheKlangFarmerAudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
     std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
     if (xmlState.get() != nullptr && xmlState->hasTagName(apvts.state.getType())) {
+        if (xmlState->getIntAttribute("fxCatalogVersion", 1) < 2) {
+            static const char* slotParamIds[] = {
+                "pre_fx_1_type", "pre_fx_2_type", "pre_fx_3_type", "pre_fx_4_type",
+                "post_fx_1_type", "post_fx_2_type", "post_fx_3_type", "post_fx_4_type"
+            };
+
+            auto migrateIndex = [](float oldVal) noexcept -> float {
+                int oldIndex = juce::roundToInt(oldVal);
+                if (oldIndex == 4) return 9.0f; // Phase Smear: 4 -> 9
+                if (oldIndex >= 5 && oldIndex <= 9) return static_cast<float>(oldIndex - 1); // Drive..Grit FX: 5..9 -> 4..8
+                return oldVal;
+            };
+
+            for (auto* child : xmlState->getChildIterator()) {
+                if (child->hasTagName("PARAM")) {
+                    juce::String id = child->getStringAttribute("id");
+                    for (const char* slotId : slotParamIds) {
+                        if (id == slotId) {
+                            double oldVal = child->getDoubleAttribute("value", 0.0);
+                            float newVal = migrateIndex(static_cast<float>(oldVal));
+                            child->setAttribute("value", (double)newVal);
+                            break;
+                        }
+                    }
+                }
+            }
+            xmlState->setAttribute("fxCatalogVersion", 2);
+        }
         apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
     }
 }
@@ -975,36 +1006,36 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
 
     // --- FX PICKERS ---
     const juce::StringArray fxChoices {
-        "None",
-        "Bell EQ",
-        "Chorus",
-        "Comb Filter",
-        "Phase Smear",
-        "Drive",
-        "Filter",
-        "Flanger",
-        "Frequency Shifter",
-        "Grit FX",
-        "Phaser",
-        "RingMod",
-        "Tempo Delay",
-        "Wave Folder"
+        "None",              // 0
+        "Bell EQ",           // 1
+        "Chorus",            // 2
+        "Comb Filter",       // 3
+        "Drive",             // 4
+        "Filter",            // 5
+        "Flanger",           // 6
+        "Frequency Shifter", // 7
+        "Grit FX",           // 8
+        "Phase Smear",       // 9
+        "Phaser",            // 10
+        "RingMod",           // 11
+        "Tempo Delay",       // 12
+        "Wave Folder"        // 13
     };
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_fx_1_type", 1), "Pre FX 1: Type", fxChoices, 5)); // Drive
+        juce::ParameterID("pre_fx_1_type", 1), "Pre FX 1: Type", fxChoices, 4)); // Drive
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("pre_fx_2_type", 1), "Pre FX 2: Type", fxChoices, 13)); // Wave Folder
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("pre_fx_3_type", 1), "Pre FX 3: Type", fxChoices, 11)); // RingMod
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_fx_4_type", 1), "Pre FX 4: Type", fxChoices, 8)); // Frequency Shifter
+        juce::ParameterID("pre_fx_4_type", 1), "Pre FX 4: Type", fxChoices, 7)); // Frequency Shifter
 
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_1_type", 1), "Post FX 1: Type", fxChoices, 9)); // Grit FX
+        juce::ParameterID("post_fx_1_type", 1), "Post FX 1: Type", fxChoices, 8)); // Grit FX
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("post_fx_2_type", 1), "Post FX 2: Type", fxChoices, 3)); // Comb Filter
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_3_type", 1), "Post FX 3: Type", fxChoices, 4)); // Phase Smear
+        juce::ParameterID("post_fx_3_type", 1), "Post FX 3: Type", fxChoices, 9)); // Phase Smear
     layout.add(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID("post_fx_4_type", 1), "Post FX 4: Type", fxChoices, 1)); // Bell EQ
 
