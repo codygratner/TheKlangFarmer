@@ -78,7 +78,8 @@ Once `PLAN.md` is written to disk, do NOT begin coding. Output an executive summ
 
 ### Ready for Review
 Review `PLAN.md` on disk. When satisfied, proceed with:
+- **`/readplan --build`** (or `/pasteplan --build` — fully autonomous audit and build loop)
+- **`/readplan`** (interactive decision gate: start Phase 1, defer, or review)
+- **`/readplan --backlog`** (defer to backlog for later)
 - **`Execute Phase 1`** (step-by-step with checkpoints)
-- **`/pasteplan --build`** (fully autonomous audit and build loop)
-- **`/pasteplan --backlog`** (defer to backlog for later)
 ```
