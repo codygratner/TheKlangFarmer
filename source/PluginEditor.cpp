@@ -2697,7 +2697,7 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
 #ifdef JucePlugin_VersionString
     juce::String verStr = "v" JucePlugin_VersionString;
 #else
-    juce::String verStr = "v0.1.8";
+    juce::String verStr = "v0.2.0";
 #endif
 #ifdef TKF_FEATURE_TAG
     if (juce::String(TKF_FEATURE_TAG).isNotEmpty()) {
