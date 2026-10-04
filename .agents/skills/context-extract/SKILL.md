@@ -1,6 +1,6 @@
 ---
 name: context-extract
-description: Extracts a lightweight Markdown snapshot of target files, schemas, directory layout, and spec doc for external LLM planning. Automatically handles feature discovery, compiles context_snapshot.md, manages browser launching and clipboard copying, and reminds the user to select the Pro model in Gemini Web. Supports flags --clipboard (-c) and --open (-o). Triggers on `/contextextract`.
+description: Extracts a lightweight Markdown snapshot of target files, schemas, directory layout, and spec doc for external LLM planning. Defaults to prompting Gemini Web to have an interactive architectural interview before planning, or directly outputs an implementation plan if --plan (-p) is supplied. Supports flags --clipboard (-c), --open (-o), and --plan (-p). Triggers on `/contextextract`.
 ---
 
 # Context Extractor for External Planning
@@ -19,6 +19,8 @@ Assemble a clean, condensed snapshot of relevant code, interfaces, directory lay
 Inspect the invocation:
 - Flag `--clipboard` or `-c`: Auto-copy markdown to OS clipboard.
 - Flag `--open` or `-o`: Auto-launch `https://gemini.google.com` in default browser.
+- Flag `--plan` or `-p`: Direct Plan Mode. Prompts Gemini Web to immediately output the full phased implementation plan without an initial conversation.
+- **Default Mode (Omitted `--plan` / `-p`)**: Conversational Discovery Mode. Prompts Gemini Web to engage in an interactive architectural discussion and design interview first before drafting a plan.
 
 
 ### 2. Locate Project Spec
@@ -43,9 +45,21 @@ Create or overwrite `context_snapshot.md` at project root:
 
 # Planning Context Snapshot
 **Timestamp:** <YYYY-MM-DD HH:MM>  
+**Mode:** <Conversational Discovery (Default) | Direct Plan (--plan / -p)>
+
+<!-- If Default (Conversational Discovery Mode): -->
 > [!IMPORTANT]
-> **PLANNING INSTRUCTIONS FOR GEMINI:**
-> - The task context below is 100% self-contained. Focus solely on producing a clean, phased implementation plan for Antigravity's `/pasteplan` skill.
+> **INSTRUCTIONS FOR GEMINI (CONVERSATIONAL DISCOVERY MODE):**
+> - **DO NOT jump straight into writing the final implementation plan.**
+> - The user wants to explore and brainstorm this feature with you first.
+> - Review the codebase context below, discuss architectural design options and trade-offs, ask clarifying questions about UX/DSP details, and brainstorm with the user.
+> - Only output the structured, phased implementation plan (formatted for Antigravity's `/pasteplan` skill) when the user explicitly directs you to generate the plan.
+
+<!-- If Direct Plan Mode (--plan or -p): -->
+> [!IMPORTANT]
+> **INSTRUCTIONS FOR GEMINI (DIRECT PLAN MODE):**
+> - The task context below is 100% self-contained.
+> - Immediately produce a clean, phased implementation plan formatted for Antigravity's `/pasteplan` skill.
 
 ## 1. Project Specification & Architecture
 *(Source: `<path/to/SPEC.md>`)*
