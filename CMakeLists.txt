@@ -9,7 +9,7 @@ if (APPLE)
 endif()
 
 # 1. Project definition
-project(TheKlangFarmer VERSION 0.1.7 LANGUAGES C CXX)
+project(TheKlangFarmer VERSION 0.1.8 LANGUAGES C CXX)
 
 # Enforce modern C++ standard
 set(CMAKE_CXX_STANDARD 20)
