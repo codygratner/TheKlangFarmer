@@ -147,9 +147,20 @@ void MainComponent::buildTree() {
     
     navigationTree.setRootItem(root);
     navigationTree.setRootItemVisible(false);
-}
 
-void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
+    // Default Selection
+    if (root->getNumSubItems() > 1) {
+        if (auto* tkf = root->getSubItem(1)) {
+            if (tkf->getNumSubItems() > 0) {
+                if (auto* osc = tkf->getSubItem(0)) {
+                    if (osc->getNumSubItems() > 0) {
+                        osc->getSubItem(0)->setSelected(true, true);
+                    }
+                }
+            }
+        }
+    }
+}void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
     if (item->itemType != "card" && !(item->itemType == "product" && item->productId == "theme")) return;
     
     if (item->itemType == "product" && item->productId == "theme") {
@@ -165,7 +176,7 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
     }
 
     auto file = getAssetFile(currentProductId == "theme" ? "controls" : "layouts", currentParamJsonFile);
-    filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : ""));
+    juce::String debugInfo = file.getFullPathName() + " -> [" + currentPageId + "] -> [" + currentCardId + "]";
 
     if (file.existsAsFile()) {
         auto fullJsonString = file.loadFileAsString();
@@ -174,21 +185,28 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
             originalJsonString = fullJsonString;
         } else {
             currentLayout = juce::JSON::parse(fullJsonString);
-            if (currentLayout.isObject() && currentLayout.getDynamicObject()->hasProperty(currentPageId)) {
-                auto pageObj = currentLayout.getDynamicObject()->getProperty(currentPageId);
-                if (pageObj.isObject() && pageObj.getDynamicObject()->hasProperty(currentCardId)) {
-                    auto cardObj = pageObj.getDynamicObject()->getProperty(currentCardId);
-                    originalJsonString = juce::JSON::toString(cardObj);
-                }
-            }
+            if (currentLayout.isObject()) {
+                if (currentLayout.getDynamicObject()->hasProperty(currentPageId)) {
+                    auto pageObj = currentLayout.getDynamicObject()->getProperty(currentPageId);
+                    if (pageObj.isObject()) {
+                        if (pageObj.getDynamicObject()->hasProperty(currentCardId)) {
+                            auto cardObj = pageObj.getDynamicObject()->getProperty(currentCardId);
+                            originalJsonString = juce::JSON::toString(cardObj);
+                            debugInfo += " | JSON LOADED: " + juce::String(originalJsonString.length()) + " bytes";
+                        } else debugInfo += " | ERROR: Card ID missing in page obj";
+                    } else debugInfo += " | ERROR: Page is not an object";
+                } else debugInfo += " | ERROR: Page ID missing in root layout";
+            } else debugInfo += " | ERROR: Root layout is not an object";
         }
         
         rawJsonDocument.replaceAllContent(originalJsonString);
         syncJsonToPreview(originalJsonString);
+    } else {
+        debugInfo += " | ERROR: FILE NOT FOUND";
     }
-}
-
-void MainComponent::codeDocumentTextInserted(const juce::String&, int) { if (!showingOriginal) startTimer(500); }
+    
+    filePathDisplay.setText(debugInfo);
+}void MainComponent::codeDocumentTextInserted(const juce::String&, int) { if (!showingOriginal) startTimer(500); }
 void MainComponent::codeDocumentTextDeleted(int, int) { if (!showingOriginal) startTimer(500); }
 
 void MainComponent::timerCallback() {
@@ -284,15 +302,17 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     }
     previewWrapper.repaint();
 
-    formEditor.clear();
+        formEditor.clear();
     juce::Array<juce::PropertyComponent*> props;
     if (parsed.isObject()) {
         auto* obj = parsed.getDynamicObject();
         for (auto& prop : obj->getProperties()) {
-            if (prop.value.isObject()) {
-                auto* pc = new juce::TextPropertyComponent(
-                    juce::Value(prop.value.getDynamicObject()->hasProperty("name") ? prop.value.getDynamicObject()->getProperty("name").toString() : prop.name.toString()), 
-                    prop.name.toString(), 256, false);
+            if (!prop.value.isObject() && !prop.value.isArray()) {
+                // We need a stable juce::Value to bind to for TextPropertyComponent. 
+                // Since this is just a visualizer for now, we'll bind to a local Value.
+                // In a real editor, this would sync back to the JSON.
+                juce::Value val (prop.value.toString());
+                auto* pc = new juce::TextPropertyComponent(val, prop.name.toString(), 256, false);
                 props.add(pc);
             }
         }
@@ -326,3 +346,6 @@ void MainComponent::resized() {
     
     verticalLayout.layOutComponents(rightComps, 5, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), false, true);
 }
+
+
+
