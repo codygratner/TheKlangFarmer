@@ -1,0 +1,277 @@
+{
+  "pitchenv1_slope": {
+    "type": "float",
+    "name": "PitchEnv 1: Slope",
+    "description": "Pitch envelope decay curve tension from punchy exponential to linear",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "pitchenv1_depth": {
+    "type": "float",
+    "name": "PitchEnv 1: Depth",
+    "description": "Bipolar pitch envelope modulation depth in semitones",
+    "is_bipolar": true,
+    "default": 0.0
+  },
+  "pitchenv1_decay": {
+    "type": "float",
+    "name": "PitchEnv 1: Decay",
+    "description": "Pitch envelope decay duration",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "pitchenv2_slope": {
+    "type": "float",
+    "name": "PitchEnv 2: Slope",
+    "description": "Voice 2 pitch envelope decay curve tension",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "pitchenv2_depth": {
+    "type": "float",
+    "name": "PitchEnv 2: Depth",
+    "description": "Voice 2 pitch envelope modulation depth in semitones",
+    "is_bipolar": true,
+    "default": 0.0
+  },
+  "pitchenv2_decay": {
+    "type": "float",
+    "name": "PitchEnv 2: Decay",
+    "description": "Voice 2 pitch envelope decay duration",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "filterenv1_slope": {
+    "type": "float",
+    "name": "FilterEnv 1: Slope",
+    "description": "Filter envelope decay curve tension",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "filterenv1_depth": {
+    "type": "float",
+    "name": "FilterEnv 1: Depth",
+    "description": "Cutoff modulation depth in octaves (-10 to +10 oct)",
+    "is_bipolar": true,
+    "default": 0.0
+  },
+  "filterenv1_decay": {
+    "type": "float",
+    "name": "FilterEnv 1: Decay",
+    "description": "Filter envelope decay duration",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "filterenv1_postdrive": {
+    "type": "float",
+    "name": "FilterEnv 1: Post-Drive",
+    "description": "Pre-filter analog saturation drive gain (-6 to +24 dB)",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "filterenv2_slope": {
+    "type": "float",
+    "name": "FilterEnv 2: Slope",
+    "description": "Filter 2 envelope decay curve tension",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "filterenv2_depth": {
+    "type": "float",
+    "name": "FilterEnv 2: Depth",
+    "description": "Filter 2 cutoff modulation depth in octaves",
+    "is_bipolar": true,
+    "default": 0.0
+  },
+  "filterenv2_decay": {
+    "type": "float",
+    "name": "FilterEnv 2: Decay",
+    "description": "Filter 2 envelope decay duration",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "filterenv2_postdrive": {
+    "type": "float",
+    "name": "FilterEnv 2: Post-Drive",
+    "description": "Filter 2 pre-filter saturation drive gain",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "filterenv3_slope": {
+    "type": "float",
+    "name": "FilterEnv 3: Slope",
+    "description": "Filter 3 envelope decay curve tension",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "filterenv3_depth": {
+    "type": "float",
+    "name": "FilterEnv 3: Depth",
+    "description": "Filter 3 cutoff modulation depth in octaves",
+    "is_bipolar": true,
+    "default": 0.0
+  },
+  "filterenv3_decay": {
+    "type": "float",
+    "name": "FilterEnv 3: Decay",
+    "description": "Filter 3 envelope decay duration",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "filterenv3_postdrive": {
+    "type": "float",
+    "name": "FilterEnv 3: Post-Drive",
+    "description": "Filter 3 pre-filter saturation drive gain",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "ampenv_claps": {
+    "type": "float",
+    "name": "AmpEnv: Claps",
+    "description": "Pre-decay transient hand-clap burst count (0 to 32 bursts)",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "ampenv_clapspeed": {
+    "type": "float",
+    "name": "AmpEnv: Clap Speed",
+    "description": "Time spacing interval between clap bursts (1 to 15 ms)",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "ampenv_slope": {
+    "type": "float",
+    "name": "AmpEnv: Slope",
+    "description": "Master amplitude envelope decay curve tension",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "ampenv_decay": {
+    "type": "float",
+    "name": "AmpEnv: Decay",
+    "description": "Master amplitude envelope decay duration",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "modenv1_slope": {
+    "type": "float",
+    "name": "ModEnv 1: Slope",
+    "description": "Modulation envelope decay curve tension",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "modenv1_depth": {
+    "type": "float",
+    "name": "ModEnv 1: Depth",
+    "description": "Bipolar modulation envelope depth to assigned target",
+    "is_bipolar": true,
+    "default": 0.0
+  },
+  "modenv1_decay": {
+    "type": "float",
+    "name": "ModEnv 1: Decay",
+    "description": "Modulation envelope decay duration",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "modenv2_slope": {
+    "type": "float",
+    "name": "ModEnv 2: Slope",
+    "description": "Modulation envelope decay curve tension",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "modenv2_depth": {
+    "type": "float",
+    "name": "ModEnv 2: Depth",
+    "description": "Bipolar modulation envelope depth to assigned target",
+    "is_bipolar": true,
+    "default": 0.0
+  },
+  "modenv2_decay": {
+    "type": "float",
+    "name": "ModEnv 2: Decay",
+    "description": "Modulation envelope decay duration",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "modenv3_slope": {
+    "type": "float",
+    "name": "ModEnv 3: Slope",
+    "description": "Modulation envelope decay curve tension",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "modenv3_depth": {
+    "type": "float",
+    "name": "ModEnv 3: Depth",
+    "description": "Bipolar modulation envelope depth to assigned target",
+    "is_bipolar": true,
+    "default": 0.0
+  },
+  "modenv3_decay": {
+    "type": "float",
+    "name": "ModEnv 3: Decay",
+    "description": "Modulation envelope decay duration",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "pitchenv1_target": {
+    "type": "choice",
+    "name": "PitchEnv 1: Target\",\n        juce::StringArray{ \"Car\", \"Mod\", \"Both\", \"Opp\" }, 0));\n\n    // --- 4. CARRIER 2 ---\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"carrier2_tracking\", 1), \"Carrier 2: Tracking\",\n        juce::StringArray{ \"MIDI\", \"Freq\", \"Note\" }, 0));\n    layout.add(makeFloatParam(\"carrier2_pitch\", \"Carrier 2: Pitch / Freq\", 0.5f));\n    layout.add(makeFloatParam(\"carrier2_shape\", \"Carrier 2: Shape\", 0.0f));         // Sine (0%)\n    layout.add(makeFloatParam(\"carrier2_depth\", \"Carrier 2: Modulation Depth\", 0.5f)); // 0% Depth (-200% to +200%)\n\n    // --- 5. MODULATOR 2 ---\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"mod2_track\", 1), \"Modulator 2: Pitch Tracking\",\n        juce::StringArray{ \"Fixed\", \"Follow\", \"FM\" }, 0));\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"mod2_type\", 1), \"Modulator 2: Type\",\n        juce::StringArray{ \"Osc\", \"Cyclic\", \"Noise\" }, 0));\n    layout.add(makeFloatParam(\"mod2_shape\", \"Modulator 2: Shape\", 0.0f));          // Sine (0%)\n    layout.add(makeFloatParam(\"mod2_speed\", \"Modulator 2: Speed\", 0.5f));          // 1:1 ratio (0.5)\n\n    // --- 6. PITCH ENVELOPE 2 ---\n    layout.add(makeFloatParam(\"pitchenv2_slope\", \"PitchEnv 2: Slope\", 0.5886f));   // Exponential (def)\n    layout.add(makeFloatParam(\"pitchenv2_depth\", \"PitchEnv 2: Depth\", 0.5f));      // 0%\n    layout.add(makeFloatParam(\"pitchenv2_decay\", \"PitchEnv 2: Decay\", 0.3806f));   // 333 ms\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"pitchenv2_target\", 1), \"PitchEnv 2: Target\",\n        juce::StringArray{ \"Car\", \"Mod\", \"Both\", \"Opp\" }, 0));\n\n    // --- 7. NOISE TRANSIENT ---\n    layout.add(makeFloatParam(\"noise_sh_rate\", \"Noise: S&H Rate\", 1.0f));       // 24 kHz\n    layout.add(makeFloatParam(\"noise_filter\", \"Noise: Filter\", 0.5f));          // Flat (50%)\n    layout.add(makeFloatParam(\"noise_drive\", \"Noise: Drive\", 0.5f));            // 0 dB (default)\n    layout.add(makeFloatParam(\"noise_decay\", \"Noise: Decay\", 0.3078f));         // 100 ms\n\n    // --- 8. MIXER ---\n    layout.add(makeFloatParam(\"mixer_carrier1_level\", \"Mixer: Carrier 1 Level\", 0.5f)); // 100%\n    layout.add(makeFloatParam(\"mixer_carrier2_level\", \"Mixer: Carrier 2 Level\", 0.0f)); // 0% (double click returns 100%)\n    layout.add(makeFloatParam(\"mixer_ringmod\", \"Mixer: Ring Mod Level\", 0.0f));        // 0% (double click returns 100%)\n    layout.add(makeFloatParam(\"mixer_noise_level\", \"Mixer: Noise Level\", 0.0f));       // 0% (double click returns 100%)\n\n    // --- 9. DRIVE ---\n    layout.add(makeFloatParam(\"drive_amount\", \"Drive: Amount\", 0.4f));              // +6 dB (def)\n    layout.add(makeFloatParam(\"drive_bias\", \"Drive: Bias\", 0.5f));                  // 0 DC Bias\n    layout.add(makeFloatParam(\"drive_filter\", \"Drive: Filter\", 0.5f));              // Flat (50%)\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"drive_limiter\", 1), \"Drive: Limiter\",\n        juce::StringArray{ \"Off\", \"On\" }, 1));                                      // On\n\n    // --- VOICE 1 FILTER & FILTER ENVELOPE ---\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"filter1_type\", 1), \"Filter 1: Type\",\n        juce::StringArray{ \"LPF\", \"BPF\", \"HPF\", \"BRF\" }, 0));\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"filter1_slope\", 1), \"Filter 1: Slope\",\n        juce::StringArray{ \"6\", \"12\", \"18\", \"24\", \"36\" }, 1));\n    layout.add(makeFloatParam(\"filter1_cutoff\", \"Filter 1: Cutoff\", 1.0f));\n    layout.add(makeFloatParam(\"filter1_resonance\", \"Filter 1: Resonance\", 0.0f));\n\n    layout.add(makeFloatParam(\"filterenv1_slope\", \"FilterEnv 1: Slope\", 0.5886f));\n    layout.add(makeFloatParam(\"filterenv1_depth\", \"FilterEnv 1: Depth\", 0.5f));\n    layout.add(makeFloatParam(\"filterenv1_decay\", \"FilterEnv 1: Decay\", 0.3806f));\n    layout.add(makeFloatParam(\"filterenv1_postdrive\", \"FilterEnv 1: Post-Drive\", 0.5f));\n\n    // --- VOICE 2 FILTER & FILTER ENVELOPE ---\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"filter2_type\", 1), \"Filter 2: Type\",\n        juce::StringArray{ \"LPF\", \"BPF\", \"HPF\", \"BRF\" }, 0));\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"filter2_slope\", 1), \"Filter 2: Slope\",\n        juce::StringArray{ \"6\", \"12\", \"18\", \"24\", \"36\" }, 1));\n    layout.add(makeFloatParam(\"filter2_cutoff\", \"Filter 2: Cutoff\", 1.0f));\n    layout.add(makeFloatParam(\"filter2_resonance\", \"Filter 2: Resonance\", 0.0f));\n\n    layout.add(makeFloatParam(\"filterenv2_slope\", \"FilterEnv 2: Slope\", 0.5886f));\n    layout.add(makeFloatParam(\"filterenv2_depth\", \"FilterEnv 2: Depth\", 0.5f));\n    layout.add(makeFloatParam(\"filterenv2_decay\", \"FilterEnv 2: Decay\", 0.3806f));\n    layout.add(makeFloatParam(\"filterenv2_postdrive\", \"FilterEnv 2: Post-Drive\", 0.5f));\n\n    // --- TRANSIENTS FILTER & FILTER ENVELOPE ---\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"filter3_type\", 1), \"Filter 3: Type\",\n        juce::StringArray{ \"LPF\", \"BPF\", \"HPF\", \"BRF\" }, 0));\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"filter3_slope\", 1), \"Filter 3: Slope\",\n        juce::StringArray{ \"6\", \"12\", \"18\", \"24\", \"36\" }, 1));\n    layout.add(makeFloatParam(\"filter3_cutoff\", \"Filter 3: Cutoff\", 1.0f));\n    layout.add(makeFloatParam(\"filter3_resonance\", \"Filter 3: Resonance\", 0.0f));\n\n    layout.add(makeFloatParam(\"filterenv3_slope\", \"FilterEnv 3: Slope\", 0.5886f));\n    layout.add(makeFloatParam(\"filterenv3_depth\", \"FilterEnv 3: Depth\", 0.5f));\n    layout.add(makeFloatParam(\"filterenv3_decay\", \"FilterEnv 3: Decay\", 0.3078f));\n    layout.add(makeFloatParam(\"filterenv3_postdrive\", \"FilterEnv 3: Post-Drive\", 0.5f));\n\n    // --- STANDALONE FX FILTER ---\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"fxfilter_type\", 1), \"FX Filter: Type\",\n        juce::StringArray{ \"LPF\", \"BPF\", \"HPF\", \"BRF\" }, 0));\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"fxfilter_slope\", 1), \"FX Filter: Slope\",\n        juce::StringArray{ \"6\", \"12\", \"18\", \"24\", \"36\" }, 1));\n    layout.add(makeFloatParam(\"fxfilter_cutoff\", \"FX Filter: Cutoff\", 1.0f));\n    layout.add(makeFloatParam(\"fxfilter_resonance\", \"FX Filter: Resonance\", 0.0f));\n\n    // --- LIMITERS ---\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"pre_limiter_enable\", 1), \"Pre-Limiter: Enable\",\n        juce::StringArray{ \"Off\", \"On\" }, 1));\n    layout.add(makeFloatParam(\"pre_limiter_gain\", \"Pre-Limiter: Input Gain\", 12.0f / 36.0f)); // 0 dB\n    layout.add(makeFloatParam(\"pre_limiter_thresh\", \"Pre-Limiter: Threshold\", 1.0f));          // 0 dB\n    layout.add(makeFloatParam(\"pre_limiter_release\", \"Pre-Limiter: Release\", 0.6296f));       // 50 ms\n\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"post_limiter_enable\", 1), \"Post-Limiter: Enable\",\n        juce::StringArray{ \"Off\", \"On\" }, 1));\n    layout.add(makeFloatParam(\"post_limiter_gain\", \"Post-Limiter: Input Gain\", 12.0f / 36.0f)); // 0 dB\n    layout.add(makeFloatParam(\"post_limiter_thresh\", \"Post-Limiter: Threshold\", 1.0f));          // 0 dB\n    layout.add(makeFloatParam(\"post_limiter_release\", \"Post-Limiter: Release\", 0.6296f));       // 50 ms\n\n    // --- FX PICKERS ---\n    const juce::StringArray fxChoices {\n        \"None\",              // 0\n        \"Bell EQ\",           // 1\n        \"Chorus\",            // 2\n        \"Comb Filter\",       // 3\n        \"Drive\",             // 4\n        \"Filter\",            // 5\n        \"Flanger\",           // 6\n        \"Frequency Shifter\", // 7\n        \"Grit FX\",           // 8\n        \"Phase Smear\",       // 9\n        \"Phaser\",            // 10\n        \"RingMod\",           // 11\n        \"Tempo Delay\",       // 12\n        \"Wave Folder\"        // 13\n    };\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"pre_fx_1_type\", 1), \"Pre FX 1: Type",
+    "description": "",
+    "choices": [
+      "Off",
+      "Bell EQ",
+      "Chorus",
+      "Comb Filter",
+      "Delay",
+      "Disperser",
+      "Distortion",
+      "FreqShift",
+      "Grit FX",
+      "Phase Smear",
+      "Phaser",
+      "RingMod",
+      "Saturator",
+      "Wave Folder"
+    ],
+    "default": 0
+  },
+  "pitchenv2_target": {
+    "type": "choice",
+    "name": "PitchEnv 2: Target",
+    "description": "",
+    "choices": [
+      "Car",
+      "Mod",
+      "Both",
+      "Opp"
+    ],
+    "default": 0
+  },
+  "modenv2_target": {
+    "type": "choice",
+    "name": "ModEnv 2: Destination",
+    "description": "",
+    "choices": [
+      "None",
+      "Carrier 1 Pitch",
+      "Carrier 2 Pitch",
+      "Filter 1 Cutoff"
+    ],
+    "default": 0
+  },
+  "modenv3_target": {
+    "type": "choice",
+    "name": "ModEnv 3: Destination",
+    "description": "",
+    "choices": [
+      "None",
+      "Carrier 1 Pitch",
+      "Carrier 2 Pitch",
+      "Filter 1 Cutoff"
+    ],
+    "default": 0
+  }
+}

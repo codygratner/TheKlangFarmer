@@ -1,0 +1,189 @@
+{
+  "mod1_shape": {
+    "type": "float",
+    "name": "Modulator 1: Shape",
+    "description": "Modulator 1 waveform shape / symmetry",
+    "is_bipolar": false,
+    "default": 0.0,
+    "points_of_interest": [
+      {
+        "value": 0.0,
+        "label": "Sine"
+      },
+      {
+        "value": 0.25,
+        "label": "Triangle"
+      },
+      {
+        "value": 0.5,
+        "label": "Sawtooth"
+      },
+      {
+        "value": 0.75,
+        "label": "Square"
+      },
+      {
+        "value": 1.0,
+        "label": "PWM"
+      }
+    ]
+  },
+  "mod1_speed": {
+    "type": "float",
+    "name": "Modulator 1: Speed",
+    "description": "Modulator 1 frequency / semitone offset / FM ratio",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "mod2_shape": {
+    "type": "float",
+    "name": "Modulator 2: Shape",
+    "description": "Modulator 2 waveform shape / symmetry",
+    "is_bipolar": false,
+    "default": 0.0,
+    "points_of_interest": [
+      {
+        "value": 0.0,
+        "label": "Sine"
+      },
+      {
+        "value": 0.25,
+        "label": "Triangle"
+      },
+      {
+        "value": 0.5,
+        "label": "Sawtooth"
+      },
+      {
+        "value": 0.75,
+        "label": "Square"
+      },
+      {
+        "value": 1.0,
+        "label": "PWM"
+      }
+    ]
+  },
+  "mod2_speed": {
+    "type": "float",
+    "name": "Modulator 2: Speed",
+    "description": "Modulator 2 frequency / semitone offset / FM ratio",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "mixer_ringmod": {
+    "type": "float",
+    "name": "Mixer: Ring Mod Level",
+    "description": "Ring modulator (Carrier 1 x Carrier 2) mix level",
+    "is_bipolar": false,
+    "default": 0.0,
+    "points_of_interest": [
+      {
+        "value": 0.0,
+        "label": "0%"
+      },
+      {
+        "value": 0.5,
+        "label": "50%"
+      },
+      {
+        "value": 1.0,
+        "label": "100%"
+      }
+    ]
+  },
+  "ringmod_shape": {
+    "type": "float",
+    "name": "RingMod: Waveform",
+    "description": "",
+    "is_bipolar": false,
+    "default": 0.0,
+    "points_of_interest": [
+      {
+        "value": 0.0,
+        "label": "Sine"
+      },
+      {
+        "value": 0.25,
+        "label": "Triangle"
+      },
+      {
+        "value": 0.5,
+        "label": "Sawtooth"
+      },
+      {
+        "value": 0.75,
+        "label": "Square"
+      },
+      {
+        "value": 1.0,
+        "label": "PWM"
+      }
+    ]
+  },
+  "ringmod_rate": {
+    "type": "float",
+    "name": "RingMod: Rate",
+    "description": "",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "ringmod_amount": {
+    "type": "float",
+    "name": "RingMod: Amount",
+    "description": "",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "ringmod_width": {
+    "type": "float",
+    "name": "RingMod: Width",
+    "description": "",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "mod1_track": {
+    "type": "choice",
+    "name": "Modulator 1: Pitch Tracking",
+    "description": "",
+    "choices": [
+      "Fixed",
+      "Follow",
+      "FM"
+    ],
+    "default": 0
+  },
+  "mod1_type": {
+    "type": "choice",
+    "name": "Modulator 1: Type",
+    "description": "",
+    "choices": [
+      "Osc",
+      "Cyclic",
+      "Noise"
+    ],
+    "default": 0
+  },
+  "mod2_track": {
+    "type": "choice",
+    "name": "Modulator 2: Pitch Tracking",
+    "description": "",
+    "choices": [
+      "Fixed",
+      "Follow",
+      "FM"
+    ],
+    "default": 0
+  },
+  "mod2_type": {
+    "type": "choice",
+    "name": "Modulator 2: Type",
+    "description": "",
+    "choices": [
+      "Osc",
+      "Cyclic",
+      "Noise"
+    ],
+    "default": 0
+  }
+}

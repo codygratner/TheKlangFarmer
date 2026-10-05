@@ -1,0 +1,30 @@
+{
+  "noise_sh_rate": {
+    "type": "float",
+    "name": "Noise: S&H Rate",
+    "description": "Sample-and-hold downsampling clock rate for metallic textures",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "noise_filter": {
+    "type": "float",
+    "name": "Noise: Filter",
+    "description": "Transient noise band-pass / center frequency color",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "noise_drive": {
+    "type": "float",
+    "name": "Noise: Drive",
+    "description": "Transient noise saturation drive gain",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "noise_decay": {
+    "type": "float",
+    "name": "Noise: Decay",
+    "description": "Transient noise burst decay time",
+    "is_bipolar": false,
+    "default": 0.0
+  }
+}
