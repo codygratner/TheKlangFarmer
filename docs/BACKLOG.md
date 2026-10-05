@@ -109,6 +109,21 @@ Expand the FX catalog from 13 to 19 algorithms (appended as indices 14–19 for 
 
 ---
 
+### 6. [PRIORITY #6] JSON Preset Browser, Tagging & State Migration
+*Detailed Plan: [`docs/preset_system_plan.md`](preset_system_plan.md)*  
+Implement a professional, tag-based preset management system utilizing JSON files for storage, complete with author metadata, tagging, and versioning.
+- **Phase 1: JSON Schema & `StateMigrator` (`source/PresetManager.h`, `source/StateMigrator.h`)**:
+  - Background `TimeSliceThread` scanner to instantly build a database from `metadata` headers without loading full state.
+  - Intercept older patches via `StateMigrator` to inject missing default values, ensuring forward compatibility as the DSP evolves.
+- **Phase 2: UI Browser Overlay (`source/PresetBrowserComponent.h`)**:
+  - Dual-column UI (Tags on Left, Results on Right) with fuzzy text search.
+  - "Save As" modal with text inputs for name, author, and tokenized tags.
+- **Phase 3: Header Integration & Automated Tests**:
+  - LCD-style preset display and `<` `>` stepper buttons in the main header.
+  - Unit tests to verify `StateMigrator` accurately forces transparent defaults on legacy mock presets.
+
+---
+
 ## 🎛️ New Effects Processors (Backlog)
 *(Elevated to Active Priority #4: see [Top Priorities section](#4-priority-4-new-effects-processors-catalog-expansion-effects-1419--universal-mix-standard) and [`docs/new_effects_plan.md`](new_effects_plan.md))*
 

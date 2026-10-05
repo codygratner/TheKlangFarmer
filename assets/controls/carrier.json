@@ -1,0 +1,25 @@
+{
+  "carrier1_shape": {
+    "type": "float",
+    "name": "Carrier 1: Shape",
+    "description": "Morph carrier waveform from sine through triangle and saw to pulse/square.",
+    "is_bipolar": false,
+    "range": { "min": 0.0, "max": 1.0, "step": 0.0005, "skew": 1.0 },
+    "default": 0.0,
+    "double_click": 0.0,
+    "points_of_interest": [
+      { "value": 0.0, "label": "Sine" },
+      { "value": 0.25, "label": "Triangle" },
+      { "value": 0.5, "label": "Sawtooth" },
+      { "value": 0.75, "label": "Square" },
+      { "value": 1.0, "label": "PWM" }
+    ]
+  },
+  "carrier1_tracking": {
+    "type": "choice",
+    "name": "Carrier 1: Tracking",
+    "description": "Dictates how Carrier 1 responds to incoming MIDI notes.",
+    "choices": ["MIDI", "Freq", "Note"],
+    "default": 0
+  }
+}
