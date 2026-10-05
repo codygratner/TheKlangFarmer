@@ -25,8 +25,29 @@ MainComponent::MainComponent()
     addAndMakeVisible(navigationTree);
     // Tree collapsed by default
 
-    addAndMakeVisible(refreshButton);
-    refreshButton.onClick = [this]() { buildTree(); };
+        addAndMakeVisible(refreshButton);
+    refreshButton.onClick = [this]() { 
+        auto xml = navigationTree.getOpennessState(false);
+        auto* selected = navigationTree.getSelectedItem(0);
+        juce::String selName = selected ? static_cast<EditorTreeItem*>(selected)->name : "";
+        juce::String selPage = selected ? static_cast<EditorTreeItem*>(selected)->pageId : "";
+        juce::String selProd = selected ? static_cast<EditorTreeItem*>(selected)->productId : "";
+        
+        buildTree();
+        
+        if (xml) navigationTree.restoreOpennessState(*xml, false);
+        
+        if (selName.isNotEmpty()) {
+            std::function<void(EditorTreeItem*)> findAndSelect = [&](EditorTreeItem* n) {
+                if (n->name == selName && n->pageId == selPage && n->productId == selProd) {
+                    n->setSelected(true, true);
+                    return;
+                }
+                for (int i=0; i < n->getNumSubItems(); ++i) findAndSelect(static_cast<EditorTreeItem*>(n->getSubItem(i)));
+            };
+            findAndSelect(static_cast<EditorTreeItem*>(navigationTree.getRootItem()));
+        }
+    };
     
     addAndMakeVisible(saveButton);
     saveButton.onClick = [this]() { 
@@ -325,11 +346,35 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
         }
     }
     if (!props.isEmpty()) {
-        formEditor.addSection("Properties", props);
+        formEditor.addSection("Card Layout", props);
     }
-}
-
-void MainComponent::mouseDown(const juce::MouseEvent& e) {
+    
+    // Add detailed parameter properties
+    if (parsed.isObject()) {
+        auto paramsArray = parsed.getDynamicObject()->getProperty("parameters");
+        if (paramsArray.isArray()) {
+            for (auto& paramIdVar : *paramsArray.getArray()) {
+                juce::String paramId = paramIdVar.toString();
+                auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+                if (def) {
+                    juce::Array<juce::PropertyComponent*> pProps;
+                    pProps.add(new juce::TextPropertyComponent(juce::Value(def->name), "name", 256, false));
+                    pProps.add(new juce::TextPropertyComponent(juce::Value(def->type), "type", 256, false));
+                    if (def->type == "float") {
+                        pProps.add(new juce::TextPropertyComponent(juce::Value(def->min), "min", 256, false));
+                        pProps.add(new juce::TextPropertyComponent(juce::Value(def->max), "max", 256, false));
+                        pProps.add(new juce::TextPropertyComponent(juce::Value(def->defaultFloat), "default", 256, false));
+                        pProps.add(new juce::TextPropertyComponent(juce::Value(def->step), "step", 256, false));
+                    } else if (def->type == "choice") {
+                        pProps.add(new juce::TextPropertyComponent(juce::Value(def->choices.joinIntoString(", ")), "choices", 256, false));
+                        pProps.add(new juce::TextPropertyComponent(juce::Value(def->defaultChoice), "defaultIdx", 256, false));
+                    }
+                    formEditor.addSection("Param: " + paramId, pProps);
+                }
+            }
+        }
+    }
+}void MainComponent::mouseDown(const juce::MouseEvent& e) {
     if (e.originalComponent && compToParamId.find(e.originalComponent) != compToParamId.end()) {
         juce::String pId = compToParamId[e.originalComponent];
         
@@ -374,6 +419,8 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
 
 
 
