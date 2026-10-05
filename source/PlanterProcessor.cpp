@@ -1,5 +1,6 @@
 #include "PlanterProcessor.h"
 #include "PlanterEditor.h"
+#include "ParameterManager.h"
 
 TheKlangPlanterAudioProcessor::TheKlangPlanterAudioProcessor()
     : AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
@@ -51,13 +52,27 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangPlanterAudioProcesso
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     auto makeFloatParam = [](const juce::String& id, const juce::String& name, float defaultVal) {
+        if (auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(id)) {
+            return std::make_unique<juce::AudioParameterFloat>(
+                juce::ParameterID(id, 1), def->name,
+                juce::NormalisableRange<float>(def->min, def->max, def->step, def->skew),
+                def->defaultFloat);
+        }
         return std::make_unique<juce::AudioParameterFloat>(juce::ParameterID(id, 1), name, 0.0f, 1.0f, defaultVal);
     };
 
+    auto makeChoiceParam = [](const juce::String& id, const juce::String& name, const juce::StringArray& choices, int defaultIndex) {
+        if (auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(id)) {
+            return std::make_unique<juce::AudioParameterChoice>(
+                juce::ParameterID(id, 1), def->name,
+                def->choices, def->defaultChoice);
+        }
+        return std::make_unique<juce::AudioParameterChoice>(
+            juce::ParameterID(id, 1), name, choices, defaultIndex);
+    };
+
     // 1. Carrier
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("planter_carrier_tracking", 1), "Carrier: Tracking",
-        juce::StringArray{ "MIDI", "Freq", "Note" }, 0));
+    layout.add(makeChoiceParam("planter_carrier_tracking", "Carrier: Tracking", juce::StringArray{ "MIDI", "Freq", "Note" }, 0));
     layout.add(makeFloatParam("planter_carrier_pitch", "Carrier: Pitch", 0.5f));
     layout.add(makeFloatParam("planter_carrier_shape", "Carrier: Shape", 0.0f));
     layout.add(makeFloatParam("planter_carrier_depth", "Carrier: Mod Depth", 0.5f));

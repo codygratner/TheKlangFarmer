@@ -25,7 +25,7 @@ No immediate blockers.
 
 ## Proposed Changes
 
-### 0. Establish Architecture Guardrails (`GEMINI.md`)
+### 0. Establish Architecture Guardrails (`GEMINI.md`) [x]
 Append a strict rule to the AI guidelines file to permanently enforce the new architecture across all future chat sessions.
 #### [MODIFY] `GEMINI.md`
 - Add a new section `## Strict Data-Driven Architecture (CRITICAL)` with rules explicitly forbidding hardcoded APVTS parameters, default values, UI labels, and coordinates in C++.
@@ -62,7 +62,7 @@ Create a new directory `assets/controls/` to house individual module definitions
 }
 ```
 
-### 2. CMake Integration
+### 2. CMake Integration [x]
 Bind the `assets/controls/` folder into the plugin binary to eliminate runtime disk I/O.
 
 #### [MODIFY] `CMakeLists.txt`
@@ -80,7 +80,7 @@ juce_add_binary_data(TkfAssets
 # Link TkfAssets to TheKlangFarmer, TheKlangPlanter, and Tests
 ```
 
-### 3. C++ Runtime Parameter Manager
+### 3. C++ Runtime Parameter Manager [x]
 Create a singleton or static manager to parse the binary JSON at startup.
 
 #### [NEW] `source/ParameterManager.h` & `source/ParameterManager.cpp`
@@ -94,12 +94,12 @@ Create a singleton or static manager to parse the binary JSON at startup.
   - Fetch the parsed dictionary from `ParameterManager`.
   - Iterate over the dictionary, pushing `std::make_unique<juce::AudioParameterFloat>` or `juce::AudioParameterChoice` into the APVTS `ParameterLayout` based on the JSON specs.
 
-### 4. Dynamic UI Quick-Snaps & Tooltips
+### 4. Dynamic UI Quick-Snaps & Tooltips [x]
 Inject the parsed metadata directly into the frontend.
 
 #### [MODIFY] `source/UIComponents.cpp` & `source/PluginEditor.cpp`
-- Remove hardcoded tooltips and replace them with `ParameterManager::getTooltip("carrier1_shape")`.
-- Refactor the right-click `SliderCalloutComponent` to automatically fetch `points_of_interest`. If they exist, dynamically instantiate and layout custom `PresetButton` pills above the slider. Clicking a pill fires `slider.setValue()`.
+- [x] Remove hardcoded tooltips and replace them with `ParameterManager::getTooltip("carrier1_shape")`.
+- [x] Refactor the right-click `SliderCalloutComponent` to automatically fetch `points_of_interest`. If they exist, dynamically instantiate and layout custom `PresetButton` pills above the slider. Clicking a pill fires `slider.setValue()`.
 
 ### 5. Piecemeal Execution Strategy
 To isolate risk, this plan will be executed incrementally. The agent will pause for user compilation and manual testing after *every* phase before proceeding.

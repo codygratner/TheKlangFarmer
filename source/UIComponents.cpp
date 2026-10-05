@@ -1,4 +1,5 @@
 #include "UIComponents.h"
+#include "ParameterManager.h"
 
 // --- SAFE PARSING & FORMATTING HELPERS ---
 
@@ -1314,6 +1315,26 @@ SliderCalloutComponent::SliderCalloutComponent(RotaryKnobSlider& ownerSlider,
 
     int w = 210;
     int h = 62;
+
+    if (auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId)) {
+        for (const auto& poi : def->pointsOfInterest) {
+            auto* btn = new juce::TextButton(poi.label);
+            btn->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2a3242));
+            btn->setColour(juce::TextButton::textColourOffId, juce::Colour(0xffedf2fa));
+            btn->onClick = [this, val = poi.value]() {
+                slider.setValue(val, juce::sendNotificationAsync);
+                if (auto* callout = findParentComponentOfClass<juce::CallOutBox>()) {
+                    callout->dismiss();
+                }
+            };
+            addAndMakeVisible(presetButtons.add(btn));
+        }
+    }
+
+    if (!presetButtons.isEmpty()) {
+        h += 28;
+    }
+
     if (cachedInfo.isModulated) {
         h += 16; // divider + header
         h += static_cast<int>(cachedInfo.sources.size()) * 18;
@@ -1408,7 +1429,19 @@ void SliderCalloutComponent::paint(juce::Graphics& g) {
 }
 
 void SliderCalloutComponent::resized() {
-    editor.setBounds(8, 26, getWidth() - 16, 24);
+    int curY = 26;
+    if (!presetButtons.isEmpty()) {
+        int gap = 4;
+        int totalWidth = getWidth() - 16;
+        int btnW = (totalWidth - gap * (presetButtons.size() - 1)) / presetButtons.size();
+        int curX = 8;
+        for (auto* btn : presetButtons) {
+            btn->setBounds(curX, curY, btnW, 20);
+            curX += btnW + gap;
+        }
+        curY += 28;
+    }
+    editor.setBounds(8, curY, getWidth() - 16, 24);
 }
 
 void RotaryKnobSlider::openHoveringEditor() {
@@ -2242,10 +2275,18 @@ juce::String makeKnobTooltip(const juce::String& title,
 
 juce::String makeKnobTooltipFromParam(juce::AudioProcessorValueTreeState& apvts,
                                       const juce::String& paramId,
-                                      const juce::String& description,
-                                      bool isBipolar)
+                                      const juce::String& fallbackDesc,
+                                      bool fallbackBipolar)
 {
     auto* param = apvts.getParameter(paramId);
+    juce::String desc = fallbackDesc;
+    bool isBipolar = fallbackBipolar;
+
+    if (auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId)) {
+        if (def->description.isNotEmpty()) desc = def->description;
+        isBipolar = def->isBipolar;
+    }
+
     if (param != nullptr) {
         juce::String name = param->getName(64);
         float defVal = param->getDefaultValue();
@@ -2255,9 +2296,9 @@ juce::String makeKnobTooltipFromParam(juce::AudioProcessorValueTreeState& apvts,
         if (label.isNotEmpty() && !defText.endsWithIgnoreCase(label)) {
             defAndUnits += " " + label;
         }
-        return makeKnobTooltip(name, description, defAndUnits, isBipolar);
+        return makeKnobTooltip(name, desc, defAndUnits, isBipolar);
     }
-    return makeKnobTooltip(paramId, description, "", isBipolar);
+    return makeKnobTooltip(paramId, desc, "", isBipolar);
 }
 
 juce::StringArray getLedSelectorItemTooltips(const juce::String& selectorCategory)

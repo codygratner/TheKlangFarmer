@@ -267,6 +267,7 @@ private:
     ParamModulationInfo cachedInfo;
     juce::TextEditor editor;
     juce::String lastLiveText;
+    juce::OwnedArray<juce::TextButton> presetButtons;
 };
 
 // Custom diagram-rendering label used as slider text box

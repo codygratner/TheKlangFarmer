@@ -1,5 +1,6 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "ParameterManager.h"
 
 TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     : AudioProcessor(BusesProperties()
@@ -857,26 +858,36 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
     auto makeFloatParam = [](const juce::String& id, const juce::String& name, float defaultVal) {
+        if (auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(id)) {
+            return std::make_unique<juce::AudioParameterFloat>(
+                juce::ParameterID(id, 1), def->name,
+                juce::NormalisableRange<float>(def->min, def->max, def->step, def->skew),
+                def->defaultFloat);
+        }
         return std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID(id, 1), name,
             juce::NormalisableRange<float>(0.0f, 1.0f, 0.0005f), defaultVal);
     };
 
+    auto makeChoiceParam = [](const juce::String& id, const juce::String& name, const juce::StringArray& choices, int defaultIndex) {
+        if (auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(id)) {
+            return std::make_unique<juce::AudioParameterChoice>(
+                juce::ParameterID(id, 1), def->name,
+                def->choices, def->defaultChoice);
+        }
+        return std::make_unique<juce::AudioParameterChoice>(
+            juce::ParameterID(id, 1), name, choices, defaultIndex);
+    };
+
     // --- 1. CARRIER 1 ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("carrier1_tracking", 1), "Carrier 1: Tracking",
-        juce::StringArray{ "MIDI", "Freq", "Note" }, 0));
+    layout.add(makeChoiceParam("carrier1_tracking", "Carrier 1: Tracking", juce::StringArray{ "MIDI", "Freq", "Note" }, 0));
     layout.add(makeFloatParam("carrier1_pitch", "Carrier 1: Pitch / Freq", 0.5f));
     layout.add(makeFloatParam("carrier1_shape", "Carrier 1: Shape", 0.0f));         // Sine (0%)
     layout.add(makeFloatParam("carrier1_depth", "Carrier 1: Modulation Depth", 0.5f)); // 0% Depth (-200% to +200%)
 
     // --- 2. MODULATOR 1 ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("mod1_track", 1), "Modulator 1: Pitch Tracking",
-        juce::StringArray{ "Fixed", "Follow", "FM" }, 0));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("mod1_type", 1), "Modulator 1: Type",
-        juce::StringArray{ "Osc", "Cyclic", "Noise" }, 0));
+    layout.add(makeChoiceParam("mod1_track", "Modulator 1: Pitch Tracking", juce::StringArray{ "Fixed", "Follow", "FM" }, 0));
+    layout.add(makeChoiceParam("mod1_type", "Modulator 1: Type", juce::StringArray{ "Osc", "Cyclic", "Noise" }, 0));
     layout.add(makeFloatParam("mod1_shape", "Modulator 1: Shape", 0.0f));          // Sine (0%)
     layout.add(makeFloatParam("mod1_speed", "Modulator 1: Speed", 0.5f));          // 1:1 ratio (0.5)
 

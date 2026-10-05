@@ -12,7 +12,7 @@ endif()
 project(TheKlangFarmer VERSION 0.2.1 LANGUAGES C CXX)
 
 # Feature branch build tag (e.g., "-tooltips"). Stripped upon merge back to master.
-set(TKF_FEATURE_TAG "-data-driven-params" CACHE STRING "Prerelease feature tag for development builds")
+set(TKF_FEATURE_TAG "" CACHE STRING "Prerelease feature tag for development builds")
 add_compile_definitions(TKF_FEATURE_TAG="${TKF_FEATURE_TAG}")
 
 # Enforce modern C++ standard
@@ -27,6 +27,16 @@ set(TKF_FORMATS VST3 Standalone)
 if (APPLE)
     list(APPEND TKF_FORMATS AU)
 endif()
+
+# Glob all JSON files in the controls directory
+file(GLOB CONTROL_JSON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/controls/*.json")
+
+juce_add_binary_data(TkfAssets
+    HEADER_NAME "TkfAssets.h"
+    NAMESPACE TkfAssets
+    SOURCES
+    ${CONTROL_JSON_FILES}
+)
 
 # 3. Configure the plugin target
 juce_add_plugin(TheKlangFarmer
@@ -51,6 +61,8 @@ target_sources(TheKlangFarmer PRIVATE
     source/FastMath.h
     source/DSPBlock.h
     source/ModularBlocks.h
+    source/ParameterManager.h
+    source/ParameterManager.cpp
     source/UIComponents.h
     source/UIComponents.cpp
     source/PluginProcessor.h
@@ -90,6 +102,7 @@ set(TKF_JUCE_MODULES
 # 5. Link required JUCE modules for The Klang Farmer
 target_link_libraries(TheKlangFarmer PRIVATE
     ${TKF_JUCE_MODULES}
+    TkfAssets
     PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
@@ -118,6 +131,8 @@ target_sources(TheKlangPlanter PRIVATE
     source/DSPBlock.h
     source/ModularBlocks.h
     source/PlanterEngine.h
+    source/ParameterManager.h
+    source/ParameterManager.cpp
     source/UIComponents.h
     source/UIComponents.cpp
     source/PlanterProcessor.h
@@ -138,6 +153,7 @@ set_target_properties(TheKlangPlanter PROPERTIES VST3_AUTO_MANIFEST FALSE)
 
 target_link_libraries(TheKlangPlanter PRIVATE
     ${TKF_JUCE_MODULES}
+    TkfAssets
     PUBLIC
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
@@ -159,6 +175,7 @@ add_executable(dsp_tests
     source/PlanterEngine.h
 )
 target_include_directories(dsp_tests PRIVATE source)
+target_link_libraries(dsp_tests PRIVATE TkfAssets)
 
 # 8. FastMath & DSP performance benchmark
 add_executable(benchmark_dsp
