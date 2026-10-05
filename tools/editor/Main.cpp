@@ -36,8 +36,8 @@ public:
             setFullScreen(true);
            #else
             setResizable(true, true);
-            setFullScreen(true); // Maximized on start
-            centreWithSize(getWidth(), getHeight());
+            auto area = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay()->userArea;
+            setBounds(area);
            #endif
 
             setVisible(true);
@@ -56,4 +56,5 @@ private:
 };
 
 START_JUCE_APPLICATION(TheKlangEditorApplication)
+
 

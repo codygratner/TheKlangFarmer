@@ -2,40 +2,53 @@
 #include "ParameterManager.h"
 #include "UIComponents.h"
 
-class ParamStatusPropertyComponent : public juce::PropertyComponent, private juce::Timer {
+class ParamHeaderPropertyComponent : public juce::PropertyComponent {
 public:
-    ParamStatusPropertyComponent(juce::Component* comp, const juce::String& name, double defVal, const juce::String& type, const juce::StringArray& c) 
-        : juce::PropertyComponent(name), component(comp), defaultValue(defVal), compType(type), choices(c) {
-        
+    ParamHeaderPropertyComponent(const juce::String& name) : juce::PropertyComponent(name) {}
+    void refresh() override {}
+    void paint(juce::Graphics& g) override {
+        auto b = getLocalBounds();
+        g.setColour(juce::Colour(0xffa0a0a0));
+        auto nameBounds = b.removeFromLeft(b.getWidth() / 3).reduced(4, 0);
+        g.drawText(getName(), nameBounds, juce::Justification::centredLeft, true);
+        auto juceBounds = b.removeFromLeft(b.getWidth() / 2).reduced(4, 0);
+        g.drawText("JUCE", juceBounds, juce::Justification::centredLeft, true);
+        g.drawText("Rendered", b.reduced(4, 0), juce::Justification::centredLeft, true);
+        g.setColour(juce::Colours::black);
+        g.drawRect(getLocalBounds(), 1.0f);
+    }
+};
+
+class ParamRowPropertyComponent : public juce::PropertyComponent, private juce::Timer {
+public:
+    ParamRowPropertyComponent(juce::Component* linkedComp, const juce::String& rowTitle, const juce::String& compType, const juce::StringArray& choices,
+                              std::function<double()> getRawVal, std::function<juce::String()> getRenVal,
+                              std::function<void(double)> onRawEdit = nullptr, std::function<void(juce::String)> onRenEdit = nullptr)
+        : juce::PropertyComponent(rowTitle), component(linkedComp), compType(compType), choices(choices), 
+          getRaw(getRawVal), getRen(getRenVal), onRawEdit(onRawEdit), onRenEdit(onRenEdit)
+    {
         addAndMakeVisible(rawValueLabel);
-        rawValueLabel.setEditable(true);
+        rawValueLabel.setEditable(onRawEdit != nullptr);
         rawValueLabel.setJustificationType(juce::Justification::centredLeft);
-        rawValueLabel.onTextChange = [this]() {
-            if (compType == "float") {
-                if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) s->setValue(rawValueLabel.getText().getDoubleValue(), juce::sendNotificationAsync);
-            } else if (compType == "choice") {
-                if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) l->setSelectedIndex(rawValueLabel.getText().getIntValue(), juce::sendNotificationAsync);
-            }
-            editedByHand = true;
-            repaint();
-        };
+        if (onRawEdit) {
+            rawValueLabel.onTextChange = [this]() {
+                if (this->onRawEdit) this->onRawEdit(rawValueLabel.getText().getDoubleValue());
+                editedByHand = true;
+                repaint();
+            };
+        }
 
         addAndMakeVisible(renderedValueLabel);
-        renderedValueLabel.setEditable(true);
+        renderedValueLabel.setEditable(onRenEdit != nullptr);
         renderedValueLabel.setJustificationType(juce::Justification::centredLeft);
-        renderedValueLabel.onTextChange = [this]() {
-            if (compType == "float") {
-                if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) s->setValue(s->getValueFromText(renderedValueLabel.getText()), juce::sendNotificationAsync);
-            } else if (compType == "choice") {
-                if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) {
-                    int idx = choices.indexOf(renderedValueLabel.getText());
-                    if (idx >= 0) l->setSelectedIndex(idx, juce::sendNotificationAsync);
-                }
-            }
-            editedByHand = true;
-            repaint();
-        };
-
+        if (onRenEdit) {
+            renderedValueLabel.onTextChange = [this]() {
+                if (this->onRenEdit) this->onRenEdit(renderedValueLabel.getText());
+                editedByHand = true;
+                repaint();
+            };
+        }
+        
         startTimerHz(15);
     }
     
@@ -49,30 +62,23 @@ public:
     }
     
     void paint(juce::Graphics& g) override {
-        double curVal = 0.0;
-        
-        if (compType == "float") {
-            if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) curVal = s->getValue();
-        } else if (compType == "choice") {
-            if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) curVal = static_cast<double>(l->getSelectedIndex());
+        bool isHovered = false;
+        if (component) {
+            if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) isHovered = s->isMouseButtonDown() || s->isMouseOverOrDragging();
+            else if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) isHovered = l->isMouseButtonDown() || l->isMouseOverOrDragging();
         }
         
-        bool isHovered = false;
-        if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) {
-            isHovered = s->isMouseButtonDown() || s->isMouseOverOrDragging();
-        } else if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) {
-            isHovered = l->isMouseButtonDown() || l->isMouseOverOrDragging();
+        auto b = getLocalBounds();
+        if (isHovered) {
+            g.setColour(juce::Colours::white);
+            g.drawRect(b, 1.0f);
+        } else {
+            g.setColour(juce::Colours::black);
+            g.drawRect(b, 1.0f);
         }
         
         auto bgCol = editedByHand ? juce::Colour(0xffe8edf5) : juce::Colours::transparentBlack;
         auto textCol = editedByHand ? juce::Colour(0xff161922) : juce::Colour(0xffe8edf5);
-        
-        auto b = getLocalBounds();
-        
-        if (isHovered) {
-            g.setColour(juce::Colour(0xffe8edf5));
-            g.drawRect(b, 1.0f);
-        }
         
         g.setColour(bgCol);
         auto nameBounds = b.withWidth(b.getWidth() / 3).reduced(4, 0);
@@ -84,36 +90,32 @@ public:
     
     void timerCallback() override { 
         if (!rawValueLabel.isBeingEdited() && !renderedValueLabel.isBeingEdited()) {
-            double curVal = 0.0;
-            juce::String rendered = "";
-            if (compType == "float") {
-                if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) {
-                    curVal = s->getValue();
-                    rendered = s->getTextFromValue(curVal);
-                }
-            } else if (compType == "choice") {
-                if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) {
-                    curVal = static_cast<double>(l->getSelectedIndex());
-                    if (l->getSelectedIndex() >= 0 && l->getSelectedIndex() < choices.size()) {
-                        rendered = choices[l->getSelectedIndex()];
-                    }
-                }
-            }
-            rawValueLabel.setText(juce::String(curVal, 3), juce::dontSendNotification);
-            renderedValueLabel.setText(rendered, juce::dontSendNotification);
+            double rVal = getRaw ? getRaw() : 0.0;
+            juce::String renStr = getRen ? getRen() : "";
+            
+            juce::String rawStr = juce::String(rVal, 3);
+            if (compType == "choice" && getName() != "Choices") rawStr = juce::String(static_cast<int>(rVal));
+            else if (getName() == "Choices") rawStr = juce::String(static_cast<int>(rVal)) + " items";
+            
+            if (rawValueLabel.getText() != rawStr) rawValueLabel.setText(rawStr, juce::dontSendNotification);
+            if (renderedValueLabel.getText() != renStr) renderedValueLabel.setText(renStr, juce::dontSendNotification);
         }
         repaint();
     }
     
 private:
     juce::Component* component;
-    double defaultValue;
     juce::String compType;
     juce::StringArray choices;
+    std::function<double()> getRaw;
+    std::function<juce::String()> getRen;
+    std::function<void(double)> onRawEdit;
+    std::function<void(juce::String)> onRenEdit;
     juce::Label rawValueLabel;
     juce::Label renderedValueLabel;
     bool editedByHand = false;
 };
+
 void EditorTreeItem::paintItem(juce::Graphics& g, int width, int height) {
     if (isSelected()) g.fillAll(juce::Colours::lightblue.withAlpha(0.2f));
     g.setColour(juce::Colours::white);
@@ -664,11 +666,73 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                             break;
                         }
                     }
-                    if (linkedComp) {
-                        double defVal = (def->type == "float") ? def->doubleClickValue : def->defaultChoice;
-                        pProps.add(new ParamStatusPropertyComponent(linkedComp, def->name, defVal, def->type, def->choices));
-                        formEditor.addSection("Param: " + paramId, pProps);
+                    
+                    juce::String sectionTitle = (currentProductId == "tkf" ? "TKF: " : (currentProductId == "tkp" ? "TKP: " : "TKS: ")) + currentCardId + ": " + def->name;
+                    pProps.add(new ParamHeaderPropertyComponent(sectionTitle));
+                    
+                    pProps.add(new ParamRowPropertyComponent(linkedComp, "Slider Value", def->type, def->choices,
+                        [linkedComp, def]() -> double {
+                            if (def->type == "float" && linkedComp) return dynamic_cast<RotaryKnobSlider*>(linkedComp)->getValue();
+                            if (def->type == "choice" && linkedComp) return dynamic_cast<LedSelectorComponent*>(linkedComp)->getSelectedIndex();
+                            return 0.0;
+                        },
+                        [linkedComp, def]() -> juce::String {
+                            if (def->type == "float" && linkedComp) {
+                                auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp);
+                                return s->getTextFromValue(s->getValue());
+                            }
+                            if (def->type == "choice" && linkedComp) {
+                                auto* l = dynamic_cast<LedSelectorComponent*>(linkedComp);
+                                int idx = l->getSelectedIndex();
+                                return (idx >= 0 && idx < def->choices.size()) ? def->choices[idx] : "";
+                            }
+                            return "";
+                        },
+                        [linkedComp, def](double v) {
+                            if (def->type == "float" && linkedComp) dynamic_cast<RotaryKnobSlider*>(linkedComp)->setValue(v, juce::sendNotificationAsync);
+                            if (def->type == "choice" && linkedComp) dynamic_cast<LedSelectorComponent*>(linkedComp)->setSelectedIndex((int)v, juce::sendNotificationAsync);
+                        },
+                        [linkedComp, def](juce::String s) {
+                            if (def->type == "float" && linkedComp) {
+                                auto* kn = dynamic_cast<RotaryKnobSlider*>(linkedComp);
+                                kn->setValue(kn->getValueFromText(s), juce::sendNotificationAsync);
+                            }
+                            if (def->type == "choice" && linkedComp) {
+                                int idx = def->choices.indexOf(s);
+                                if (idx >= 0) dynamic_cast<LedSelectorComponent*>(linkedComp)->setSelectedIndex(idx, juce::sendNotificationAsync);
+                            }
+                        }
+                    ));
+
+                    if (def->type == "float") {
+                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Minimum", def->type, def->choices,
+                            [def]() { return def->min; },
+                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->min) : ""; }
+                        ));
+                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Maximum", def->type, def->choices,
+                            [def]() { return def->max; },
+                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->max) : ""; }
+                        ));
+                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Default", def->type, def->choices,
+                            [def]() { return def->defaultFloat; },
+                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->defaultFloat) : ""; }
+                        ));
+                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Double-Click", def->type, def->choices,
+                            [def]() { return def->doubleClickValue; },
+                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->doubleClickValue) : ""; }
+                        ));
+                    } else if (def->type == "choice") {
+                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Default", def->type, def->choices,
+                            [def]() { return def->defaultChoice; },
+                            [def]() { return (def->defaultChoice >= 0 && def->defaultChoice < def->choices.size()) ? def->choices[def->defaultChoice] : ""; }
+                        ));
+                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Choices", def->type, def->choices,
+                            [def]() { return def->choices.size(); },
+                            [def]() { return def->choices.joinIntoString(", "); }
+                        ));
                     }
+
+                    formEditor.addSection("Param: " + def->name, pProps);
                 }
             }
         }
@@ -732,6 +796,10 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
+
+
 
 
 
