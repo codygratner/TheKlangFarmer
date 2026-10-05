@@ -23,7 +23,7 @@ MainComponent::MainComponent()
       treeSplitter(&horizontalLayout, 1, false)
 {
     addAndMakeVisible(navigationTree);
-    navigationTree.setDefaultOpenness(true);
+    // Tree collapsed by default
 
     addAndMakeVisible(refreshButton);
     refreshButton.onClick = [this]() { buildTree(); };
@@ -69,7 +69,13 @@ MainComponent::MainComponent()
     addAndMakeVisible(filePathDisplay);
 
     addAndMakeVisible(formEditor);
+    
+    emptyPlaceholder.setJustificationType(juce::Justification::centred);
+    emptyPlaceholder.setFont(16.0f);
+    emptyPlaceholder.setColour(juce::Label::textColourId, juce::Colours::grey);
+    previewWrapper.addAndMakeVisible(emptyPlaceholder);
     addAndMakeVisible(previewWrapper);
+    previewWrapper.addMouseListener(this, true); // Listen for clicks on children!
 
     rawJsonEditor = std::make_unique<juce::CodeEditorComponent>(rawJsonDocument, nullptr);
     addAndMakeVisible(rawJsonEditor.get());
@@ -147,20 +153,9 @@ void MainComponent::buildTree() {
     
     navigationTree.setRootItem(root);
     navigationTree.setRootItemVisible(false);
+}
 
-    // Default Selection
-    if (root->getNumSubItems() > 1) {
-        if (auto* tkf = root->getSubItem(1)) {
-            if (tkf->getNumSubItems() > 0) {
-                if (auto* osc = tkf->getSubItem(0)) {
-                    if (osc->getNumSubItems() > 0) {
-                        osc->getSubItem(0)->setSelected(true, true);
-                    }
-                }
-            }
-        }
-    }
-}void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
+void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
     if (item->itemType != "card" && !(item->itemType == "product" && item->productId == "theme")) return;
     
     if (item->itemType == "product" && item->productId == "theme") {
@@ -176,7 +171,7 @@ void MainComponent::buildTree() {
     }
 
     auto file = getAssetFile(currentProductId == "theme" ? "controls" : "layouts", currentParamJsonFile);
-    juce::String debugInfo = file.getFullPathName() + " -> [" + currentPageId + "] -> [" + currentCardId + "]";
+    filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : ""));
 
     if (file.existsAsFile()) {
         auto fullJsonString = file.loadFileAsString();
@@ -185,28 +180,21 @@ void MainComponent::buildTree() {
             originalJsonString = fullJsonString;
         } else {
             currentLayout = juce::JSON::parse(fullJsonString);
-            if (currentLayout.isObject()) {
-                if (currentLayout.getDynamicObject()->hasProperty(currentPageId)) {
-                    auto pageObj = currentLayout.getDynamicObject()->getProperty(currentPageId);
-                    if (pageObj.isObject()) {
-                        if (pageObj.getDynamicObject()->hasProperty(currentCardId)) {
-                            auto cardObj = pageObj.getDynamicObject()->getProperty(currentCardId);
-                            originalJsonString = juce::JSON::toString(cardObj);
-                            debugInfo += " | JSON LOADED: " + juce::String(originalJsonString.length()) + " bytes";
-                        } else debugInfo += " | ERROR: Card ID missing in page obj";
-                    } else debugInfo += " | ERROR: Page is not an object";
-                } else debugInfo += " | ERROR: Page ID missing in root layout";
-            } else debugInfo += " | ERROR: Root layout is not an object";
+            if (currentLayout.isObject() && currentLayout.getDynamicObject()->hasProperty(currentPageId)) {
+                auto pageObj = currentLayout.getDynamicObject()->getProperty(currentPageId);
+                if (pageObj.isObject() && pageObj.getDynamicObject()->hasProperty(currentCardId)) {
+                    auto cardObj = pageObj.getDynamicObject()->getProperty(currentCardId);
+                    originalJsonString = juce::JSON::toString(cardObj);
+                }
+            }
         }
         
         rawJsonDocument.replaceAllContent(originalJsonString);
         syncJsonToPreview(originalJsonString);
-    } else {
-        debugInfo += " | ERROR: FILE NOT FOUND";
     }
-    
-    filePathDisplay.setText(debugInfo);
-}void MainComponent::codeDocumentTextInserted(const juce::String&, int) { if (!showingOriginal) startTimer(500); }
+}
+
+void MainComponent::codeDocumentTextInserted(const juce::String&, int) { if (!showingOriginal) startTimer(500); }
 void MainComponent::codeDocumentTextDeleted(int, int) { if (!showingOriginal) startTimer(500); }
 
 void MainComponent::timerCallback() {
@@ -227,6 +215,7 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     
     previewWrapper.deleteAllChildren();
     activeSliders.clear();
+    compToParamId.clear();
     
     if (isTheme) {
         auto* card = new ModuleCardComponent("Theme Preview", 
@@ -235,7 +224,7 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
         card->setBounds(10, 10, 280, 200);
     } else {
         if (parsed.isObject()) {
-            auto moduleConfig = parsed; // The raw editor now ONLY holds this card's config!
+            auto moduleConfig = parsed;
             
             juce::Colour c = RlyehSound::ParameterManager::getInstance().getThemeColour(
                 moduleConfig.getProperty("color", "colSilver").toString());
@@ -255,6 +244,8 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                         if (def->type == "float" && slot < 4) {
                             auto* slider = new RotaryKnobSlider();
                             activeSliders.add(slider);
+                            compToParamId[slider] = paramId;
+                            
                             slider->setTooltip(def->description);
                             slider->setRange(def->min, def->max, def->step);
                             slider->setValue(def->defaultFloat);
@@ -282,6 +273,8 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                         } else if (def->type == "choice") {
                             auto* box = new juce::ComboBox();
                             activeSliders.add(box);
+                            compToParamId[box] = paramId;
+                            
                             box->addItemList(def->choices, 1);
                             box->setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff161922));
                             box->setColour(juce::ComboBox::textColourId, juce::Colour(0xffe8edf5));
@@ -302,23 +295,49 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     }
     previewWrapper.repaint();
 
-        formEditor.clear();
+    formEditor.clear();
     juce::Array<juce::PropertyComponent*> props;
     if (parsed.isObject()) {
         auto* obj = parsed.getDynamicObject();
         for (auto& prop : obj->getProperties()) {
-            if (!prop.value.isObject() && !prop.value.isArray()) {
-                // We need a stable juce::Value to bind to for TextPropertyComponent. 
-                // Since this is just a visualizer for now, we'll bind to a local Value.
-                // In a real editor, this would sync back to the JSON.
-                juce::Value val (prop.value.toString());
-                auto* pc = new juce::TextPropertyComponent(val, prop.name.toString(), 256, false);
-                props.add(pc);
+            juce::String valStr;
+            if (prop.value.isArray()) {
+                juce::StringArray arr;
+                for (auto& v : *prop.value.getArray()) arr.add(v.toString());
+                valStr = "[ " + arr.joinIntoString(", ") + " ]";
+            } else if (!prop.value.isObject()) {
+                valStr = prop.value.toString();
+            } else {
+                continue;
             }
+            
+            juce::Value val (valStr);
+            auto* pc = new juce::TextPropertyComponent(val, prop.name.toString(), 256, false);
+            props.add(pc);
         }
     }
     if (!props.isEmpty()) {
         formEditor.addSection("Properties", props);
+    }
+}
+
+void MainComponent::mouseDown(const juce::MouseEvent& e) {
+    if (e.originalComponent && compToParamId.find(e.originalComponent) != compToParamId.end()) {
+        juce::String pId = compToParamId[e.originalComponent];
+        
+        // Find line in code editor
+        for (int i = 0; i < rawJsonDocument.getNumLines(); ++i) {
+            juce::String lineText = rawJsonDocument.getLine(i);
+            if (lineText.contains(pId)) {
+                // Scroll and select
+                juce::CodeDocument::Position startPos(rawJsonDocument, i, 0);
+                juce::CodeDocument::Position endPos(rawJsonDocument, i, lineText.length());
+                
+                rawJsonEditor->selectRegion(startPos, endPos);
+                rawJsonEditor->scrollToLine(i);
+                break;
+            }
+        }
     }
 }
 
@@ -339,13 +358,11 @@ void MainComponent::resized() {
 
     juce::Component* rightComps[] = { &formEditor, &splitterBar1, &previewWrapper, &splitterBar2, rawJsonEditor.get() };
     
-    // We can't nest layOutComponents easily. We just use standard positioning.
     auto treeBounds = bounds.removeFromLeft(200);
     treeSplitter.setBounds(bounds.removeFromLeft(8));
     navigationTree.setBounds(treeBounds);
     
     verticalLayout.layOutComponents(rightComps, 5, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), false, true);
+    
+    emptyPlaceholder.setBounds(previewWrapper.getLocalBounds());
 }
-
-
-

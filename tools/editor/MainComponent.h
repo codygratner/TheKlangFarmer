@@ -25,6 +25,7 @@ public:
 
     void paint(juce::Graphics& g) override;
     void resized() override;
+    void mouseDown(const juce::MouseEvent& e) override;
     
     void timerCallback() override;
     void codeDocumentTextInserted(const juce::String&, int) override;
@@ -44,9 +45,11 @@ private:
     juce::TextEditor filePathDisplay;
     juce::PropertyPanel formEditor;
     juce::Component previewWrapper;
+    juce::Label emptyPlaceholder { {}, "Pick a module from the left tree to edit its UI card" };
     juce::CodeDocument rawJsonDocument;
     std::unique_ptr<juce::CodeEditorComponent> rawJsonEditor;
     juce::OwnedArray<juce::Component> activeSliders;
+    std::unordered_map<juce::Component*, juce::String> compToParamId;
 
     juce::StretchableLayoutManager verticalLayout;
     juce::StretchableLayoutManager horizontalLayout;
@@ -54,7 +57,7 @@ private:
     juce::StretchableLayoutResizerBar splitterBar2;
     juce::StretchableLayoutResizerBar treeSplitter;
     
-    juce::String currentProductId; // "tkf", "tkp", "theme"
+    juce::String currentProductId;
     juce::String currentPageId;
     juce::String currentCardId;
     juce::String currentParamJsonFile;
