@@ -7,9 +7,7 @@ MainComponent::MainComponent()
       splitterBar2(&verticalLayout, 3, true)
 {
     addAndMakeVisible(fileSelector);
-    fileSelector.addItem("theme.json", 1);
-    fileSelector.addItem("carrier.json", 2);
-    fileSelector.onChange = [this]() { loadFile(fileSelector.getSelectedId()); };
+    fileSelector.onChange = [this]() { loadFile(fileSelector.getText()); };
 
     filePathDisplay.setMultiLine(true);
     filePathDisplay.setReadOnly(true);
@@ -33,6 +31,17 @@ MainComponent::MainComponent()
 
     setSize(1000, 700);
 
+    // Scan for JSON files
+    auto assetsDir = getAssetFile("").getParentDirectory();
+    if (assetsDir.exists()) {
+        juce::Array<juce::File> files;
+        assetsDir.findChildFiles(files, juce::File::findFiles, false, "*.json");
+        int id = 1;
+        for (const auto& f : files) {
+            fileSelector.addItem(f.getFileName(), id++);
+        }
+    }
+    
     // Initial load
     fileSelector.setSelectedId(1, juce::sendNotification);
 }
@@ -42,7 +51,6 @@ MainComponent::~MainComponent() {
 }
 
 juce::File MainComponent::getAssetFile(const juce::String& name) {
-    // Assuming we run from build directory or similar, look up to find assets
     auto currentDir = juce::File::getCurrentWorkingDirectory();
     while (currentDir.getParentDirectory() != currentDir) {
         auto assetsDir = currentDir.getChildFile("assets");
@@ -54,10 +62,9 @@ juce::File MainComponent::getAssetFile(const juce::String& name) {
     return {};
 }
 
-void MainComponent::loadFile(int id) {
-    if (id == 1) currentFileId = "theme.json";
-    else if (id == 2) currentFileId = "carrier.json";
-    else return;
+void MainComponent::loadFile(const juce::String& filename) {
+    if (filename.isEmpty()) return;
+    currentFileId = filename;
 
     auto file = getAssetFile(currentFileId);
     filePathDisplay.setText(file.getFullPathName());
@@ -80,50 +87,79 @@ void MainComponent::syncJsonToPreview() {
     auto jsonString = rawJsonDocument.getAllContent();
     bool isTheme = (currentFileId == "theme.json");
     
-    // Attempt parse
     auto parsed = juce::JSON::parse(jsonString);
-    if (!parsed.isVoid()) {
-        RlyehSound::ParameterManager::getInstance().reloadFromJson(jsonString, isTheme);
-        
-        // Save to file automatically for live preview
-        auto file = getAssetFile(currentFileId);
-        if (file.existsAsFile()) {
-            file.replaceWithText(jsonString);
-        }
-        
-        // Reload Preview Component
-        previewWrapper.deleteAllChildren();
-        
-        if (isTheme) {
-            // Style Guide Mode - just a card to show colors
-            auto* card = new ModuleCardComponent("Theme Preview", 
-                RlyehSound::ParameterManager::getInstance().getThemeColour("colRed"));
-            previewWrapper.addAndMakeVisible(card);
-            card->setBounds(10, 10, 280, 200);
-        } else if (currentFileId == "carrier.json") {
-            auto* card = new ModuleCardComponent("Carrier Preview", 
-                RlyehSound::ParameterManager::getInstance().getThemeColour("colCyan"));
-            previewWrapper.addAndMakeVisible(card);
-            card->setBounds(10, 10, 280, 420);
-        }
-        previewWrapper.repaint();
+    if (parsed.isVoid()) return;
 
-        // Populate Form (One-way for now)
-        formEditor.clear();
-        juce::Array<juce::PropertyComponent*> props;
+    RlyehSound::ParameterManager::getInstance().reloadFromJson(jsonString, isTheme);
+    
+    auto file = getAssetFile(currentFileId);
+    if (file.existsAsFile()) {
+        file.replaceWithText(jsonString);
+    }
+    
+    previewWrapper.deleteAllChildren();
+    activeSliders.clear();
+    
+    if (isTheme) {
+        auto* card = new ModuleCardComponent("Theme Preview", 
+            RlyehSound::ParameterManager::getInstance().getThemeColour("colRed"));
+        previewWrapper.addAndMakeVisible(card);
+        card->setBounds(10, 10, 280, 200);
+    } else {
+        auto* card = new ModuleCardComponent(currentFileId.upToLastOccurrenceOf(".json", false, false).toUpperCase(), 
+            RlyehSound::ParameterManager::getInstance().getThemeColour("colCyan"));
+        
+        // Dynamically add knobs based on JSON properties
         if (parsed.isObject()) {
             auto* obj = parsed.getDynamicObject();
+            int slot = 0;
             for (auto& prop : obj->getProperties()) {
-                if (prop.value.isString()) {
-                    auto* pc = new juce::TextPropertyComponent(
-                        juce::Value(prop.value.toString()), prop.name.toString(), 256, false);
-                    props.add(pc);
+                if (prop.value.isObject()) {
+                    auto* vObj = prop.value.getDynamicObject();
+                    juce::String name = vObj->hasProperty("name") ? vObj->getProperty("name").toString() : prop.name.toString();
+                    juce::String type = vObj->hasProperty("type") ? vObj->getProperty("type").toString() : "float";
+                    juce::String desc = vObj->hasProperty("description") ? vObj->getProperty("description").toString() : "";
+                    
+                    if (type == "float" && slot < 4) {
+                        auto* slider = new RotaryKnobSlider();
+                        activeSliders.add(slider);
+                        slider->setTooltip(desc);
+                        slider->setRange(
+                            vObj->hasProperty("range") && vObj->getProperty("range").isObject() && vObj->getProperty("range").getDynamicObject()->hasProperty("min") ? static_cast<double>(vObj->getProperty("range").getDynamicObject()->getProperty("min")) : 0.0,
+                            vObj->hasProperty("range") && vObj->getProperty("range").isObject() && vObj->getProperty("range").getDynamicObject()->hasProperty("max") ? static_cast<double>(vObj->getProperty("range").getDynamicObject()->getProperty("max")) : 1.0,
+                            vObj->hasProperty("range") && vObj->getProperty("range").isObject() && vObj->getProperty("range").getDynamicObject()->hasProperty("step") ? static_cast<double>(vObj->getProperty("range").getDynamicObject()->getProperty("step")) : 0.001
+                        );
+                        slider->setValue(vObj->hasProperty("default") ? static_cast<double>(vObj->getProperty("default")) : 0.0);
+                        
+                        card->addAndMakeVisible(slider);
+                        card->setKnob(slot, name, slider);
+                        slot++;
+                    }
                 }
             }
         }
-        if (!props.isEmpty()) {
-            formEditor.addSection("Properties", props);
+        
+        previewWrapper.addAndMakeVisible(card);
+        card->setBounds(10, 10, 280, 420);
+    }
+    previewWrapper.repaint();
+
+    // Populate Form
+    formEditor.clear();
+    juce::Array<juce::PropertyComponent*> props;
+    if (parsed.isObject()) {
+        auto* obj = parsed.getDynamicObject();
+        for (auto& prop : obj->getProperties()) {
+            if (prop.value.isObject()) {
+                auto* pc = new juce::TextPropertyComponent(
+                    juce::Value(prop.value.getDynamicObject()->hasProperty("name") ? prop.value.getDynamicObject()->getProperty("name").toString() : ""), 
+                    prop.name.toString(), 256, false);
+                props.add(pc);
+            }
         }
+    }
+    if (!props.isEmpty()) {
+        formEditor.addSection("Properties", props);
     }
 }
 

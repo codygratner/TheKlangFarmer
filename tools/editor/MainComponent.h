@@ -16,7 +16,7 @@ public:
     void codeDocumentTextDeleted(int, int) override;
 
 private:
-    void loadFile(int id);
+    void loadFile(const juce::String& filename);
     void syncJsonToPreview();
 
     juce::ComboBox fileSelector;
@@ -25,6 +25,7 @@ private:
     juce::Component previewWrapper;
     juce::CodeDocument rawJsonDocument;
     std::unique_ptr<juce::CodeEditorComponent> rawJsonEditor;
+    juce::OwnedArray<juce::Component> activeSliders;
 
     juce::StretchableLayoutManager verticalLayout;
     juce::StretchableLayoutResizerBar splitterBar1;
