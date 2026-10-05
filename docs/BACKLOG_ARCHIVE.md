@@ -150,3 +150,9 @@ This document serves as the permanent historical record of completed engineering
   - Real-time stereo modulation visualizer and oscilloscope XY plotting modes.
   - Fully real-time audio thread compliant (zero allocations, zero locks, zero blocking I/O).
 
+
+### [COMPLETED] Core Architecture Base Class Refactor
+Refactor codebase to use a "Common Core" base-class architecture (KlangCoreProcessor, KlangCoreEditor) to share standard JUCE boilerplate, UI LookAndFeel, preset management, and APVTS loading/saving across TheKlangFarmer, TheKlangPlanter, and The Klang Seed (Hardware).
+
+### [COMPLETED] Data-Driven UI Layout & Colors (	heme.json)
+Extract the remaining hardcoded UI configuration out of C++ (PluginEditor.cpp) into JSON assets (ssets/controls/theme.json or layout.json).
