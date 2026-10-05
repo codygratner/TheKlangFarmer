@@ -12,7 +12,7 @@ endif()
 project(TheKlangFarmer VERSION 0.2.6 LANGUAGES C CXX)
 
 # Feature branch build tag (e.g., "-tooltips"). Stripped upon merge back to master.
-set(TKF_FEATURE_TAG "-core-architecture" CACHE STRING "Prerelease feature tag for development builds")
+set(TKF_FEATURE_TAG "" CACHE STRING "Prerelease feature tag for development builds")
 add_compile_definitions(TKF_FEATURE_TAG="${TKF_FEATURE_TAG}")
 
 # Enforce modern C++ standard
