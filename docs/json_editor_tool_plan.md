@@ -51,6 +51,14 @@ Create the standard JUCE GUI app entry point.
 - **Pane 2 (Visual Preview)**: A wrapper `juce::Component`. Whenever the JSON updates, this destroys and re-instantiates the specific `SynthCardComponent` (e.g., the Carrier Card) using the new layout/theme data.
 - **Pane 3 (Raw Code)**: `juce::CodeEditorComponent` attached to a `juce::CodeDocument`. 
 
+### 3.5 Handling Modularity (Theme vs. Parameters)
+The architecture explicitly keeps `theme.json` (colors/visuals) separate from module JSONs (DSP parameters). This allows users to share UI "Skins" without accidentally overwriting DSP algorithms or parameter ranges. 
+The Editor handles this modularity dynamically:
+- **Global Background State**: The editor always holds `theme.json` in memory so the Visual Preview pane can render correctly.
+- **Context Switching**: The active file in the ComboBox dictates what is shown in the Form Editor and Raw Code panes.
+  - *If `carrier.json` is selected*: You edit DSP parameters. The Preview pane renders just the Carrier Card (using the global theme).
+  - *If `theme.json` is selected*: You edit colors. The Preview pane switches to a "Style Guide" mode (or renders the full synth chassis) so you can instantly see global color changes applied everywhere.
+
 ### 4. Live Synchronization Engine
 A central state manager to handle bidirectional updates without infinite loops.
 - `juce::var activeJsonState;`
