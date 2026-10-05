@@ -45,3 +45,17 @@
   - Omit braces for single-line `if` statements.
 - **Pointers/References**: Attach the asterisk/ampersand to the type, not the variable (e.g., `float* myPtr`, not `float *myPtr`).
 - **Modern C++**: Use `auto` where types are obvious from the right-hand side, and use `const` generously.
+
+## Strict Memory Management
+- **No Raw Ownership**: Never use raw `new` or `delete`. 
+- **Smart Pointers**: Always use `std::unique_ptr` and `std::make_unique` for dynamic object ownership.
+- **Observation Only**: Raw pointers (`T*`) and references (`T&`) may ONLY be used for non-owning observation and passing objects to functions.
+
+## UI & Audio Thread Separation
+- **No UI in DSP**: Never call UI methods (e.g., `repaint()`, `setValue()`, component constructors) from `processBlock()` or `processStereo()`.
+- **Async Communication**: If the audio thread needs to update the UI (like a visualizer or meter), it must use lock-free FIFOs or `juce::AsyncUpdater`.
+
+## Strict Git Commit Etiquette
+- **Conventional Commits**: All git commits must strictly follow the conventional commit format: `<type>(<optional scope>): <description>`.
+- **Allowed Types**: `feat:` (new features), `fix:` (bug fixes), `refactor:` (code restructuring), `chore:` (tooling, dependencies), `docs:` (documentation/plans).
+- **Example**: `feat(presets): add JSON preset browser modal`
