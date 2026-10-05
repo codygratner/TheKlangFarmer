@@ -43,11 +43,18 @@ private:
     juce::TextButton toggleOriginalButton { "Show Original" };
     
     juce::TextEditor filePathDisplay;
-    juce::PropertyPanel formEditor;
+            juce::PropertyPanel formEditor;
     juce::Component previewWrapper;
     juce::Label emptyPlaceholder { {}, "Pick a module from the left tree to edit its UI card" };
-    juce::CodeDocument rawJsonDocument;
-    std::unique_ptr<juce::CodeEditorComponent> rawJsonEditor;
+    
+    juce::CodeDocument layoutJsonDocument;
+    std::unique_ptr<juce::CodeEditorComponent> layoutJsonEditor;
+    juce::CodeDocument controlsJsonDocument;
+    std::unique_ptr<juce::CodeEditorComponent> controlsJsonEditor;
+    juce::Component jsonContainer;
+    juce::StretchableLayoutManager jsonSplitterLayout;
+    std::unique_ptr<juce::StretchableLayoutResizerBar> jsonSplitterBar;
+    
     juce::OwnedArray<juce::Component> activeSliders;
     std::unordered_map<juce::Component*, juce::String> compToParamId;
 
@@ -65,7 +72,16 @@ private:
     bool showingOriginal = false;
     
     juce::File getAssetFile(const juce::String& subfolder, const juce::String& name);
-    juce::var currentLayout;
+        juce::var currentLayout;
+    juce::String originalLayoutJson;
+    juce::String originalControlsJson;
+    std::unordered_map<juce::String, juce::String> paramToFileMap;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };
+
+
+
+
+
+
