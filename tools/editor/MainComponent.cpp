@@ -70,10 +70,10 @@ MainComponent::MainComponent()
 
     addAndMakeVisible(formEditor);
     
-    emptyPlaceholder.setJustificationType(juce::Justification::centred);
+        emptyPlaceholder.setJustificationType(juce::Justification::centred);
     emptyPlaceholder.setFont(16.0f);
     emptyPlaceholder.setColour(juce::Label::textColourId, juce::Colours::grey);
-    previewWrapper.addAndMakeVisible(emptyPlaceholder);
+    addAndMakeVisible(emptyPlaceholder); // Sibling of previewWrapper, not a child!
     addAndMakeVisible(previewWrapper);
     previewWrapper.addMouseListener(this, true); // Listen for clicks on children!
 
@@ -207,7 +207,15 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     bool isTheme = (currentProductId == "theme");
     
     auto parsed = juce::JSON::parse(jsonString);
-    if (parsed.isVoid()) return;
+    if (parsed.isVoid() || jsonString.isEmpty()) {
+        emptyPlaceholder.setVisible(true);
+        previewWrapper.deleteAllChildren();
+        activeSliders.clear();
+        compToParamId.clear();
+        formEditor.clear();
+        return;
+    }
+    emptyPlaceholder.setVisible(false);
 
     if (isTheme) {
         RlyehSound::ParameterManager::getInstance().reloadFromJson(jsonString, true);
@@ -364,5 +372,8 @@ void MainComponent::resized() {
     
     verticalLayout.layOutComponents(rightComps, 5, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), false, true);
     
-    emptyPlaceholder.setBounds(previewWrapper.getLocalBounds());
+    emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
+
