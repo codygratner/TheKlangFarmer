@@ -13,6 +13,7 @@ This script will:
 1. **Extract Legacy Data**: Use `git show v0.2.0:source/PluginProcessor.cpp` and `UIComponents.cpp` to regex-parse the legacy `APVTS` defaults, `getTextFromValue` string formatters, tooltips, and `juce::Colour` hex codes.
 2. **Extract Current Data**: Load all current JSON files in `assets/controls/`.
 3. **Compare & Filter**: Cross-reference every parameter. If a parameter's Type, Range, Default, Double-Click, Formatting, and Colors are 100% identical, it will be silently dropped from the report to reduce noise.
+    - **Exclusion Rule (Safe Additions)**: If a JSON array is a pure *superset* of the legacy array (e.g., the Filter Type choices match perfectly, but the JSON has a new `"APF"` tacked onto the end), this will be explicitly ignored. Appending new choices does not break backward compatibility for existing `0.2.0` save states, so it will not be flagged as a discrepancy.
 4. **Highlight Differences**: Any discrepancies will be flagged for injection into the report.
 
 ### 2. PDF Generation via HTML Print CSS
