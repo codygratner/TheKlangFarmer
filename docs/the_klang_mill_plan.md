@@ -1,14 +1,14 @@
-# Implementation Plan: The Klang Effects (Standalone VST)
+# Implementation Plan: The Klang Mill (Standalone VST)
 
 ## Goal Description
-Create a third standalone VST3 plugin in the ecosystem named **The Klang Effects**. This plugin strips away all synthesizer, noise, and envelope generation, serving purely as a serial multi-effects rack for external audio. 
+Create a third standalone VST3 plugin in the ecosystem named **The Klang Mill**. This plugin strips away all synthesizer, noise, and envelope generation, serving purely as a serial multi-effects rack for external audio. 
 
 It reuses the exact DSP algorithms and UI components from `TheKlangFarmer` but runs them in a streamlined 1x6 layout.
 
 ## User Review Required
 > [!IMPORTANT] 
 > **Base Class Dependency**
-> This plugin will be built *after* the "Core Architecture Base Class Refactor" (Priority #1) is complete. `TheKlangEffects` will inherit directly from `KlangCoreProcessor` and `KlangCoreEditor`. This means it automatically gets the JSON preset browser, standard LookAndFeel, and preset serialization for free!
+> This plugin will be built *after* the "Core Architecture Base Class Refactor" (Priority #1) is complete. `TheKlangMill` will inherit directly from `KlangCoreProcessor` and `KlangCoreEditor`. This means it automatically gets the JSON preset browser, standard LookAndFeel, and preset serialization for free!
 
 ## Proposed Changes
 
@@ -16,13 +16,13 @@ It reuses the exact DSP algorithms and UI components from `TheKlangFarmer` but r
 Add a new VST3 target in the root CMake file that links to the shared core and effects DSP, but omits the synth engine.
 #### [MODIFY] `CMakeLists.txt`
 ```cmake
-juce_add_plugin(TheKlangEffects
+juce_add_plugin(TheKlangMill
     PLUGIN_MANUFACTURER_CODE "Tbd!"
-    PLUGIN_CODE "Tke1"
+    PLUGIN_CODE "Tkm1"
     FORMATS VST3 AU Standalone
-    PRODUCT_NAME "The Klang Effects")
+    PRODUCT_NAME "The Klang Mill")
 
-target_sources(TheKlangEffects PRIVATE
+target_sources(TheKlangMill PRIVATE
     source/EffectsProcessor.cpp
     source/EffectsEditor.cpp
     # Shared Core sources
@@ -54,10 +54,10 @@ target_sources(TheKlangEffects PRIVATE
 ## Verification Plan
 
 ### Automated Tests
-1. `cmake --build build --target TheKlangEffects_VST3` compiles cleanly.
+1. `cmake --build build --target TheKlangMill_VST3` compiles cleanly.
 
 ### Manual Verification
-1. Load `The Klang Effects.vst3` into a DAW on an audio track.
+1. Load `The Klang Mill.vst3` into a DAW on an audio track.
 2. Verify the GUI draws a clean 1x6 grid of cards.
 3. Pass audio (like a drum loop) into the plugin.
 4. Select "Overdrive" on Slot 1 and increase Drive. Verify audio is distorted.
