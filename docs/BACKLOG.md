@@ -3,7 +3,8 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized items below:
-> 1. **Priority #1 (UI Architecture)**: Data-Driven UI Layout, Colors, & Groupings (theme.json).
+> 1. **Priority #1 (Architecture)**: Core Architecture Base Class Refactor.
+> 2. **Priority #2 (UI Architecture)**: Data-Driven UI Layout, Colors, & Groupings (theme.json).
 > 3. **Priority #3 (Export & DAW Integration)**: WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17).
 > 4. **Priority #4 (DSP / FX Expansion)**: New Effects Processors Catalog Expansion (Effects 14–19) & Universal Mix Standard (`docs/new_effects_plan.md`).
 > 5. **Priority #5 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
@@ -12,7 +13,13 @@
 
 ## 📌 Top Priorities for Upcoming Sessions
 
-### 1. [PRIORITY #1] Data-Driven UI Layout & Colors (`theme.json`)
+### 1. [PRIORITY #1] Core Architecture Base Class Refactor
+*Detailed Plan: [`docs/core_architecture_plan.md`](core_architecture_plan.md)*
+Refactor codebase to use a "Common Core" base-class architecture (`KlangCoreProcessor`, `KlangCoreEditor`) to share standard JUCE boilerplate, UI LookAndFeel, preset management, and APVTS loading/saving across `TheKlangFarmer`, `TheKlangPlanter`, and `The Klang Seed` (Hardware).
+
+---
+
+### 2. [PRIORITY #2] Data-Driven UI Layout & Colors (`theme.json`)
 Extract the remaining hardcoded UI configuration out of C++ (`PluginEditor.cpp`) into JSON assets (`assets/controls/theme.json` or `layout.json`).
 - Move all **Knob Colors** (e.g. `juce::Colour(0xff00d2ff)`) into JSON.
 - Move **UI Coordinates & Sizes** (`setBounds(x,y,w,h)`) into JSON.
@@ -164,9 +171,9 @@ Implement a professional, tag-based preset management system utilizing JSON file
 ### 14. 2x5 Eurorack Modular Layout Exploration
 - Investigate moving from the current 2x4 (8-card) chassis to an expanded **2-row by 5-column (2x5, 10-card)** layout.
 
-### 15. Hardware Standalone Synthesizer Port (BACK BURNER)
+### 15. The Klang Seed (TKS) Standalone Synthesizer Port (BACK BURNER)
 - Put on the back burner per user instruction, but fully architected for execution:
-  - **Teensy 4.1 Hardware Drum Machine ("The Klang Planter 8-Voice Hardware")**:
+  - **Teensy 4.1 Hardware Drum Machine ("The Klang Seed 8-Voice Hardware")**:
     - NXP i.MX RT1062 ARM Cortex-M7 running at **600 MHz**.
     - 8 Mono Voices takes ~2,000 cycles/sample ($\approx 14.7\%$ CPU load).
     - Multi-channel audio output via Cirrus Logic CS42448 (8-channel 24-bit 192 kHz codec).
