@@ -54,12 +54,12 @@ MainComponent::MainComponent()
         auto parsedEdit = juce::JSON::parse(rawJsonDocument.getAllContent());
         if (parsedEdit.isVoid()) return; // Don't save invalid JSON
         
-        juce::String changes = "";
+                juce::String changes = "";
         auto oldObj = juce::JSON::parse(originalJsonString).getDynamicObject();
         auto newObj = parsedEdit.getDynamicObject();
         if (oldObj && newObj) {
             for (auto& prop : newObj->getProperties()) {
-                if (!oldObj->hasProperty(prop.name) || juce::JSON::toString(oldObj->getProperty(prop.name)) != juce::JSON::toString(prop.value)) {
+                if (!oldObj->hasProperty(prop.name) || oldObj->getProperty(prop.name) != prop.value) {
                     changes += "- " + prop.name.toString() + "\n";
                 }
             }
@@ -177,7 +177,7 @@ void MainComponent::buildTree() {
     const char* products[] = { "The Klang Farmer", "The Klang Planter", "The Klang Seed" };
     const char* productIds[] = { "tkf", "tkp", "tks" };
     
-    for (int p = 0; p < 3; ++p) {
+        for (int p = 0; p < 3; ++p) {
         auto* prodNode = new EditorTreeItem(this, products[p], "product", productIds[p]);
         
         juce::String layoutFile = juce::String(productIds[p]) + "_layout.json";
@@ -186,18 +186,24 @@ void MainComponent::buildTree() {
             auto layout = juce::JSON::parse(file.loadFileAsString());
             if (layout.isObject()) {
                 auto* lObj = layout.getDynamicObject();
-                for (auto& pageProp : lObj->getProperties()) {
-                    juce::String pageName = pageProp.name.toString();
-                    auto* pageNode = new EditorTreeItem(this, pageName, "page", productIds[p], pageName);
-                    
-                    if (pageProp.value.isObject()) {
-                        auto* pObj = pageProp.value.getDynamicObject();
-                        for (auto& cardProp : pObj->getProperties()) {
-                            juce::String cardName = cardProp.name.toString();
-                            pageNode->addSubItem(new EditorTreeItem(this, cardName, "card", productIds[p], pageName, cardName));
+                for (auto& prop : lObj->getProperties()) {
+                    if (prop.value.isObject()) {
+                        auto* pObj = prop.value.getDynamicObject();
+                        if (pObj->hasProperty("parameters")) {
+                            // It's a card directly
+                            juce::String cardName = prop.name.toString();
+                            prodNode->addSubItem(new EditorTreeItem(this, cardName, "card", productIds[p], "", cardName));
+                        } else {
+                            // It's a page
+                            juce::String pageName = prop.name.toString();
+                            auto* pageNode = new EditorTreeItem(this, pageName, "page", productIds[p], pageName);
+                            for (auto& cardProp : pObj->getProperties()) {
+                                juce::String cardName = cardProp.name.toString();
+                                pageNode->addSubItem(new EditorTreeItem(this, cardName, "card", productIds[p], pageName, cardName));
+                            }
+                            prodNode->addSubItem(pageNode);
                         }
                     }
-                    prodNode->addSubItem(pageNode);
                 }
             }
         }
@@ -396,12 +402,12 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                         juce::Value val (valStr);
             auto* pc = new juce::TextPropertyComponent(val, prop.name.toString(), 256, false);
             
-            auto origParsed = juce::JSON::parse(originalJsonString);
+                        auto origParsed = juce::JSON::parse(originalJsonString);
             if (origParsed.isObject()) {
                 auto* origObj = origParsed.getDynamicObject();
-                if (!origObj->hasProperty(prop.name) || juce::JSON::toString(origObj->getProperty(prop.name)) != juce::JSON::toString(prop.value)) {
-                    pc->setColour(juce::PropertyComponent::backgroundColourId, juce::Colour(0xffe8edf5)); // Light text color as background
-                    pc->setColour(juce::PropertyComponent::labelTextColourId, juce::Colour(0xff161922)); // Dark background as text
+                if (!origObj->hasProperty(prop.name) || origObj->getProperty(prop.name) != prop.value) {
+                    pc->setColour(juce::PropertyComponent::backgroundColourId, juce::Colour(0xffe8edf5));
+                    pc->setColour(juce::PropertyComponent::labelTextColourId, juce::Colour(0xff161922));
                 }
             }
             props.add(pc);
@@ -482,6 +488,10 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
+
+
 
 
 
