@@ -235,3 +235,38 @@ target_link_libraries(TheKlangEditor PRIVATE
 )
 target_include_directories(TheKlangEditor PRIVATE source tools/editor)
 
+
+
+
+
+# ==============================================================================
+# 11. Artifact Gathering (Copy to /current_build/)
+# ==============================================================================
+set(ARTIFACT_DIR "/current_build")
+
+# The Klang Farmer
+add_custom_command(TARGET TheKlangFarmer_Standalone POST_BUILD
+    COMMAND "" -E make_directory "/Standalone"
+    COMMAND "" -E copy "$<TARGET_FILE:TheKlangFarmer_Standalone>" "/Standalone/"
+    COMMAND "" -E copy "/deploy_vst3.bat" "/deploy_vst3.bat"
+)
+add_custom_command(TARGET TheKlangFarmer_VST3 POST_BUILD
+    COMMAND "" -E make_directory "/VST3/The Klang Farmer.vst3"
+    COMMAND "" -E copy_directory "/TheKlangFarmer_artefacts/$<CONFIG>/VST3/The Klang Farmer.vst3" "/VST3/The Klang Farmer.vst3"
+)
+
+# The Klang Planter
+add_custom_command(TARGET TheKlangPlanter_Standalone POST_BUILD
+    COMMAND "" -E make_directory "/Standalone"
+    COMMAND "" -E copy "$<TARGET_FILE:TheKlangPlanter_Standalone>" "/Standalone/"
+)
+add_custom_command(TARGET TheKlangPlanter_VST3 POST_BUILD
+    COMMAND "" -E make_directory "/VST3/The Klang Planter.vst3"
+    COMMAND "" -E copy_directory "/TheKlangPlanter_artefacts/$<CONFIG>/VST3/The Klang Planter.vst3" "/VST3/The Klang Planter.vst3"
+)
+
+# The Klang Editor
+add_custom_command(TARGET TheKlangEditor POST_BUILD
+    COMMAND "" -E make_directory "/Editor"
+    COMMAND "" -E copy "$<TARGET_FILE:TheKlangEditor>" "/Editor/"
+)
