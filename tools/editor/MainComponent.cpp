@@ -533,9 +533,26 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                 int choiceCount = 0;
                 for (auto& paramIdVar : *paramsArray.getArray()) {
                     juce::String paramId = paramIdVar.toString();
-                    auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
-                    
+                    auto* constDef = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+                    auto* def = const_cast<RlyehSound::ControlDef*>(constDef);
                     if (def) {
+                        auto updateControlsJson = [this, paramId](const juce::String& key, const juce::var& newValue) {
+                            auto parsed = juce::JSON::parse(controlsJsonDocument.getAllContent());
+                            if (parsed.isObject() && parsed.getDynamicObject()->hasProperty(paramId)) {
+                                parsed.getDynamicObject()->getProperty(paramId).getDynamicObject()->setProperty(key, newValue);
+                                controlsJsonDocument.replaceAllContent(juce::JSON::toString(parsed));
+                            }
+                        };
+                        
+                        auto updateChoicesJson = [this, paramId](const juce::StringArray& choices) {
+                            auto parsed = juce::JSON::parse(controlsJsonDocument.getAllContent());
+                            if (parsed.isObject() && parsed.getDynamicObject()->hasProperty(paramId)) {
+                                juce::Array<juce::var> arr;
+                                for (auto& c : choices) arr.add(c);
+                                parsed.getDynamicObject()->getProperty(paramId).getDynamicObject()->setProperty("choices", juce::var(arr));
+                                controlsJsonDocument.replaceAllContent(juce::JSON::toString(parsed));
+                            }
+                        };
                         if (def->type == "float" && slot < 4) {
                             auto* slider = new RotaryKnobSlider();
                             activeSliders.add(slider);
@@ -547,7 +564,32 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                             
                             slider->setDoubleClickReturnValue(true, def->doubleClickValue);
                             slider->getDefaultValue = [val = def->doubleClickValue]() { return val; };
-                            
+                            auto nameLower = def->name.toLowerCase();
+                            if (nameLower.contains("hz") || paramId.contains("freq") || paramId.contains("cutoff") || paramId.contains("filter")) {
+                                slider->customFormatText = formatFreqHz;
+                                slider->customParseText = parseFreqHz;
+                            } else if (nameLower.contains("ms") || paramId.contains("decay") || paramId.contains("attack") || paramId.contains("release") || paramId.contains("sh_rate")) {
+                                slider->customFormatText = formatTimeMs;
+                                slider->customParseText = parseTimeMs;
+                            } else if (paramId.contains("crossfade") || paramId.contains("mix")) {
+                                slider->customFormatText = formatCrossfade;
+                                slider->customParseText = parseCrossfade;
+                            } else if (paramId.contains("pan") || paramId.contains("detune")) {
+                                slider->customFormatText = formatBipolarPercent;
+                                slider->customParseText = parseBipolarPercent;
+                            } else if (paramId.contains("semi")) {
+                                slider->customFormatText = formatSemi;
+                                slider->customParseText = parseSemi;
+                            } else if (paramId.contains("db") || paramId.contains("drive") || paramId.contains("gain")) {
+                                slider->customFormatText = def->isBipolar ? formatBipolarDb : formatDb;
+                                slider->customParseText = def->isBipolar ? parseBipolarDb : parseDb;
+                            } else if (def->isBipolar) {
+                                slider->customFormatText = formatBipolarPercent;
+                                slider->customParseText = parseBipolarPercent;
+                            } else {
+                                slider->customFormatText = formatPercent;
+                                slider->customParseText = parsePercent;
+                            }
                             if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("waveform")) {
                                 slider->diagramType = RotaryKnobSlider::DiagramType::Waveform;
                             } else if (paramId.containsIgnoreCase("slope")) {
@@ -656,8 +698,26 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
             for (auto& paramIdVar : *paramsArray.getArray()) {
                 juce::String paramId = paramIdVar.toString();
                 if (currentParamTarget.isNotEmpty() && currentParamTarget != paramId) continue;
-                auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
-                if (def) {
+                auto* constDef = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+                auto* def = const_cast<RlyehSound::ControlDef*>(constDef);
+                    if (def) {
+                        auto updateControlsJson = [this, paramId](const juce::String& key, const juce::var& newValue) {
+                            auto parsed = juce::JSON::parse(controlsJsonDocument.getAllContent());
+                            if (parsed.isObject() && parsed.getDynamicObject()->hasProperty(paramId)) {
+                                parsed.getDynamicObject()->getProperty(paramId).getDynamicObject()->setProperty(key, newValue);
+                                controlsJsonDocument.replaceAllContent(juce::JSON::toString(parsed));
+                            }
+                        };
+                        
+                        auto updateChoicesJson = [this, paramId](const juce::StringArray& choices) {
+                            auto parsed = juce::JSON::parse(controlsJsonDocument.getAllContent());
+                            if (parsed.isObject() && parsed.getDynamicObject()->hasProperty(paramId)) {
+                                juce::Array<juce::var> arr;
+                                for (auto& c : choices) arr.add(c);
+                                parsed.getDynamicObject()->getProperty(paramId).getDynamicObject()->setProperty("choices", juce::var(arr));
+                                controlsJsonDocument.replaceAllContent(juce::JSON::toString(parsed));
+                            }
+                        };
                     juce::Array<juce::PropertyComponent*> pProps;
                     juce::Component* linkedComp = nullptr;
                     for (int j = 0; j < activeSliders.size(); ++j) {
@@ -707,31 +767,81 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                     if (def->type == "float") {
                         pProps.add(new ParamRowPropertyComponent(linkedComp, "Minimum", def->type, def->choices,
                             [def]() { return def->min; },
-                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->min) : ""; }
+                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->min) : ""; },
+                            nullptr,
+                            [def, updateControlsJson, linkedComp](juce::String s) {
+                                if (linkedComp) {
+                                    double v = dynamic_cast<RotaryKnobSlider*>(linkedComp)->getValueFromText(s);
+                                    def->min = v;
+                                    updateControlsJson("min", v);
+                                    dynamic_cast<RotaryKnobSlider*>(linkedComp)->setRange(def->min, def->max, def->step);
+                                }
+                            }
                         ));
                         pProps.add(new ParamRowPropertyComponent(linkedComp, "Maximum", def->type, def->choices,
                             [def]() { return def->max; },
-                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->max) : ""; }
+                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->max) : ""; },
+                            nullptr,
+                            [def, updateControlsJson, linkedComp](juce::String s) {
+                                if (linkedComp) {
+                                    double v = dynamic_cast<RotaryKnobSlider*>(linkedComp)->getValueFromText(s);
+                                    def->max = v;
+                                    updateControlsJson("max", v);
+                                    dynamic_cast<RotaryKnobSlider*>(linkedComp)->setRange(def->min, def->max, def->step);
+                                }
+                            }
                         ));
                         pProps.add(new ParamRowPropertyComponent(linkedComp, "Default", def->type, def->choices,
                             [def]() { return def->defaultFloat; },
-                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->defaultFloat) : ""; }
+                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->defaultFloat) : ""; },
+                            [def, updateControlsJson](double v) { def->defaultFloat = v; updateControlsJson("default", v); },
+                            [def, updateControlsJson, linkedComp](juce::String s) {
+                                if (linkedComp) {
+                                    double v = dynamic_cast<RotaryKnobSlider*>(linkedComp)->getValueFromText(s);
+                                    def->defaultFloat = v;
+                                    updateControlsJson("default", v);
+                                }
+                            }
                         ));
                         pProps.add(new ParamRowPropertyComponent(linkedComp, "Double-Click", def->type, def->choices,
                             [def]() { return def->doubleClickValue; },
-                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->doubleClickValue) : ""; }
+                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->doubleClickValue) : ""; },
+                            [def, updateControlsJson](double v) { def->doubleClickValue = v; updateControlsJson("double_click", v); },
+                            [def, updateControlsJson, linkedComp](juce::String s) {
+                                if (linkedComp) {
+                                    double v = dynamic_cast<RotaryKnobSlider*>(linkedComp)->getValueFromText(s);
+                                    def->doubleClickValue = v;
+                                    updateControlsJson("double_click", v);
+                                }
+                            }
                         ));
                     } else if (def->type == "choice") {
                         pProps.add(new ParamRowPropertyComponent(linkedComp, "Default", def->type, def->choices,
                             [def]() { return def->defaultChoice; },
-                            [def]() { return (def->defaultChoice >= 0 && def->defaultChoice < def->choices.size()) ? def->choices[def->defaultChoice] : ""; }
+                            [def]() { return (def->defaultChoice >= 0 && def->defaultChoice < def->choices.size()) ? def->choices[def->defaultChoice] : ""; },
+                            [def, updateControlsJson](double v) { def->defaultChoice = (int)v; updateControlsJson("default", (int)v); },
+                            [def, updateControlsJson](juce::String s) {
+                                int idx = def->choices.indexOf(s);
+                                if (idx >= 0) { def->defaultChoice = idx; updateControlsJson("default", idx); }
+                            }
                         ));
                         pProps.add(new ParamRowPropertyComponent(linkedComp, "Choices", def->type, def->choices,
                             [def]() { return def->choices.size(); },
-                            [def]() { return def->choices.joinIntoString(", "); }
+                            [def]() { return def->choices.joinIntoString(", "); },
+                            nullptr,
+                            [def, updateChoicesJson, linkedComp](juce::String s) {
+                                juce::StringArray arr;
+                                arr.addTokens(s, ",", "\"");
+                                for (auto& token : arr) token = token.trim();
+                                def->choices = arr;
+                                updateChoicesJson(arr);
+                                if (linkedComp) {
+                                    auto* l = dynamic_cast<LedSelectorComponent*>(linkedComp);
+                                    if (l) l->setItems(arr);
+                                }
+                            }
                         ));
                     }
-
                     formEditor.addSection("Param: " + def->name, pProps);
                 }
             }
@@ -796,6 +906,15 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
+
+
+
+
+
+
+
 
 
 
