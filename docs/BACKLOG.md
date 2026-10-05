@@ -3,8 +3,7 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized items below:
-> 1. **Priority #1 (UX / Modal & Tooltips)**: Quick-Snap Presets & Tooltips in Edit Modal (`SliderCalloutComponent`).
-> 2. **Priority #2 (Refactoring / Architecture)**: Extract Tooltips & Text into JSON (`StringManager` & CMake `juce_add_binary_data`).
+> 1. **Priority #1 (UI Architecture)**: Data-Driven UI Layout, Colors, & Groupings (theme.json).
 > 3. **Priority #3 (Export & DAW Integration)**: WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17).
 > 4. **Priority #4 (DSP / FX Expansion)**: New Effects Processors Catalog Expansion (Effects 14–19) & Universal Mix Standard (`docs/new_effects_plan.md`).
 > 5. **Priority #5 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
@@ -13,42 +12,12 @@
 
 ## 📌 Top Priorities for Upcoming Sessions
 
-### 1. [PRIORITY #1] Quick-Snap Presets & Tooltips in Edit Modal (`SliderCalloutComponent`)
-Inject dynamic parameter tooltips and contextual quick-snap preset buttons directly into the right-click `SliderCalloutComponent` modal:
-- **Phase 1: Header Additions (`source/UIComponents.h`)**:
-  - Add state variables to hold tooltip string (`tooltipText`) and text layout (`tooltipLayout` for height measurement).
-  - Add `QuickPreset` struct (`juce::String label`, `juce::String valueStr`) and active presets vector (`std::vector<QuickPreset> activePresets`).
-  - Add custom `PresetButtonLookAndFeel` for sleek preset "pills" (`drawButtonBackground`, `drawButtonText`).
-  - Add button storage: `PresetButtonLookAndFeel presetBtnLaf; juce::OwnedArray<juce::TextButton> presetButtons;`.
-- **Phase 2: Contextual Presets & Layout (`source/UIComponents.cpp`)**:
-  - Dynamically populate `activePresets` based on target slider/parameter:
-    - **Waveshape**: Sine (`0.0`), Triangle (`0.25`), Saw (`0.5`), Square (`0.75` / `1.0`)
-    - **Pitch / Semitones / Coarse Tune**: `-24`, `-12`, `-7`, `0`, `+7`, `+12`, `+24`
-    - **Dual-Mode FX Mix Knobs**: `-100% (Wet)`, `0% (Dry)`, `+100% (Parallel)`
-    - **Filter Cutoff**: `60 Hz`, `250 Hz`, `1 kHz`, `3.5 kHz`, `10 kHz`
-    - **Filter Resonance / Q**: `0.5`, `0.707`, `1.414`, `4.0`, `10.0`
-    - **Envelopes (Decay / Release)**: `10 ms`, `60 ms`, `150 ms`, `600 ms`, `2.0 s`
-    - **Tempo Delay & Reverb Gate Times**: `1/16`, `1/8`, `1/8D`, `1/8T`, `1/4`
-    - **Stereo Enhancer / Width**: `0% (Mono)`, `100% (Normal)`, `200% (Wide)`, `400% (Hyper-Wide)`
-  - Layout: Dynamically compute height accommodating the tooltip, preset pill button bar, slider, and text editor.
-  - Clicking a preset pill updates the slider and active text box immediately.
-
----
-
-### 2. [PRIORITY #2] Extract Tooltips & Text into JSON (`StringManager` & CMake `juce_add_binary_data`)
-*Detailed Plan: [`docs/extract_tooltips_text_into_json_plan.md`](extract_tooltips_text_into_json_plan.md)*  
-Extract all hardcoded UI text, tooltips, and Quickstart Guide copywriting into a centralized JSON dictionary:
-- **Phase 1: Asset Creation & JSON Structure**:
-  - Create `assets/en_strings.json` as the single source of truth for copywriting (Quickstart guide, navigation pages, FX algorithms, FX knobs, LED selectors, parameter descriptions).
-- **Phase 2: CMake Binary Data Generation**:
-  - Configure `juce_add_binary_data(TkfAssets ...)` in `CMakeLists.txt` to bake `en_strings.json` directly into the binary.
-  - Link `TkfAssets` to `TheKlangFarmer`, `TheKlangPlanter`, and test binaries.
-- **Phase 3: Runtime String Manager**:
-  - Implement `StringManager` singleton (`source/StringManager.h`, `source/StringManager.cpp`) parsing JSON on startup and querying strings via dot-delimited key paths (`getString`, `getStringArray`, `getFxKnob`, `getVar`).
-- **Phase 4: Refactoring UI Components**:
-  - Refactor `TooltipHelper` in `source/UIComponents.cpp` to pull FX knob descriptions, algorithm descriptions, and LED selector tips dynamically from `StringManager`.
-- **Phase 5: Refactoring Plugin Editor**:
-  - Refactor `PluginEditor.cpp` to replace hardcoded strings in navigation buttons, parameter descriptions (`getFarmerParamDescription`), and `QuickstartGuideModalComponent` panels with dynamic `StringManager` fetches.
+### 1. [PRIORITY #1] Data-Driven UI Layout & Colors (`theme.json`)
+Extract the remaining hardcoded UI configuration out of C++ (`PluginEditor.cpp`) into JSON assets (`assets/controls/theme.json` or `layout.json`).
+- Move all **Knob Colors** (e.g. `juce::Colour(0xff00d2ff)`) into JSON.
+- Move **UI Coordinates & Sizes** (`setBounds(x,y,w,h)`) into JSON.
+- Move **Card Groupings** (which knobs belong to which physical "Cards" on the screen) into JSON.
+- Hook this up to `ParameterManager` so the UI can be fully skinned and reconfigured dynamically without recompiling C++.
 
 ---
 
