@@ -275,9 +275,12 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                             activeSliders.add(slider);
                             compToParamId[slider] = paramId;
                             
-                            slider->setTooltip(def->description);
+                                                        slider->setTooltip(def->description);
                             slider->setRange(def->min, def->max, def->step);
                             slider->setValue(def->defaultFloat);
+                            
+                            slider->setDoubleClickReturnValue(true, def->doubleClickValue);
+                            slider->getDefaultValue = [val = def->doubleClickValue]() { return val; };
                             
                             if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("waveform")) {
                                 slider->diagramType = RotaryKnobSlider::DiagramType::Waveform;
@@ -360,10 +363,11 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                     juce::Array<juce::PropertyComponent*> pProps;
                     pProps.add(new juce::TextPropertyComponent(juce::Value(def->name), "name", 256, false));
                     pProps.add(new juce::TextPropertyComponent(juce::Value(def->type), "type", 256, false));
-                    if (def->type == "float") {
+                                        if (def->type == "float") {
                         pProps.add(new juce::TextPropertyComponent(juce::Value(def->min), "min", 256, false));
                         pProps.add(new juce::TextPropertyComponent(juce::Value(def->max), "max", 256, false));
                         pProps.add(new juce::TextPropertyComponent(juce::Value(def->defaultFloat), "default", 256, false));
+                        pProps.add(new juce::TextPropertyComponent(juce::Value(def->doubleClickValue), "doubleClick", 256, false));
                         pProps.add(new juce::TextPropertyComponent(juce::Value(def->step), "step", 256, false));
                     } else if (def->type == "choice") {
                         pProps.add(new juce::TextPropertyComponent(juce::Value(def->choices.joinIntoString(", ")), "choices", 256, false));
@@ -419,6 +423,8 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
 
 
 
