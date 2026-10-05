@@ -2,10 +2,7 @@
 #include "PlanterEditor.h"
 #include "ParameterManager.h"
 
-TheKlangPlanterAudioProcessor::TheKlangPlanterAudioProcessor()
-    : AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts(*this, nullptr, "Parameters", createParameterLayout())
-{
+TheKlangPlanterAudioProcessor::TheKlangPlanterAudioProcessor() : KlangCoreProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true), "PARAMETERS", createParameterLayout()) {
     // Cache direct parameter pointers
     carrierTrackingParam = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("planter_carrier_tracking"));
     carrierPitchParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_carrier_pitch"));
@@ -229,20 +226,10 @@ bool TheKlangPlanterAudioProcessor::hasEditor() const {
     return true;
 }
 
-void TheKlangPlanterAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
-    auto state = apvts.copyState();
-    std::unique_ptr<juce::XmlElement> xml(state.createXml());
-    copyXmlToBinary(*xml, destData);
-}
-
-void TheKlangPlanterAudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
-    std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
-    if (xmlState != nullptr && xmlState->hasTagName(apvts.state.getType())) {
-        apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
-    }
-}
-
 // JUCE Plugin Entry Point for The Klang Planter
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
     return new TheKlangPlanterAudioProcessor();
 }
+
+
+

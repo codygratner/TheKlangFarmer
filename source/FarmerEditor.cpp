@@ -1,4 +1,4 @@
-#include "PluginEditor.h"
+#include "FarmerEditor.h"
 #include "UIComponents.h"
 
 
@@ -819,7 +819,7 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
 // --- THE KLANG FARMER AUDIO PROCESSOR EDITOR CONSTRUCTOR ---
 
 TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangFarmerAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p),
+    : KlangCoreEditor(p), audioProcessor(p),
       carrier1TrackingSelector(juce::Colour(0xff00d2ff)),
       mod1TrackSelector(juce::Colour(0xffff7043)),
       mod1TypeSelector(juce::Colour(0xffff7043)),
@@ -858,6 +858,8 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         quickstartGuide.toFront(true);
         quickstartGuide.grabKeyboardFocus();
     };
+    initButton.onClick = [this] { resetToDefaults(); };
+    triggerButton.onClick = [this] { audioProcessor.getEngine().trigger(); };
     addAndMakeVisible(guideButton);
 
     addChildComponent(quickstartGuide);
@@ -1886,30 +1888,6 @@ TheKlangFarmerAudioProcessorEditor::~TheKlangFarmerAudioProcessorEditor() {
     setLookAndFeel(nullptr);
 }
 
-void TheKlangFarmerAudioProcessorEditor::setTooltipsEnabled(bool enabled) {
-    tooltipsEnabled = enabled;
-    if (enabled) {
-        if (!tooltipWindow) {
-            tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 300);
-            tooltipWindow->setLookAndFeel(&knobLookAndFeel);
-            tooltipWindow->setOpaque(false);
-            tooltipWindow->setInterceptsMouseClicks(false, false);
-        }
-        tooltipsButton.setButtonText("TIPS: ON");
-        tooltipsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1f2430));
-        tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff00d2ff));
-    } else {
-        if (tooltipWindow) {
-            tooltipWindow->hideTip();
-            tooltipWindow->setLookAndFeel(nullptr);
-            tooltipWindow.reset();
-        }
-        tooltipsButton.setButtonText("TIPS: OFF");
-        tooltipsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff151821));
-        tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff556070));
-    }
-}
-
 void TheKlangFarmerAudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colour trackColour, bool isBipolar, double defaultVal) {
     slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     slider.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
@@ -2046,6 +2024,11 @@ static juce::String getFarmerParamDescription(const juce::String& paramId, bool&
 }
 
 void TheKlangFarmerAudioProcessorEditor::bindSlider(const juce::String& paramId, RotaryKnobSlider& slider) {
+    if (auto* param = audioProcessor.apvts.getParameter(paramId)) {
+        float defVal = param->getDefaultValue();
+        slider.setDoubleClickReturnValue(true, defVal);
+        slider.getDefaultValue = [defVal]() { return defVal; };
+    }
     slider.setParamId(paramId);
     slider.getModInfoFunc = [this](const juce::String& pid) {
         return audioProcessor.getParamModulationInfo(pid);
@@ -2812,5 +2795,12 @@ void TheKlangFarmerAudioProcessorEditor::mouseDrag(const juce::MouseEvent& e) {
 void TheKlangFarmerAudioProcessorEditor::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& /*d*/) {
     handleCardInteraction(e.eventComponent);
 }
+
+
+
+
+
+
+
 
 

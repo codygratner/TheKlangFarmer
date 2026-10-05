@@ -11,7 +11,8 @@
     "name": "PitchEnv 1: Depth",
     "description": "Bipolar pitch envelope modulation depth in semitones",
     "is_bipolar": true,
-    "default": 0.0
+    "default": 0.5,
+    "double_click": 0.5
   },
   "pitchenv1_decay": {
     "type": "float",
@@ -32,7 +33,8 @@
     "name": "PitchEnv 2: Depth",
     "description": "Voice 2 pitch envelope modulation depth in semitones",
     "is_bipolar": true,
-    "default": 0.0
+    "default": 0.5,
+    "double_click": 0.5
   },
   "pitchenv2_decay": {
     "type": "float",
@@ -53,7 +55,8 @@
     "name": "FilterEnv 1: Depth",
     "description": "Cutoff modulation depth in octaves (-10 to +10 oct)",
     "is_bipolar": true,
-    "default": 0.0
+    "default": 0.5,
+    "double_click": 0.5
   },
   "filterenv1_decay": {
     "type": "float",
@@ -81,7 +84,8 @@
     "name": "FilterEnv 2: Depth",
     "description": "Filter 2 cutoff modulation depth in octaves",
     "is_bipolar": true,
-    "default": 0.0
+    "default": 0.5,
+    "double_click": 0.5
   },
   "filterenv2_decay": {
     "type": "float",
@@ -109,7 +113,8 @@
     "name": "FilterEnv 3: Depth",
     "description": "Filter 3 cutoff modulation depth in octaves",
     "is_bipolar": true,
-    "default": 0.0
+    "default": 0.5,
+    "double_click": 0.5
   },
   "filterenv3_decay": {
     "type": "float",
@@ -165,7 +170,8 @@
     "name": "ModEnv 1: Depth",
     "description": "Bipolar modulation envelope depth to assigned target",
     "is_bipolar": true,
-    "default": 0.0
+    "default": 0.5,
+    "double_click": 0.5
   },
   "modenv1_decay": {
     "type": "float",
@@ -186,7 +192,8 @@
     "name": "ModEnv 2: Depth",
     "description": "Bipolar modulation envelope depth to assigned target",
     "is_bipolar": true,
-    "default": 0.0
+    "default": 0.5,
+    "double_click": 0.5
   },
   "modenv2_decay": {
     "type": "float",
@@ -207,7 +214,8 @@
     "name": "ModEnv 3: Depth",
     "description": "Bipolar modulation envelope depth to assigned target",
     "is_bipolar": true,
-    "default": 0.0
+    "default": 0.5,
+    "double_click": 0.5
   },
   "modenv3_decay": {
     "type": "float",

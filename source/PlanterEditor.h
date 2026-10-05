@@ -1,6 +1,6 @@
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
-#include <juce_audio_processors/juce_audio_processors.h>
+#include "KlangCoreEditor.h"
 #include "PlanterProcessor.h"
 #include "UIComponents.h"
 
@@ -18,7 +18,7 @@ private:
     float liveLimiterAct = 0.0f;
 };
 
-class TheKlangPlanterAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::Timer {
+class TheKlangPlanterAudioProcessorEditor : public KlangCoreEditor, public juce::Timer {
 public:
     explicit TheKlangPlanterAudioProcessorEditor(TheKlangPlanterAudioProcessor&);
     ~TheKlangPlanterAudioProcessorEditor() override;
@@ -29,17 +29,7 @@ public:
 
 private:
     TheKlangPlanterAudioProcessor& audioProcessor;
-    RotaryKnobLookAndFeel knobLookAndFeel;
-    std::unique_ptr<juce::TooltipWindow> tooltipWindow;
-    bool tooltipsEnabled = false;
-    void setTooltipsEnabled(bool enabled);
-
-    // Header Components
     PlanterHeaderVisualizer headerViz;
-    juce::TextButton tooltipsButton{ "TIPS: OFF" };
-    juce::TextButton initButton{ "INIT" };
-    juce::TextButton triggerButton{ "TRIGGER" };
-
     // 8 Module Cards (4 Columns x 2 Rows)
     std::unique_ptr<ModuleCardComponent> cardCarrier;
     std::unique_ptr<ModuleCardComponent> cardMod;
@@ -130,3 +120,4 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangPlanterAudioProcessorEditor)
 };
+

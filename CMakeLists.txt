@@ -9,10 +9,10 @@ if (APPLE)
 endif()
 
 # 1. Project definition
-project(TheKlangFarmer VERSION 0.2.1 LANGUAGES C CXX)
+project(TheKlangFarmer VERSION 0.2.6 LANGUAGES C CXX)
 
 # Feature branch build tag (e.g., "-tooltips"). Stripped upon merge back to master.
-set(TKF_FEATURE_TAG "" CACHE STRING "Prerelease feature tag for development builds")
+set(TKF_FEATURE_TAG "-core-architecture" CACHE STRING "Prerelease feature tag for development builds")
 add_compile_definitions(TKF_FEATURE_TAG="${TKF_FEATURE_TAG}")
 
 # Enforce modern C++ standard
@@ -64,11 +64,15 @@ target_sources(TheKlangFarmer PRIVATE
     source/ParameterManager.h
     source/ParameterManager.cpp
     source/UIComponents.h
+    source/KlangCoreProcessor.h
+    source/KlangCoreProcessor.cpp
+    source/KlangCoreEditor.h
+    source/KlangCoreEditor.cpp
     source/UIComponents.cpp
-    source/PluginProcessor.h
-    source/PluginProcessor.cpp
-    source/PluginEditor.h
-    source/PluginEditor.cpp
+    source/FarmerProcessor.h
+    source/FarmerProcessor.cpp
+    source/FarmerEditor.h
+    source/FarmerEditor.cpp
 )
 
 target_include_directories(TheKlangFarmer PRIVATE
@@ -134,6 +138,10 @@ target_sources(TheKlangPlanter PRIVATE
     source/ParameterManager.h
     source/ParameterManager.cpp
     source/UIComponents.h
+    source/KlangCoreProcessor.h
+    source/KlangCoreProcessor.cpp
+    source/KlangCoreEditor.h
+    source/KlangCoreEditor.cpp
     source/UIComponents.cpp
     source/PlanterProcessor.h
     source/PlanterProcessor.cpp
@@ -175,7 +183,7 @@ add_executable(dsp_tests
     source/PlanterEngine.h
 )
 target_include_directories(dsp_tests PRIVATE source)
-target_link_libraries(dsp_tests PRIVATE TkfAssets)
+target_link_libraries(dsp_tests PRIVATE TkfAssets juce::juce_audio_processors)
 
 # 8. FastMath & DSP performance benchmark
 add_executable(benchmark_dsp
@@ -203,4 +211,7 @@ target_link_libraries(capture_planter_screenshot PRIVATE
     juce::juce_gui_basics
     juce::juce_graphics
 )
-target_include_directories(capture_planter_screenshot PRIVATE source)
+target_include_directories(capture_planter_screenshot PRIVATE source)
+
+
+

@@ -23,7 +23,7 @@ struct ControlDef {
     bool isBipolar { false };
     float min { 0.0f };
     float max { 1.0f };
-    float step { 0.01f };
+    float step { 0.0005f };
     float skew { 1.0f };
     float defaultFloat { 0.0f };
     float doubleClickValue { 0.0f };

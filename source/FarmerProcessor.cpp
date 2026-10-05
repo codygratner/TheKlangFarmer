@@ -1,13 +1,12 @@
-#include "PluginProcessor.h"
-#include "PluginEditor.h"
+#include "FarmerProcessor.h"
+#include "FarmerEditor.h"
 #include "ParameterManager.h"
 
 TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
-    : AudioProcessor(BusesProperties()
-                     .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
-                     .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts(*this, nullptr, "Parameters", createParameterLayout())
+    : KlangCoreProcessor(BusesProperties().withInput("Input", juce::AudioChannelSet::stereo(), true).withOutput("Output", juce::AudioChannelSet::stereo(), true), "Parameters", createParameterLayout())
 {
+
+
     // Retrieve direct raw parameter pointers
     // 1. Carrier 1
     carrier1TrackingParam = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("carrier1_tracking"));
@@ -229,6 +228,8 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
 }
 
 void TheKlangFarmerAudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
+
+
     engine.init(static_cast<float>(sampleRate));
 }
 
@@ -776,84 +777,6 @@ const juce::String TheKlangFarmerAudioProcessor::getName() const {
     return "The Klang Farmer";
 }
 
-bool TheKlangFarmerAudioProcessor::acceptsMidi() const {
-    return true;
-}
-
-bool TheKlangFarmerAudioProcessor::producesMidi() const {
-    return false;
-}
-
-bool TheKlangFarmerAudioProcessor::isMidiEffect() const {
-    return false;
-}
-
-double TheKlangFarmerAudioProcessor::getTailLengthSeconds() const {
-    return 0.0;
-}
-
-int TheKlangFarmerAudioProcessor::getNumPrograms() {
-    return 1;
-}
-
-int TheKlangFarmerAudioProcessor::getCurrentProgram() {
-    return 0;
-}
-
-void TheKlangFarmerAudioProcessor::setCurrentProgram(int) {
-}
-
-const juce::String TheKlangFarmerAudioProcessor::getProgramName(int) {
-    return {};
-}
-
-void TheKlangFarmerAudioProcessor::changeProgramName(int, const juce::String&) {
-}
-
-void TheKlangFarmerAudioProcessor::getStateInformation(juce::MemoryBlock& destData) {
-    auto state = apvts.copyState();
-    std::unique_ptr<juce::XmlElement> xml(state.createXml());
-    if (xml.get() != nullptr) {
-        xml->setAttribute("fxCatalogVersion", 2);
-        copyXmlToBinary(*xml, destData);
-    }
-}
-
-void TheKlangFarmerAudioProcessor::setStateInformation(const void* data, int sizeInBytes) {
-    std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
-    if (xmlState.get() != nullptr && xmlState->hasTagName(apvts.state.getType())) {
-        if (xmlState->getIntAttribute("fxCatalogVersion", 1) < 2) {
-            static const char* slotParamIds[] = {
-                "pre_fx_1_type", "pre_fx_2_type", "pre_fx_3_type", "pre_fx_4_type",
-                "post_fx_1_type", "post_fx_2_type", "post_fx_3_type", "post_fx_4_type"
-            };
-
-            auto migrateIndex = [](float oldVal) noexcept -> float {
-                int oldIndex = juce::roundToInt(oldVal);
-                if (oldIndex == 4) return 9.0f; // Phase Smear: 4 -> 9
-                if (oldIndex >= 5 && oldIndex <= 9) return static_cast<float>(oldIndex - 1); // Drive..Grit FX: 5..9 -> 4..8
-                return oldVal;
-            };
-
-            for (auto* child : xmlState->getChildIterator()) {
-                if (child->hasTagName("PARAM")) {
-                    juce::String id = child->getStringAttribute("id");
-                    for (const char* slotId : slotParamIds) {
-                        if (id == slotId) {
-                            double oldVal = child->getDoubleAttribute("value", 0.0);
-                            float newVal = migrateIndex(static_cast<float>(oldVal));
-                            child->setAttribute("value", (double)newVal);
-                            break;
-                        }
-                    }
-                }
-            }
-            xmlState->setAttribute("fxCatalogVersion", 2);
-        }
-        apvts.replaceState(juce::ValueTree::fromXml(*xmlState));
-    }
-}
-
 juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor::createParameterLayout() {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
 
@@ -1340,3 +1263,5 @@ TheKlangFarmerAudioProcessor::ParamModulationInfo TheKlangFarmerAudioProcessor::
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
     return new TheKlangFarmerAudioProcessor();
 }
+
+

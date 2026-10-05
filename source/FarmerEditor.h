@@ -1,7 +1,7 @@
 #pragma once
 #include <juce_gui_basics/juce_gui_basics.h>
-#include <juce_audio_processors/juce_audio_processors.h>
-#include "PluginProcessor.h"
+#include "KlangCoreEditor.h"
+#include "FarmerProcessor.h"
 #include "UIComponents.h"
 #include <vector>
 #include <memory>
@@ -147,7 +147,7 @@ private:
     juce::TextButton closeButton { "✕" };
 };
 
-class TheKlangFarmerAudioProcessorEditor : public juce::AudioProcessorEditor, private juce::Timer {
+class TheKlangFarmerAudioProcessorEditor : public KlangCoreEditor, private juce::Timer {
 public:
     explicit TheKlangFarmerAudioProcessorEditor(TheKlangFarmerAudioProcessor&);
     ~TheKlangFarmerAudioProcessorEditor() override;
@@ -170,16 +170,7 @@ public:
 
 private:
     TheKlangFarmerAudioProcessor& audioProcessor;
-    RotaryKnobLookAndFeel knobLookAndFeel;
-    std::unique_ptr<juce::TooltipWindow> tooltipWindow;
-    bool tooltipsEnabled = false;
-    void setTooltipsEnabled(bool enabled);
-
-    // Header buttons
-    juce::TextButton tooltipsButton { "TIPS: OFF" };
     juce::TextButton guideButton { "GUIDE" };
-    juce::TextButton initButton { "INIT" };
-    juce::TextButton triggerButton { "AUDITION HIT" };
 
     // Quickstart Guide overlay
     QuickstartGuideModalComponent quickstartGuide;
@@ -427,3 +418,4 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangFarmerAudioProcessorEditor)
 };
+

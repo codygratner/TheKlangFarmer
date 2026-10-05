@@ -100,7 +100,7 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
 // --- THE KLANG PLANTER AUDIO PROCESSOR EDITOR ---
 
 TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlangPlanterAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p),
+    : KlangCoreEditor(p), audioProcessor(p),
       carrierTrackingSelector(juce::Colour(0xffff3b30)),
       modTrackSelector(juce::Colour(0xff00d2ff)),
       modTypeSelector(juce::Colour(0xff00d2ff)),
@@ -540,30 +540,6 @@ TheKlangPlanterAudioProcessorEditor::~TheKlangPlanterAudioProcessorEditor() {
     setLookAndFeel(nullptr);
 }
 
-void TheKlangPlanterAudioProcessorEditor::setTooltipsEnabled(bool enabled) {
-    tooltipsEnabled = enabled;
-    if (enabled) {
-        if (!tooltipWindow) {
-            tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 300);
-            tooltipWindow->setLookAndFeel(&knobLookAndFeel);
-            tooltipWindow->setOpaque(false);
-            tooltipWindow->setInterceptsMouseClicks(false, false);
-        }
-        tooltipsButton.setButtonText("TIPS: ON");
-        tooltipsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1f2430));
-        tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff00d2ff));
-    } else {
-        if (tooltipWindow) {
-            tooltipWindow->hideTip();
-            tooltipWindow->setLookAndFeel(nullptr);
-            tooltipWindow.reset();
-        }
-        tooltipsButton.setButtonText("TIPS: OFF");
-        tooltipsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff151821));
-        tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff556070));
-    }
-}
-
 void TheKlangPlanterAudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juce::Colour accent, bool bipolar, double defaultValue) {
     slider.setAccentColour(accent);
     slider.setBipolar(bipolar);
@@ -580,6 +556,11 @@ void TheKlangPlanterAudioProcessorEditor::setupBox(juce::ComboBox& box) {
 }
 
 void TheKlangPlanterAudioProcessorEditor::bindSlider(const juce::String& paramId, RotaryKnobSlider& slider) {
+    if (auto* param = audioProcessor.apvts.getParameter(paramId)) {
+        float defVal = param->getDefaultValue();
+        slider.setDoubleClickReturnValue(true, defVal);
+        slider.getDefaultValue = [defVal]() { return defVal; };
+    }
     slider.setParamId(paramId);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, paramId, slider));
 }
@@ -797,3 +778,8 @@ void TheKlangPlanterAudioProcessorEditor::timerCallback() {
 
     headerViz.updateData(scopeBuffer.data(), static_cast<int>(scopeBuffer.size()), peakL, peakR, limAct);
 }
+
+
+
+
+
