@@ -180,11 +180,22 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                             slider->setRange(def->min, def->max, def->step);
                             slider->setValue(def->defaultFloat);
                             
-                            if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("waveform")) {
+                                                        if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("waveform")) {
                                 slider->diagramType = RotaryKnobSlider::DiagramType::Waveform;
                             } else if (paramId.containsIgnoreCase("slope")) {
                                 slider->diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
                             }
+                            
+                            slider->customFormatText = [paramId](double val) {
+                                if (paramId.containsIgnoreCase("pitch") || paramId.containsIgnoreCase("semi")) return juce::String(juce::roundToInt((val - 0.5) * 96.0)) + " st";
+                                if (paramId.containsIgnoreCase("depth") || paramId.containsIgnoreCase("crossfade") || paramId.containsIgnoreCase("pan")) return (val >= 0.5 ? "+" : "") + juce::String(juce::roundToInt((val - 0.5) * 200.0)) + " %";
+                                if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("ratio") || paramId.containsIgnoreCase("amount") || paramId.containsIgnoreCase("level") || paramId.containsIgnoreCase("res") || paramId.containsIgnoreCase("mix")) return juce::String(juce::roundToInt(val * 100.0)) + " %";
+                                if (paramId.containsIgnoreCase("decay") || paramId.containsIgnoreCase("speed") || paramId.containsIgnoreCase("time")) return juce::String(val * 2000.0, 0) + " ms";
+                                if (paramId.containsIgnoreCase("cutoff") || paramId.containsIgnoreCase("rate") || paramId.containsIgnoreCase("freq")) return juce::String(val * 20000.0, 0) + " Hz";
+                                if (paramId.containsIgnoreCase("drive") || paramId.containsIgnoreCase("gain")) return (val >= 0.5 ? "+" : "") + juce::String((val - 0.5) * 48.0, 1) + " dB";
+                                if (paramId.containsIgnoreCase("claps")) return juce::String(juce::roundToInt(val * 8.0));
+                                return juce::String(val, 2);
+                            };
                             
                             card->addAndMakeVisible(slider);
                             card->setKnob(slot, def->name, slider);
@@ -250,3 +261,4 @@ void MainComponent::resized() {
     juce::Component* comps[] = { &formEditor, &splitterBar1, &previewWrapper, &splitterBar2, rawJsonEditor.get() };
     verticalLayout.layOutComponents(comps, 5, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), false, true);
 }
+
