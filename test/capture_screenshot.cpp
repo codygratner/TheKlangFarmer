@@ -1,8 +1,8 @@
 #include <iostream>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_graphics/juce_graphics.h>
-#include "PluginProcessor.h"
-#include "PluginEditor.h"
+#include "FarmerProcessor.h"
+#include "FarmerEditor.h"
 
 int main(int argc, char* argv[]) {
     juce::ScopedJuceInitialiser_GUI guiInit;

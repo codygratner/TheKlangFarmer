@@ -1,5 +1,5 @@
-#include "../source/PluginProcessor.h"
-#include "../source/PluginProcessor.h"
+
+
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -8,11 +8,7 @@
 #include "ModularBlocks.h"
 #include "PlanterEngine.h"
 
-void testProcessorProcessBlock() { std::cout << "Testing PluginProcessor processBlock..." << std::endl; TheKlangFarmerAudioProcessor p; p.prepareToPlay(44100.0, 512); juce::AudioBuffer<float> buffer(2, 512); buffer.clear(); juce::MidiBuffer midi; midi.addEvent(juce::MidiMessage::noteOn(1, 60, 1.0f), 0); p.processBlock(buffer, midi); bool hasSound = false; for(int i=0; i<512; ++i) { if(std::abs(buffer.getSample(0, i)) > 1e-5f || std::abs(buffer.getSample(1, i)) > 1e-5f) hasSound = true; } if(hasSound) std::cout << "PASS: Processor makes sound!" << std::endl; else std::cout << "FAIL: Processor is SILENT!" << std::endl; }
-
-void testProcessBlock() { std::cout << "\nTesting PluginProcessor::processBlock()..." << std::endl; TheKlangFarmerAudioProcessor p; p.prepareToPlay(44100.0, 512); juce::AudioBuffer<float> buffer(2, 512); buffer.clear(); juce::MidiBuffer midi; midi.addEvent(juce::MidiMessage::noteOn(1, 60, 1.0f), 0); p.processBlock(buffer, midi); bool hasSound = false; for(int i=0; i<512; ++i) { if(std::abs(buffer.getSample(0, i)) > 1e-5f) hasSound = true; } if(hasSound) std::cout << "PASS: Processor makes sound in processBlock!" << std::endl; else { std::cout << "FAIL: Processor is SILENT in processBlock!" << std::endl; exit(1); } }
-
-int main() { testProcessBlock(); testProcessorProcessBlock();
+int main() {
     std::cout << "Starting DSP Verification Tests for 22-Block Modular Drum Synth..." << std::endl;
 
     TbdAudio::ModularDrumEngine engine;

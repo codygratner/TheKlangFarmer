@@ -11,14 +11,34 @@ ParameterManager::ParameterManager() {
         // Ensure it's a JSON file based on name
         juce::String resourceName(TkfAssets::namedResourceList[i]);
         if (resourceName.endsWithIgnoreCase(".json") || resourceName.endsWithIgnoreCase("_json")) {
-            parseJsonBlob(data, dataSizeInBytes);
+            bool isTheme = resourceName.containsIgnoreCase("theme");
+            parseJsonBlob(data, dataSizeInBytes, isTheme);
         }
     }
 }
 
-void ParameterManager::parseJsonBlob(const char* data, int size) {
+juce::Colour ParameterManager::getThemeColour(const juce::String& colorId, juce::Colour defaultColour) const {
+    if (themeData.isObject()) {
+        if (auto* colors = themeData.getProperty("colors", juce::var()).getDynamicObject()) {
+            if (colors->hasProperty(colorId)) {
+                juce::String hex = colors->getProperty(colorId).toString();
+                if (hex.startsWithIgnoreCase("0x")) hex = hex.substring(2);
+                if (hex.startsWithIgnoreCase("#")) hex = hex.substring(1);
+                return juce::Colour::fromString(hex.length() == 6 ? "ff" + hex : hex);
+            }
+        }
+    }
+    return defaultColour;
+}
+
+void ParameterManager::parseJsonBlob(const char* data, int size, bool isTheme) {
     juce::String jsonString = juce::String::fromUTF8(data, size);
     auto var = juce::JSON::parse(jsonString);
+
+    if (isTheme) {
+        themeData = var;
+        return;
+    }
 
     if (var.isObject()) {
         auto* obj = var.getDynamicObject();

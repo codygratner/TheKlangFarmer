@@ -58,6 +58,9 @@ public:
         return {};
     }
 
+    juce::Colour getThemeColour(const juce::String& colorId, juce::Colour defaultColour = juce::Colours::transparentBlack) const;
+    const juce::var& getThemeData() const { return themeData; }
+
 private:
     ParameterManager();
     ~ParameterManager() = default;
@@ -66,8 +69,9 @@ private:
     ParameterManager& operator=(const ParameterManager&) = delete;
 
     std::unordered_map<juce::String, ControlDef> controls;
+    juce::var themeData;
 
-    void parseJsonBlob(const char* data, int size);
+    void parseJsonBlob(const char* data, int size, bool isTheme = false);
 };
 
 } // namespace RlyehSound
