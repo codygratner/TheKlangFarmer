@@ -25,6 +25,11 @@ No immediate blockers.
 
 ## Proposed Changes
 
+### 0. Establish Architecture Guardrails (`GEMINI.md`)
+Append a strict rule to the AI guidelines file to permanently enforce the new architecture across all future chat sessions.
+#### [MODIFY] `GEMINI.md`
+- Add a new section `## Strict Data-Driven Architecture (CRITICAL)` with rules explicitly forbidding hardcoded APVTS parameters, default values, UI labels, and coordinates in C++.
+
 ### 1. JSON Asset Architecture & Schema [x]
 Create a new directory `assets/controls/` to house individual module definitions.
 
