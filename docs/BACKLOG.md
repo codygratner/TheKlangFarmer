@@ -6,7 +6,8 @@
 > 1. **Priority #1 (UX / Modal & Tooltips)**: Quick-Snap Presets & Tooltips in Edit Modal (`SliderCalloutComponent`).
 > 2. **Priority #2 (Refactoring / Architecture)**: Extract Tooltips & Text into JSON (`StringManager` & CMake `juce_add_binary_data`).
 > 3. **Priority #3 (Export & DAW Integration)**: WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17).
-> 4. **Priority #4 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
+> 4. **Priority #4 (DSP / FX Expansion)**: New Effects Processors Catalog Expansion (Effects 14–19) & Universal Mix Standard (`docs/new_effects_plan.md`).
+> 5. **Priority #5 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
 
 ---
 
@@ -72,7 +73,32 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (`.sf2`) bank gener
 
 ---
 
-### 4. [PRIORITY #4] Dual Sample Players for Noise Transient Page (Plugin Only)
+### 4. [PRIORITY #4] New Effects Processors Catalog Expansion (Effects 14–19) & Universal Mix Standard
+*Detailed Plan: [`docs/new_effects_plan.md`](new_effects_plan.md)*  
+Expand the FX catalog from 13 to 19 algorithms (appended as indices 14–19 for 100% backward preset compatibility) and standardize Knob 4 across all modulation/time-based FX to the Universal Dual-Mode Mix:
+- **Phase 1: Universal Dual-Mode Mix Helper & Core Enums**:
+  - Implement shared `computeDualModeMix(float normParam, float& dryGain, float& wetGain)` in `source/DSPBlock.h` (`-100%` wet crossfade ↔ `0%` pure dry ↔ `+100%` parallel additive blend).
+  - Update `createFXBlock()` factory and `BlockType` enum in `source/ModularBlocks.h` with `TransientShaper` (14), `CustomWaveshaper` (15), `ChannelMixer` (16), `StereoEnhancer` (17), `HaasDelay` (18), and `GatedReverb` (19).
+  - Register algorithms in `PluginProcessor.cpp` and `PlanterProcessor.cpp` `fxChoices` list.
+- **Phase 2: DSP Implementations (`source/ModularBlocks.h`)**:
+  - `TransientShaperBlock`: Bipolar Attack ($\pm 100\%$), Pump ($0..100\%$), Sustain ($\pm 100\%$), Speed ($0.5..350\,\text{ms}$) with stereo-linked envelope detector.
+  - `CustomWaveshaperBlock`: Morphing transfer function (Sine → Tri → Saw → Square → PWM), Drive ($1..20\times$), Pre-DJ Filter tilt, Universal Mix.
+  - `ChannelMixerBlock`: 4-quadrant matrix mixer ($L \to L, R \to L, L \to R, R \to R$) with unity defaults $\{1.0, 0.5, 0.5, 1.0\}$.
+  - `StereoEnhancerBlock`: Mid/Side balance, piecewise width ($0..100\%$ on $0..0.5$, $100..600\%$ on $0.5..1.0$), Pan, and per-trigger analog Slop drift.
+  - `HaasDelayBlock`: Bipolar circular delay ($\pm 100\,\text{ms}$), Tone 6 dB/oct tilt, cross-feedback, and parallel blend phase protection ($0.0$ wet on undelayed channel).
+  - `GatedReverbBlock`: 8-tap diffuser, 12-bit lo-fi damping, deterministic note-trigger sample countdown gate (1/64 to 1/2 note) with $3\,\text{ms}$ raised-cosine micro-fade, Universal Mix.
+- **Phase 3: Standardize Existing FX Mix Knobs**:
+  - Migrate Chorus, Comb, Flanger, Phaser, Tempo Delay, and Drive (replacing DJ Filter on Drive) to use `computeDualModeMix`.
+- **Phase 4: UI / UX Integration (`source/UIComponents.cpp`)**:
+  - Add parameter labels, units, and ranges in `TooltipHelper::getKnobParamInfo()`.
+  - Add algorithm descriptions in `TooltipHelper::getFXBlockTooltip()`.
+  - Add custom quick-snap presets for all 6 new effects in `SliderCalloutComponent`.
+- **Phase 5: Automated DSP Unit Tests (`test/dsp_tests.cpp`)**:
+  - Verification suite testing zero-allocation rendering, dual-mode mix curve math, stereo image preservation, matrix pass-through, and gate silence transitions.
+
+---
+
+### 5. [PRIORITY #5] Dual Sample Players for Noise Transient Page (Plugin Only)
 - Add two dedicated sample player modules to the Transients page (desktop plugin specific; not constrained to TBD-16 4-control limits).
 - **Controls per Player**:
   1. **File Picker**: File browser / drag-and-drop audio file loader.
@@ -84,6 +110,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (`.sf2`) bank gener
 ---
 
 ## 🎛️ New Effects Processors (Backlog)
+*(Elevated to Active Priority #4: see [Top Priorities section](#4-priority-4-new-effects-processors-catalog-expansion-effects-1419--universal-mix-standard) and [`docs/new_effects_plan.md`](new_effects_plan.md))*
 
 ### 7. Transient Shaper Effect
 - 4-knob envelope dynamic processor (Kilohearts style):
