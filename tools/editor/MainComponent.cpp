@@ -262,9 +262,10 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
             
             auto* card = new ModuleCardComponent(currentCardId, c, style);
             
-            auto paramsArray = moduleConfig.getProperty("parameters", juce::var());
+                        auto paramsArray = moduleConfig.getProperty("parameters", juce::var());
             if (paramsArray.isArray()) {
                 int slot = 0;
+                int choiceCount = 0;
                 for (auto& paramIdVar : *paramsArray.getArray()) {
                     juce::String paramId = paramIdVar.toString();
                     auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
@@ -275,7 +276,7 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                             activeSliders.add(slider);
                             compToParamId[slider] = paramId;
                             
-                                                        slider->setTooltip(def->description);
+                            slider->setTooltip(def->description);
                             slider->setRange(def->min, def->max, def->step);
                             slider->setValue(def->defaultFloat);
                             
@@ -303,20 +304,37 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                             card->setKnob(slot, def->name, slider);
                             slot++;
                         } else if (def->type == "choice") {
-                            auto* box = new juce::ComboBox();
+                            auto* box = new LedSelectorComponent(c);
                             activeSliders.add(box);
                             compToParamId[box] = paramId;
                             
-                            box->addItemList(def->choices, 1);
-                            box->setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff161922));
-                            box->setColour(juce::ComboBox::textColourId, juce::Colour(0xffe8edf5));
-                            box->setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff2d3342));
-                            box->setJustificationType(juce::Justification::centredLeft);
+                            box->setItems(def->choices, def->choices.size() > 3 ? 4 : def->choices.size());
                             box->setTooltip(def->description);
-                            box->setSelectedItemIndex(def->defaultChoice, juce::dontSendNotification);
+                            box->setSelectedIndex(def->defaultChoice, juce::dontSendNotification);
+                            
+                                                        if (paramId.containsIgnoreCase("target")) {
+                                card->setSelectorAtBottom(true);
+                                if (currentProductId == "tkp") {
+                                    juce::Colour colRed = RlyehSound::ParameterManager::getInstance().getThemeColour("colRed");
+                                    juce::Colour colCyan = RlyehSound::ParameterManager::getInstance().getThemeColour("colCyan");
+                                    box->setItemStyle(0, { colRed,  std::nullopt, std::nullopt });
+                                    box->setItemStyle(1, { colCyan, std::nullopt, std::nullopt });
+                                    box->setItemStyle(2, { colCyan, colRed,       colRed       });
+                                    box->setItemStyle(3, { colRed,  colCyan,      colCyan      });
+                                } else {
+                                    juce::Colour colCarrier = RlyehSound::ParameterManager::getInstance().getThemeColour("colCyan");
+                                    juce::Colour colMod = RlyehSound::ParameterManager::getInstance().getThemeColour("colOrange");
+                                    box->setItemStyle(0, { colCarrier, std::nullopt, std::nullopt });
+                                    box->setItemStyle(1, { colMod, std::nullopt, std::nullopt });
+                                    box->setItemStyle(2, { colMod, colCarrier, colCarrier });
+                                    box->setItemStyle(3, { colCarrier, colMod, colMod });
+                                }
+                            }
+                            
                             card->addAndMakeVisible(box);
-                            card->setSelector(box);
-                            if (slot > 1) card->setSelectorAtBottom(true);
+                            if (choiceCount == 0) card->setLedSelector(box);
+                            else card->setSecondLedSelector(box);
+                            choiceCount++;
                         }
                     }
                 }
@@ -423,6 +441,8 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
 
 
 
