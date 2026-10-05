@@ -58,6 +58,9 @@ Create the standard JUCE GUI app entry point.
     - Split out **RGBA** sliders/text boxes (Red, Green, Blue, Alpha).
     - Split out **HSVA** sliders/text boxes (Hue, Saturation, Value, Alpha).
     - A **Hex Code** input box formatted specifically for JUCE's required `0xAARRGGBB` format (Alpha must be included as the framework relies heavily on it for glows/shadows).
+    
+    ![Color Picker UI Mockup](../screenshots/tke_color_picker_mockup.jpg)
+
 - **Pane 2 (Visual Preview)**: A wrapper `juce::Component`. Whenever the JSON updates, this destroys and re-instantiates the specific `SynthCardComponent` (e.g., the Carrier Card) using the new layout/theme data.
 - **Pane 3 (Raw Code)**: `juce::CodeEditorComponent` attached to a `juce::CodeDocument`. 
 
