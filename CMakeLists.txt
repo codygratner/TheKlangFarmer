@@ -215,3 +215,21 @@ target_include_directories(capture_planter_screenshot PRIVATE source)
 
 
 
+
+# 10. Standalone JSON Data & Theme Editor
+juce_add_gui_app(TheKlangEditor
+    PRODUCT_NAME "The Klang Editor"
+    VERSION ${PROJECT_VERSION}
+)
+target_sources(TheKlangEditor PRIVATE
+    tools/editor/Main.cpp
+    tools/editor/MainComponent.cpp
+    # Shared sources
+    source/UIComponents.cpp
+    source/ParameterManager.cpp
+)
+target_link_libraries(TheKlangEditor PRIVATE
+    ${TKF_JUCE_MODULES}
+    TkfAssets
+)
+target_include_directories(TheKlangEditor PRIVATE source tools/editor)

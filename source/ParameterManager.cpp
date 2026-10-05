@@ -102,4 +102,16 @@ void ParameterManager::parseJsonBlob(const char* data, int size, bool isTheme) {
     }
 }
 
+void ParameterManager::reloadFromJson(const juce::String& jsonString, bool isTheme) {
+    if (isTheme) {
+        auto parsed = juce::JSON::parse(jsonString);
+        if (parsed.isObject()) {
+            themeData = parsed;
+        }
+    } else {
+        auto stdString = jsonString.toStdString();
+        parseJsonBlob(stdString.c_str(), static_cast<int>(stdString.size()), false);
+    }
+}
+
 } // namespace RlyehSound

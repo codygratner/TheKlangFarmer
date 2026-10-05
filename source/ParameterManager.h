@@ -61,6 +61,8 @@ public:
     juce::Colour getThemeColour(const juce::String& colorId, juce::Colour defaultColour = juce::Colours::transparentBlack) const;
     const juce::var& getThemeData() const { return themeData; }
 
+    void reloadFromJson(const juce::String& jsonString, bool isTheme = false);
+
 private:
     ParameterManager();
     ~ParameterManager() = default;
