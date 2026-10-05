@@ -51,26 +51,58 @@ MainComponent::MainComponent()
     
     addAndMakeVisible(saveButton);
     saveButton.onClick = [this]() { 
-        auto file = getAssetFile(currentProductId == "theme" ? "controls" : "layouts", currentParamJsonFile);
-        if (file.existsAsFile()) {
-            if (currentProductId != "theme" && currentLayout.isObject()) {
-                if (currentLayout.getDynamicObject()->hasProperty(currentPageId)) {
-                    auto pageObj = currentLayout.getDynamicObject()->getProperty(currentPageId);
-                    if (pageObj.isObject()) {
-                        auto parsedEdit = juce::JSON::parse(rawJsonDocument.getAllContent());
-                        if (!parsedEdit.isVoid()) {
-                            pageObj.getDynamicObject()->setProperty(currentCardId, parsedEdit);
-                            juce::String fullJson = juce::JSON::toString(currentLayout);
-                            file.replaceWithText(fullJson);
-                            originalJsonString = rawJsonDocument.getAllContent();
-                        }
-                    }
+        auto parsedEdit = juce::JSON::parse(rawJsonDocument.getAllContent());
+        if (parsedEdit.isVoid()) return; // Don't save invalid JSON
+        
+        juce::String changes = "";
+        auto oldObj = juce::JSON::parse(originalJsonString).getDynamicObject();
+        auto newObj = parsedEdit.getDynamicObject();
+        if (oldObj && newObj) {
+            for (auto& prop : newObj->getProperties()) {
+                if (!oldObj->hasProperty(prop.name) || juce::JSON::toString(oldObj->getProperty(prop.name)) != juce::JSON::toString(prop.value)) {
+                    changes += "- " + prop.name.toString() + "\n";
                 }
-            } else if (currentProductId == "theme") {
-                file.replaceWithText(rawJsonDocument.getAllContent());
-                originalJsonString = rawJsonDocument.getAllContent();
+            }
+            for (auto& prop : oldObj->getProperties()) {
+                if (!newObj->hasProperty(prop.name)) {
+                    changes += "- " + prop.name.toString() + " (deleted)\n";
+                }
             }
         }
+        if (changes.isEmpty()) changes = "No changes detected.";
+        
+        juce::MessageBoxOptions options = juce::MessageBoxOptions()
+            .withIconType(juce::MessageBoxIconType::QuestionIcon)
+            .withTitle("Confirm Save")
+            .withMessage("You are about to save changes to:\nProduct: " + currentProductId + 
+                         (currentPageId.isNotEmpty() ? "\nPage: " + currentPageId : "") + 
+                         "\nCard: " + currentCardId + "\n\nChanges detected:\n" + changes + "\n\nCommit to disk?")
+            .withButton("Commit").withButton("Cancel");
+            
+        juce::AlertWindow::showAsync(options, [this, parsedEdit](int result) {
+            if (result == 1) { // 1 = Commit
+                auto file = getAssetFile(currentProductId == "theme" ? "controls" : "layouts", currentParamJsonFile);
+                if (file.existsAsFile()) {
+                    if (currentProductId != "theme" && currentLayout.isObject()) {
+                        if (currentPageId.isNotEmpty() && currentLayout.getDynamicObject()->hasProperty(currentPageId)) {
+                            auto pageObj = currentLayout.getDynamicObject()->getProperty(currentPageId);
+                            if (pageObj.isObject()) {
+                                pageObj.getDynamicObject()->setProperty(currentCardId, parsedEdit);
+                            }
+                        } else if (currentPageId.isEmpty()) {
+                            currentLayout.getDynamicObject()->setProperty(currentCardId, parsedEdit);
+                        }
+                        
+                        juce::String fullJson = juce::JSON::toString(currentLayout);
+                        file.replaceWithText(fullJson);
+                        originalJsonString = juce::JSON::toString(parsedEdit);
+                    } else if (currentProductId == "theme") {
+                        file.replaceWithText(rawJsonDocument.getAllContent());
+                        originalJsonString = rawJsonDocument.getAllContent();
+                    }
+                }
+            }
+        });
     };
     
     addAndMakeVisible(toggleOriginalButton);
@@ -361,8 +393,17 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                 continue;
             }
             
-            juce::Value val (valStr);
+                        juce::Value val (valStr);
             auto* pc = new juce::TextPropertyComponent(val, prop.name.toString(), 256, false);
+            
+            auto origParsed = juce::JSON::parse(originalJsonString);
+            if (origParsed.isObject()) {
+                auto* origObj = origParsed.getDynamicObject();
+                if (!origObj->hasProperty(prop.name) || juce::JSON::toString(origObj->getProperty(prop.name)) != juce::JSON::toString(prop.value)) {
+                    pc->setColour(juce::PropertyComponent::backgroundColourId, juce::Colour(0xffe8edf5)); // Light text color as background
+                    pc->setColour(juce::PropertyComponent::labelTextColourId, juce::Colour(0xff161922)); // Dark background as text
+                }
+            }
             props.add(pc);
         }
     }
@@ -441,6 +482,10 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
+
+
 
 
 

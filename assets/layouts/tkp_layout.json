@@ -1,84 +1,82 @@
 {
-    "Main":  {
-                 "Carrier":  {
-                                 "color":  "colRed",
-                                 "style":  "StandardDark",
-                                 "parameters":  [
-                                                    "planter_carrier_tracking",
-                                                    "planter_carrier_pitch",
-                                                    "planter_carrier_shape",
-                                                    "planter_carrier_depth"
-                                                ]
-                             },
-                 "Modulator":  {
-                                   "color":  "colCyan",
-                                   "style":  "StandardDark",
-                                   "parameters":  [
-                                                      "planter_mod_track",
-                                                      "planter_mod_type",
-                                                      "planter_mod_shape",
-                                                      "planter_mod_speed"
-                                                  ]
-                               },
-                 "Pitch Env":  {
-                                   "color":  "colSilver",
-                                   "style":  "StandardDark",
-                                   "parameters":  [
-                                                      "planter_pitchenv_target",
-                                                      "planter_pitchenv_slope",
-                                                      "planter_pitchenv_depth",
-                                                      "planter_pitchenv_decay"
-                                                  ]
-                               },
-                 "Noise Transient":  {
-                                         "color":  "colDarkGrey",
-                                         "style":  "StandardDark",
-                                         "parameters":  [
-                                                            "planter_noise_sh_rate",
-                                                            "planter_noise_filter",
-                                                            "planter_noise_decay",
-                                                            "planter_noise_crossfade"
-                                                        ]
-                                     },
-                 "Filter":  {
-                                "color":  "colBlue",
-                                "style":  "StandardDark",
-                                "parameters":  [
-                                                   "planter_filter_type",
-                                                   "planter_filter_slope",
-                                                   "planter_filter_cutoff",
-                                                   "planter_filter_reso"
-                                               ]
-                            },
-                 "Filter Env":  {
-                                    "color":  "colAmber",
-                                    "style":  "StandardDark",
-                                    "parameters":  [
-                                                       "planter_filterenv_slope",
-                                                       "planter_filterenv_depth",
-                                                       "planter_filterenv_decay",
-                                                       "planter_filterenv_drive"
-                                                   ]
-                                },
-                 "Amplifier":  {
-                                   "color":  "colGreen",
-                                   "style":  "StandardDark",
-                                   "parameters":  [
-                                                      "planter_amp_drive",
-                                                      "planter_amp_pan",
-                                                      "planter_amp_vel_slope",
-                                                      "planter_amp_vel_floor"
-                                                  ]
-                               },
-                 "Amp Envelope":  {
-                                      "color":  "colMagenta",
-                                      "style":  "StandardDark",
-                                      "parameters":  [
-                                                         "planter_ampenv_claps",
-                                                         "planter_ampenv_clapspeed",
-                                                         "planter_ampenv_slope",
-                                                         "planter_ampenv_decay"
-                                                     ]
-                                  }
-             }
+    "Carrier":  {
+                    "color":  "colRed",
+                    "style":  "StandardDark",
+                    "parameters":  [
+                                       "planter_carrier_tracking",
+                                       "planter_carrier_pitch",
+                                       "planter_carrier_shape",
+                                       "planter_carrier_depth"
+                                   ]
+                },
+    "Modulator":  {
+                      "color":  "colCyan",
+                      "style":  "StandardDark",
+                      "parameters":  [
+                                         "planter_mod_track",
+                                         "planter_mod_type",
+                                         "planter_mod_shape",
+                                         "planter_mod_speed"
+                                     ]
+                  },
+    "Pitch Env":  {
+                      "color":  "colSilver",
+                      "style":  "StandardDark",
+                      "parameters":  [
+                                         "planter_pitchenv_target",
+                                         "planter_pitchenv_slope",
+                                         "planter_pitchenv_depth",
+                                         "planter_pitchenv_decay"
+                                     ]
+                  },
+    "Noise Transient":  {
+                            "color":  "colDarkGrey",
+                            "style":  "StandardDark",
+                            "parameters":  [
+                                               "planter_noise_sh_rate",
+                                               "planter_noise_filter",
+                                               "planter_noise_decay",
+                                               "planter_noise_crossfade"
+                                           ]
+                        },
+    "Filter":  {
+                   "color":  "colBlue",
+                   "style":  "StandardDark",
+                   "parameters":  [
+                                      "planter_filter_type",
+                                      "planter_filter_slope",
+                                      "planter_filter_cutoff",
+                                      "planter_filter_reso"
+                                  ]
+               },
+    "Filter Env":  {
+                       "color":  "colAmber",
+                       "style":  "StandardDark",
+                       "parameters":  [
+                                          "planter_filterenv_slope",
+                                          "planter_filterenv_depth",
+                                          "planter_filterenv_decay",
+                                          "planter_filterenv_drive"
+                                      ]
+                   },
+    "Amplifier":  {
+                      "color":  "colGreen",
+                      "style":  "StandardDark",
+                      "parameters":  [
+                                         "planter_amp_drive",
+                                         "planter_amp_pan",
+                                         "planter_amp_vel_slope",
+                                         "planter_amp_vel_floor"
+                                     ]
+                  },
+    "Amp Envelope":  {
+                         "color":  "colMagenta",
+                         "style":  "StandardDark",
+                         "parameters":  [
+                                            "planter_ampenv_claps",
+                                            "planter_ampenv_clapspeed",
+                                            "planter_ampenv_slope",
+                                            "planter_ampenv_decay"
+                                        ]
+                     }
 }
