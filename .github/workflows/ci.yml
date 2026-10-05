@@ -31,7 +31,7 @@ jobs:
           cmake --build build --config Release --parallel --target \
             TheKlangFarmer_VST3 TheKlangFarmer_AU \
             TheKlangPlanter_VST3 TheKlangPlanter_AU \
-            dsp_tests capture_screenshot capture_planter_screenshot
+            TheKlangEditor dsp_tests capture_screenshot capture_planter_screenshot
 
       - name: Run DSP Unit Tests
         run: |
@@ -111,7 +111,7 @@ jobs:
         run: |
           cmake --build build --config Release --parallel --target \
             TheKlangFarmer_VST3 TheKlangPlanter_VST3 \
-            dsp_tests capture_screenshot capture_planter_screenshot
+            TheKlangEditor dsp_tests capture_screenshot capture_planter_screenshot
 
       - name: Run DSP Unit Tests
         run: |
@@ -157,7 +157,7 @@ jobs:
         run: |
           cmake --build build --config Release --parallel --target `
             TheKlangFarmer_VST3 TheKlangPlanter_VST3 `
-            dsp_tests capture_screenshot capture_planter_screenshot
+            TheKlangEditor dsp_tests capture_screenshot capture_planter_screenshot
 
       - name: Run DSP Unit Tests
         run: .\build\Release\dsp_tests.exe
@@ -174,3 +174,6 @@ jobs:
           Expand-Archive -Path "pluginval.zip" -DestinationPath "."
           .\pluginval.exe --strictness-level 5 --validate-in-process --timeout-ms 60000 "build\TheKlangFarmer_artefacts\Release\VST3\The Klang Farmer.vst3"
           .\pluginval.exe --strictness-level 5 --validate-in-process --timeout-ms 60000 "build\TheKlangPlanter_artefacts\Release\VST3\The Klang Planter.vst3"
+
+
+

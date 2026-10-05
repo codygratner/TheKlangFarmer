@@ -221,6 +221,7 @@ juce_add_gui_app(TheKlangEditor
     PRODUCT_NAME "The Klang Editor"
     VERSION ${PROJECT_VERSION}
 )
+juce_generate_juce_header(TheKlangEditor)
 target_sources(TheKlangEditor PRIVATE
     tools/editor/Main.cpp
     tools/editor/MainComponent.cpp
@@ -233,3 +234,4 @@ target_link_libraries(TheKlangEditor PRIVATE
     TkfAssets
 )
 target_include_directories(TheKlangEditor PRIVATE source tools/editor)
+

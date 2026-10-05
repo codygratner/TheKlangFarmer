@@ -1,16 +1,17 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "MainComponent.h"
+#include <JuceHeader.h> // for ProjectInfo::versionString
 
 class TheKlangEditorApplication : public juce::JUCEApplication {
 public:
     TheKlangEditorApplication() {}
 
     const juce::String getApplicationName() override       { return "The Klang Editor"; }
-    const juce::String getApplicationVersion() override    { return "1.0.0"; }
+    const juce::String getApplicationVersion() override    { return ProjectInfo::versionString; }
     bool moreThanOneInstanceAllowed() override             { return true; }
 
     void initialise(const juce::String& commandLine) override {
-        mainWindow.reset(new MainWindow(getApplicationName()));
+        mainWindow.reset(new MainWindow(getApplicationName() + " v" + getApplicationVersion()));
     }
 
     void shutdown() override {
@@ -35,6 +36,7 @@ public:
             setFullScreen(true);
            #else
             setResizable(true, true);
+            setFullScreen(true); // Maximized on start
             centreWithSize(getWidth(), getHeight());
            #endif
 
@@ -54,3 +56,4 @@ private:
 };
 
 START_JUCE_APPLICATION(TheKlangEditorApplication)
+
