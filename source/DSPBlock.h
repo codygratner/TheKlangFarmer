@@ -70,7 +70,7 @@ struct BlockContext {
     float slopRingModRate = 0.0f;
     float slopCombDamp = 0.0f;
     float slopCombCutoff = 0.0f;
-    float slopDisperserCutoff = 0.0f;
+    float slopPhaseSmearCutoff = 0.0f;
     float slopEQFreq = 0.0f;
     float slopEQFilter = 0.0f;
 

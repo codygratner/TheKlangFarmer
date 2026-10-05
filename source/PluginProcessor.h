@@ -189,11 +189,11 @@ private:
     juce::AudioParameterFloat*  combResonanceParam   = nullptr;
     juce::AudioParameterFloat*  combMixParam         = nullptr;
 
-    // 17. Disperser
-    juce::AudioParameterChoice* disperserTypeParam   = nullptr;
-    juce::AudioParameterFloat*  disperserAmountParam = nullptr;
-    juce::AudioParameterFloat*  disperserCutoffParam = nullptr;
-    juce::AudioParameterFloat*  disperserResonanceParam = nullptr;
+    // 17. PhaseSmear
+    juce::AudioParameterChoice* phasesmearTypeParam   = nullptr;
+    juce::AudioParameterFloat*  phasesmearAmountParam = nullptr;
+    juce::AudioParameterFloat*  phasesmearCutoffParam = nullptr;
+    juce::AudioParameterFloat*  phasesmearResonanceParam = nullptr;
 
     // 18. EQ (bell EQ)
     juce::AudioParameterFloat*  eqFreqParam          = nullptr;

@@ -80,7 +80,7 @@ This document serves as the permanent historical record of completed engineering
 - **Commits:** `3f16f87`, `b441b3e`  
 - **Plan Archive:** [`docs/completed_plans/2026-10-04_THE-6_fix-fx-catalog-alphabetical-ordering.md`](completed_plans/2026-10-04_THE-6_fix-fx-catalog-alphabetical-ordering.md)
 - **Summary & Technical Design**:
-  - Re-ordered the FX catalog so **Phase Smear** (formerly Disperser) sits in its proper alphabetical position:
+  - Re-ordered the FX catalog so **Phase Smear** (formerly PhaseSmear) sits in its proper alphabetical position:
     - Slot 0: `None`
     - Slot 1: `Bitcrusher`
     - Slot 2: `Chorus`
@@ -95,7 +95,7 @@ This document serves as the permanent historical record of completed engineering
   - **Backward-Compatible State Migration**:
     - In `source/PluginProcessor.cpp` `setStateInformation()`, added `fxCatalogVersion = 2` attribute.
     - Legacy presets (missing `fxCatalogVersion` or `< 2`) automatically remap slot indices:
-      - 4 → 9 (legacy Disperser → new Phase Smear)
+      - 4 → 9 (legacy PhaseSmear → new Phase Smear)
       - 5..9 → 4..8 (shifted one position down)
     - Guarantees 100% sonic fidelity when users open older projects or presets.
 - **Verification**:

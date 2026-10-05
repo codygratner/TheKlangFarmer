@@ -183,21 +183,21 @@
       }
     ]
   },
-  "disperser_amount": {
+  "phasesmear_amount": {
     "type": "float",
     "name": "Phase Smear: Amount",
     "description": "",
     "is_bipolar": false,
     "default": 0.0
   },
-  "disperser_cutoff": {
+  "phasesmear_cutoff": {
     "type": "float",
     "name": "Phase Smear: Cutoff",
     "description": "",
     "is_bipolar": false,
     "default": 0.0
   },
-  "disperser_resonance": {
+  "phasesmear_resonance": {
     "type": "float",
     "name": "Phase Smear: Resonance",
     "description": "",
@@ -267,7 +267,7 @@
     ],
     "default": 0
   },
-  "disperser_type": {
+  "phasesmear_type": {
     "type": "choice",
     "name": "Phase Smear: Order",
     "description": "",
@@ -287,7 +287,7 @@
       "Chorus",
       "Comb Filter",
       "Delay",
-      "Disperser",
+      "PhaseSmear",
       "Distortion",
       "FreqShift",
       "Grit FX",
@@ -309,7 +309,7 @@
       "Chorus",
       "Comb Filter",
       "Delay",
-      "Disperser",
+      "PhaseSmear",
       "Distortion",
       "FreqShift",
       "Grit FX",
@@ -331,7 +331,7 @@
       "Chorus",
       "Comb Filter",
       "Delay",
-      "Disperser",
+      "PhaseSmear",
       "Distortion",
       "FreqShift",
       "Grit FX",
@@ -353,7 +353,7 @@
       "Chorus",
       "Comb Filter",
       "Delay",
-      "Disperser",
+      "PhaseSmear",
       "Distortion",
       "FreqShift",
       "Grit FX",
@@ -375,7 +375,7 @@
       "Chorus",
       "Comb Filter",
       "Delay",
-      "Disperser",
+      "PhaseSmear",
       "Distortion",
       "FreqShift",
       "Grit FX",
@@ -397,7 +397,7 @@
       "Chorus",
       "Comb Filter",
       "Delay",
-      "Disperser",
+      "PhaseSmear",
       "Distortion",
       "FreqShift",
       "Grit FX",
@@ -419,7 +419,7 @@
       "Chorus",
       "Comb Filter",
       "Delay",
-      "Disperser",
+      "PhaseSmear",
       "Distortion",
       "FreqShift",
       "Grit FX",
@@ -433,7 +433,7 @@
   },
   "wavefolder_type": {
     "type": "choice",
-    "name": "WaveFolder: Type\",\n        juce::StringArray{ \"Off\", \"On\" }, 0));\n    layout.add(makeFloatParam(\"wavefolder_fold\", \"WaveFolder: Fold\", 0.0f));        // 0 folds\n    layout.add(makeFloatParam(\"wavefolder_bias\", \"WaveFolder: Bias\", 0.5f));        // 0 DC Bias\n    layout.add(makeFloatParam(\"wavefolder_filter\", \"WaveFolder: Filter\", 0.5f));    // Flat (50%)\n\n    // --- 13. RING MOD ---\n    layout.add(makeFloatParam(\"ringmod_shape\", \"RingMod: Waveform\", 0.0f));     // Sine\n    layout.add(makeFloatParam(\"ringmod_rate\", \"RingMod: Rate\", 0.50934f));      // 55 Hz (0.50934)\n    layout.add(makeFloatParam(\"ringmod_amount\", \"RingMod: Amount\", 0.0f));      // 0% (Dry)\n    layout.add(makeFloatParam(\"ringmod_width\", \"RingMod: Width\", 0.5f));        // Center (0%)\n\n    // --- 14. FREQUENCY SHIFTER ---\n    layout.add(makeFloatParam(\"freqshift_shift\", \"FreqShift: Shift\", 0.5f));    // 0 Hz\n    layout.add(makeFloatParam(\"freqshift_range\", \"FreqShift: Range\", TbdAudio::rangeHzToNorm(3.0f))); // 3 Hz default\n    layout.add(makeFloatParam(\"freqshift_blend\", \"FreqShift: Blend\", 0.75f));   // +50%:50% (def)\n    layout.add(makeFloatParam(\"freqshift_width\", \"FreqShift: Width\", 0.5f));    // Center (0%)\n\n    // --- 15. GRIT FX ---\n    layout.add(makeFloatParam(\"grit_bits\", \"Grit: Bit Reduction\", 1.0f));       // 16.0 bits\n    layout.add(makeFloatParam(\"grit_rate\", \"Grit: Sample Rate\", 1.0f));         // 24 kHz\n    layout.add(makeFloatParam(\"grit_low\", \"Grit: Low Shelf\", 0.5f));            // 0 dB\n    layout.add(makeFloatParam(\"grit_high\", \"Grit: High Shelf\", 0.5f));          // 0 dB\n\n    // --- 16. COMB FILTER ---\n    layout.add(makeFloatParam(\"comb_dampening\", \"Comb: Dampening\", 1.0f));      // 24 kHz\n    layout.add(makeFloatParam(\"comb_cutoff\", \"Comb: Cutoff\", 1.0f));            // 24 kHz\n    layout.add(makeFloatParam(\"comb_resonance\", \"Comb: Resonance\", 0.5f));      // 0% (bipolar center)\n    layout.add(makeFloatParam(\"comb_mix\", \"Comb: Mix\", 0.75f));                // +50%:50% (def)\n\n    // --- 17. PHASE SMEAR ---\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"disperser_type\", 1), \"Phase Smear: Order\",\n        juce::StringArray{ \"2nd\", \"4th\" }, 0));\n    layout.add(makeFloatParam(\"disperser_amount\", \"Phase Smear: Amount\", 4.0f / 32.0f)); // 4 APFs\n    layout.add(makeFloatParam(\"disperser_cutoff\", \"Phase Smear: Cutoff\", 0.62124f));     // 220 Hz\n    layout.add(makeFloatParam(\"disperser_resonance\", \"Phase Smear: Resonance\", 0.5f));   // 0% (bipolar center)\n\n    // --- 18. EQ (bell EQ) ---\n    layout.add(makeFloatParam(\"eq_freq\", \"EQ: Frequency\", 1.0f));               // 24 kHz\n    layout.add(makeFloatParam(\"eq_width\", \"EQ: Width\", 0.0f));                  // 0.1 octaves\n    layout.add(makeFloatParam(\"eq_gain\", \"EQ: Gain\", 0.5f));                    // 0 dB\n    layout.add(makeFloatParam(\"eq_filter\", \"EQ: DJ Filter\", 0.5f));             // Flat (50%)\n\n    // --- 19. AMP ---\n    layout.add(makeFloatParam(\"amp_level\", \"Amp: Level\", 1.0f));                // 100%\n    layout.add(makeFloatParam(\"amp_pan\", \"Amp: Pan\", 0.5f));                    // Center\n    layout.add(makeFloatParam(\"amp_drive\", \"Amp: Drive\", 0.5f));                // 0 dB\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"amp_limiter\", 1), \"Amp: Limiter\",\n        juce::StringArray{ \"Off\", \"On\" }, 1));                                  // On\n\n    // --- 20. AMP ENVELOPE ---\n    layout.add(makeFloatParam(\"ampenv_claps\", \"AmpEnv: Claps\", 0.0f));          // 0 claps\n    layout.add(makeFloatParam(\"ampenv_clapspeed\", \"AmpEnv: Clap Speed\", 0.1429f)); // 3 ms\n    layout.add(makeFloatParam(\"ampenv_slope\", \"AmpEnv: Slope\", 0.5886f));       // Exponential (def)\n    layout.add(makeFloatParam(\"ampenv_decay\", \"AmpEnv: Decay\", 0.3806f));       // 333 ms\n\n    // --- 21. VELOCITY ---\n    layout.add(makeFloatParam(\"vel_slope\", \"Velocity: Slope\", 0.5886f));          // Exponential (def)\n    layout.add(makeFloatParam(\"vel_depth\", \"Velocity: Depth\", 0.5f));            // 0% (bipolar center)\n    layout.add(makeFloatParam(\"vel_decay\", \"Velocity: Decay\", 0.5f));            // 0% (bipolar center)\n    layout.add(makeFloatParam(\"vel_volume\", \"Velocity: Volume\", 0.0f));          // 0% (unipolar min)\n\n    // --- 22. KEY TRACKING ---\n    layout.add(makeFloatParam(\"key_slope\", \"KeyTrack: Slope\", 0.5886f));          // Exponential (def)\n    layout.add(makeFloatParam(\"key_depth\", \"KeyTrack: Depth\", 0.5f));            // 0% (bipolar center)\n    layout.add(makeFloatParam(\"key_decay\", \"KeyTrack: Decay\", 0.5f));            // 0% (bipolar center)\n    layout.add(makeFloatParam(\"key_volume\", \"KeyTrack: Volume\", 0.0f));          // 0% (unipolar min)\n\n    // --- 23. SLOP ---\n    layout.add(makeFloatParam(\"slop_freq\", \"Slop: Frequency\", 0.0f));           // 0% (unipolar min)\n    layout.add(makeFloatParam(\"slop_depth\", \"Slop: Depth\", 0.0f));              // 0% (unipolar min)\n    layout.add(makeFloatParam(\"slop_decay\", \"Slop: Decay\", 0.0f));              // 0% (unipolar min)\n    layout.add(makeFloatParam(\"slop_pan\", \"Slop: Pan\", 0.0f));                  // 0% (unipolar min)\n\n    // --- 24. MOD ENVELOPE 1 ---\n    const auto modChoices = getModDestinationChoices();\n    layout.add(makeFloatParam(\"modenv1_slope\", \"ModEnv 1: Slope\", 0.5886f));     // Exponential (def)\n    layout.add(makeFloatParam(\"modenv1_depth\", \"ModEnv 1: Depth\", 0.5f));        // 0% (bipolar center)\n    layout.add(makeFloatParam(\"modenv1_decay\", \"ModEnv 1: Decay\", 0.3806f));     // 333 ms\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"modenv1_target\", 1), \"ModEnv 1: Destination",
+    "name": "WaveFolder: Type\",\n        juce::StringArray{ \"Off\", \"On\" }, 0));\n    layout.add(makeFloatParam(\"wavefolder_fold\", \"WaveFolder: Fold\", 0.0f));        // 0 folds\n    layout.add(makeFloatParam(\"wavefolder_bias\", \"WaveFolder: Bias\", 0.5f));        // 0 DC Bias\n    layout.add(makeFloatParam(\"wavefolder_filter\", \"WaveFolder: Filter\", 0.5f));    // Flat (50%)\n\n    // --- 13. RING MOD ---\n    layout.add(makeFloatParam(\"ringmod_shape\", \"RingMod: Waveform\", 0.0f));     // Sine\n    layout.add(makeFloatParam(\"ringmod_rate\", \"RingMod: Rate\", 0.50934f));      // 55 Hz (0.50934)\n    layout.add(makeFloatParam(\"ringmod_amount\", \"RingMod: Amount\", 0.0f));      // 0% (Dry)\n    layout.add(makeFloatParam(\"ringmod_width\", \"RingMod: Width\", 0.5f));        // Center (0%)\n\n    // --- 14. FREQUENCY SHIFTER ---\n    layout.add(makeFloatParam(\"freqshift_shift\", \"FreqShift: Shift\", 0.5f));    // 0 Hz\n    layout.add(makeFloatParam(\"freqshift_range\", \"FreqShift: Range\", TbdAudio::rangeHzToNorm(3.0f))); // 3 Hz default\n    layout.add(makeFloatParam(\"freqshift_blend\", \"FreqShift: Blend\", 0.75f));   // +50%:50% (def)\n    layout.add(makeFloatParam(\"freqshift_width\", \"FreqShift: Width\", 0.5f));    // Center (0%)\n\n    // --- 15. GRIT FX ---\n    layout.add(makeFloatParam(\"grit_bits\", \"Grit: Bit Reduction\", 1.0f));       // 16.0 bits\n    layout.add(makeFloatParam(\"grit_rate\", \"Grit: Sample Rate\", 1.0f));         // 24 kHz\n    layout.add(makeFloatParam(\"grit_low\", \"Grit: Low Shelf\", 0.5f));            // 0 dB\n    layout.add(makeFloatParam(\"grit_high\", \"Grit: High Shelf\", 0.5f));          // 0 dB\n\n    // --- 16. COMB FILTER ---\n    layout.add(makeFloatParam(\"comb_dampening\", \"Comb: Dampening\", 1.0f));      // 24 kHz\n    layout.add(makeFloatParam(\"comb_cutoff\", \"Comb: Cutoff\", 1.0f));            // 24 kHz\n    layout.add(makeFloatParam(\"comb_resonance\", \"Comb: Resonance\", 0.5f));      // 0% (bipolar center)\n    layout.add(makeFloatParam(\"comb_mix\", \"Comb: Mix\", 0.75f));                // +50%:50% (def)\n\n    // --- 17. PHASE SMEAR ---\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"phasesmear_type\", 1), \"Phase Smear: Order\",\n        juce::StringArray{ \"2nd\", \"4th\" }, 0));\n    layout.add(makeFloatParam(\"phasesmear_amount\", \"Phase Smear: Amount\", 4.0f / 32.0f)); // 4 APFs\n    layout.add(makeFloatParam(\"phasesmear_cutoff\", \"Phase Smear: Cutoff\", 0.62124f));     // 220 Hz\n    layout.add(makeFloatParam(\"phasesmear_resonance\", \"Phase Smear: Resonance\", 0.5f));   // 0% (bipolar center)\n\n    // --- 18. EQ (bell EQ) ---\n    layout.add(makeFloatParam(\"eq_freq\", \"EQ: Frequency\", 1.0f));               // 24 kHz\n    layout.add(makeFloatParam(\"eq_width\", \"EQ: Width\", 0.0f));                  // 0.1 octaves\n    layout.add(makeFloatParam(\"eq_gain\", \"EQ: Gain\", 0.5f));                    // 0 dB\n    layout.add(makeFloatParam(\"eq_filter\", \"EQ: DJ Filter\", 0.5f));             // Flat (50%)\n\n    // --- 19. AMP ---\n    layout.add(makeFloatParam(\"amp_level\", \"Amp: Level\", 1.0f));                // 100%\n    layout.add(makeFloatParam(\"amp_pan\", \"Amp: Pan\", 0.5f));                    // Center\n    layout.add(makeFloatParam(\"amp_drive\", \"Amp: Drive\", 0.5f));                // 0 dB\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"amp_limiter\", 1), \"Amp: Limiter\",\n        juce::StringArray{ \"Off\", \"On\" }, 1));                                  // On\n\n    // --- 20. AMP ENVELOPE ---\n    layout.add(makeFloatParam(\"ampenv_claps\", \"AmpEnv: Claps\", 0.0f));          // 0 claps\n    layout.add(makeFloatParam(\"ampenv_clapspeed\", \"AmpEnv: Clap Speed\", 0.1429f)); // 3 ms\n    layout.add(makeFloatParam(\"ampenv_slope\", \"AmpEnv: Slope\", 0.5886f));       // Exponential (def)\n    layout.add(makeFloatParam(\"ampenv_decay\", \"AmpEnv: Decay\", 0.3806f));       // 333 ms\n\n    // --- 21. VELOCITY ---\n    layout.add(makeFloatParam(\"vel_slope\", \"Velocity: Slope\", 0.5886f));          // Exponential (def)\n    layout.add(makeFloatParam(\"vel_depth\", \"Velocity: Depth\", 0.5f));            // 0% (bipolar center)\n    layout.add(makeFloatParam(\"vel_decay\", \"Velocity: Decay\", 0.5f));            // 0% (bipolar center)\n    layout.add(makeFloatParam(\"vel_volume\", \"Velocity: Volume\", 0.0f));          // 0% (unipolar min)\n\n    // --- 22. KEY TRACKING ---\n    layout.add(makeFloatParam(\"key_slope\", \"KeyTrack: Slope\", 0.5886f));          // Exponential (def)\n    layout.add(makeFloatParam(\"key_depth\", \"KeyTrack: Depth\", 0.5f));            // 0% (bipolar center)\n    layout.add(makeFloatParam(\"key_decay\", \"KeyTrack: Decay\", 0.5f));            // 0% (bipolar center)\n    layout.add(makeFloatParam(\"key_volume\", \"KeyTrack: Volume\", 0.0f));          // 0% (unipolar min)\n\n    // --- 23. SLOP ---\n    layout.add(makeFloatParam(\"slop_freq\", \"Slop: Frequency\", 0.0f));           // 0% (unipolar min)\n    layout.add(makeFloatParam(\"slop_depth\", \"Slop: Depth\", 0.0f));              // 0% (unipolar min)\n    layout.add(makeFloatParam(\"slop_decay\", \"Slop: Decay\", 0.0f));              // 0% (unipolar min)\n    layout.add(makeFloatParam(\"slop_pan\", \"Slop: Pan\", 0.0f));                  // 0% (unipolar min)\n\n    // --- 24. MOD ENVELOPE 1 ---\n    const auto modChoices = getModDestinationChoices();\n    layout.add(makeFloatParam(\"modenv1_slope\", \"ModEnv 1: Slope\", 0.5886f));     // Exponential (def)\n    layout.add(makeFloatParam(\"modenv1_depth\", \"ModEnv 1: Depth\", 0.5f));        // 0% (bipolar center)\n    layout.add(makeFloatParam(\"modenv1_decay\", \"ModEnv 1: Decay\", 0.3806f));     // 333 ms\n    layout.add(std::make_unique<juce::AudioParameterChoice>(\n        juce::ParameterID(\"modenv1_target\", 1), \"ModEnv 1: Destination",
     "description": "",
     "choices": [
       "None",

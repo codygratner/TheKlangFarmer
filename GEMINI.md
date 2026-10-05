@@ -30,3 +30,8 @@
 - **No Spontaneous Implementation**: When the user invokes planning commands (/plan, /strict-plan, /pasteplan, /readplan), you must NEVER automatically start writing C++ code, compiling, or modifying source files.
 - **Mandatory Confirmation**: Always stop, summarize the loaded plan, and explicitly ask the user for permission to begin implementation, or if they prefer to defer it to the backlog.
 
+
+## Strict Background Task Etiquette
+- **No Polling or Pinging**: When a long-running command (like a build, test suite, or script) goes to the background, you must NEVER use `manage_task` to poll its status.
+- **Yield and Wait**: Stop calling tools and yield your turn. The system will automatically wake you up with the task's final output when it completes. Do not spam the chat with "checking status" updates.
+

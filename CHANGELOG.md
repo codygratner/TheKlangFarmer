@@ -75,7 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Sub-Block Modulation Smoothing**: Real-time sample-accurate sub-block modulation matrix routing across all active synthesis and effect parameters.
 - **Key Tracking Module**: Pitch tracking module with configurable root key, tracking rate, and key center.
 - **Pitch Envelope OPP Mode**: Added `OPP` (Opposite / Inverse) mode to pitch envelopes alongside `CAR`, `MOD`, and `BOTH`, driving carrier and modulator pitch in reciprocal directions.
-- **Phase Smear 2nd / 4th Order Selector**: Replaced Disperser on/off switch with a 2nd Order / 4th Order all-pass filter cascade selector for standard or extreme phase dispersion.
+- **Phase Smear 2nd / 4th Order Selector**: Replaced PhaseSmear on/off switch with a 2nd Order / 4th Order all-pass filter cascade selector for standard or extreme phase dispersion.
 
 ### Changed
 - **Complementary Color Panel Tints**: Added 10–15% complementary color tinting to module cards, enhancing visual separation across the modular rack.
@@ -187,7 +187,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.2] - 2026-09-29
 
 ### Added
-- **Cascaded 2nd-Order Allpass Disperser**:
+- **Cascaded 2nd-Order Allpass PhaseSmear**:
   - Multi-stage phase smearing module for authentic acoustic transient "zapping" and physical strike dispersion.
   - True energy-conserving allpass implementation.
 - **Dedicated Comb Filter Module**:

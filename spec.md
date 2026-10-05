@@ -141,7 +141,7 @@ To maintain consistency across all modules and effect cards, standard parameter 
 
 ### 3.5. Frequency Ranges
 - **Full Audio Spectrum**: $20\,\text{Hz} - 24\,\text{kHz}$ (logarithmic scale, used in Carriers, Grit, Bell EQ, DJ Filters).
-- **Wide Modular / LFO Spectrum**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (logarithmic scale, used in Modulators, Filter Cutoff, Comb Filter, Disperser, RingMod).
+- **Wide Modular / LFO Spectrum**: $0.1\,\text{Hz} - 24\,\text{kHz}$ (logarithmic scale, used in Modulators, Filter Cutoff, Comb Filter, PhaseSmear, RingMod).
 
 ### 3.6. Bipolar Modulations & Gains
 - **Carrier Modulation Depth**: $-100\%$ to $0\%$ to $+100\%$ (bipolar, $0\% = 0.5$ default).
@@ -156,7 +156,7 @@ To maintain consistency across all modules and effect cards, standard parameter 
 
 ### 3.8. Tactile Hardware Button Selectors & Toggles
 - All discrete module state selectors and bypass toggles use consistent, large, tactile hardware-style single-row buttons with glowing status LED indicators:
-  - **Bypass / Toggle Buttons**: Standardized 2-column single-row layout (`Off`, `On`) with large 26px tactile touch zones (used in `Drive`, `Wave Folder`, `Comb Filter`, `Disperser`, `Amplifier Limiter`, `Pre-Limiter`, and `Post-Limiter`).
+  - **Bypass / Toggle Buttons**: Standardized 2-column single-row layout (`Off`, `On`) with large 26px tactile touch zones (used in `Drive`, `Wave Folder`, `Comb Filter`, `PhaseSmear`, `Amplifier Limiter`, `Pre-Limiter`, and `Post-Limiter`).
   - **Carrier Pitch Tracking**: Single-row 3-button selector (`MIDI`, `Freq`, `Note`).
     - **MIDI**: Tracks incoming MIDI pitch with a semitone offset slider ($-24$ to $+24$ st, default $0\text{ st}$, center-split bipolar meter).
     - **Freq**: Fixed continuous frequency slider ($20\,\text{Hz} - 24\,\text{kHz}$, logarithmic, default $55\,\text{Hz}$).

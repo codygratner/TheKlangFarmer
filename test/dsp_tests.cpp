@@ -64,7 +64,7 @@ int main() {
     }
     std::cout << "PASS: 22-block parameter sweep stability test." << std::endl;
 
-    // 3. Test Comb filter and Phase Smear (APF Disperser)
+    // 3. Test Comb filter and Phase Smear (APF PhaseSmear)
     // Comb filter (Block BLK_COMB: Dampening, Cutoff, Res, Mix)
     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 0, 0.5f);        // Dampening
     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 1, 0.5f);        // Cutoff
@@ -83,11 +83,11 @@ int main() {
     }
     std::cout << "PASS: Comb filter test." << std::endl;
 
-    // Phase Smear (Block BLK_DISPERSER: Order, Amount, Cutoff, Resonance)
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 0, 0.0f); // 2nd Order
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 1, 1.0f); // 32 stages
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 2, 0.6f); // Cutoff
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 3, 0.8f); // Resonance
+    // Phase Smear (Block BLK_PHASE_SMEAR: Order, Amount, Cutoff, Resonance)
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 0, 0.0f); // 2nd Order
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 1, 1.0f); // 32 stages
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 2, 0.6f); // Cutoff
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 3, 0.8f); // Resonance
     engine.trigger(1.0f);
     for (int block = 0; block < 50; ++block) {
         engine.processStereo(left.data(), right.data(), blockSize);
@@ -100,7 +100,7 @@ int main() {
         }
     }
     // Test 4th Order mode
-    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 0, 1.0f); // 4th Order
+    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 0, 1.0f); // 4th Order
     engine.trigger(1.0f);
     for (int block = 0; block < 50; ++block) {
         engine.processStereo(left.data(), right.data(), blockSize);
@@ -116,7 +116,7 @@ int main() {
     // Verify Phase Smear 2nd-order and 4th-order smearing and allpass energy preservation
     {
         for (int order = 0; order <= 1; ++order) {
-            TbdAudio::DisperserBlock disp;
+            TbdAudio::PhaseSmearBlock disp;
             TbdAudio::BlockContext ctx;
             ctx.sampleRate = 44100.0f;
             ctx.invSr = 1.0f / 44100.0f;
@@ -438,7 +438,7 @@ int main() {
         assert(ctxDef.slopRingModRate == 0.0f);
         assert(ctxDef.slopCombDamp == 0.0f);
         assert(ctxDef.slopCombCutoff == 0.0f);
-        assert(ctxDef.slopDisperserCutoff == 0.0f);
+        assert(ctxDef.slopPhaseSmearCutoff == 0.0f);
         assert(ctxDef.slopPitchEnv1Depth == 0.0f);
         assert(ctxDef.slopPitchEnv2Depth == 0.0f);
         assert(ctxDef.slopFilterEnv1Depth == 0.0f);
@@ -1118,7 +1118,7 @@ int main() {
         assert(dynamic_cast<TbdAudio::FlangerBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(6).get()) != nullptr);
         assert(dynamic_cast<TbdAudio::FrequencyShifterBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(7).get()) != nullptr);
         assert(dynamic_cast<TbdAudio::GritBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(8).get()) != nullptr);
-        assert(dynamic_cast<TbdAudio::DisperserBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(9).get()) != nullptr);
+        assert(dynamic_cast<TbdAudio::PhaseSmearBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(9).get()) != nullptr);
         assert(dynamic_cast<TbdAudio::PhaserBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(10).get()) != nullptr);
         assert(dynamic_cast<TbdAudio::RingModBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(11).get()) != nullptr);
         assert(dynamic_cast<TbdAudio::DelayBlock*>(TbdAudio::ModularDrumEngine::createFXBlock(12).get()) != nullptr);

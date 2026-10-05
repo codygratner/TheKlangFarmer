@@ -15,7 +15,7 @@
 
 ## 1. Executive Summary & Canonical Index Mapping
 
-When **Disperser** was renamed to **Phase Smear**, its catalog position remained at index `4` (between *Comb Filter* and *Drive*). Re-ordering the 13-processor FX catalog alphabetically places **Phase Smear** at index `9` (immediately before **Phaser** at index `10`, since ASCII space `0x20` precedes `'r'` `0x72`).
+When **PhaseSmear** was renamed to **Phase Smear**, its catalog position remained at index `4` (between *Comb Filter* and *Drive*). Re-ordering the 13-processor FX catalog alphabetically places **Phase Smear** at index `9` (immediately before **Phaser** at index `10`, since ASCII space `0x20` precedes `'r'` `0x72`).
 
 Because `Phaser` (`10`), `RingMod` (`11`), `Tempo Delay` (`12`), and `Wave Folder` (`13`) are already in alphabetical order after `Phase Smear`, **only indices `4` through `9` change** (`0..3` and `10..13` are invariant):
 
@@ -25,12 +25,12 @@ Because `Phaser` (`10`), `RingMod` (`11`), `Tempo Delay` (`12`), and `Wave Folde
 | **1** | `Bell EQ` (`EQBlock`) | `Bell EQ` (`EQBlock`) | `0` (Invariant) |
 | **2** | `Chorus` (`ChorusBlock`) | `Chorus` (`ChorusBlock`) | `0` (Invariant) |
 | **3** | `Comb Filter` (`CombFilterBlock`) | `Comb Filter` (`CombFilterBlock`) | `0` (Invariant) |
-| **4** | `Phase Smear` (`DisperserBlock`) | **`Drive`** (`DriveBlock`) | Was `5 -> 4` (`-1`) |
+| **4** | `Phase Smear` (`PhaseSmearBlock`) | **`Drive`** (`DriveBlock`) | Was `5 -> 4` (`-1`) |
 | **5** | `Drive` (`DriveBlock`) | **`Filter`** (`FilterBlock(0)`) | Was `6 -> 5` (`-1`) |
 | **6** | `Filter` (`FilterBlock(0)`) | **`Flanger`** (`FlangerBlock`) | Was `7 -> 6` (`-1`) |
 | **7** | `Flanger` (`FlangerBlock`) | **`Frequency Shifter`** (`FrequencyShifterBlock`) | Was `8 -> 7` (`-1`) |
 | **8** | `Frequency Shifter` (`FrequencyShifterBlock`) | **`Grit FX`** (`GritBlock`) | Was `9 -> 8` (`-1`) |
-| **9** | `Grit FX` (`GritBlock`) | **`Phase Smear`** (`DisperserBlock`) | **Was `4 -> 9` (`+5`)** |
+| **9** | `Grit FX` (`GritBlock`) | **`Phase Smear`** (`PhaseSmearBlock`) | **Was `4 -> 9` (`+5`)** |
 | **10** | `Phaser` (`PhaserBlock`) | `Phaser` (`PhaserBlock`) | `0` (Invariant) |
 | **11** | `RingMod` (`RingModBlock`) | `RingMod` (`RingModBlock`) | `0` (Invariant) |
 | **12** | `Tempo Delay` (`DelayBlock`) | `Tempo Delay` (`DelayBlock`) | `0` (Invariant) |
@@ -70,7 +70,7 @@ static std::unique_ptr<DSPBlock> createFXBlock(int type) {
         case 6:  return std::make_unique<FlangerBlock>();          // Flanger
         case 7:  return std::make_unique<FrequencyShifterBlock>(); // Frequency Shifter
         case 8:  return std::make_unique<GritBlock>();             // Grit FX
-        case 9:  return std::make_unique<DisperserBlock>();        // Phase Smear
+        case 9:  return std::make_unique<PhaseSmearBlock>();        // Phase Smear
         case 10: return std::make_unique<PhaserBlock>();           // Phaser
         case 11: return std::make_unique<RingModBlock>();          // RingMod
         case 12: return std::make_unique<DelayBlock>();            // Tempo Delay
@@ -172,7 +172,7 @@ Updated every `switch (fxType)` and `currentType` dynamic control check in `sour
 
 - [x] **`test/dsp_tests.cpp`**:
    - Updated existing `setPreFXType` / `setPostFXType` calls referencing indices `4..9` (Drive 4, Grit FX 8, Flanger 6).
-   - Added test 29 verifying `createFXBlock(1..13)` instantiates the exact alphabetical `DSPBlock` subclasses (`EQBlock`, `ChorusBlock`, `CombFilterBlock`, `DriveBlock`, `FilterBlock`, `FlangerBlock`, `FrequencyShifterBlock`, `GritBlock`, `DisperserBlock`, `PhaserBlock`, `RingModBlock`, `DelayBlock`, `WaveFolderBlock`).
+   - Added test 29 verifying `createFXBlock(1..13)` instantiates the exact alphabetical `DSPBlock` subclasses (`EQBlock`, `ChorusBlock`, `CombFilterBlock`, `DriveBlock`, `FilterBlock`, `FlangerBlock`, `FrequencyShifterBlock`, `GritBlock`, `PhaseSmearBlock`, `PhaserBlock`, `RingModBlock`, `DelayBlock`, `WaveFolderBlock`).
    - Verified default FX slot assignments on `ModularDrumEngine` initialization match alphabetical ordering.
 - [x] **`spec.md` & `future_backlog_and_reminders.md`**:
    - Updated the FX catalog table and default slot index documentation in `spec.md`.

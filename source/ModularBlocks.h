@@ -977,8 +977,8 @@ private:
     float combDampL = 0.0f, combDampR = 0.0f;
 };
 
-// --- BLOCK: DISPERSER (Type, Amount, Cutoff, Resonance) ---
-class DisperserBlock : public DSPBlock {
+// --- BLOCK: PHASE_SMEAR (Type, Amount, Cutoff, Resonance) ---
+class PhaseSmearBlock : public DSPBlock {
 public:
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
@@ -1004,19 +1004,19 @@ public:
         if (apfStages == 0) return;
 
         // 3. Cutoff: 0.1 Hz to 24 kHz (def 24 kHz)
-        float cutoffParam = std::clamp(params[2] + ctx.slopDisperserCutoff, 0.0f, 1.0f);
+        float cutoffParam = std::clamp(params[2] + ctx.slopPhaseSmearCutoff, 0.0f, 1.0f);
         float cutoff = 0.1f * std::pow(24000.0f / 0.1f, cutoffParam);
         cutoff = std::clamp(cutoff, 10.0f, sampleRate * 0.485f);
 
         // 4. Resonance: -100% to 0% to +100% (bipolar, def 0% = 0.5)
         // High resonance (Q) creates a steep phase transition and dramatic group delay
         // (the classic laser zap / chirp / smearing of Phase Smear)
-        float disperserRes = (params[3] - 0.5f) * 2.0f;
+        float phasesmearRes = (params[3] - 0.5f) * 2.0f;
         float Q = 0.7071f;
-        if (disperserRes >= 0.0f) {
-            Q = 0.7071f * std::pow(35.0f, disperserRes);
+        if (phasesmearRes >= 0.0f) {
+            Q = 0.7071f * std::pow(35.0f, phasesmearRes);
         } else {
-            Q = 0.7071f * std::pow(0.25f, -disperserRes);
+            Q = 0.7071f * std::pow(0.25f, -phasesmearRes);
         }
         Q = std::clamp(Q, 0.1f, 30.0f);
 
@@ -1095,7 +1095,7 @@ private:
     float apf2S2R[32] = { 0.0f };
 };
 
-using PhaseSmearBlock = DisperserBlock;
+using PhaseSmearBlock = PhaseSmearBlock;
 
 // --- BLOCK: EQ (Bell EQ + DJ Filter) ---
 class EQBlock : public DSPBlock {
@@ -2387,7 +2387,7 @@ public:
         BLK_FREQSHIFT,
         BLK_GRIT,
         BLK_COMB,
-        BLK_DISPERSER,
+        BLK_PHASE_SMEAR,
         BLK_EQ,
         BLK_AMP,
         BLK_AMPENV,
@@ -2420,7 +2420,7 @@ public:
             case 6:  return std::make_unique<FlangerBlock>();          // Flanger
             case 7:  return std::make_unique<FrequencyShifterBlock>(); // Frequency Shifter
             case 8:  return std::make_unique<GritBlock>();             // Grit FX
-            case 9:  return std::make_unique<DisperserBlock>();        // Phase Smear
+            case 9:  return std::make_unique<PhaseSmearBlock>();        // Phase Smear
             case 10: return std::make_unique<PhaserBlock>();           // Phaser
             case 11: return std::make_unique<RingModBlock>();          // RingMod
             case 12: return std::make_unique<DelayBlock>();            // Tempo Delay
@@ -2464,7 +2464,7 @@ public:
         allBlocks[BLK_FREQSHIFT]  = std::make_unique<FrequencyShifterBlock>();
         allBlocks[BLK_GRIT]       = std::make_unique<GritBlock>();
         allBlocks[BLK_COMB]       = std::make_unique<CombFilterBlock>();
-        allBlocks[BLK_DISPERSER]  = std::make_unique<DisperserBlock>();
+        allBlocks[BLK_PHASE_SMEAR]  = std::make_unique<PhaseSmearBlock>();
         allBlocks[BLK_EQ]         = std::make_unique<EQBlock>();
 
         allBlocks[BLK_AMP]        = std::make_unique<AmpBlock>();
@@ -2613,10 +2613,10 @@ public:
         setPageParameter(BLK_COMB, 2, 0.5f);  // Resonance
         setPageParameter(BLK_COMB, 3, 0.75f); // Mix (+50%:50% def)
 
-        setPageParameter(BLK_DISPERSER, 0, 0.0f); // 2nd Order
-        setPageParameter(BLK_DISPERSER, 1, 4.0f / 32.0f); // 4 APFs
-        setPageParameter(BLK_DISPERSER, 2, 0.62124f);
-        setPageParameter(BLK_DISPERSER, 3, 0.5f);
+        setPageParameter(BLK_PHASE_SMEAR, 0, 0.0f); // 2nd Order
+        setPageParameter(BLK_PHASE_SMEAR, 1, 4.0f / 32.0f); // 4 APFs
+        setPageParameter(BLK_PHASE_SMEAR, 2, 0.62124f);
+        setPageParameter(BLK_PHASE_SMEAR, 3, 0.5f);
 
         setPageParameter(BLK_EQ, 0, 1.0f);
         setPageParameter(BLK_EQ, 1, 0.0f);
@@ -2760,7 +2760,7 @@ public:
         ctx.slopRingModRate     = slopFreq  * fastRng(slopRngState);
         ctx.slopCombDamp        = slopFreq  * fastRng(slopRngState);
         ctx.slopCombCutoff      = slopFreq  * fastRng(slopRngState);
-        ctx.slopDisperserCutoff = slopFreq  * fastRng(slopRngState);
+        ctx.slopPhaseSmearCutoff = slopFreq  * fastRng(slopRngState);
         ctx.slopEQFreq          = slopFreq  * fastRng(slopRngState);
         ctx.slopEQFilter        = slopFreq  * fastRng(slopRngState);
 
@@ -3010,8 +3010,8 @@ public:
                 scopes[BLK_COMB].pushBlock(left, numSamples);
                 break;
             case 8:
-                allBlocks[BLK_DISPERSER]->processStereo(left, right, numSamples, ctx);
-                scopes[BLK_DISPERSER].pushBlock(left, numSamples);
+                allBlocks[BLK_PHASE_SMEAR]->processStereo(left, right, numSamples, ctx);
+                scopes[BLK_PHASE_SMEAR].pushBlock(left, numSamples);
                 break;
             case 9:
                 allBlocks[BLK_EQ]->processStereo(left, right, numSamples, ctx);

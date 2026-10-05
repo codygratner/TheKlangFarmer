@@ -154,11 +154,11 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     combResonanceParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_resonance"));
     combMixParam         = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_mix"));
 
-    // 17. Disperser
-    disperserTypeParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("disperser_type"));
-    disperserAmountParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("disperser_amount"));
-    disperserCutoffParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("disperser_cutoff"));
-    disperserResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("disperser_resonance"));
+    // 17. PhaseSmear
+    phasesmearTypeParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("phasesmear_type"));
+    phasesmearAmountParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("phasesmear_amount"));
+    phasesmearCutoffParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("phasesmear_cutoff"));
+    phasesmearResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("phasesmear_resonance"));
 
     // 18. EQ (bell EQ)
     eqFreqParam          = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("eq_freq"));
@@ -586,11 +586,11 @@ void TheKlangFarmerAudioProcessor::applyBaseParameters() {
     if (combResonanceParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 2, getNorm(combResonanceParam));
     if (combMixParam)         engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 3, getNorm(combMixParam));
 
-    // 17. Disperser
-    if (disperserTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 0, static_cast<float>(disperserTypeParam->getIndex()));
-    if (disperserAmountParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 1, getNorm(disperserAmountParam));
-    if (disperserCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 2, getNorm(disperserCutoffParam));
-    if (disperserResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DISPERSER, 3, getNorm(disperserResonanceParam));
+    // 17. PhaseSmear
+    if (phasesmearTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 0, static_cast<float>(phasesmearTypeParam->getIndex()));
+    if (phasesmearAmountParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 1, getNorm(phasesmearAmountParam));
+    if (phasesmearCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 2, getNorm(phasesmearCutoffParam));
+    if (phasesmearResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 3, getNorm(phasesmearResonanceParam));
 
     // 18. EQ (bell EQ)
     if (eqFreqParam)             engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_EQ, 0, getNorm(eqFreqParam));
@@ -1107,11 +1107,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
 
     // --- 17. PHASE SMEAR ---
     layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("disperser_type", 1), "Phase Smear: Order",
+        juce::ParameterID("phasesmear_type", 1), "Phase Smear: Order",
         juce::StringArray{ "2nd", "4th" }, 0));
-    layout.add(makeFloatParam("disperser_amount", "Phase Smear: Amount", 4.0f / 32.0f)); // 4 APFs
-    layout.add(makeFloatParam("disperser_cutoff", "Phase Smear: Cutoff", 0.62124f));     // 220 Hz
-    layout.add(makeFloatParam("disperser_resonance", "Phase Smear: Resonance", 0.5f));   // 0% (bipolar center)
+    layout.add(makeFloatParam("phasesmear_amount", "Phase Smear: Amount", 4.0f / 32.0f)); // 4 APFs
+    layout.add(makeFloatParam("phasesmear_cutoff", "Phase Smear: Cutoff", 0.62124f));     // 220 Hz
+    layout.add(makeFloatParam("phasesmear_resonance", "Phase Smear: Resonance", 0.5f));   // 0% (bipolar center)
 
     // --- 18. EQ (bell EQ) ---
     layout.add(makeFloatParam("eq_freq", "EQ: Frequency", 1.0f));               // 24 kHz
