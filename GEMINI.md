@@ -35,3 +35,13 @@
 - **No Polling or Pinging**: When a long-running command (like a build, test suite, or script) goes to the background, you must NEVER use `manage_task` to poll its status.
 - **Yield and Wait**: Stop calling tools and yield your turn. The system will automatically wake you up with the task's final output when it completes. Do not spam the chat with "checking status" updates.
 
+
+## Strict C++ Formatting & Style
+- **Indentation**: Exactly 4 spaces. No tabs. No 2-space indents.
+- **Naming**: `camelCase` for variables and methods. `PascalCase` for classes and structs.
+- **Braces**: 
+  - Functions and Classes must use Allman style (opening brace on a new line).
+  - Control flow (`if`, `for`, `while`) must use K&R style (opening brace on the same line).
+  - Omit braces for single-line `if` statements.
+- **Pointers/References**: Attach the asterisk/ampersand to the type, not the variable (e.g., `float* myPtr`, not `float *myPtr`).
+- **Modern C++**: Use `auto` where types are obvious from the right-hand side, and use `const` generously.
