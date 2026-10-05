@@ -6,51 +6,113 @@ class ParamStatusPropertyComponent : public juce::PropertyComponent, private juc
 public:
     ParamStatusPropertyComponent(juce::Component* comp, const juce::String& name, double defVal, const juce::String& type, const juce::StringArray& c) 
         : juce::PropertyComponent(name), component(comp), defaultValue(defVal), compType(type), choices(c) {
+        
+        addAndMakeVisible(rawValueLabel);
+        rawValueLabel.setEditable(true);
+        rawValueLabel.setJustificationType(juce::Justification::centredLeft);
+        rawValueLabel.onTextChange = [this]() {
+            if (compType == "float") {
+                if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) s->setValue(rawValueLabel.getText().getDoubleValue(), juce::sendNotificationAsync);
+            } else if (compType == "choice") {
+                if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) l->setSelectedIndex(rawValueLabel.getText().getIntValue(), juce::sendNotificationAsync);
+            }
+            editedByHand = true;
+            repaint();
+        };
+
+        addAndMakeVisible(renderedValueLabel);
+        renderedValueLabel.setEditable(true);
+        renderedValueLabel.setJustificationType(juce::Justification::centredLeft);
+        renderedValueLabel.onTextChange = [this]() {
+            if (compType == "float") {
+                if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) s->setValue(s->getValueFromText(renderedValueLabel.getText()), juce::sendNotificationAsync);
+            } else if (compType == "choice") {
+                if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) {
+                    int idx = choices.indexOf(renderedValueLabel.getText());
+                    if (idx >= 0) l->setSelectedIndex(idx, juce::sendNotificationAsync);
+                }
+            }
+            editedByHand = true;
+            repaint();
+        };
+
         startTimerHz(15);
     }
     
     void refresh() override {}
     
-    void paint(juce::Graphics& g) override {
-        double curVal = 0.0;
-        juce::String rendered = "";
-        
-        if (compType == "float") {
-            if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) {
-                curVal = s->getValue();
-                rendered = s->getTextFromValue(curVal);
-            }
-        } else if (compType == "choice") {
-            if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) {
-                curVal = static_cast<double>(l->getSelectedIndex());
-                if (l->getSelectedIndex() >= 0 && l->getSelectedIndex() < choices.size()) {
-                    rendered = choices[l->getSelectedIndex()];
-                }
-            }
-        }
-        
-        bool edited = std::abs(curVal - defaultValue) > 0.0001;
-        
-        auto bgCol = edited ? juce::Colour(0xffe8edf5) : juce::Colours::transparentBlack;
-        auto textCol = edited ? juce::Colour(0xff161922) : juce::Colour(0xffe8edf5);
-        
+    void resized() override {
         auto b = getLocalBounds();
-        g.setColour(bgCol);
-        g.fillRect(b);
-        
-        g.setColour(textCol);
-        g.drawText(getName(), b.withWidth(b.getWidth() / 3).reduced(4, 0), juce::Justification::centredLeft, true);
-        g.drawText(juce::String(curVal, 3), b.withTrimmedLeft(b.getWidth() / 3).withWidth(b.getWidth() / 3).reduced(4, 0), juce::Justification::centredLeft, true);
-        g.drawText(rendered, b.withTrimmedLeft((b.getWidth() / 3) * 2).reduced(4, 0), juce::Justification::centredLeft, true);
+        b.removeFromLeft(b.getWidth() / 3);
+        rawValueLabel.setBounds(b.removeFromLeft(b.getWidth() / 2).reduced(4, 0));
+        renderedValueLabel.setBounds(b.reduced(4, 0));
     }
     
-    void timerCallback() override { repaint(); }
+    void paint(juce::Graphics& g) override {
+        double curVal = 0.0;
+        
+        if (compType == "float") {
+            if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) curVal = s->getValue();
+        } else if (compType == "choice") {
+            if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) curVal = static_cast<double>(l->getSelectedIndex());
+        }
+        
+        bool isHovered = false;
+        if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) {
+            isHovered = s->isMouseButtonDown() || s->isMouseOverOrDragging();
+        } else if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) {
+            isHovered = l->isMouseButtonDown() || l->isMouseOverOrDragging();
+        }
+        
+        auto bgCol = editedByHand ? juce::Colour(0xffe8edf5) : juce::Colours::transparentBlack;
+        auto textCol = editedByHand ? juce::Colour(0xff161922) : juce::Colour(0xffe8edf5);
+        
+        auto b = getLocalBounds();
+        
+        if (isHovered) {
+            g.setColour(juce::Colour(0xffe8edf5));
+            g.drawRect(b, 1.0f);
+        }
+        
+        g.setColour(bgCol);
+        auto nameBounds = b.withWidth(b.getWidth() / 3).reduced(4, 0);
+        g.fillRect(nameBounds);
+        
+        g.setColour(textCol);
+        g.drawText(getName(), nameBounds, juce::Justification::centredLeft, true);
+    }
+    
+    void timerCallback() override { 
+        if (!rawValueLabel.isBeingEdited() && !renderedValueLabel.isBeingEdited()) {
+            double curVal = 0.0;
+            juce::String rendered = "";
+            if (compType == "float") {
+                if (auto* s = dynamic_cast<RotaryKnobSlider*>(component)) {
+                    curVal = s->getValue();
+                    rendered = s->getTextFromValue(curVal);
+                }
+            } else if (compType == "choice") {
+                if (auto* l = dynamic_cast<LedSelectorComponent*>(component)) {
+                    curVal = static_cast<double>(l->getSelectedIndex());
+                    if (l->getSelectedIndex() >= 0 && l->getSelectedIndex() < choices.size()) {
+                        rendered = choices[l->getSelectedIndex()];
+                    }
+                }
+            }
+            rawValueLabel.setText(juce::String(curVal, 3), juce::dontSendNotification);
+            renderedValueLabel.setText(rendered, juce::dontSendNotification);
+        }
+        repaint();
+    }
     
 private:
     juce::Component* component;
     double defaultValue;
     juce::String compType;
     juce::StringArray choices;
+    juce::Label rawValueLabel;
+    juce::Label renderedValueLabel;
+    bool editedByHand = false;
 };
 void EditorTreeItem::paintItem(juce::Graphics& g, int width, int height) {
     if (isSelected()) g.fillAll(juce::Colours::lightblue.withAlpha(0.2f));
@@ -280,14 +342,34 @@ void MainComponent::buildTree() {
                         if (pObj->hasProperty("parameters")) {
                             // It's a card directly
                             juce::String cardName = prop.name.toString();
-                            prodNode->addSubItem(new EditorTreeItem(this, cardName, "card", productIds[p], "", cardName));
+                            auto* cardNode = new EditorTreeItem(this, cardName, "card", productIds[p], "", cardName);
+                            cardNode->addSubItem(new EditorTreeItem(this, "Main Theme", "card_theme", productIds[p], "", cardName));
+                            auto params = pObj->getProperty("parameters");
+                            if (params.isArray()) {
+                                int i = 1;
+                                for (auto& param : *params.getArray()) {
+                                    cardNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", productIds[p], "", cardName, param.toString()));
+                                }
+                            }
+                            prodNode->addSubItem(cardNode);
                         } else {
                             // It's a page
                             juce::String pageName = prop.name.toString();
                             auto* pageNode = new EditorTreeItem(this, pageName, "page", productIds[p], pageName);
                             for (auto& cardProp : pObj->getProperties()) {
                                 juce::String cardName = cardProp.name.toString();
-                                pageNode->addSubItem(new EditorTreeItem(this, cardName, "card", productIds[p], pageName, cardName));
+                                auto* cardNode = new EditorTreeItem(this, cardName, "card", productIds[p], pageName, cardName);
+                                cardNode->addSubItem(new EditorTreeItem(this, "Main Theme", "card_theme", productIds[p], pageName, cardName));
+                                if (cardProp.value.isObject()) {
+                                    auto params = cardProp.value.getDynamicObject()->getProperty("parameters");
+                                    if (params.isArray()) {
+                                        int i = 1;
+                                        for (auto& param : *params.getArray()) {
+                                            cardNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", productIds[p], pageName, cardName, param.toString()));
+                                        }
+                                    }
+                                }
+                                pageNode->addSubItem(cardNode);
                             }
                             prodNode->addSubItem(pageNode);
                         }
@@ -303,7 +385,9 @@ void MainComponent::buildTree() {
 }
 
 void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
-    if (item->itemType != "card" && !(item->itemType == "product" && item->productId == "theme")) return;
+    if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme")) return;
+    
+    currentParamTarget = item->paramId;
     
     if (item->itemType == "product" && item->productId == "theme") {
         currentProductId = "theme";
@@ -318,7 +402,7 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
     }
 
     auto file = getAssetFile(currentProductId == "theme" ? "controls" : "layouts", currentParamJsonFile);
-    filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : ""));
+    filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : "") + (currentParamTarget.isNotEmpty() ? " -> [" + currentParamTarget + "]" : ""));
 
     if (file.existsAsFile()) {
         auto fullJsonString = file.loadFileAsString();
@@ -353,7 +437,9 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
                             auto p = juce::JSON::parse(f.loadFileAsString());
                             if (p.isObject() && p.getDynamicObject()->hasProperty(paramId)) {
                                 paramToFileMap[paramId] = f.getFileName();
-                                controlsObj->setProperty(paramId, p.getDynamicObject()->getProperty(paramId));
+                                if (item->itemType != "card_param" || currentParamTarget == paramId) {
+                                    controlsObj->setProperty(paramId, p.getDynamicObject()->getProperty(paramId));
+                                }
                                 break;
                             }
                         }
@@ -361,6 +447,10 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
                 }
             }
             originalControlsJson = juce::JSON::toString(juce::var(controlsObj.get()));
+            
+            if (item->itemType == "card_param") {
+                // Keep the layout intact in memory for preview, but maybe clear the editor
+            }
         } else {
             originalLayoutJson = fullJsonString;
             originalControlsJson = "{}";
@@ -368,6 +458,22 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
         
         layoutJsonDocument.replaceAllContent(originalLayoutJson);
         controlsJsonDocument.replaceAllContent(originalControlsJson);
+        
+        if (item->itemType == "card_theme") {
+            jsonSplitterLayout.setItemLayout(0, -1.0, -1.0, -1.0); // Full layout
+            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);          // Hide splitter
+            jsonSplitterLayout.setItemLayout(2, 0, 0, 0);          // Hide controls
+        } else if (item->itemType == "card_param") {
+            jsonSplitterLayout.setItemLayout(0, 0, 0, 0);          // Hide layout
+            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);          // Hide splitter
+            jsonSplitterLayout.setItemLayout(2, -1.0, -1.0, -1.0); // Full controls
+        } else {
+            jsonSplitterLayout.setItemLayout(0, -0.1, -0.9, -0.5);
+            jsonSplitterLayout.setItemLayout(1, 8, 8, 8);
+            jsonSplitterLayout.setItemLayout(2, -0.1, -0.9, -0.5);
+        }
+        resized();
+        
         syncJsonToPreview(originalLayoutJson);
     }
 }
@@ -502,9 +608,14 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     }
     previewWrapper.repaint();
 
+    auto* selected = navigationTree.getSelectedItem(0);
+    juce::String selType = selected ? static_cast<EditorTreeItem*>(selected)->itemType : "";
+    bool showLayout = (selType != "card_param");
+    bool showParams = (selType != "card_theme");
+
     formEditor.clear();
     juce::Array<juce::PropertyComponent*> props;
-    if (parsed.isObject()) {
+    if (showLayout && parsed.isObject()) {
         auto* obj = parsed.getDynamicObject();
         for (auto& prop : obj->getProperties()) {
             juce::String valStr;
@@ -537,11 +648,12 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     }
     
     // Add detailed parameter properties
-    if (parsed.isObject()) {
+    if (showParams && parsed.isObject()) {
         auto paramsArray = parsed.getDynamicObject()->getProperty("parameters");
         if (paramsArray.isArray()) {
             for (auto& paramIdVar : *paramsArray.getArray()) {
                 juce::String paramId = paramIdVar.toString();
+                if (currentParamTarget.isNotEmpty() && currentParamTarget != paramId) continue;
                 auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
                 if (def) {
                     juce::Array<juce::PropertyComponent*> pProps;
@@ -620,6 +732,14 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
+
+
+
+
+
+
 
 
 

@@ -7,17 +7,16 @@ class MainComponent;
 
 class EditorTreeItem : public juce::TreeViewItem {
 public:
-    EditorTreeItem(MainComponent* owner, const juce::String& text, const juce::String& type, const juce::String& prodId = "", const juce::String& pgId = "", const juce::String& cId = "")
-        : mainComp(owner), name(text), itemType(type), productId(prodId), pageId(pgId), cardId(cId) {}
+    EditorTreeItem(MainComponent* owner, const juce::String& text, const juce::String& type, const juce::String& prodId = "", const juce::String& pgId = "", const juce::String& cId = "", const juce::String& pId = "")
+        : mainComp(owner), name(text), itemType(type), productId(prodId), pageId(pgId), cardId(cId), paramId(pId) {}
 
     bool mightContainSubItems() override { return getNumSubItems() > 0; }
     void paintItem(juce::Graphics& g, int width, int height) override;
     void itemSelectionChanged(bool isNowSelected) override;
 
     MainComponent* mainComp;
-    juce::String name, itemType, productId, pageId, cardId;
+    juce::String name, itemType, productId, pageId, cardId, paramId;
 };
-
 class MainComponent : public juce::Component, public juce::Timer, public juce::CodeDocument::Listener {
 public:
     MainComponent();
@@ -67,6 +66,7 @@ private:
     juce::String currentProductId;
     juce::String currentPageId;
     juce::String currentCardId;
+    juce::String currentParamTarget;
     juce::String currentParamJsonFile;
     juce::String originalJsonString;
     bool showingOriginal = false;
@@ -79,6 +79,8 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };
+
+
 
 
 
