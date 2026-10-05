@@ -19,6 +19,33 @@ public:
     }
 };
 
+class DiffViewerComponent : public juce::Component {
+public:
+    DiffViewerComponent(const juce::String& oldL, const juce::String& newL, const juce::String& oldC, const juce::String& newC) {
+        oldDoc.replaceAllContent("=== OLD LAYOUT ===\n" + oldL + "\n\n=== OLD CONTROLS ===\n" + oldC);
+        newDoc.replaceAllContent("=== NEW LAYOUT ===\n" + newL + "\n\n=== NEW CONTROLS ===\n" + newC);
+        
+        oldEditor = std::make_unique<juce::CodeEditorComponent>(oldDoc, nullptr);
+        newEditor = std::make_unique<juce::CodeEditorComponent>(newDoc, nullptr);
+        
+        oldEditor->setReadOnly(true);
+        newEditor->setReadOnly(true);
+        
+        addAndMakeVisible(oldEditor.get());
+        addAndMakeVisible(newEditor.get());
+        setSize(1000, 700);
+    }
+    
+    void resized() override {
+        auto b = getLocalBounds();
+        oldEditor->setBounds(b.removeFromLeft(b.getWidth() / 2));
+        newEditor->setBounds(b);
+    }
+    
+private:
+    juce::CodeDocument oldDoc, newDoc;
+    std::unique_ptr<juce::CodeEditorComponent> oldEditor, newEditor;
+};
 class ParamRowPropertyComponent : public juce::PropertyComponent, private juce::Timer {
 public:
     ParamRowPropertyComponent(juce::Component* linkedComp, const juce::String& rowTitle, const juce::String& compType, const juce::StringArray& choices,
@@ -141,6 +168,7 @@ MainComponent::MainComponent()
 
         addAndMakeVisible(refreshButton);
     refreshButton.onClick = [this]() { 
+        RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent(), false);
         auto xml = navigationTree.getOpennessState(false);
         auto* selected = navigationTree.getSelectedItem(0);
         juce::String selName = selected ? static_cast<EditorTreeItem*>(selected)->name : "";
@@ -200,7 +228,7 @@ MainComponent::MainComponent()
             .withMessage("You are about to save changes to:\nProduct: " + currentProductId + 
                          (currentPageId.isNotEmpty() ? "\nPage: " + currentPageId : "") + 
                          "\nCard: " + currentCardId + "\n\nChanges detected:\n" + changes + "\n\nCommit to disk?")
-            .withButton("Commit").withButton("Cancel");
+            .withButton("Commit").withButton("Show Diff").withButton("Cancel");
             
         juce::AlertWindow::showAsync(options, [this, parsedLayoutEdit, parsedControlsEdit, newControls](int result) {
             if (result == 1) { // Commit
@@ -239,6 +267,21 @@ MainComponent::MainComponent()
                 
                 originalLayoutJson = juce::JSON::toString(parsedLayoutEdit);
                 originalControlsJson = juce::JSON::toString(parsedControlsEdit);
+                
+                // Refresh models
+                RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent(), false);
+                buildTree();
+                
+            } else if (result == 2) { // Show Diff
+                auto* diffComp = new DiffViewerComponent(originalLayoutJson, layoutJsonDocument.getAllContent(), originalControlsJson, controlsJsonDocument.getAllContent());
+                juce::DialogWindow::LaunchOptions opts;
+                opts.content.setOwned(diffComp);
+                opts.dialogTitle = "Diff Viewer";
+                opts.dialogBackgroundColour = juce::Colour(0xff222222);
+                opts.escapeKeyTriggersCloseButton = true;
+                opts.useNativeTitleBar = true;
+                opts.resizable = true;
+                opts.launchAsync();
             }
         });
     };
@@ -842,7 +885,45 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                             }
                         ));
                     }
-                    formEditor.addSection("Param: " + def->name, pProps);
+                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Tooltip", "string", juce::StringArray(),
+                            []() { return 0.0; },
+                            [def]() { return def->description; },
+                            nullptr,
+                            [def, updateControlsJson](juce::String s) {
+                                def->description = s;
+                                updateControlsJson("description", s);
+                            }
+                        ));
+                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Snap Points", "string", juce::StringArray(),
+                            []() { return 0.0; },
+                            [def]() {
+                                juce::StringArray parts;
+                                for (auto& p : def->pointsOfInterest) parts.add(juce::String(p.value, 3) + ": " + p.label);
+                                return parts.joinIntoString(", ");
+                            },
+                            nullptr,
+                            [def, updateControlsJson](juce::String s) {
+                                def->pointsOfInterest.clear();
+                                juce::StringArray parts;
+                                parts.addTokens(s, ",", "\"");
+                                juce::Array<juce::var> jsonPoiArr;
+                                for (auto& part : parts) {
+                                    auto p = part.trim();
+                                    if (p.contains(":")) {
+                                        float v = p.upToFirstOccurrenceOf(":", false, false).getFloatValue();
+                                        juce::String l = p.fromFirstOccurrenceOf(":", false, false).trim();
+                                        def->pointsOfInterest.push_back({v, l});
+                                        auto* obj = new juce::DynamicObject();
+                                        obj->setProperty("value", v);
+                                        obj->setProperty("label", l);
+                                        jsonPoiArr.add(juce::var(obj));
+                                    }
+                                }
+                                updateControlsJson("points_of_interest", juce::var(jsonPoiArr));
+                            }
+                        ));
+                        
+                        formEditor.addSection("Param: " + def->name, pProps);
                 }
             }
         }
@@ -906,6 +987,11 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
+
+
+
 
 
 
