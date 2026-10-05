@@ -18,21 +18,25 @@ Editing any of these three panes will instantly sync and reflect across the othe
 ## Proposed Changes
 
 ### 1. CMake Integration
-Add a new executable target that links to the shared GUI code but explicitly excludes the heavy DSP (`PluginProcessor.cpp`).
+Add a new executable target that links to the shared GUI code but explicitly excludes the heavy DSP (`PluginProcessor.cpp`). This will be wrapped in a CMake Option so it isn't compiled into public tagged releases by default, but remains available for those building from source.
 #### [MODIFY] `CMakeLists.txt`
 ```cmake
-# New target: TheKlangEditor (GUI App only)
-juce_add_gui_app(TheKlangEditor
-    PRODUCT_NAME "The Klang Editor"
-    VERSION ${PROJECT_VERSION}
-)
-target_sources(TheKlangEditor PRIVATE
-    tools/editor/Main.cpp
-    tools/editor/MainComponent.cpp
-    # Shared sources
-    source/UIComponents.cpp
-    source/ParameterManager.cpp
-)
+option(BUILD_TK_EDITOR "Build The Klang Editor (Internal Dev Tool)" OFF)
+
+if(BUILD_TK_EDITOR)
+    # New target: TheKlangEditor (GUI App only)
+    juce_add_gui_app(TheKlangEditor
+        PRODUCT_NAME "The Klang Editor"
+        VERSION ${PROJECT_VERSION}
+    )
+    target_sources(TheKlangEditor PRIVATE
+        tools/editor/Main.cpp
+        tools/editor/MainComponent.cpp
+        # Shared sources
+        source/UIComponents.cpp
+        source/ParameterManager.cpp
+    )
+endif()
 ```
 
 ### 2. Standalone App Scaffolding
