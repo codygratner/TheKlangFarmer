@@ -6,8 +6,41 @@ MainComponent::MainComponent()
     : splitterBar1(&verticalLayout, 1, true),
       splitterBar2(&verticalLayout, 3, true)
 {
-    addAndMakeVisible(fileSelector);
-    fileSelector.onChange = [this]() { loadFile(fileSelector.getText()); };
+    addAndMakeVisible(productSelector);
+    productSelector.addItem("Global Theme", 1);
+    productSelector.addItem("The Klang Farmer (TKF)", 2);
+    productSelector.addItem("The Klang Planter (TKP)", 3);
+    productSelector.onChange = [this]() { loadProduct(productSelector.getSelectedId()); };
+
+    addAndMakeVisible(moduleSelector);
+    moduleSelector.onChange = [this]() { loadModule(moduleSelector.getText()); };
+
+    addAndMakeVisible(refreshButton);
+    refreshButton.onClick = [this]() { loadModule(moduleSelector.getText()); };
+    
+    addAndMakeVisible(saveButton);
+    saveButton.onClick = [this]() { 
+        auto file = getAssetFile(currentProductId == 1 ? "controls" : "layouts", currentParamJsonFile);
+        if (file.existsAsFile()) {
+            file.replaceWithText(rawJsonDocument.getAllContent());
+            originalJsonString = rawJsonDocument.getAllContent();
+        }
+    };
+    
+    addAndMakeVisible(toggleOriginalButton);
+    toggleOriginalButton.onClick = [this]() {
+        showingOriginal = !showingOriginal;
+        if (showingOriginal) {
+            toggleOriginalButton.setButtonText("Show Edited");
+            auto parsed = juce::JSON::parse(originalJsonString);
+            if (!parsed.isVoid()) {
+                syncJsonToPreview(originalJsonString);
+            }
+        } else {
+            toggleOriginalButton.setButtonText("Show Original");
+            syncJsonToPreview(rawJsonDocument.getAllContent());
+        }
+    };
 
     filePathDisplay.setMultiLine(true);
     filePathDisplay.setReadOnly(true);
@@ -31,70 +64,86 @@ MainComponent::MainComponent()
 
     setSize(1000, 700);
 
-    // Scan for JSON files
-    auto assetsDir = getAssetFile("").getParentDirectory();
-    if (assetsDir.exists()) {
-        juce::Array<juce::File> files;
-        assetsDir.findChildFiles(files, juce::File::findFiles, false, "*.json");
-        int id = 1;
-        for (const auto& f : files) {
-            fileSelector.addItem(f.getFileName(), id++);
-        }
-    }
-    
-    // Initial load
-    fileSelector.setSelectedId(1, juce::sendNotification);
+    productSelector.setSelectedId(2, juce::sendNotification);
 }
 
 MainComponent::~MainComponent() {
     rawJsonDocument.removeListener(this);
 }
 
-juce::File MainComponent::getAssetFile(const juce::String& name) {
+juce::File MainComponent::getAssetFile(const juce::String& subfolder, const juce::String& name) {
     auto currentDir = juce::File::getCurrentWorkingDirectory();
     while (currentDir.getParentDirectory() != currentDir) {
         auto assetsDir = currentDir.getChildFile("assets");
         if (assetsDir.exists()) {
-            return assetsDir.getChildFile("controls").getChildFile(name);
+            return assetsDir.getChildFile(subfolder).getChildFile(name);
         }
         currentDir = currentDir.getParentDirectory();
     }
     return {};
 }
 
-void MainComponent::loadFile(const juce::String& filename) {
-    if (filename.isEmpty()) return;
-    currentFileId = filename;
+void MainComponent::loadProduct(int productId) {
+    currentProductId = productId;
+    moduleSelector.clear(juce::dontSendNotification);
 
-    auto file = getAssetFile(currentFileId);
-    filePathDisplay.setText(file.getFullPathName());
-
-    if (file.existsAsFile()) {
-        rawJsonDocument.replaceAllContent(file.loadFileAsString());
-        syncJsonToPreview();
+    if (productId == 1) {
+        moduleSelector.addItem("theme.json", 1);
+        moduleSelector.setSelectedId(1, juce::sendNotification);
+    } else {
+        juce::String layoutFile = (productId == 2) ? "tkf_layout.json" : "tkp_layout.json";
+        auto file = getAssetFile("layouts", layoutFile);
+        if (file.existsAsFile()) {
+            currentLayout = juce::JSON::parse(file.loadFileAsString());
+            if (currentLayout.isObject()) {
+                int id = 1;
+                for (auto& prop : currentLayout.getDynamicObject()->getProperties()) {
+                    moduleSelector.addItem(prop.name.toString(), id++);
+                }
+            }
+            if (moduleSelector.getNumItems() > 0)
+                moduleSelector.setSelectedId(1, juce::sendNotification);
+        }
     }
 }
 
-void MainComponent::codeDocumentTextInserted(const juce::String&, int) { startTimer(500); }
-void MainComponent::codeDocumentTextDeleted(int, int) { startTimer(500); }
+void MainComponent::loadModule(const juce::String& moduleName) {
+    if (moduleName.isEmpty()) return;
+    currentModuleName = moduleName;
+
+    if (currentProductId == 1) {
+        currentParamJsonFile = "theme.json";
+    } else {
+        currentParamJsonFile = (currentProductId == 2) ? "tkf_layout.json" : "tkp_layout.json";
+    }
+
+    auto file = getAssetFile(currentProductId == 1 ? "controls" : "layouts", currentParamJsonFile);
+    filePathDisplay.setText(file.getFullPathName());
+
+    if (file.existsAsFile()) {
+        originalJsonString = file.loadFileAsString();
+        rawJsonDocument.replaceAllContent(originalJsonString);
+        syncJsonToPreview(originalJsonString);
+    }
+}
+
+void MainComponent::codeDocumentTextInserted(const juce::String&, int) { if (!showingOriginal) startTimer(500); }
+void MainComponent::codeDocumentTextDeleted(int, int) { if (!showingOriginal) startTimer(500); }
 
 void MainComponent::timerCallback() {
     stopTimer();
     syncJsonToPreview();
 }
 
-void MainComponent::syncJsonToPreview() {
-    auto jsonString = rawJsonDocument.getAllContent();
-    bool isTheme = (currentFileId == "theme.json");
+void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
+    auto jsonString = forcedJson.isNotEmpty() ? forcedJson : rawJsonDocument.getAllContent();
+    bool isTheme = (currentProductId == 1);
     
     auto parsed = juce::JSON::parse(jsonString);
     if (parsed.isVoid()) return;
 
-    RlyehSound::ParameterManager::getInstance().reloadFromJson(jsonString, isTheme);
-    
-    auto file = getAssetFile(currentFileId);
-    if (file.existsAsFile()) {
-        file.replaceWithText(jsonString);
+    if (isTheme) {
+        RlyehSound::ParameterManager::getInstance().reloadFromJson(jsonString, true);
     }
     
     previewWrapper.deleteAllChildren();
@@ -106,45 +155,63 @@ void MainComponent::syncJsonToPreview() {
         previewWrapper.addAndMakeVisible(card);
         card->setBounds(10, 10, 280, 200);
     } else {
-        auto* card = new ModuleCardComponent(currentFileId.upToLastOccurrenceOf(".json", false, false).toUpperCase(), 
-            RlyehSound::ParameterManager::getInstance().getThemeColour("colCyan"));
-        
-        // Dynamically add knobs based on JSON properties
-        if (parsed.isObject()) {
-            auto* obj = parsed.getDynamicObject();
-            int slot = 0;
-            for (auto& prop : obj->getProperties()) {
-                if (prop.value.isObject()) {
-                    auto* vObj = prop.value.getDynamicObject();
-                    juce::String name = vObj->hasProperty("name") ? vObj->getProperty("name").toString() : prop.name.toString();
-                    juce::String type = vObj->hasProperty("type") ? vObj->getProperty("type").toString() : "float";
-                    juce::String desc = vObj->hasProperty("description") ? vObj->getProperty("description").toString() : "";
+        if (parsed.isObject() && parsed.getDynamicObject()->hasProperty(currentModuleName)) {
+            auto moduleConfig = parsed.getDynamicObject()->getProperty(currentModuleName);
+            
+            juce::Colour c = RlyehSound::ParameterManager::getInstance().getThemeColour(
+                moduleConfig.getProperty("color", "colSilver").toString());
+            auto styleStr = moduleConfig.getProperty("style", "StandardDark").toString();
+            auto style = (styleStr == "DoepferSilver") ? ModuleCardComponent::PanelStyle::DoepferSilver : ModuleCardComponent::PanelStyle::StandardDark;
+            
+            auto* card = new ModuleCardComponent(currentModuleName, c, style);
+            
+            auto paramsArray = moduleConfig.getProperty("parameters", juce::var());
+            if (paramsArray.isArray()) {
+                int slot = 0;
+                for (auto& paramIdVar : *paramsArray.getArray()) {
+                    juce::String paramId = paramIdVar.toString();
+                    auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
                     
-                    if (type == "float" && slot < 4) {
-                        auto* slider = new RotaryKnobSlider();
-                        activeSliders.add(slider);
-                        slider->setTooltip(desc);
-                        slider->setRange(
-                            vObj->hasProperty("range") && vObj->getProperty("range").isObject() && vObj->getProperty("range").getDynamicObject()->hasProperty("min") ? static_cast<double>(vObj->getProperty("range").getDynamicObject()->getProperty("min")) : 0.0,
-                            vObj->hasProperty("range") && vObj->getProperty("range").isObject() && vObj->getProperty("range").getDynamicObject()->hasProperty("max") ? static_cast<double>(vObj->getProperty("range").getDynamicObject()->getProperty("max")) : 1.0,
-                            vObj->hasProperty("range") && vObj->getProperty("range").isObject() && vObj->getProperty("range").getDynamicObject()->hasProperty("step") ? static_cast<double>(vObj->getProperty("range").getDynamicObject()->getProperty("step")) : 0.001
-                        );
-                        slider->setValue(vObj->hasProperty("default") ? static_cast<double>(vObj->getProperty("default")) : 0.0);
-                        
-                        card->addAndMakeVisible(slider);
-                        card->setKnob(slot, name, slider);
-                        slot++;
+                    if (def) {
+                        if (def->type == "float" && slot < 4) {
+                            auto* slider = new RotaryKnobSlider();
+                            activeSliders.add(slider);
+                            slider->setTooltip(def->description);
+                            slider->setRange(def->min, def->max, def->step);
+                            slider->setValue(def->defaultFloat);
+                            
+                            if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("waveform")) {
+                                slider->diagramType = RotaryKnobSlider::DiagramType::Waveform;
+                            } else if (paramId.containsIgnoreCase("slope")) {
+                                slider->diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
+                            }
+                            
+                            card->addAndMakeVisible(slider);
+                            card->setKnob(slot, def->name, slider);
+                            slot++;
+                        } else if (def->type == "choice") {
+                            auto* box = new juce::ComboBox();
+                            activeSliders.add(box);
+                            box->addItemList(def->choices, 1);
+                            box->setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff161922));
+                            box->setColour(juce::ComboBox::textColourId, juce::Colour(0xffe8edf5));
+                            box->setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff2d3342));
+                            box->setJustificationType(juce::Justification::centredLeft);
+                            box->setTooltip(def->description);
+                            box->setSelectedItemIndex(def->defaultChoice, juce::dontSendNotification);
+                            card->addAndMakeVisible(box);
+                            card->setSelector(box);
+                            if (slot > 1) card->setSelectorAtBottom(true);
+                        }
                     }
                 }
             }
+            previewWrapper.addAndMakeVisible(card);
+            card->setBounds(10, 10, 280, 420);
         }
-        
-        previewWrapper.addAndMakeVisible(card);
-        card->setBounds(10, 10, 280, 420);
     }
     previewWrapper.repaint();
 
-    // Populate Form
     formEditor.clear();
     juce::Array<juce::PropertyComponent*> props;
     if (parsed.isObject()) {
@@ -152,7 +219,7 @@ void MainComponent::syncJsonToPreview() {
         for (auto& prop : obj->getProperties()) {
             if (prop.value.isObject()) {
                 auto* pc = new juce::TextPropertyComponent(
-                    juce::Value(prop.value.getDynamicObject()->hasProperty("name") ? prop.value.getDynamicObject()->getProperty("name").toString() : ""), 
+                    juce::Value(prop.value.getDynamicObject()->hasProperty("name") ? prop.value.getDynamicObject()->getProperty("name").toString() : prop.name.toString()), 
                     prop.name.toString(), 256, false);
                 props.add(pc);
             }
@@ -171,7 +238,13 @@ void MainComponent::resized() {
     auto bounds = getLocalBounds();
     auto topBar = bounds.removeFromTop(60);
     
-    fileSelector.setBounds(topBar.removeFromTop(24).reduced(4, 0));
+    auto row1 = topBar.removeFromTop(24);
+    productSelector.setBounds(row1.removeFromLeft(bounds.getWidth() / 4).reduced(4, 0));
+    moduleSelector.setBounds(row1.removeFromLeft(bounds.getWidth() / 4).reduced(4, 0));
+    refreshButton.setBounds(row1.removeFromLeft(80).reduced(4, 0));
+    saveButton.setBounds(row1.removeFromLeft(80).reduced(4, 0));
+    toggleOriginalButton.setBounds(row1.removeFromLeft(120).reduced(4, 0));
+    
     filePathDisplay.setBounds(topBar.reduced(4, 4));
 
     juce::Component* comps[] = { &formEditor, &splitterBar1, &previewWrapper, &splitterBar2, rawJsonEditor.get() };

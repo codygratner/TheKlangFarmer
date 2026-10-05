@@ -16,10 +16,16 @@ public:
     void codeDocumentTextDeleted(int, int) override;
 
 private:
-    void loadFile(const juce::String& filename);
-    void syncJsonToPreview();
+    void loadProduct(int productId);
+    void loadModule(const juce::String& moduleName);
+    void syncJsonToPreview(const juce::String& jsonString = "");
 
-    juce::ComboBox fileSelector;
+    juce::ComboBox productSelector;
+    juce::ComboBox moduleSelector;
+    juce::TextButton refreshButton { "Refresh" };
+    juce::TextButton saveButton { "Save" };
+    juce::TextButton toggleOriginalButton { "Show Original" };
+    
     juce::TextEditor filePathDisplay;
     juce::PropertyPanel formEditor;
     juce::Component previewWrapper;
@@ -31,8 +37,14 @@ private:
     juce::StretchableLayoutResizerBar splitterBar1;
     juce::StretchableLayoutResizerBar splitterBar2;
     
-    juce::String currentFileId;
-    juce::File getAssetFile(const juce::String& name);
+    int currentProductId = 0;
+    juce::String currentModuleName;
+    juce::String currentParamJsonFile;
+    juce::String originalJsonString;
+    bool showingOriginal = false;
+    
+    juce::File getAssetFile(const juce::String& subfolder, const juce::String& name);
+    juce::var currentLayout;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

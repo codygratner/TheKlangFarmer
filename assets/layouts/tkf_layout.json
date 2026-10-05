@@ -1,0 +1,192 @@
+{
+  "Carrier 1": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "carrier1_tracking",
+      "carrier1_pitch",
+      "carrier1_shape",
+      "carrier1_depth"
+    ]
+  },
+  "Modulator 1": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "mod1_track",
+      "mod1_type",
+      "mod1_shape",
+      "mod1Speed"
+    ]
+  },
+  "Pitch Env 1": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "pitchenv1_target",
+      "pitch_env1_slope",
+      "pitch_env1_depth",
+      "pitch_env1_decay"
+    ]
+  },
+  "Filter 1": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "filter1_type",
+      "filter1_slope",
+      "filter1_cutoff",
+      "filter1Resonance"
+    ]
+  },
+  "Filter Env 1": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "filter_env1_slope",
+      "filter_env1_depth",
+      "filter_env1_decay",
+      "filterEnv1PostDrive"
+    ]
+  },
+  "Noise Transient": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "noise_rate",
+      "noise_color",
+      "noiseDrive",
+      "noise_decay"
+    ]
+  },
+  "Filter 3": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "filter3_type",
+      "filter3_slope",
+      "filter3_cutoff",
+      "filter3Resonance"
+    ]
+  },
+  "Filter Env 3": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "filter_env3_slope",
+      "filter_env3_depth",
+      "filter_env3_decay",
+      "filterEnv3PostDrive"
+    ]
+  },
+  "Mixer": {
+    "color": "colRed",
+    "style": "DoepferSilver",
+    "parameters": [
+      "mixerCarrier1Level",
+      "mixerCarrier2Level",
+      "mixerRingMod",
+      "mixerNoiseLevel"
+    ]
+  },
+  "Amplifier": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "amp_limiter",
+      "amp_level",
+      "amp_pan",
+      "amp_drive"
+    ]
+  },
+  "Amp Envelope": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "amp_env_claps",
+      "amp_env_clap_speed",
+      "amp_env_slope",
+      "amp_env_decay"
+    ]
+  },
+  "Pre Limiter": {
+    "color": "colRed",
+    "style": "DoepferSilver",
+    "parameters": [
+      "pre_limiter_enable",
+      "pre_limiter_gain",
+      "preLimiterThresh",
+      "preLimiterRelease"
+    ]
+  },
+  "Post Limiter": {
+    "color": "colRed",
+    "style": "DoepferSilver",
+    "parameters": [
+      "post_limiter_enable",
+      "post_limiter_gain",
+      "postLimiterThresh",
+      "postLimiterRelease"
+    ]
+  },
+  "Velocity": {
+    "color": "colCyan",
+    "style": "StandardDark",
+    "parameters": [
+      "vel_slope",
+      "vel_depth",
+      "velDecay",
+      "velVolume"
+    ]
+  },
+  "Key Track": {
+    "color": "colTeal",
+    "style": "StandardDark",
+    "parameters": [
+      "key_slope",
+      "key_depth",
+      "keyDecay",
+      "keyVolume"
+    ]
+  },
+  "Slop": {
+    "color": "colPurple",
+    "style": "StandardDark",
+    "parameters": [
+      "slop_freq",
+      "slop_depth",
+      "slop_decay",
+      "slopPan"
+    ]
+  },
+  "Mod Env 1": {
+    "color": "colAmber",
+    "style": "StandardDark",
+    "parameters": [
+      "mod_env1_target",
+      "mod_env1_slope",
+      "mod_env1_depth",
+      "mod_env1_decay"
+    ]
+  },
+  "Mod Env 2": {
+    "color": "colAmber",
+    "style": "StandardDark",
+    "parameters": [
+      "mod_env2_target",
+      "mod_env2_slope",
+      "mod_env2_depth",
+      "mod_env2_decay"
+    ]
+  },
+  "Mod Env 3": {
+    "color": "colAmber",
+    "style": "StandardDark",
+    "parameters": [
+      "mod_env3_target",
+      "mod_env3_slope",
+      "mod_env3_depth",
+      "mod_env3_decay"
+    ]
+  }
+}
