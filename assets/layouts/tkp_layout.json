@@ -1,80 +1,82 @@
 {
-  "Carrier": {
-    "color": "colRed",
-    "style": "StandardDark",
-    "parameters": [
-      "carrier_tracking",
-      "carrier_pitch",
-      "carrier_shape",
-      "carrier_depth"
-    ]
-  },
-  "Modulator": {
-    "color": "colCyan",
-    "style": "StandardDark",
-    "parameters": [
-      "mod_type",
-      "mod_shape",
-      "mod_ratio",
-      "mod_depth"
-    ]
-  },
-  "Pitch Env": {
-    "color": "colSilver",
-    "style": "StandardDark",
-    "parameters": [
-      "pitch_env_slope",
-      "pitch_env_depth",
-      "pitch_env_decay"
-    ]
-  },
-  "Noise Transient": {
-    "color": "colDarkGrey",
-    "style": "StandardDark",
-    "parameters": [
-      "noise_rate",
-      "noise_color",
-      "noise_decay",
-      "noise_crossfade"
-    ]
-  },
-  "Filter": {
-    "color": "colBlue",
-    "style": "StandardDark",
-    "parameters": [
-      "filter_type",
-      "filter_cutoff",
-      "filter_res"
-    ]
-  },
-  "Filter Env": {
-    "color": "colAmber",
-    "style": "StandardDark",
-    "parameters": [
-      "filter_env_slope",
-      "filter_env_depth",
-      "filter_env_decay",
-      "filter_drive"
-    ]
-  },
-  "Amplifier": {
-    "color": "colGreen",
-    "style": "StandardDark",
-    "parameters": [
-      "amp_drive",
-      "amp_pan",
-      "amp_vel_slope",
-      "amp_vel_floor"
-    ]
-  },
-  "Amp Envelope": {
-    "color": "colMagenta",
-    "style": "StandardDark",
-    "parameters": [
-      "amp_env_claps",
-      "amp_env_clap_speed",
-      "amp_env_slope",
-      "amp_env_decay"
-    ]
+  "Main": {
+    "Carrier": {
+      "color": "colRed",
+      "style": "StandardDark",
+      "parameters": [
+        "carrier_tracking",
+        "carrier_pitch",
+        "carrier_shape",
+        "carrier_depth"
+      ]
+    },
+    "Modulator": {
+      "color": "colCyan",
+      "style": "StandardDark",
+      "parameters": [
+        "mod_type",
+        "mod_shape",
+        "mod_ratio",
+        "mod_depth"
+      ]
+    },
+    "Pitch Env": {
+      "color": "colSilver",
+      "style": "StandardDark",
+      "parameters": [
+        "pitch_env_slope",
+        "pitch_env_depth",
+        "pitch_env_decay"
+      ]
+    },
+    "Noise Transient": {
+      "color": "colDarkGrey",
+      "style": "StandardDark",
+      "parameters": [
+        "noise_rate",
+        "noise_color",
+        "noise_decay",
+        "noise_crossfade"
+      ]
+    },
+    "Filter": {
+      "color": "colBlue",
+      "style": "StandardDark",
+      "parameters": [
+        "filter_type",
+        "filter_cutoff",
+        "filter_res"
+      ]
+    },
+    "Filter Env": {
+      "color": "colAmber",
+      "style": "StandardDark",
+      "parameters": [
+        "filter_env_slope",
+        "filter_env_depth",
+        "filter_env_decay",
+        "filter_drive"
+      ]
+    },
+    "Amplifier": {
+      "color": "colGreen",
+      "style": "StandardDark",
+      "parameters": [
+        "amp_drive",
+        "amp_pan",
+        "amp_vel_slope",
+        "amp_vel_floor"
+      ]
+    },
+    "Amp Envelope": {
+      "color": "colMagenta",
+      "style": "StandardDark",
+      "parameters": [
+        "amp_env_claps",
+        "amp_env_clap_speed",
+        "amp_env_slope",
+        "amp_env_decay"
+      ]
+    }
   }
 }

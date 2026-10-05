@@ -2,28 +2,53 @@
 #include "ParameterManager.h"
 #include "UIComponents.h"
 
+void EditorTreeItem::paintItem(juce::Graphics& g, int width, int height) {
+    if (isSelected()) g.fillAll(juce::Colours::lightblue.withAlpha(0.2f));
+    g.setColour(juce::Colours::white);
+    g.setFont(itemType == "product" ? 16.0f : (itemType == "page" ? 14.0f : 13.0f));
+    juce::String text = name;
+    if (itemType == "product") text = text.toUpperCase();
+    g.drawText(text, 4, 0, width - 4, height, juce::Justification::centredLeft, true);
+}
+
+void EditorTreeItem::itemSelectionChanged(bool isNowSelected) {
+    if (isNowSelected && mainComp) {
+        mainComp->onTreeItemSelected(this);
+    }
+}
+
 MainComponent::MainComponent()
     : splitterBar1(&verticalLayout, 1, true),
-      splitterBar2(&verticalLayout, 3, true)
+      splitterBar2(&verticalLayout, 3, true),
+      treeSplitter(&horizontalLayout, 1, false)
 {
-    addAndMakeVisible(productSelector);
-    productSelector.addItem("Global Theme", 1);
-    productSelector.addItem("The Klang Farmer (TKF)", 2);
-    productSelector.addItem("The Klang Planter (TKP)", 3);
-    productSelector.onChange = [this]() { loadProduct(productSelector.getSelectedId()); };
-
-    addAndMakeVisible(moduleSelector);
-    moduleSelector.onChange = [this]() { loadModule(moduleSelector.getText()); };
+    addAndMakeVisible(navigationTree);
+    navigationTree.setDefaultOpenness(true);
 
     addAndMakeVisible(refreshButton);
-    refreshButton.onClick = [this]() { loadModule(moduleSelector.getText()); };
+    refreshButton.onClick = [this]() { buildTree(); };
     
     addAndMakeVisible(saveButton);
     saveButton.onClick = [this]() { 
-        auto file = getAssetFile(currentProductId == 1 ? "controls" : "layouts", currentParamJsonFile);
+        auto file = getAssetFile(currentProductId == "theme" ? "controls" : "layouts", currentParamJsonFile);
         if (file.existsAsFile()) {
-            file.replaceWithText(rawJsonDocument.getAllContent());
-            originalJsonString = rawJsonDocument.getAllContent();
+            if (currentProductId != "theme" && currentLayout.isObject()) {
+                if (currentLayout.getDynamicObject()->hasProperty(currentPageId)) {
+                    auto pageObj = currentLayout.getDynamicObject()->getProperty(currentPageId);
+                    if (pageObj.isObject()) {
+                        auto parsedEdit = juce::JSON::parse(rawJsonDocument.getAllContent());
+                        if (!parsedEdit.isVoid()) {
+                            pageObj.getDynamicObject()->setProperty(currentCardId, parsedEdit);
+                            juce::String fullJson = juce::JSON::toString(currentLayout);
+                            file.replaceWithText(fullJson);
+                            originalJsonString = rawJsonDocument.getAllContent();
+                        }
+                    }
+                }
+            } else if (currentProductId == "theme") {
+                file.replaceWithText(rawJsonDocument.getAllContent());
+                originalJsonString = rawJsonDocument.getAllContent();
+            }
         }
     };
     
@@ -32,10 +57,7 @@ MainComponent::MainComponent()
         showingOriginal = !showingOriginal;
         if (showingOriginal) {
             toggleOriginalButton.setButtonText("Show Edited");
-            auto parsed = juce::JSON::parse(originalJsonString);
-            if (!parsed.isVoid()) {
-                syncJsonToPreview(originalJsonString);
-            }
+            syncJsonToPreview(originalJsonString);
         } else {
             toggleOriginalButton.setButtonText("Show Original");
             syncJsonToPreview(rawJsonDocument.getAllContent());
@@ -55,6 +77,11 @@ MainComponent::MainComponent()
 
     addAndMakeVisible(splitterBar1);
     addAndMakeVisible(splitterBar2);
+    addAndMakeVisible(treeSplitter);
+
+    horizontalLayout.setItemLayout(0, -0.1, -0.3, -0.2);
+    horizontalLayout.setItemLayout(1, 8, 8, 8);
+    horizontalLayout.setItemLayout(2, -0.1, -0.9, -0.8);
 
     verticalLayout.setItemLayout(0, -0.1, -0.5, -0.33);
     verticalLayout.setItemLayout(1, 8, 8, 8);
@@ -62,9 +89,9 @@ MainComponent::MainComponent()
     verticalLayout.setItemLayout(3, 8, 8, 8);
     verticalLayout.setItemLayout(4, -0.1, -0.5, -0.34);
 
-    setSize(1000, 700);
+    setSize(1100, 750);
 
-    productSelector.setSelectedId(2, juce::sendNotification);
+    buildTree();
 }
 
 MainComponent::~MainComponent() {
@@ -83,45 +110,79 @@ juce::File MainComponent::getAssetFile(const juce::String& subfolder, const juce
     return {};
 }
 
-void MainComponent::loadProduct(int productId) {
-    currentProductId = productId;
-    moduleSelector.clear(juce::dontSendNotification);
+void MainComponent::buildTree() {
+    auto* root = new EditorTreeItem(this, "Root", "root");
+    auto* themeNode = new EditorTreeItem(this, "Global Theme", "product", "theme");
+    root->addSubItem(themeNode);
 
-    if (productId == 1) {
-        moduleSelector.addItem("theme.json", 1);
-        moduleSelector.setSelectedId(1, juce::sendNotification);
-    } else {
-        juce::String layoutFile = (productId == 2) ? "tkf_layout.json" : "tkp_layout.json";
+    const char* products[] = { "The Klang Farmer", "The Klang Planter", "The Klang Seed" };
+    const char* productIds[] = { "tkf", "tkp", "tks" };
+    
+    for (int p = 0; p < 3; ++p) {
+        auto* prodNode = new EditorTreeItem(this, products[p], "product", productIds[p]);
+        
+        juce::String layoutFile = juce::String(productIds[p]) + "_layout.json";
         auto file = getAssetFile("layouts", layoutFile);
         if (file.existsAsFile()) {
-            currentLayout = juce::JSON::parse(file.loadFileAsString());
-            if (currentLayout.isObject()) {
-                int id = 1;
-                for (auto& prop : currentLayout.getDynamicObject()->getProperties()) {
-                    moduleSelector.addItem(prop.name.toString(), id++);
+            auto layout = juce::JSON::parse(file.loadFileAsString());
+            if (layout.isObject()) {
+                auto* lObj = layout.getDynamicObject();
+                for (auto& pageProp : lObj->getProperties()) {
+                    juce::String pageName = pageProp.name.toString();
+                    auto* pageNode = new EditorTreeItem(this, pageName, "page", productIds[p], pageName);
+                    
+                    if (pageProp.value.isObject()) {
+                        auto* pObj = pageProp.value.getDynamicObject();
+                        for (auto& cardProp : pObj->getProperties()) {
+                            juce::String cardName = cardProp.name.toString();
+                            pageNode->addSubItem(new EditorTreeItem(this, cardName, "card", productIds[p], pageName, cardName));
+                        }
+                    }
+                    prodNode->addSubItem(pageNode);
                 }
             }
-            if (moduleSelector.getNumItems() > 0)
-                moduleSelector.setSelectedId(1, juce::sendNotification);
         }
+        root->addSubItem(prodNode);
     }
+    
+    navigationTree.setRootItem(root);
+    navigationTree.setRootItemVisible(false);
 }
 
-void MainComponent::loadModule(const juce::String& moduleName) {
-    if (moduleName.isEmpty()) return;
-    currentModuleName = moduleName;
-
-    if (currentProductId == 1) {
+void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
+    if (item->itemType != "card" && !(item->itemType == "product" && item->productId == "theme")) return;
+    
+    if (item->itemType == "product" && item->productId == "theme") {
+        currentProductId = "theme";
         currentParamJsonFile = "theme.json";
+        currentPageId = "";
+        currentCardId = "theme";
     } else {
-        currentParamJsonFile = (currentProductId == 2) ? "tkf_layout.json" : "tkp_layout.json";
+        currentProductId = item->productId;
+        currentParamJsonFile = currentProductId + "_layout.json";
+        currentPageId = item->pageId;
+        currentCardId = item->cardId;
     }
 
-    auto file = getAssetFile(currentProductId == 1 ? "controls" : "layouts", currentParamJsonFile);
-    filePathDisplay.setText(file.getFullPathName());
+    auto file = getAssetFile(currentProductId == "theme" ? "controls" : "layouts", currentParamJsonFile);
+    filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : ""));
 
     if (file.existsAsFile()) {
-        originalJsonString = file.loadFileAsString();
+        auto fullJsonString = file.loadFileAsString();
+        
+        if (currentProductId == "theme") {
+            originalJsonString = fullJsonString;
+        } else {
+            currentLayout = juce::JSON::parse(fullJsonString);
+            if (currentLayout.isObject() && currentLayout.getDynamicObject()->hasProperty(currentPageId)) {
+                auto pageObj = currentLayout.getDynamicObject()->getProperty(currentPageId);
+                if (pageObj.isObject() && pageObj.getDynamicObject()->hasProperty(currentCardId)) {
+                    auto cardObj = pageObj.getDynamicObject()->getProperty(currentCardId);
+                    originalJsonString = juce::JSON::toString(cardObj);
+                }
+            }
+        }
+        
         rawJsonDocument.replaceAllContent(originalJsonString);
         syncJsonToPreview(originalJsonString);
     }
@@ -137,7 +198,7 @@ void MainComponent::timerCallback() {
 
 void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     auto jsonString = forcedJson.isNotEmpty() ? forcedJson : rawJsonDocument.getAllContent();
-    bool isTheme = (currentProductId == 1);
+    bool isTheme = (currentProductId == "theme");
     
     auto parsed = juce::JSON::parse(jsonString);
     if (parsed.isVoid()) return;
@@ -155,15 +216,15 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
         previewWrapper.addAndMakeVisible(card);
         card->setBounds(10, 10, 280, 200);
     } else {
-        if (parsed.isObject() && parsed.getDynamicObject()->hasProperty(currentModuleName)) {
-            auto moduleConfig = parsed.getDynamicObject()->getProperty(currentModuleName);
+        if (parsed.isObject()) {
+            auto moduleConfig = parsed; // The raw editor now ONLY holds this card's config!
             
             juce::Colour c = RlyehSound::ParameterManager::getInstance().getThemeColour(
                 moduleConfig.getProperty("color", "colSilver").toString());
             auto styleStr = moduleConfig.getProperty("style", "StandardDark").toString();
             auto style = (styleStr == "DoepferSilver") ? ModuleCardComponent::PanelStyle::DoepferSilver : ModuleCardComponent::PanelStyle::StandardDark;
             
-            auto* card = new ModuleCardComponent(currentModuleName, c, style);
+            auto* card = new ModuleCardComponent(currentCardId, c, style);
             
             auto paramsArray = moduleConfig.getProperty("parameters", juce::var());
             if (paramsArray.isArray()) {
@@ -180,7 +241,7 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                             slider->setRange(def->min, def->max, def->step);
                             slider->setValue(def->defaultFloat);
                             
-                                                        if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("waveform")) {
+                            if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("waveform")) {
                                 slider->diagramType = RotaryKnobSlider::DiagramType::Waveform;
                             } else if (paramId.containsIgnoreCase("slope")) {
                                 slider->diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
@@ -188,7 +249,7 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                             
                             slider->customFormatText = [paramId](double val) {
                                 if (paramId.containsIgnoreCase("pitch") || paramId.containsIgnoreCase("semi")) return juce::String(juce::roundToInt((val - 0.5) * 96.0)) + " st";
-                                if (paramId.containsIgnoreCase("depth") || paramId.containsIgnoreCase("crossfade") || paramId.containsIgnoreCase("pan")) return (val >= 0.5 ? "+" : "") + juce::String(juce::roundToInt((val - 0.5) * 200.0)) + " %";
+                                if (paramId.containsIgnoreCase("depth") || paramId.containsIgnoreCase("crossfade") || paramId.containsIgnoreCase("pan") || paramId.containsIgnoreCase("filter")) return (val >= 0.5 ? "+" : "") + juce::String(juce::roundToInt((val - 0.5) * 200.0)) + " %";
                                 if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("ratio") || paramId.containsIgnoreCase("amount") || paramId.containsIgnoreCase("level") || paramId.containsIgnoreCase("res") || paramId.containsIgnoreCase("mix")) return juce::String(juce::roundToInt(val * 100.0)) + " %";
                                 if (paramId.containsIgnoreCase("decay") || paramId.containsIgnoreCase("speed") || paramId.containsIgnoreCase("time")) return juce::String(val * 2000.0, 0) + " ms";
                                 if (paramId.containsIgnoreCase("cutoff") || paramId.containsIgnoreCase("rate") || paramId.containsIgnoreCase("freq")) return juce::String(val * 20000.0, 0) + " Hz";
@@ -250,15 +311,18 @@ void MainComponent::resized() {
     auto topBar = bounds.removeFromTop(60);
     
     auto row1 = topBar.removeFromTop(24);
-    productSelector.setBounds(row1.removeFromLeft(bounds.getWidth() / 4).reduced(4, 0));
-    moduleSelector.setBounds(row1.removeFromLeft(bounds.getWidth() / 4).reduced(4, 0));
     refreshButton.setBounds(row1.removeFromLeft(80).reduced(4, 0));
     saveButton.setBounds(row1.removeFromLeft(80).reduced(4, 0));
     toggleOriginalButton.setBounds(row1.removeFromLeft(120).reduced(4, 0));
     
     filePathDisplay.setBounds(topBar.reduced(4, 4));
 
-    juce::Component* comps[] = { &formEditor, &splitterBar1, &previewWrapper, &splitterBar2, rawJsonEditor.get() };
-    verticalLayout.layOutComponents(comps, 5, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), false, true);
+    juce::Component* rightComps[] = { &formEditor, &splitterBar1, &previewWrapper, &splitterBar2, rawJsonEditor.get() };
+    
+    // We can't nest layOutComponents easily. We just use standard positioning.
+    auto treeBounds = bounds.removeFromLeft(200);
+    treeSplitter.setBounds(bounds.removeFromLeft(8));
+    navigationTree.setBounds(treeBounds);
+    
+    verticalLayout.layOutComponents(rightComps, 5, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), false, true);
 }
-

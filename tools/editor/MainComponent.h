@@ -3,6 +3,21 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_gui_extra/juce_gui_extra.h>
 
+class MainComponent;
+
+class EditorTreeItem : public juce::TreeViewItem {
+public:
+    EditorTreeItem(MainComponent* owner, const juce::String& text, const juce::String& type, const juce::String& prodId = "", const juce::String& pgId = "", const juce::String& cId = "")
+        : mainComp(owner), name(text), itemType(type), productId(prodId), pageId(pgId), cardId(cId) {}
+
+    bool mightContainSubItems() override { return getNumSubItems() > 0; }
+    void paintItem(juce::Graphics& g, int width, int height) override;
+    void itemSelectionChanged(bool isNowSelected) override;
+
+    MainComponent* mainComp;
+    juce::String name, itemType, productId, pageId, cardId;
+};
+
 class MainComponent : public juce::Component, public juce::Timer, public juce::CodeDocument::Listener {
 public:
     MainComponent();
@@ -15,13 +30,13 @@ public:
     void codeDocumentTextInserted(const juce::String&, int) override;
     void codeDocumentTextDeleted(int, int) override;
 
-private:
-    void loadProduct(int productId);
-    void loadModule(const juce::String& moduleName);
-    void syncJsonToPreview(const juce::String& jsonString = "");
+    void onTreeItemSelected(EditorTreeItem* item);
 
-    juce::ComboBox productSelector;
-    juce::ComboBox moduleSelector;
+private:
+    void buildTree();
+    void syncJsonToPreview(const juce::String& forcedJson = "");
+
+    juce::TreeView navigationTree;
     juce::TextButton refreshButton { "Refresh" };
     juce::TextButton saveButton { "Save" };
     juce::TextButton toggleOriginalButton { "Show Original" };
@@ -34,11 +49,14 @@ private:
     juce::OwnedArray<juce::Component> activeSliders;
 
     juce::StretchableLayoutManager verticalLayout;
+    juce::StretchableLayoutManager horizontalLayout;
     juce::StretchableLayoutResizerBar splitterBar1;
     juce::StretchableLayoutResizerBar splitterBar2;
+    juce::StretchableLayoutResizerBar treeSplitter;
     
-    int currentProductId = 0;
-    juce::String currentModuleName;
+    juce::String currentProductId; // "tkf", "tkp", "theme"
+    juce::String currentPageId;
+    juce::String currentCardId;
     juce::String currentParamJsonFile;
     juce::String originalJsonString;
     bool showingOriginal = false;
