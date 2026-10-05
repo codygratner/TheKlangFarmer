@@ -5,9 +5,10 @@
 > When opening the next session, review the prioritized items below:
 > 1. **Priority #1 (Architecture)**: Core Architecture Base Class Refactor.
 > 2. **Priority #2 (UI Architecture)**: Data-Driven UI Layout, Colors, & Groupings (theme.json).
-> 3. **Priority #3 (Export & DAW Integration)**: WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17).
-> 4. **Priority #4 (DSP / FX Expansion)**: New Effects Processors Catalog Expansion (Effects 14–19) & Universal Mix Standard (`docs/new_effects_plan.md`).
-> 5. **Priority #5 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
+> 3. **Priority #3 (Tooling)**: Standalone JSON Data & Theme Editor (`TheKlangEditor`).
+> 4. **Priority #4 (Export & DAW Integration)**: WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17).
+> 5. **Priority #5 (DSP / FX Expansion)**: New Effects Processors Catalog Expansion (Effects 14–19) & Universal Mix Standard (`docs/new_effects_plan.md`).
+> 6. **Priority #6 (Transient Sampling)**: Dual Sample Players for Noise Transient Page (Plugin Only).
 
 ---
 
@@ -28,7 +29,13 @@ Extract the remaining hardcoded UI configuration out of C++ (`PluginEditor.cpp`)
 
 ---
 
-### 3. [PRIORITY #3] WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17)
+### 3. [PRIORITY #3] Standalone JSON Data & Theme Editor (`TheKlangEditor`)
+*Detailed Plan: [`docs/json_editor_tool_plan.md`](json_editor_tool_plan.md)*
+Create a dedicated JUCE GUI application with a 3-pane live-sync interface (Form Property Panel, Raw JSON Editor, and Live UI Preview) to rapidly author module schemas, init/double-click values, and theme colors without recompiling the main synth.
+
+---
+
+### 4. [PRIORITY #4] WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17)
 *Detailed Plan: [`docs/wav_render_sf2_export_dragndrop_plan.md`](wav_render_sf2_export_dragndrop_plan.md)*  
 Comprehensive offline audio bounce, multi-sample SoundFont 2 (`.sf2`) bank generation, and zero-friction DAW integration:
 - **Phase 1: Offline Render Pipeline, SF2 Builder & Last-Note Tracking**:
@@ -49,7 +56,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (`.sf2`) bank gener
 
 ---
 
-### 4. [PRIORITY #4] New Effects Processors Catalog Expansion (Effects 14–19) & Universal Mix Standard
+### 5. [PRIORITY #5] New Effects Processors Catalog Expansion (Effects 14–19) & Universal Mix Standard
 *Detailed Plan: [`docs/new_effects_plan.md`](new_effects_plan.md)*  
 Expand the FX catalog from 13 to 19 algorithms (appended as indices 14–19 for 100% backward preset compatibility) and standardize Knob 4 across all modulation/time-based FX to the Universal Dual-Mode Mix:
 - **Phase 1: Universal Dual-Mode Mix Helper & Core Enums**:
@@ -74,7 +81,7 @@ Expand the FX catalog from 13 to 19 algorithms (appended as indices 14–19 for 
 
 ---
 
-### 5. [PRIORITY #5] Dual Sample Players for Noise Transient Page (Plugin Only)
+### 6. [PRIORITY #6] Dual Sample Players for Noise Transient Page (Plugin Only)
 - Add two dedicated sample player modules to the Transients page (desktop plugin specific; not constrained to TBD-16 4-control limits).
 - **Controls per Player**:
   1. **File Picker**: File browser / drag-and-drop audio file loader.
@@ -85,7 +92,7 @@ Expand the FX catalog from 13 to 19 algorithms (appended as indices 14–19 for 
 
 ---
 
-### 6. [PRIORITY #6] JSON Preset Browser, Tagging & State Migration
+### 7. [PRIORITY #7] JSON Preset Browser, Tagging & State Migration
 *Detailed Plan: [`docs/preset_system_plan.md`](preset_system_plan.md)*  
 Implement a professional, tag-based preset management system utilizing JSON files for storage, complete with author metadata, tagging, and versioning.
 - **Phase 1: JSON Schema & `StateMigrator` (`source/PresetManager.h`, `source/StateMigrator.h`)**:
