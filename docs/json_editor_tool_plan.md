@@ -44,7 +44,9 @@ Create the standard JUCE GUI app entry point.
 ### 3. The 3-Pane Interface
 #### [NEW] `tools/editor/MainComponent.h` & `.cpp`
 - **Layout**: Uses `juce::StretchableLayoutManager` for resizable vertical splitters.
-- **Top Bar**: `juce::ComboBox` for selecting the active JSON module (e.g., `carrier.json`, `theme.json`).
+- **Top Bar (File Selection & Info)**: 
+  - `juce::ComboBox` for selecting the active JSON module (e.g., `carrier.json`, `theme.json`).
+  - Read-only, multi-line, word-wrapped text field (e.g. a `juce::TextEditor` set to `setMultiLine(true)` and `setReadOnly(true)`) sitting beneath the dropdown to clearly display the active file's absolute path without cutting off.
 - **Pane 1 (Form Editor)**: `juce::PropertyPanel`. Dynamically populates `juce::TextPropertyComponent`, `juce::SliderPropertyComponent`, and `juce::ColourPropertyComponent` based on the loaded JSON keys.
 - **Pane 2 (Visual Preview)**: A wrapper `juce::Component`. Whenever the JSON updates, this destroys and re-instantiates the specific `SynthCardComponent` (e.g., the Carrier Card) using the new layout/theme data.
 - **Pane 3 (Raw Code)**: `juce::CodeEditorComponent` attached to a `juce::CodeDocument`. 
