@@ -100,69 +100,7 @@ Implement a professional, tag-based preset management system utilizing JSON file
 
 ---
 
-## 🎛️ New Effects Processors (Backlog)
-*(Elevated to Active Priority #4: see [Top Priorities section](#4-priority-4-new-effects-processors-catalog-expansion-effects-1419--universal-mix-standard) and [`docs/new_effects_plan.md`](new_effects_plan.md))*
-
-### 7. Transient Shaper Effect
-- 4-knob envelope dynamic processor (Kilohearts style):
-  1. **Attack**: Boost or attenuate initial transient impact.
-  2. **Pump**: Sustained envelope swell and recovery.
-  3. **Sustain**: Tail length and body amplification.
-  4. **Speed**: Detection envelope attack/release tracking speed.
-
-### 8. Custom Waveshaper Effect
-- Uses the current crossfaded waveform morph (sine / tri / saw / square / PWM) as the non-linear transfer function / transform for waveshaping.
-- **Controls**:
-  1. **Waveshape**: Selects/morphs the shaping curve.
-  2. **Drive**: Input pre-gain drive.
-  3. **DJ Filter**: Bipolar tilt filter (0% flat center).
-  4. **Mix**: Universal dual-mode mix.
-
-### 9. Channel Mixer Effect
-- 4-knob cross-channel matrix mixer (Kilohearts style):
-  1. **L → L**: Incoming Left to Outgoing Left ($-100\%$ to $+100\%$).
-  2. **R → L**: Incoming Right to Outgoing Left ($-100\%$ to $+100\%$).
-  3. **L → R**: Incoming Right to Outgoing Right ($-100\%$ to $+100\%$).
-  4. **R → R**: Incoming Right to Outgoing Right ($-100\%$ to $+100\%$).
-
-### 10. Stereo Enhancer Effect
-- Advanced stereo field shaper:
-  1. **Mid**: Mid-channel gain ($0\%$ to $100\%$).
-  2. **Width**: Side-channel expansion ($0\%$ to $100\%$ to $600\%$ super-wide).
-  3. **Pan**: Stereo balance (Left ↔ Center ↔ Right).
-  4. **Slop**: Random analog drift depth ($0\%$ to $100\%$) applied across Mid, Width, and Pan per trigger hit.
-
-### 11. Haas Delay Effect
-- Psychoacoustic spatial widener via the Haas effect:
-  - **Haas Delay Knob**: Single bipolar delay slider:
-    - `-100 ms`: Left channel delayed up to 100 ms (Right arrives first → sound localized Right).
-    - `0 ms`: No delay on either channel (Center).
-    - `+100 ms`: Right channel delayed up to 100 ms (Left arrives first → sound localized Left).
-
-### 12. Lo-Fi Early Reflections Gated Reverb Effect
-- Characterized by dense, vintage, "kinda crap sounding" retro early reflections specifically tailored for 80s-style gated snare and punchy drum sounds.
-- **Controls**:
-  1. **Time**: Reverb decay time / room size.
-  2. **DJ Filter**: Bipolar tilt filter (0% flat center) for reflection high/low spectral shaping.
-  3. **Mix**: Universal dual-mode mix (`-100%` pure wet crossfade ↔ `0%` dry ↔ `+100%` parallel additive).
-  4. **Gate Time**: BPM-synced gate cutoff time in 64th note increments (1/64, 2/64, 3/64, etc.) to abruptly terminate the reverb tail in sync with the song tempo.
-
----
-
 ## 🖱️ UI / UX & Modal Enhancements (Backlog)
-
-### 13. Right-Click Parameter Edit Modal: Quick-Snap Preset Buttons (Approved Spec)
-- **Waveshape Edit Modal**:
-  - Add quick preset buttons directly into the right-click edit modal: **Sine** (`0.0`), **Triangle** (`0.25`), **Saw** (`0.5`), and **Square** (`0.75` / `1.0`).
-- **Contextual Quick-Snap Buttons Across the Synth**:
-  1. **Pitch / Semitones / Coarse Tune**: `-24`, `-12`, `-7`, `0`, `+7`, `+12`, `+24`
-  2. **Dual-Mode FX Mix Knobs**: `-100% (Wet)`, `0% (Dry)`, `+100% (Parallel)`
-  3. **Filter Cutoff**: `60 Hz (Sub)`, `250 Hz (Warmth)`, `1 kHz (Body)`, `3.5 kHz (Edge)`, `10 kHz (Air)`
-  4. **Filter Resonance / Q**: `0.5 (Gentle)`, `0.707 (Flat/Butterworth)`, `1.414 (Musical Peak)`, `4.0 (Ring)`, `10.0 (Self-Osc)`
-  5. **Envelopes (Decay / Release)**: `10 ms (Click)`, `60 ms (Tight Snare)`, `150 ms (Punchy Kick)`, `600 ms (808 Boom)`, `2.0 s (Tail)`
-  6. **Tempo Delay & Reverb Gate Times**: `1/16`, `1/8`, `1/8D (Dotted)`, `1/8T (Triplet)`, `1/4`
-  7. **Stereo Enhancer / Width**: `0% (Mono)`, `100% (Normal)`, `200% (Wide)`, `400% (Hyper-Wide)`
-  8. **Sample Playback Speed (Plugin Transient Players)**: `-100% (Reverse)`, `+50% (Half-Speed)`, `+100% (Normal)`, `+200% (Double-Speed)`
 
 ---
 
@@ -181,12 +119,6 @@ Implement a professional, tag-based preset management system utilizing JSON file
     - 8 independent MIDI channels with identical CC mappings.
   - **Daisy Seed (Electro-Smith)**: Alternative open hardware platform ($29, STM32H750 Cortex-M7 @ 480 MHz).
   - **Embedded Core Engine (`embedded/KlangPlanterEmbedded.h`)**: Single-file, zero-allocation DSP engine.
-
-### 16. WAV Render & Multi-Sample Export Dialog
-- *Elevated to Active Priority #3 (see [Top Priorities section](#3-priority-3-wav-render-multi-sample--sf2-export-dialog--instant-daw-drag-n-drop-features-16--17) and [`docs/wav_render_sf2_export_dragndrop_plan.md`](wav_render_sf2_export_dragndrop_plan.md))*.
-
-### 17. Instant DAW Drag 'n' Drop (Tekno-Style)
-- *Elevated to Active Priority #3 (see [Top Priorities section](#3-priority-3-wav-render-multi-sample--sf2-export-dialog--instant-daw-drag-n-drop-features-16--17) and [`docs/wav_render_sf2_export_dragndrop_plan.md`](wav_render_sf2_export_dragndrop_plan.md))*.
 
 ---
 

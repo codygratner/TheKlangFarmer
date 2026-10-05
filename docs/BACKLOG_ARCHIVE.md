@@ -1,5 +1,12 @@
 # Backlog Archive: Completed Milestones & Engineering History
 
+### [COMPLETED] Right-Click Parameter Edit Modal: Quick-Snap Preset Buttons
+- **Waveshape Edit Modal**:
+  - Add quick preset buttons directly into the right-click edit modal: **Sine** (0.0), **Triangle** (0.25), **Saw** (0.5), and **Square** (0.75 / 1.0).
+- **Contextual Quick-Snap Buttons Across the Synth**:
+  - Added via JSON `points_of_interest` system.
+
+
 This document serves as the permanent historical record of completed engineering tasks, feature implementations, bug fixes, and architectural decisions for **The Klang Farmer** and **The Klang Planter**.
 
 ---
@@ -142,3 +149,4 @@ This document serves as the permanent historical record of completed engineering
   - 13 dynamic audio effects processors (Bitcrusher, Chorus, Comb Filter, Drive, Filter, Flanger, Frequency Shifter, Grit FX, Phase Smear, Phaser, RingMod, Tempo Delay, Wave Folder).
   - Real-time stereo modulation visualizer and oscilloscope XY plotting modes.
   - Fully real-time audio thread compliant (zero allocations, zero locks, zero blocking I/O).
+
