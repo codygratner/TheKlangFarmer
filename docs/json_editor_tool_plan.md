@@ -51,7 +51,13 @@ Create the standard JUCE GUI app entry point.
 - **Top Bar (File Selection & Info)**: 
   - `juce::ComboBox` for selecting the active JSON module (e.g., `carrier.json`, `theme.json`).
   - Read-only, multi-line, word-wrapped text field (e.g. a `juce::TextEditor` set to `setMultiLine(true)` and `setReadOnly(true)`) sitting beneath the dropdown to clearly display the active file's absolute path without cutting off.
-- **Pane 1 (Form Editor)**: `juce::PropertyPanel`. Dynamically populates `juce::TextPropertyComponent`, `juce::SliderPropertyComponent`, and `juce::ColourPropertyComponent` based on the loaded JSON keys.
+- **Pane 1 (Form Editor)**: `juce::PropertyPanel` that dynamically populates controls based on the active JSON keys.
+  - **Parameter Fields**: Uses `juce::TextPropertyComponent` and `juce::SliderPropertyComponent` for numeric values.
+  - **Advanced Color Picker**: When `theme.json` is active, color fields will spawn a custom editor featuring:
+    - An interactive click-and-drag **Color Wheel**.
+    - Split out **RGBA** sliders/text boxes (Red, Green, Blue, Alpha).
+    - Split out **HSVA** sliders/text boxes (Hue, Saturation, Value, Alpha).
+    - A **Hex Code** input box formatted specifically for JUCE's required `0xAARRGGBB` format (Alpha must be included as the framework relies heavily on it for glows/shadows).
 - **Pane 2 (Visual Preview)**: A wrapper `juce::Component`. Whenever the JSON updates, this destroys and re-instantiates the specific `SynthCardComponent` (e.g., the Carrier Card) using the new layout/theme data.
 - **Pane 3 (Raw Code)**: `juce::CodeEditorComponent` attached to a `juce::CodeDocument`. 
 
