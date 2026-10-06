@@ -1,117 +1,85 @@
-# Architecture & Implementation Plan: TBD-16 Effects & The Klang Seed Integration
+# Architecture & Implementation Plan: dadamachines tbd-16 & The Klang Seed Hardware Integration
 
-## Goal Description
-Answer the hardware architecture questions and design the integration of the modular 26-algorithm Effects engine into the **TBD-16** control surface (16-knob / 4×4 grid controller) and **The Klang Seed (TKS)** standalone embedded hardware package. 
-
-Specifically, this plan addresses:
-1. **Does the TBD-16 have effects?** Yes. In `spec.md`, every single effect was mathematically standardized with exactly **4 controls** specifically so that 4 distinct effects map cleanly across the 16 physical knobs ($4 \times 4 = 16$).
-2. **Can effects be multiple pages?** Yes. A 16-encoder hardware surface naturally supports bank/page switching. With 4 Pre-Amp FX slots and 4 Post-Amp FX slots, the entire 8-slot rack maps perfectly to a two-page system:
-   - **Page 1: Pre-Amp FX Rack** (Slots 1, 2, 3, 4 $\times$ 4 knobs = 16 knobs)
-   - **Page 2: Post-Amp FX Rack** (Slots 5, 6, 7, 8 $\times$ 4 knobs = 16 knobs)
-3. **Can we make these available in the TBD-16 as part of The Klang Seed package?** Yes. Because our DSP engine in [`source/ModularBlocks.h`](file:///c:/Dev/TheKlangFarmer/source/ModularBlocks.h) and [`source/DSPBlock.h`](file:///c:/Dev/TheKlangFarmer/source/DSPBlock.h) is already 100% decoupled from JUCE, all 26 DSP algorithms compile directly onto embedded targets (Teensy 4.1 NXP ARM Cortex-M7 @ 600 MHz or Daisy Seed STM32H750 @ 480 MHz).
+## 1. Goal Description
+Specify the hardware integration and deployment pathways for running the pure C++ synthesizer and 26-algorithm Effects engine across dedicated embedded hardware targets:
+1. **dadamachines tbd-16**: Hackable groovebox / standalone synthesizer platform.
+2. **The Klang Seed (TKS)**: DIY hardware drum machine based on **Daisy Seed** (stereo) or **Teensy 4.1** (8 discrete voice outputs).
+3. **Zynthian V5**: Raspberry Pi 5 Linux standalone synth box.
 
 ---
 
-## User Review Required
+## 2. Hardware Architecture Fact-Check & Verification
 
-> [!IMPORTANT]
-> **Embedded Memory Constraints:**
-> While algorithmic effects (Distortion, Filters, EQ, Wavefolder, RingMod, Transient Shaper) require virtually zero RAM ($< 1\,\text{KB}$), time-based delay and reverb effects (Tempo Delay, Gated Reverb, Haas Delay, Juno Chorus) require ring buffers. 
-> - On **Teensy 4.1**, delay buffers live in external 8 MB PSRAM or the 512 KB TCM DTCM/ITCM RAM.
-> - On **Daisy Seed**, delay buffers live in the onboard 64 MB SDRAM.
-> Pre-allocating maximum buffer lengths for 8 simultaneous multi-instance FX slots requires approximately $2.5\,\text{MB}$ of total buffer space at $44.1\,\text{kHz}$, which easily fits into both target hardware platforms.
+### Target 1: dadamachines tbd-16
+Verified open-source hardware architecture:
+- **Audio DSP Core**: **Espressif ESP32-P4** (Dual-core RISC-V @ 400 MHz) running real-time audio DSP and synthesis.
+- **UI & Controller Core**: **Raspberry Pi RP2350B** (Dual-core ARM Cortex-M33 / Hazard3 RISC-V @ 150 MHz) handling 30 tactile RGB buttons, step sequencer, and 2.4" OLED display.
+- **Wireless Core**: **ESP32-C6** handling Wi-Fi, BLE, and Ableton Link sync.
+- **Physical Controls**: **4 endless push-encoders** + volume potentiometer + 30 RGB step/function buttons.
+- **1:1 Mapping Miracle**: The '16' in tbd-16 refers to its **16 sequencer tracks**, NOT 16 knobs! Because the physical unit has **4 endless encoders**, our **4-knob card architecture** (`Carrier 1`, `Filter`, `Pre-FX 1`, etc.) maps **1:1 natively per page** on its 2.4" OLED screen!
+
+### Target 2: The Klang Seed (TKS) — Daisy Seed vs Teensy 4.1
+These are two distinct, non-overlapping ARM Cortex-M7 platforms:
+- **Daisy Seed (Electro-Smith)**:
+  - **SoC**: STMicroelectronics **STM32H750IB** ARM Cortex-M7 @ 480 MHz.
+  - **Memory**: **64 MB high-speed SDRAM** built-in (massive buffer capacity for delays, reverbs, and sample playback).
+  - **Audio Codec**: Integrated AK4556 24-bit 96 kHz stereo DAC/ADC.
+  - **Best For**: Compact, plug-and-play stereo desktop drum synth or Eurorack module.
+- **Teensy 4.1 (PJRC)**:
+  - **SoC**: NXP **i.MX RT1062** ARM Cortex-M7 @ 600 MHz.
+  - **Memory**: 1 MB on-chip TCM RAM (expandable with 8 MB external PSRAM chips).
+  - **Audio Engine**: TDM (Time Division Multiplexing) driving an external CS42448 8-channel DAC.
+  - **Best For**: Studio drum machine with **8 discrete physical 1/4" analog voice outputs**.
+
+### Target 3: Zynthian V5
+- **Compute**: Raspberry Pi 5 (Quad-core ARM Cortex-A76 @ 2.4 GHz) running 64-bit ZynthianOS (Debian Linux).
+- **Physical Controls**: 5-inch 800x480 capacitive touchscreen + **4 optical push-rotary encoders**.
+- **Format**: Headless Linux LV2 / CLAP plugin.
 
 ---
 
-## Hardware Control Layout & Pagination Schema
+## 3. The 4-Encoder Paging Standard Across All 3 Targets
+
+Because **all three hardware platforms (tbd-16, Zynthian V5, and TKS)** share the exact same physical control interface—**4 rotary encoders and an OLED/LCD display**—our parameter mapping is 100% unified:
 
 ```mermaid
 flowchart TD
-    subgraph TBD16["TBD-16 Physical Hardware Surface (16 Encoders / 4x4 Grid)"]
-        K01["Enc 1"] --- K02["Enc 2"] --- K03["Enc 3"] --- K04["Enc 4"]
-        K05["Enc 5"] --- K06["Enc 6"] --- K07["Enc 7"] --- K08["Enc 8"]
-        K09["Enc 9"] --- K10["Enc 10"] --- K11["Enc 11"] --- K12["Enc 12"]
-        K13["Enc 13"] --- K14["Enc 14"] --- K15["Enc 15"] --- K16["Enc 16"]
+    subgraph UI["Unified 4-Encoder Page Interface (tbd-16 / Zynthian / TKS)"]
+        E1["Encoder 1"] --- E2["Encoder 2"] --- E3["Encoder 3"] --- E4["Encoder 4"]
+        SCREEN["OLED / Display: Active Card Name"]
     end
 
-    subgraph Pages["TBD-16 Page Navigation (Bank / Page Switch)"]
-        P_SYNTH["Page 0: Synth Engine (Carrier, Mod, Env, Filter)"]
-        P_PRE["Page 1: Pre-Amp FX (Slots 1, 2, 3, 4)"]
-        P_POST["Page 2: Post-Amp FX (Slots 5, 6, 7, 8)"]
-        P_DETAIL["Page 3..10: FX Deep-Dive / Sub-Pages (Optional)"]
+    subgraph Pages["Sequential Card Pages (Navigated via Buttons / Push-Encoders)"]
+        P01["Page 01: Carrier 1 (Ratio, Pitch, Shape, Depth)"]
+        P02["Page 02: Modulator 1 (Track, Wave, Shape, Rate)"]
+        P03["Page 03: Pitch Env 1 (Target, Slope, Depth, Decay)"]
+        P04["Page 04: Amp Env 1 (Slope, Hold, Decay, Curve)"]
+        P05["Page 05: Carrier 2 / Body"]
+        P06["Page 06: Modulator 2"]
+        P07["Page 07: Filter (Cutoff, Res, Drive, Mode)"]
+        P08["Page 08–11: Pre-Amp FX Slots 1–4 (4 Knobs per Effect)"]
+        P12["Page 12–15: Post-Amp FX Slots 1–4 (4 Knobs per Effect)"]
+        P16["Page 16: Master Limiter & Slop Drift"]
     end
 
-    subgraph PreMapping["Page 1: Pre-Amp FX Mapping (4 x 4 Knobs)"]
-        FX1["Slot 1: Knobs 1-4"]
-        FX2["Slot 2: Knobs 5-8"]
-        FX3["Slot 3: Knobs 9-12"]
-        FX4["Slot 4: Knobs 13-16"]
-    end
-
-    TBD16 --> P_PRE --> PreMapping
+    UI --> Pages
 ```
 
-### 1. Macro Page Mode (Overview)
-- **Pre-Amp FX Page**:
-  - Row 1 (Knobs 1–4): **FX Slot 1** (Param 1, Param 2, Param 3, Mix)
-  - Row 2 (Knobs 5–8): **FX Slot 2** (Param 1, Param 2, Param 3, Mix)
-  - Row 3 (Knobs 9–12): **FX Slot 3** (Param 1, Param 2, Param 3, Mix)
-  - Row 4 (Knobs 13–16): **FX Slot 4** (Param 1, Param 2, Param 3, Mix)
-- **Post-Amp FX Page**:
-  - Row 1 (Knobs 1–4): **FX Slot 5** (Param 1, Param 2, Param 3, Mix)
-  - Row 2 (Knobs 5–8): **FX Slot 6** (Param 1, Param 2, Param 3, Mix)
-  - Row 3 (Knobs 9–12): **FX Slot 7** (Param 1, Param 2, Param 3, Mix)
-  - Row 4 (Knobs 13–16): **FX Slot 8** (Param 1, Param 2, Param 3, Mix)
+---
 
-### 2. Slot Selection & Type Switching
-- Pushing encoder down (encoder push-switch) or holding a dedicated Shift button enters the **Algorithm Selector**:
-  - Turning the encoder scrolls through the 26 algorithms.
-  - Small OLED / 7-segment screen displays the active algorithm name (e.g. `"WAVGUID"`, `"JUNOCHR"`).
+## 4. Proposed C++ Repository Layout
+
+### Component: `embedded/`
+- `embedded/common/`: Pure C++ headless parameter bridge and page navigation state machine.
+- `embedded/targets/tbd16/`: CTAG TBD C++ engine plugin for ESP32-P4 + RP2350B.
+- `embedded/targets/daisy_seed/`: `libDaisy` stereo firmware for STM32H750.
+- `embedded/targets/teensy41/`: 8-voice multi-out firmware with CS42448 TDM audio driver.
+- `embedded/targets/zynthian/`: Headless Linux LV2 / CLAP build manifest and TTL generator.
 
 ---
 
-## Embedded Architecture: The Klang Seed (TKS)
+## 5. Verification Plan
 
-### 1. Zero-Allocation Modular DSP Engine
-The existing desktop engine structure will be mapped into an embedded HAL:
-- **No `std::vector` dynamic resizing**: Delay buffers and reflection taps are statically allocated at compile time in PSRAM / SDRAM using fixed arrays:
-  ```cpp
-  // Statically allocated in Teensy 4.1 EXTMEM (8MB PSRAM) or Daisy SDRAM
-  EXTMEM float fxDelayPool[MAX_FX_SLOTS][MAX_DELAY_SAMPLES];
-  ```
-- **Real-Time Interrupt Processing**:
-  - Supports single-sample audio processing for I2S/SAI DMA ring buffers (`processSample(float& left, float& right)`).
-  - Native 32-bit float hardware acceleration using Cortex-M7 FPU (`VFPv5-D16`).
-
----
-
-## Proposed Changes to the Repository
-
-### Component: Embedded Hardware Core (`embedded/`)
-
-#### [NEW] `embedded/tks_core/TKS_EffectsEngine.h`
-- Embedded wrapper for the 26 DSP blocks from [`source/ModularBlocks.h`](file:///c:/Dev/TheKlangFarmer/source/ModularBlocks.h).
-- Strips any remaining standard library CRT calls in favor of [`source/FastMath.h`](file:///c:/Dev/TheKlangFarmer/source/FastMath.h).
-- Manages static buffer pooling across the 8 multi-FX slots.
-
-#### [NEW] `embedded/tks_core/TBD16_PageManager.h`
-- 16-encoder banking and pagination state machine:
-  - Manages active page index (`PAGE_VOICE`, `PAGE_PRE_FX`, `PAGE_POST_FX`).
-  - Handles encoder resolution, acceleration, and parameter pickup / soft-takeover.
-  - Generates display text strings for hardware OLED displays (128x32 or 128x64 I2C/SPI).
-
----
-
-## Verification Plan
-
-### Automated Simulation Tests (Desktop)
-1. **Desktop TBD-16 Simulator (`test/tbd16_tests.cpp`)**:
-   - Create a headless test that feeds mock 16-encoder MIDI CC / rotary events to `TBD16_PageManager`.
-   - Verify that switching between Page 1 (Pre-FX) and Page 2 (Post-FX) correctly updates the underlying DSP parameters across all 8 slots without clicks or zipper noise.
-2. **Buffer Bounds Test**:
-   - Verify zero allocations occur during active algorithm switching and audio rendering.
-
-### Hardware Verification
-1. Flash reference firmware onto **Teensy 4.1** or **Daisy Seed**.
-2. Profile audio cycle budget on a 600 MHz Cortex-M7 with all 8 FX slots active simultaneously.
-   - Target: Total FX rack budget $< 25\%$ CPU load.
+### Automated Tests
+1. Headless simulation test verifying that cycling through all 16 pages and updating the 4 encoders accurately maps to APVTS / engine parameters without zipper noise.
+2. Cycle count profiling: verify mono drum voice takes $< 250$ cycles per sample on Cortex-M7 and ESP32-P4.

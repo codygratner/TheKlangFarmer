@@ -164,29 +164,26 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 ---
 
 ## 🚀 Milestone: v0.6.0 "The Hardware & Embedded Update"
-*Focus: Standalone Hardware Synthesizer (The Klang Seed), TBD-16 Physical Control Surface, and Embedded Microcontroller Engine.*
+*Focus: Standalone Hardware Synthesizer (The Klang Seed), dadamachines tbd-16 Integration, and Zynthian V5 Linux Port.*
 
-### 1. The Klang Seed (TKS) Standalone Hardware Synthesizer Port
-*Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](embedded_dsp_and_hardware_port_plan.md)*
-Port the zero-dependency pure C++ DSP engine to dedicated embedded hardware:
-- **Teensy 4.1 Platform**: NXP i.MX RT1062 ARM Cortex-M7 @ 600 MHz running 8 mono drum voices (~14.7% CPU load) with CS42448 8-channel DAC delivering discrete individual physical voice outputs.
-- **Daisy Seed Platform**: STM32H750 @ 480 MHz open-source reference module for breadboard and custom enclosure builds.
-
-### 2. TBD-16 Physical Control Surface & Multi-Page Effects Engine
+### 1. dadamachines tbd-16 Groovebox Integration
 *Detailed Plan: [`docs/tbd16_klang_seed_effects_plan.md`](tbd16_klang_seed_effects_plan.md)*
-Integrate the 26-algorithm Effects engine into the physical 16-encoder (4x4 grid) TBD-16 controller:
-- **Multi-Page FX Banking**: 
-  - **Page 1 (Pre-Amp FX)**: Slots 1–4 mapped across the 16 encoders (4 knobs/effects per row).
-  - **Page 2 (Post-Amp FX)**: Slots 5–8 mapped across the 16 encoders.
-- **Zero-Allocation Buffer Pooling**: Static ring-buffer allocation in 8 MB external PSRAM / 64 MB SDRAM for real-time interrupt processing.
-- **Hardware Interaction**: Push-encoder algorithm selector with hardware OLED screen display feedback.
+Deploy the pure C++ DSP engine onto the open-source **dadamachines tbd-16** platform:
+- **Architecture**: Dual-core **ESP32-P4 RISC-V @ 400 MHz** (Audio DSP) + **RP2350B @ 150 MHz** (UI, Sequencer, 2.4" OLED, 30 RGB buttons) + **ESP32-C6** (Wi-Fi/Ableton Link).
+- **Native 4-Encoder Mapping**: The unit features **4 endless push-encoders**; each 4-knob card and 4-knob FX slot in our engine maps directly to one 4-encoder screen page on its 2.4" OLED!
+
+### 2. The Klang Seed (TKS) Standalone Hardware Synthesizer
+*Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](embedded_dsp_and_hardware_port_plan.md)*
+Port the zero-dependency pure C++ DSP engine to dedicated DIY embedded platforms:
+- **Daisy Seed (Electro-Smith)**: STM32H750 ARM Cortex-M7 @ 480 MHz with 64 MB onboard SDRAM and integrated AK4556 stereo codec. Purpose-built for plug-and-play stereo desktop units and Eurorack modules.
+- **Teensy 4.1 (PJRC)**: NXP i.MX RT1062 ARM Cortex-M7 @ 600 MHz running 8 mono drum voices (~14.7% CPU load) with CS42448 8-channel DAC delivering **8 discrete physical 1/4" voice outputs** for studio outboard processing.
 
 ### 3. Zynthian V5 / V4 Standalone Hardware Port (TENTATIVE)
 *Detailed Plan: [`docs/zynthian_port_plan.md`](zynthian_port_plan.md)*
-Tentative exploration to deploy headless Linux LV2 / CLAP plugins onto the open-source Zynthian hardware ecosystem (Raspberry Pi 5 ARM64):
-- **Zero GUI Overhead**: Compiles purely the audio processor and APVTS state tree with no desktop GUI overhead.
-- **1:1 4-Encoder Page Mapping**: Each 4-knob card in our engine corresponds directly to one 4-encoder screen page on Zynthian V5's display, controlled by its 4 physical push-rotary optical encoders.
-- **Native Zynthian Host**: Leverages ZynthianOS for native preset storage, MIDI routing, and snapshot management.
+Deploy headless Linux LV2 / CLAP plugins onto the open-source Zynthian hardware ecosystem:
+- **Compute**: Raspberry Pi 5 (Quad-core ARM Cortex-A76 @ 2.4 GHz) running 64-bit ZynthianOS.
+- **Zero GUI Overhead**: Pure headless real-time DSP without X11/OpenGL overhead.
+- **1:1 4-Encoder Page Mapping**: Maps 1:1 onto Zynthian V5's 4 physical optical push-encoders and 800x480 touchscreen.
 
 ---
 
