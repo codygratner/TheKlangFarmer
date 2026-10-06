@@ -7,63 +7,144 @@
     "name": "Drive: Filter",
     "description": "",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "gain"
   },
   "filter1_cutoff": {
     "type": "float",
     "name": "Filter 1: Cutoff",
     "description": "Filter 1 cutoff corner / center frequency (20 Hz - 24 kHz)",
     "is_bipolar": false,
-    "default": 1.0
+    "default": 1.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 1.0,
+    "snap_points": [],
+    "format": "hertz"
   },
   "filter1_resonance": {
     "type": "float",
     "name": "Filter 1: Resonance",
     "description": "Filter 1 resonance / Q sharpness boost at cutoff",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "filter2_cutoff": {
     "type": "float",
     "name": "Filter 2: Cutoff",
     "description": "Filter 2 cutoff corner / center frequency",
     "is_bipolar": false,
-    "default": 1.0
+    "default": 1.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 1.0,
+    "snap_points": [],
+    "format": "hertz"
   },
   "filter2_resonance": {
     "type": "float",
     "name": "Filter 2: Resonance",
     "description": "Filter 2 resonance / Q sharpness boost at cutoff",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "filter3_cutoff": {
     "type": "float",
     "name": "Filter 3: Cutoff",
     "description": "Filter 3 cutoff corner / center frequency",
     "is_bipolar": false,
-    "default": 1.0
+    "default": 1.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 1.0,
+    "snap_points": [],
+    "format": "hertz"
   },
   "filter3_resonance": {
     "type": "float",
     "name": "Filter 3: Resonance",
     "description": "Filter 3 resonance / Q sharpness boost at cutoff",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "wavefolder_filter": {
     "type": "float",
     "name": "WaveFolder: Filter",
     "description": "",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "eq_filter": {
     "type": "float",
     "name": "EQ: DJ Filter",
     "description": "",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "filter1_type": {
     "type": "choice",

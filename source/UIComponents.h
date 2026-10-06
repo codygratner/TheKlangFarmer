@@ -263,6 +263,9 @@ public:
 
     juce::String getTextFromValue(double val) override;
     double getValueFromText(const juce::String& text) override;
+    
+    std::vector<double> snapValues;
+    double snapValue(double attemptedValue, DragMode dragMode) override;
 
     struct ModulationVisual {
         bool isModulated = false;

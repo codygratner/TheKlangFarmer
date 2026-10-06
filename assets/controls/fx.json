@@ -6,7 +6,15 @@
     "is_bipolar": false,
     "default": 1.0,
     "double_click": 1.0,
-    "default_label": "20.0 kHz"
+    "default_label": "20.0 kHz",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "hertz"
   },
   "fxfilter_resonance": {
     "type": "float",
@@ -15,7 +23,15 @@
     "is_bipolar": false,
     "default": 0.0,
     "double_click": 0.0,
-    "default_label": "0%"
+    "default_label": "0%",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "percent"
   },
   "wavefolder_fold": {
     "type": "float",
@@ -24,7 +40,15 @@
     "is_bipolar": false,
     "default": 0.0,
     "double_click": 0.0,
-    "default_label": "1.0x"
+    "default_label": "1.0x",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "percent"
   },
   "wavefolder_bias": {
     "type": "float",
@@ -33,7 +57,15 @@
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0%"
+    "default_label": "0%",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "freqshift_shift": {
     "type": "float",
@@ -42,7 +74,15 @@
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0.0 Hz"
+    "default_label": "0.0 Hz",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "freqshift_blend": {
     "type": "float",
@@ -52,7 +92,14 @@
     "default": 0.75,
     "double_click": 0.75,
     "format": "wet_dry",
-    "default_label": "Dry (0%)"
+    "default_label": "Dry (0%)",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": []
   },
   "freqshift_width": {
     "type": "float",
@@ -61,7 +108,15 @@
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0%"
+    "default_label": "0%",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "grit_bits": {
     "type": "float",
@@ -70,7 +125,15 @@
     "is_bipolar": false,
     "default": 1.0,
     "double_click": 1.0,
-    "default_label": "16 bits"
+    "default_label": "16 bits",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "percent"
   },
   "grit_rate": {
     "type": "float",
@@ -79,7 +142,15 @@
     "is_bipolar": false,
     "default": 1.0,
     "double_click": 1.0,
-    "default_label": "48.0 kHz"
+    "default_label": "48.0 kHz",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "hertz"
   },
   "grit_low": {
     "type": "float",
@@ -88,7 +159,15 @@
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0.0 dB"
+    "default_label": "0.0 dB",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "grit_high": {
     "type": "float",
@@ -97,7 +176,15 @@
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0.0 dB"
+    "default_label": "0.0 dB",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "comb_dampening": {
     "type": "float",
@@ -106,7 +193,15 @@
     "is_bipolar": false,
     "default": 1.0,
     "double_click": 1.0,
-    "default_label": "8.0 kHz"
+    "default_label": "8.0 kHz",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "percent"
   },
   "comb_cutoff": {
     "type": "float",
@@ -115,7 +210,15 @@
     "is_bipolar": false,
     "default": 1.0,
     "double_click": 1.0,
-    "default_label": "440 Hz"
+    "default_label": "440 Hz",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "hertz"
   },
   "comb_resonance": {
     "type": "float",
@@ -124,7 +227,15 @@
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0%"
+    "default_label": "0%",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "comb_mix": {
     "type": "float",
@@ -134,7 +245,14 @@
     "default": 0.75,
     "double_click": 0.75,
     "format": "wet_dry",
-    "default_label": "Dry (0%)"
+    "default_label": "Dry (0%)",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": []
   },
   "phasesmear_cutoff": {
     "type": "float",
@@ -143,7 +261,15 @@
     "is_bipolar": false,
     "default": 0.62124,
     "double_click": 0.62124,
-    "default_label": "1.0 kHz"
+    "default_label": "1.0 kHz",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "hertz"
   },
   "phasesmear_resonance": {
     "type": "float",
@@ -152,7 +278,15 @@
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0%"
+    "default_label": "0%",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "eq_freq": {
     "type": "float",
@@ -160,7 +294,15 @@
     "description": "",
     "is_bipolar": false,
     "default": 1.0,
-    "double_click": 1.0
+    "double_click": 1.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "hertz"
   },
   "eq_width": {
     "type": "float",
@@ -168,7 +310,15 @@
     "description": "",
     "is_bipolar": false,
     "default": 0.0,
-    "double_click": 0.0
+    "double_click": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "percent"
   },
   "eq_gain": {
     "type": "float",
@@ -176,7 +326,15 @@
     "description": "",
     "is_bipolar": false,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "gain"
   },
   "slop_freq": {
     "type": "float",
@@ -184,7 +342,15 @@
     "description": "",
     "is_bipolar": false,
     "default": 0.0,
-    "double_click": 0.0
+    "double_click": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "hertz"
   },
   "fxfilter_type": {
     "type": "choice",
@@ -248,7 +414,15 @@
     "is_bipolar": false,
     "default": 0.03806,
     "double_click": 0.03806,
-    "default_label": "500 Hz"
+    "default_label": "500 Hz",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "hertz"
   },
   "phasesmear_amount": {
     "type": "float",
@@ -257,7 +431,15 @@
     "is_bipolar": false,
     "default": 0.125,
     "double_click": 0.125,
-    "default_label": "4 Stages"
+    "default_label": "4 Stages",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "percent"
   },
   "pre_fx_1_type": {
     "type": "choice",
@@ -632,209 +814,479 @@
     "name": "Center Frequency",
     "description": "Peak/notch filter frequency (20 Hz - 24 kHz)",
     "default_label": "1.00 kHz",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "hertz"
   },
   "bell_eq_width": {
     "type": "float",
     "name": "Width",
     "description": "Bandwidth / Q factor in octaves (0.1 to 10.0 oct)",
     "default_label": "1.00 oct",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "bell_eq_gain": {
     "type": "float",
     "name": "Gain",
     "description": "Parametric boost or cut range",
     "default_label": "0.0 dB",
-    "is_bipolar": true
+    "is_bipolar": true,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "bipolar"
   },
   "bell_eq_djfilter": {
     "type": "float",
     "name": "DJ Filter",
     "description": "Macro low-pass / high-pass tilt filter",
     "default_label": "Flat",
-    "is_bipolar": true
+    "is_bipolar": true,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "bipolar"
   },
   "chorus_rate": {
     "type": "float",
     "name": "Rate",
     "description": "Modulation LFO speed in Hz (0.1 - 10.0 Hz)",
     "default_label": "1.2 Hz",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "hertz"
   },
   "chorus_depth": {
     "type": "float",
     "name": "Depth",
     "description": "LFO pitch modulation depth percentage",
     "default_label": "50%",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "chorus_feedback": {
     "type": "float",
     "name": "Feedback",
     "description": "Bipolar delay regeneration feedback",
     "default_label": "0%",
-    "is_bipolar": true
+    "is_bipolar": true,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "bipolar"
   },
   "chorus_mix": {
     "type": "float",
     "name": "Mix",
     "description": "Dry/Wet balance percentage",
     "default_label": "50%",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "drive_amount": {
     "type": "float",
     "name": "Drive",
     "description": "Nonlinear saturation input gain in dB (-12 to +24 dB)",
     "default_label": "0.0 dB",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "gain"
   },
   "drive_bias": {
     "type": "float",
     "name": "Bias",
     "description": "Asymmetrical DC offset for even/odd harmonics",
     "default_label": "0%",
-    "is_bipolar": true
+    "is_bipolar": true,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "bipolar"
   },
   "drive_filter": {
     "type": "float",
     "name": "Filter",
     "description": "Pre-saturation tilt / tone filter emphasis",
     "default_label": "0%",
-    "is_bipolar": true
+    "is_bipolar": true,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "bipolar"
   },
   "drive_limiter": {
     "type": "float",
     "name": "Limiter",
     "description": "Output brickwall peak limiter toggle",
     "default_label": "Off",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "gain"
   },
   "flanger_rate": {
     "type": "float",
     "name": "Rate",
     "description": "Modulation LFO rate in Hz (0.05 - 5.0 Hz)",
     "default_label": "0.25 Hz",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "hertz"
   },
   "flanger_depth": {
     "type": "float",
     "name": "Depth",
     "description": "LFO sweep range percentage",
     "default_label": "70%",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "flanger_feedback": {
     "type": "float",
     "name": "Feedback",
     "description": "Bipolar regeneration feedback for intense metallic jet sweeps",
     "default_label": "0%",
-    "is_bipolar": true
+    "is_bipolar": true,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "bipolar"
   },
   "flanger_mix": {
     "type": "float",
     "name": "Mix",
     "description": "Dry/Wet balance percentage",
     "default_label": "50%",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "phaser_rate": {
     "type": "float",
     "name": "Rate",
     "description": "Modulation LFO sweep speed in Hz (0.05 - 8.0 Hz)",
     "default_label": "0.50 Hz",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "hertz"
   },
   "phaser_depth": {
     "type": "float",
     "name": "Depth",
     "description": "LFO sweep depth percentage",
     "default_label": "60%",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "phaser_feedback": {
     "type": "float",
     "name": "Feedback",
     "description": "Bipolar all-pass feedback resonance",
     "default_label": "0%",
-    "is_bipolar": true
+    "is_bipolar": true,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "bipolar"
   },
   "phaser_mix": {
     "type": "float",
     "name": "Mix",
     "description": "Dry/Wet mix percentage",
     "default_label": "50%",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "ringmod_wave": {
     "type": "float",
     "name": "Waveform",
     "description": "Internal carrier oscillator shape (Sine -> Triangle -> Saw -> Square)",
     "default_label": "Sine (0%)",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "ringmod_rate": {
     "type": "float",
     "name": "Rate",
     "description": "Carrier oscillator modulation frequency in Hz (0.1 Hz to 5.0 kHz)",
     "default_label": "250 Hz",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "hertz"
   },
   "ringmod_amount": {
     "type": "float",
     "name": "Amount",
     "description": "Modulation depth / wet mix percentage",
     "default_label": "100%",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "ringmod_width": {
     "type": "float",
     "name": "Width",
     "description": "Bipolar stereo phase spread between left and right carrier oscillators",
     "default_label": "0%",
-    "is_bipolar": true
+    "is_bipolar": true,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "bipolar"
   },
   "delay_div": {
     "type": "float",
     "name": "Division",
     "description": "Host-synchronized musical beat subdivision (1/32 to 1/2)",
     "default_label": "1/8",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "delay_feedback": {
     "type": "float",
     "name": "Feedback",
     "description": "Delay echo regeneration percentage",
     "default_label": "40%",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "delay_tone": {
     "type": "float",
     "name": "Tone",
     "description": "Low-pass damping filter cutoff frequency on feedback loop",
     "default_label": "8.0 kHz",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "delay_mix": {
     "type": "float",
     "name": "Mix",
     "description": "Dry/Wet delay balance percentage",
     "default_label": "30%",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "wavefolder_limiter": {
     "type": "float",
     "name": "Limiter",
     "description": "Output hard limiter toggle",
     "default_label": "Off",
-    "is_bipolar": false
+    "is_bipolar": false,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "wavefolder_filter": {
     "type": "float",
     "name": "Filter",
     "description": "Pre-folding tilt tone filter emphasis",
     "default_label": "0%",
-    "is_bipolar": true
+    "is_bipolar": true,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "bipolar"
   }
 }

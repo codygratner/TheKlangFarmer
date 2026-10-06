@@ -1490,6 +1490,22 @@ double RotaryKnobSlider::getValueFromText(const juce::String& text) {
     return juce::Slider::getValueFromText(text);
 }
 
+double RotaryKnobSlider::snapValue(double attemptedValue, DragMode dragMode) {
+    double snapped = juce::Slider::snapValue(attemptedValue, dragMode);
+    if (snapValues.empty()) return snapped;
+    
+    // 3% magnetism based on total range
+    double range = getMaximum() - getMinimum();
+    double threshold = range * 0.03;
+    
+    for (double sv : snapValues) {
+        if (std::abs(snapped - sv) < threshold) {
+            return sv;
+        }
+    }
+    return snapped;
+}
+
 void RotaryKnobSlider::drawDiagram(juce::Graphics& g, juce::Rectangle<float> area) {
     if (area.getWidth() <= 4.0f || area.getHeight() <= 4.0f) return;
 

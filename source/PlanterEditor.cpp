@@ -579,8 +579,16 @@ void TheKlangPlanterAudioProcessorEditor::setupBox(juce::ComboBox& box) {
 void TheKlangPlanterAudioProcessorEditor::bindSlider(const juce::String& paramId, RotaryKnobSlider& slider) {
     if (auto* param = audioProcessor.apvts.getParameter(paramId)) {
         float defVal = param->getDefaultValue();
-        slider.setDoubleClickReturnValue(true, defVal);
-        slider.getDefaultValue = [defVal]() { return defVal; };
+        const auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+        
+        if (def != nullptr) {
+            slider.setDoubleClickReturnValue(true, def->doubleClickValue);
+            slider.getDefaultValue = [v = def->doubleClickValue]() { return v; };
+            for (auto& pt : def->snapPoints) slider.snapValues.push_back(pt.value);
+        } else {
+            slider.setDoubleClickReturnValue(true, defVal);
+            slider.getDefaultValue = [defVal]() { return defVal; };
+        }
     }
     slider.setParamId(paramId);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, paramId, slider));

@@ -9,7 +9,16 @@
     "name": "PitchEnv 1: Slope",
     "description": "Pitch envelope decay curve tension from punchy exponential to linear",
     "is_bipolar": false,
-    "default": 0.5886
+    "default": 0.5886,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5886,
+    "snap_points": [],
+    "format": "semitones"
   },
   "pitchenv1_depth": {
     "type": "float",
@@ -17,21 +26,47 @@
     "description": "Bipolar pitch envelope modulation depth in semitones",
     "is_bipolar": true,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "pitchenv1_decay": {
     "type": "float",
     "name": "PitchEnv 1: Decay",
     "description": "Pitch envelope decay duration",
     "is_bipolar": false,
-    "default": 0.3806
+    "default": 0.3806,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.3806,
+    "snap_points": [],
+    "format": "seconds"
   },
   "pitchenv2_slope": {
     "type": "float",
     "name": "PitchEnv 2: Slope",
     "description": "Voice 2 pitch envelope decay curve tension",
     "is_bipolar": false,
-    "default": 0.5886
+    "default": 0.5886,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5886,
+    "snap_points": [],
+    "format": "semitones"
   },
   "pitchenv2_depth": {
     "type": "float",
@@ -39,21 +74,47 @@
     "description": "Voice 2 pitch envelope modulation depth in semitones",
     "is_bipolar": true,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "pitchenv2_decay": {
     "type": "float",
     "name": "PitchEnv 2: Decay",
     "description": "Voice 2 pitch envelope decay duration",
     "is_bipolar": false,
-    "default": 0.3806
+    "default": 0.3806,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.3806,
+    "snap_points": [],
+    "format": "seconds"
   },
   "filterenv1_slope": {
     "type": "float",
     "name": "FilterEnv 1: Slope",
     "description": "Filter envelope decay curve tension",
     "is_bipolar": false,
-    "default": 0.5886
+    "default": 0.5886,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5886,
+    "snap_points": [],
+    "format": "percent"
   },
   "filterenv1_depth": {
     "type": "float",
@@ -61,28 +122,63 @@
     "description": "Cutoff modulation depth in octaves (-10 to +10 oct)",
     "is_bipolar": true,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "filterenv1_decay": {
     "type": "float",
     "name": "FilterEnv 1: Decay",
     "description": "Filter envelope decay duration",
     "is_bipolar": false,
-    "default": 0.3806
+    "default": 0.3806,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.3806,
+    "snap_points": [],
+    "format": "seconds"
   },
   "filterenv1_postdrive": {
     "type": "float",
     "name": "FilterEnv 1: Post-Drive",
     "description": "Pre-filter analog saturation drive gain (-6 to +24 dB)",
     "is_bipolar": false,
-    "default": 0.5
+    "default": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5,
+    "snap_points": [],
+    "format": "gain"
   },
   "filterenv2_slope": {
     "type": "float",
     "name": "FilterEnv 2: Slope",
     "description": "Filter 2 envelope decay curve tension",
     "is_bipolar": false,
-    "default": 0.5886
+    "default": 0.5886,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5886,
+    "snap_points": [],
+    "format": "percent"
   },
   "filterenv2_depth": {
     "type": "float",
@@ -90,28 +186,63 @@
     "description": "Filter 2 cutoff modulation depth in octaves",
     "is_bipolar": true,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "filterenv2_decay": {
     "type": "float",
     "name": "FilterEnv 2: Decay",
     "description": "Filter 2 envelope decay duration",
     "is_bipolar": false,
-    "default": 0.3806
+    "default": 0.3806,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.3806,
+    "snap_points": [],
+    "format": "seconds"
   },
   "filterenv2_postdrive": {
     "type": "float",
     "name": "FilterEnv 2: Post-Drive",
     "description": "Filter 2 pre-filter saturation drive gain",
     "is_bipolar": false,
-    "default": 0.5
+    "default": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5,
+    "snap_points": [],
+    "format": "gain"
   },
   "filterenv3_slope": {
     "type": "float",
     "name": "FilterEnv 3: Slope",
     "description": "Filter 3 envelope decay curve tension",
     "is_bipolar": false,
-    "default": 0.5886
+    "default": 0.5886,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5886,
+    "snap_points": [],
+    "format": "percent"
   },
   "filterenv3_depth": {
     "type": "float",
@@ -119,56 +250,127 @@
     "description": "Filter 3 cutoff modulation depth in octaves",
     "is_bipolar": true,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "filterenv3_decay": {
     "type": "float",
     "name": "FilterEnv 3: Decay",
     "description": "Filter 3 envelope decay duration",
     "is_bipolar": false,
-    "default": 0.3078
+    "default": 0.3078,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.3078,
+    "snap_points": [],
+    "format": "seconds"
   },
   "filterenv3_postdrive": {
     "type": "float",
     "name": "FilterEnv 3: Post-Drive",
     "description": "Filter 3 pre-filter saturation drive gain",
     "is_bipolar": false,
-    "default": 0.5
+    "default": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5,
+    "snap_points": [],
+    "format": "gain"
   },
   "ampenv_claps": {
     "type": "float",
     "name": "AmpEnv: Claps",
     "description": "Pre-decay transient hand-clap burst count (0 to 32 bursts)",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "ampenv_clapspeed": {
     "type": "float",
     "name": "AmpEnv: Clap Speed",
     "description": "Time spacing interval between clap bursts (1 to 15 ms)",
     "is_bipolar": false,
-    "default": 0.142857
+    "default": 0.142857,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.142857,
+    "snap_points": [],
+    "format": "percent"
   },
   "ampenv_slope": {
     "type": "float",
     "name": "AmpEnv: Slope",
     "description": "Master amplitude envelope decay curve tension",
     "is_bipolar": false,
-    "default": 0.5886
+    "default": 0.5886,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5886,
+    "snap_points": [],
+    "format": "percent"
   },
   "ampenv_decay": {
     "type": "float",
     "name": "AmpEnv: Decay",
     "description": "Master amplitude envelope decay duration",
     "is_bipolar": false,
-    "default": 0.3806
+    "default": 0.3806,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.3806,
+    "snap_points": [],
+    "format": "seconds"
   },
   "modenv1_slope": {
     "type": "float",
     "name": "ModEnv 1: Slope",
     "description": "Modulation envelope decay curve tension",
     "is_bipolar": false,
-    "default": 0.5886
+    "default": 0.5886,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5886,
+    "snap_points": [],
+    "format": "percent"
   },
   "modenv1_depth": {
     "type": "float",
@@ -176,21 +378,47 @@
     "description": "Bipolar modulation envelope depth to assigned target",
     "is_bipolar": true,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "modenv1_decay": {
     "type": "float",
     "name": "ModEnv 1: Decay",
     "description": "Modulation envelope decay duration",
     "is_bipolar": false,
-    "default": 0.3806
+    "default": 0.3806,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.3806,
+    "snap_points": [],
+    "format": "seconds"
   },
   "modenv2_slope": {
     "type": "float",
     "name": "ModEnv 2: Slope",
     "description": "Modulation envelope decay curve tension",
     "is_bipolar": false,
-    "default": 0.5886
+    "default": 0.5886,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5886,
+    "snap_points": [],
+    "format": "percent"
   },
   "modenv2_depth": {
     "type": "float",
@@ -198,21 +426,47 @@
     "description": "Bipolar modulation envelope depth to assigned target",
     "is_bipolar": true,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "modenv2_decay": {
     "type": "float",
     "name": "ModEnv 2: Decay",
     "description": "Modulation envelope decay duration",
     "is_bipolar": false,
-    "default": 0.3806
+    "default": 0.3806,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.3806,
+    "snap_points": [],
+    "format": "seconds"
   },
   "modenv3_slope": {
     "type": "float",
     "name": "ModEnv 3: Slope",
     "description": "Modulation envelope decay curve tension",
     "is_bipolar": false,
-    "default": 0.5886
+    "default": 0.5886,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5886,
+    "snap_points": [],
+    "format": "percent"
   },
   "modenv3_depth": {
     "type": "float",
@@ -220,14 +474,31 @@
     "description": "Bipolar modulation envelope depth to assigned target",
     "is_bipolar": true,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "modenv3_decay": {
     "type": "float",
     "name": "ModEnv 3: Decay",
     "description": "Modulation envelope decay duration",
     "is_bipolar": false,
-    "default": 0.3806
+    "default": 0.3806,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.3806,
+    "snap_points": [],
+    "format": "seconds"
   },
   "pitchenv1_target": {
     "type": "choice",

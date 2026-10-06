@@ -8,7 +8,15 @@
     "description": "Sample-and-hold downsampling clock rate for metallic textures",
     "is_bipolar": false,
     "default": 1.0,
-    "double_click": 1.0
+    "double_click": 1.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "hertz"
   },
   "noise_filter": {
     "type": "float",
@@ -16,7 +24,15 @@
     "description": "Transient noise band-pass / center frequency color",
     "is_bipolar": false,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "percent"
   },
   "noise_drive": {
     "type": "float",
@@ -24,7 +40,15 @@
     "description": "Transient noise saturation drive gain",
     "is_bipolar": false,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "gain"
   },
   "noise_decay": {
     "type": "float",
@@ -32,7 +56,15 @@
     "description": "Transient noise burst decay time",
     "is_bipolar": false,
     "default": 0.3078,
-    "double_click": 0.3078
+    "double_click": 0.3078,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "seconds"
   },
   "mixer_carrier1_level": {
     "type": "float",
@@ -40,7 +72,15 @@
     "description": "Carrier 1 voice output volume level",
     "is_bipolar": false,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "gain"
   },
   "mixer_carrier2_level": {
     "type": "float",
@@ -48,7 +88,15 @@
     "description": "Carrier 2 voice output volume level",
     "is_bipolar": false,
     "default": 0.0,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "gain"
   },
   "mixer_ringmod": {
     "type": "float",
@@ -56,7 +104,15 @@
     "description": "Ring modulator (Carrier 1 x Carrier 2) mix level",
     "is_bipolar": false,
     "default": 0.0,
-    "double_click": 0.0
+    "double_click": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "percent"
   },
   "mixer_noise_level": {
     "type": "float",
@@ -77,7 +133,15 @@
         "value": 1.0,
         "label": "100%"
       }
-    ]
+    ],
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "format": "gain"
   },
   "ui_strings": {
     "card_mixer_tooltip": "MIXER: 4-channel analog summing mixer blending Carrier 1, Carrier 2, Ring Mod, and Noise.",

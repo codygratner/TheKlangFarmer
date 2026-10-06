@@ -30,14 +30,30 @@
         "label": "PWM"
       }
     ],
-    "format": "waveshape"
+    "format": "waveshape",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0
   },
   "mod1_speed": {
     "type": "float",
     "name": "Modulator 1: Speed",
     "description": "Modulator 1 frequency / semitone offset / FM ratio",
     "is_bipolar": false,
-    "default": 0.5
+    "default": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5,
+    "snap_points": [],
+    "format": "percent"
   },
   "mod2_shape": {
     "type": "float",
@@ -67,14 +83,30 @@
         "label": "PWM"
       }
     ],
-    "format": "waveshape"
+    "format": "waveshape",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0
   },
   "mod2_speed": {
     "type": "float",
     "name": "Modulator 2: Speed",
     "description": "Modulator 2 frequency / semitone offset / FM ratio",
     "is_bipolar": false,
-    "default": 0.5
+    "default": 0.5,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.5,
+    "snap_points": [],
+    "format": "percent"
   },
   "mixer_ringmod": {
     "type": "float",
@@ -95,7 +127,15 @@
         "value": 1.0,
         "label": "100%"
       }
-    ]
+    ],
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "format": "percent"
   },
   "ringmod_shape": {
     "type": "float",
@@ -125,28 +165,62 @@
         "label": "PWM"
       }
     ],
-    "format": "waveshape"
+    "format": "waveshape",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0
   },
   "ringmod_rate": {
     "type": "float",
     "name": "RingMod: Rate",
     "description": "",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "hertz"
   },
   "ringmod_amount": {
     "type": "float",
     "name": "RingMod: Amount",
     "description": "",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "ringmod_width": {
     "type": "float",
     "name": "RingMod: Width",
     "description": "",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.0,
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "double_click": 0.0,
+    "snap_points": [],
+    "format": "percent"
   },
   "mod1_track": {
     "type": "choice",
