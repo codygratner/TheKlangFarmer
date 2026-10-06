@@ -1,3 +1,4 @@
+﻿#define JUCE_LOG_ASSERTIONS 1
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "MainComponent.h"
 #include <JuceHeader.h> // for ProjectInfo::versionString
@@ -11,14 +12,18 @@ public:
     bool moreThanOneInstanceAllowed() override             { return true; }
 
     void initialise(const juce::String& commandLine) override {
+        juce::FileLogger::createDefaultAppLogger("TheKlangFarmer", "Editor.log", "App Started");
+        juce::Logger::writeToLog("Initialising...");
         mainWindow.reset(new MainWindow(getApplicationName() + " v" + getApplicationVersion()));
     }
 
     void shutdown() override {
+        juce::Logger::writeToLog("Shutting down...");
         mainWindow = nullptr;
     }
 
     void systemRequestedQuit() override {
+        juce::Logger::writeToLog("System requested quit...");
         quit();
     }
 
@@ -41,6 +46,7 @@ public:
            #endif
 
             setVisible(true);
+            juce::Logger::writeToLog("MainWindow visible.");
         }
 
         void closeButtonPressed() override {
@@ -56,5 +62,3 @@ private:
 };
 
 START_JUCE_APPLICATION(TheKlangEditorApplication)
-
-

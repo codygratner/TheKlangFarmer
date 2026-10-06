@@ -43,6 +43,10 @@ TheKlangPlanterAudioProcessor::TheKlangPlanterAudioProcessor() : KlangCoreProces
     ampEnvClapSpeedParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_ampenv_clapspeed"));
     ampEnvSlopeParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_ampenv_slope"));
     ampEnvDecayParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_ampenv_decay"));
+    limiterEnableParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("planter_limiter_enable"));
+    limiterGainParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_limiter_gain"));
+    limiterThreshParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_limiter_thresh"));
+    limiterReleaseParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("planter_limiter_release"));
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout TheKlangPlanterAudioProcessor::createParameterLayout() {
@@ -125,6 +129,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangPlanterAudioProcesso
     layout.add(makeFloatParam("planter_ampenv_clapspeed", "AmpEnv: Clap Speed", 2.0f / 14.0f));
     layout.add(makeFloatParam("planter_ampenv_slope", "AmpEnv: Slope", 0.5886f));
     layout.add(makeFloatParam("planter_ampenv_decay", "AmpEnv: Decay", 0.3806f));
+    layout.add(makeChoiceParam("planter_limiter_enable", "Limiter: Enable", juce::StringArray{ "Off", "On" }, 1));
+    layout.add(makeFloatParam("planter_limiter_gain", "Limiter: Gain", 12.0f / 36.0f));
+    layout.add(makeFloatParam("planter_limiter_thresh", "Limiter: Threshold", 1.0f));
+    layout.add(makeFloatParam("planter_limiter_release", "Limiter: Release", 0.6296f));
 
     return layout;
 }
@@ -193,7 +201,13 @@ void TheKlangPlanterAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     if (ampEnvClapsParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMPENV, 0, ampEnvClapsParam->get());
     if (ampEnvClapSpeedParam) engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMPENV, 1, ampEnvClapSpeedParam->get());
     if (ampEnvSlopeParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMPENV, 2, ampEnvSlopeParam->get());
-    if (ampEnvDecayParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMPENV, 3, ampEnvDecayParam->get());
+        if (ampEnvDecayParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMPENV, 3, ampEnvDecayParam->get());
+
+    // Limiter
+    if (limiterEnableParam)   engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_LIMITER, 0, static_cast<float>(limiterEnableParam->getIndex()));
+    if (limiterGainParam)     engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_LIMITER, 1, limiterGainParam->get());
+    if (limiterThreshParam)   engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_LIMITER, 2, limiterThreshParam->get());
+    if (limiterReleaseParam)  engine.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_LIMITER, 3, limiterReleaseParam->get());
 
     // 2. Process MIDI events
     for (const auto metadata : midiMessages) {
@@ -230,6 +244,8 @@ bool TheKlangPlanterAudioProcessor::hasEditor() const {
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
     return new TheKlangPlanterAudioProcessor();
 }
+
+
 
 
 

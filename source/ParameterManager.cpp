@@ -35,10 +35,9 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
             def.id = prop.name.toString();
             
             auto& val = prop.value;
-            if (!val.isObject())
-                continue;
-
             auto* vObj = val.getDynamicObject();
+            if (vObj == nullptr)
+                continue;
             
             if (def.id == "ui_colors") {
                 for (auto& colorProp : vObj->getProperties()) {

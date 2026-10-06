@@ -191,5 +191,9 @@
       "Noise"
     ],
     "default": 0
+  },
+  "ui_strings": {
+    "card_mod1_tooltip": "MODULATOR 1: Frequency modulation oscillator in Fixed Hz, Pitch Follow, or Harmonic Ratio modes.",
+    "card_mod2_tooltip": "MODULATOR 2: Secondary modulation source (Oscillator, Cyclic LFO, or Noise)."
   }
 }

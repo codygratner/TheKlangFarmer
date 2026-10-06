@@ -58,7 +58,7 @@
   "carrier1_pitch": {
     "type": "float",
     "name": "Carrier 1: Pitch / Freq",
-    "description": "",
+    "description": "Carrier 1 pitch transpose / frequency offset",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -67,7 +67,7 @@
   "carrier1_depth": {
     "type": "float",
     "name": "Carrier 1: Modulation Depth",
-    "description": "",
+    "description": "Frequency modulation depth from Modulator 1",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -76,7 +76,7 @@
   "carrier2_pitch": {
     "type": "float",
     "name": "Carrier 2: Pitch / Freq",
-    "description": "",
+    "description": "Carrier 2 pitch transpose / frequency offset",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -85,7 +85,7 @@
   "carrier2_shape": {
     "type": "float",
     "name": "Carrier 2: Shape",
-    "description": "",
+    "description": "Carrier 2 waveform shape morphing",
     "is_bipolar": false,
     "default": 0.0,
     "double_click": 0.0,
@@ -116,7 +116,7 @@
   "carrier2_depth": {
     "type": "float",
     "name": "Carrier 2: Modulation Depth",
-    "description": "",
+    "description": "Frequency modulation depth from Modulator 2",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -138,5 +138,12 @@
       "FREQ: Free-running continuous frequency in Hertz (20 Hz - 24 kHz).",
       "NOTE: Quantizes base carrier frequency to discrete musical semitones."
     ]
+  },
+  "ui_strings": {
+    "card_carrier1_tooltip": "CARRIER 1: Primary tonal FM oscillator with morphable sine/tri/saw/pulse waveforms.",
+    "card_carrier2_tooltip": "CARRIER 2: Secondary tonal FM oscillator for layered drum bodies and sub harmonics.",
+    "carrier_pitch_desc_midi": "Pitch transpose offset in semitones",
+    "carrier_pitch_desc_freq": "Carrier base frequency in Hertz",
+    "carrier_pitch_desc_note": "Base musical note pitch"
   }
 }

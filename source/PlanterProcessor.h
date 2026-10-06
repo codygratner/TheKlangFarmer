@@ -83,6 +83,13 @@ private:
     juce::AudioParameterFloat*  ampEnvSlopeParam     = nullptr;
     juce::AudioParameterFloat*  ampEnvDecayParam     = nullptr;
 
+    // 9. Limiter
+    juce::AudioParameterChoice* limiterEnableParam   = nullptr;
+    juce::AudioParameterFloat*  limiterGainParam     = nullptr;
+    juce::AudioParameterFloat*  limiterThreshParam   = nullptr;
+    juce::AudioParameterFloat*  limiterReleaseParam  = nullptr;
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangPlanterAudioProcessor)
 };
+
 

@@ -797,24 +797,23 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     if (parsed.isVoid() || jsonString.isEmpty()) {
         emptyPlaceholder.setVisible(true);
         activeSliders.clear();
-    previewWrapper.deleteAllChildren();
+        previewWrapper.deleteAllChildren();
         compToParamId.clear();
-    formEditor.clear();
+        formEditor.clear();
         return;
     }
     emptyPlaceholder.setVisible(false);
+
+    activeSliders.clear();
+    previewWrapper.deleteAllChildren();
+    compToParamId.clear();
+    formEditor.clear();
 
     if (isTheme) {
         RlyehSound::ParameterManager::getInstance().reloadFromJson(jsonString);
     } else {
         RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent());
     }
-    
-    activeSliders.clear();
-    previewWrapper.deleteAllChildren();
-    compToParamId.clear();
-
-    formEditor.clear();
 
 if (isTheme && parsed.isObject()) {
         juce::Array<juce::PropertyComponent*> props;

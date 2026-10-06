@@ -367,5 +367,50 @@
     "type": "float",
     "max": 1,
     "defaultFloat": 0.3078
+  },
+  "ui_strings": {
+    "card_planter_carrier_tooltip": "CARRIER: Primary tonal FM oscillator with morphable shape.",
+    "card_planter_modulator_tooltip": "MODULATOR: Frequency modulation oscillator in Fixed Hz, Pitch Follow, or Ratio modes.",
+    "card_planter_pitchenv_tooltip": "PITCH ENV: Dedicated pitch modulation envelope with routing destinations.",
+    "card_planter_noise_tooltip": "TRANSIENTS: Tuned sample-and-hold noise generator with transient envelope.",
+    "card_planter_filter_tooltip": "FILTER: State-variable resonant filter with multiple types and slopes.",
+    "card_planter_filterenv_tooltip": "FILTER ENV: Cutoff sweep envelope and pre-filter overdrive.",
+    "card_planter_amp_tooltip": "AMPLIFIER: Master saturation drive, stereo panning, and velocity scaling.",
+    "card_planter_ampenv_tooltip": "AMP ENV: Master percussive amplitude decay envelope and clap burst generator.",
+    "card_planter_limiter_tooltip": "LIMITER: Brickwall peak limiter with auto soft-knee release and gain boosting."
+  },
+  "planter_limiter_enable": {
+    "type": "choice",
+    "name": "Limiter: Enable",
+    "choices": [
+      "Off",
+      "On"
+    ],
+    "default": 1,
+    "description": "Enable or bypass the master output limiter"
+  },
+  "planter_limiter_gain": {
+    "type": "float",
+    "name": "Limiter: Gain",
+    "min": 0.0,
+    "max": 1.0,
+    "default": 0.3333333333333333,
+    "description": "Input boost gain into the limiter"
+  },
+  "planter_limiter_thresh": {
+    "type": "float",
+    "name": "Limiter: Threshold",
+    "min": 0.0,
+    "max": 1.0,
+    "default": 1.0,
+    "description": "Ceiling threshold for peak reduction"
+  },
+  "planter_limiter_release": {
+    "type": "float",
+    "name": "Limiter: Release",
+    "min": 0.0,
+    "max": 1.0,
+    "default": 0.6296,
+    "description": "Release recovery time for the limiter"
   }
 }

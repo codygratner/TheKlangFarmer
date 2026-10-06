@@ -3,6 +3,7 @@
     "Carrier 1": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "CARRIER 1: Primary tonal FM oscillator with morphable sine/tri/saw/pulse waveforms.",
       "parameters": [
         "carrier1_tracking",
         "carrier1_pitch",
@@ -13,6 +14,7 @@
     "Modulator 1": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "MODULATOR 1: Frequency modulation oscillator in Fixed Hz, Pitch Follow, or Harmonic Ratio modes.",
       "parameters": [
         "mod1_track",
         "mod1_type",
@@ -23,6 +25,7 @@
     "Pitch Env 1": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "PITCH ENV 1: High-speed exponential pitch envelope routable to Carrier, Modulator, or Both.",
       "parameters": [
         "pitchenv1_slope",
         "pitchenv1_depth",
@@ -32,6 +35,7 @@
     "Filter 1": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "FILTER 1: Voice 1 multi-mode resonant filter with selectable 6-36 dB/oct slope.",
       "parameters": [
         "filter1_type",
         "filter1_slope",
@@ -42,6 +46,7 @@
     "Filter Env 1": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "FILTER ENV 1: Voice 1 filter cutoff modulation envelope and pre-filter overdrive.",
       "parameters": [
         "filterenv1_slope",
         "filterenv1_depth",
@@ -52,6 +57,7 @@
     "Mixer": {
       "color": "0xFFFF1744",
       "style": "DoepferSilver",
+      "tooltip": "MIXER: 4-channel analog summing mixer blending Carrier 1, Carrier 2, Ring Mod, and Noise.",
       "parameters": [
         "mixer_carrier1_level",
         "mixer_carrier2_level",
@@ -64,6 +70,7 @@
     "Carrier 2": {
       "color": "0xFFFF1744",
       "style": "StandardDark",
+      "tooltip": "CARRIER 2: Secondary tonal FM oscillator for layered drum bodies and sub harmonics.",
       "parameters": [
         "carrier2_tracking",
         "carrier2_pitch",
@@ -75,6 +82,7 @@
     "Pitch Env 2": {
       "color": "0xFFCFD8DC",
       "style": "StandardDark",
+      "tooltip": "PITCH ENV 2: Voice 2 pitch envelope for transient attack sweeps.",
       "parameters": [
         "pitchenv2_slope",
         "pitchenv2_depth",
@@ -84,6 +92,7 @@
     "Filter 2": {
       "color": "0xFF2979FF",
       "style": "StandardDark",
+      "tooltip": "FILTER 2: Voice 2 multi-mode resonant filter.",
       "parameters": [
         "filter2_type",
         "filter2_slope",
@@ -94,6 +103,7 @@
     "Filter Env 2": {
       "color": "0xFFFFB300",
       "style": "StandardDark",
+      "tooltip": "FILTER ENV 2: Voice 2 cutoff modulation envelope and pre-filter overdrive.",
       "parameters": [
         "filterenv2_slope",
         "filterenv2_depth",
@@ -104,6 +114,7 @@
     "Mixer": {
       "color": "0xFFFF1744",
       "style": "DoepferSilver",
+      "tooltip": "MIXER: 4-channel analog summing mixer blending Carrier 1, Carrier 2, Ring Mod, and Noise.",
       "parameters": [
         "mixer_carrier1_level",
         "mixer_carrier2_level",
@@ -116,6 +127,7 @@
     "Noise Transient": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "NOISE TRANSIENT: Metallic transient generator with sample-and-hold clock and center frequency filter.",
       "parameters": [
         "noise_rate",
         "noise_color",
@@ -126,6 +138,7 @@
     "Filter 3": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "FILTER 3: Dedicated multi-mode filter processing the Noise transient burst.",
       "parameters": [
         "filter3_type",
         "filter3_slope",
@@ -136,6 +149,7 @@
     "Filter Env 3": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "FILTER ENV 3: Envelope shaping Noise filter cutoff modulation and pre-filter drive.",
       "parameters": [
         "filterenv3_slope",
         "filterenv3_depth",
@@ -146,6 +160,7 @@
     "Mixer": {
       "color": "0xFFFF1744",
       "style": "DoepferSilver",
+      "tooltip": "MIXER: 4-channel analog summing mixer blending Carrier 1, Carrier 2, Ring Mod, and Noise.",
       "parameters": [
         "mixer_carrier1_level",
         "mixer_carrier2_level",
@@ -188,6 +203,7 @@
     "Velocity": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "VELOCITY: Global MIDI velocity modulation matrix mapping strike force to synth parameters.",
       "parameters": [
         "vel_slope",
         "vel_depth",
@@ -198,6 +214,7 @@
     "Key Track": {
       "color": "0xFF1DE9B6",
       "style": "StandardDark",
+      "tooltip": "KEY TRACK: MIDI pitch-tracking matrix scaling cutoff, decay, and level across keyboard.",
       "parameters": [
         "key_slope",
         "key_depth",
@@ -208,6 +225,7 @@
     "Slop": {
       "color": "0xFFD500F9",
       "style": "StandardDark",
+      "tooltip": "SLOP: Analog pitch, decay, and pan micro-drift simulation for organic acoustic variation.",
       "parameters": [
         "slop_freq",
         "slop_depth",
@@ -218,6 +236,7 @@
     "Mixer": {
       "color": "0xFFFF1744",
       "style": "DoepferSilver",
+      "tooltip": "MIXER: 4-channel analog summing mixer blending Carrier 1, Carrier 2, Ring Mod, and Noise.",
       "parameters": [
         "mixer_carrier1_level",
         "mixer_carrier2_level",
@@ -230,6 +249,7 @@
     "Pre Limiter": {
       "color": "0xFFFF1744",
       "style": "DoepferSilver",
+      "tooltip": "PRE LIMITER: Pre-saturation brickwall safety limiter and gain booster.",
       "parameters": [
         "pre_limiter_enable",
         "pre_limiter_gain",
@@ -240,6 +260,7 @@
     "Post Limiter": {
       "color": "0xFFFF1744",
       "style": "DoepferSilver",
+      "tooltip": "POST LIMITER: Master output brickwall peak limiter with auto soft-knee release.",
       "parameters": [
         "post_limiter_enable",
         "post_limiter_gain",
@@ -250,6 +271,7 @@
     "Amp Envelope": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "AMP ENVELOPE: Master amplitude decay envelope with integrated multi-burst clap generator.",
       "parameters": [
         "amp_env_claps",
         "amp_env_clap_speed",
@@ -260,6 +282,7 @@
     "Amplifier": {
       "color": "0xFF00D2FF",
       "style": "StandardDark",
+      "tooltip": "AMPLIFIER: Master output gain stage with stereo panning and pre-limiter saturation drive.",
       "parameters": [
         "amp_limiter",
         "amp_level",

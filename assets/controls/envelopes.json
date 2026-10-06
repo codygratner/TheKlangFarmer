@@ -310,5 +310,13 @@
       "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
       "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
     ]
+  },
+  "ui_strings": {
+    "card_pitchenv1_tooltip": "PITCH ENV 1: High-speed exponential pitch envelope routable to Carrier, Modulator, or Both.",
+    "card_pitchenv2_tooltip": "PITCH ENV 2: Voice 2 pitch envelope for transient attack sweeps.",
+    "card_ampenv_tooltip": "AMP ENVELOPE: Master amplitude decay envelope with integrated multi-burst clap generator.",
+    "card_modenv1_tooltip": "MOD ENV 1: Freely assignable modulation envelope routable to any synthesizer parameter.",
+    "card_modenv2_tooltip": "MOD ENV 2: Freely assignable modulation envelope routable to any synthesizer parameter.",
+    "card_modenv3_tooltip": "MOD ENV 3: Freely assignable modulation envelope routable to any synthesizer parameter."
   }
 }

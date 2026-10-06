@@ -107,7 +107,8 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
       modTypeSelector(juce::Colour(0xff00d2ff)),
       pitchEnvTargetSelector(juce::Colour(0xffcfd8dc)),
       filterTypeSelector(juce::Colour(0xff2979ff)),
-      filterSlopeSelector(juce::Colour(0xff2979ff))
+      filterSlopeSelector(juce::Colour(0xff2979ff)),
+      limiterEnableSelector(juce::Colour(0xffe53935))
 {
     setLookAndFeel(&knobLookAndFeel);
     scopeBuffer.resize(512, 0.0f);
@@ -446,6 +447,21 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardAmpEnv->setKnob(3, "Decay", &ampEnvDecaySlider);
     addAndMakeVisible(cardAmpEnv.get());
 
+    // 6. Limiter Card
+    cardLimiter = std::make_unique<ModuleCardComponent>("Limiter", juce::Colour(0xffe53935), ModuleCardComponent::PanelStyle::DoepferSilver);
+    cardLimiter->setTooltip("LIMITER \u2014 Final mastering soft-clipper to prevent digital clipping.");
+    setupKnob(limiterGainSlider, juce::Colour(0xffe53935), false, 12.0 / 36.0);
+    setupKnob(limiterThreshSlider, juce::Colour(0xffe53935), false, 1.0);
+    setupKnob(limiterReleaseSlider, juce::Colour(0xffe53935), false, 0.6296);
+    cardLimiter->setKnob(1, "Gain", &limiterGainSlider);
+    cardLimiter->setKnob(2, "Threshold", &limiterThreshSlider);
+    cardLimiter->setKnob(3, "Release", &limiterReleaseSlider);
+    bindSelector(limiterEnableSelector, limiterEnableBox, "planter_limiter_enable", { "Off", "On" }, 2);
+    limiterEnableSelector.setAccent(juce::Colour(0xffe53935));
+    limiterEnableSelector.setTooltip("ENABLE LIMITER");
+    cardLimiter->setLedSelector(&limiterEnableSelector);
+    addAndMakeVisible(cardLimiter.get());
+
     // Connect slider attachments
     bindSlider("planter_carrier_pitch", carrierPitchSlider);
     bindSlider("planter_carrier_shape", carrierShapeSlider);
@@ -480,6 +496,10 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     bindSlider("planter_ampenv_clapspeed", ampEnvClapSpeedSlider);
     bindSlider("planter_ampenv_slope", ampEnvSlopeSlider);
     bindSlider("planter_ampenv_decay", ampEnvDecaySlider);
+
+    bindSlider("planter_limiter_gain", limiterGainSlider);
+    bindSlider("planter_limiter_thresh", limiterThreshSlider);
+    bindSlider("planter_limiter_release", limiterReleaseSlider);
 
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_carrier_tracking", carrierTrackingBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_mod_track", modTrackBox));

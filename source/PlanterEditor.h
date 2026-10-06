@@ -31,15 +31,6 @@ private:
     TheKlangPlanterAudioProcessor& audioProcessor;
     PlanterHeaderVisualizer headerViz;
     // 8 Module Cards (4 Columns x 2 Rows)
-    std::unique_ptr<ModuleCardComponent> cardCarrier;
-    std::unique_ptr<ModuleCardComponent> cardMod;
-    std::unique_ptr<ModuleCardComponent> cardPitchEnv;
-    std::unique_ptr<ModuleCardComponent> cardNoise;
-    std::unique_ptr<ModuleCardComponent> cardFilter;
-    std::unique_ptr<ModuleCardComponent> cardFilterEnv;
-    std::unique_ptr<ModuleCardComponent> cardAmp;
-    std::unique_ptr<ModuleCardComponent> cardAmpEnv;
-
     // Carrier Controls
     juce::ComboBox carrierTrackingBox;
     LedSelectorComponent carrierTrackingSelector;
@@ -94,6 +85,23 @@ private:
     RotaryKnobSlider ampEnvSlopeSlider;
     RotaryKnobSlider ampEnvDecaySlider;
 
+    juce::ComboBox limiterEnableBox;
+    LedSelectorComponent limiterEnableSelector;
+    RotaryKnobSlider limiterGainSlider;
+    RotaryKnobSlider limiterThreshSlider;
+    RotaryKnobSlider limiterReleaseSlider;
+
+    std::unique_ptr<ModuleCardComponent> cardCarrier;
+    std::unique_ptr<ModuleCardComponent> cardMod;
+    std::unique_ptr<ModuleCardComponent> cardPitchEnv;
+    std::unique_ptr<ModuleCardComponent> cardNoise;
+    std::unique_ptr<ModuleCardComponent> cardFilter;
+    std::unique_ptr<ModuleCardComponent> cardFilterEnv;
+    std::unique_ptr<ModuleCardComponent> cardAmp;
+    std::unique_ptr<ModuleCardComponent> cardAmpEnv;
+    std::unique_ptr<ModuleCardComponent> cardLimiter;
+
+    
     // APVTS Attachments
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
     using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
@@ -120,4 +128,5 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangPlanterAudioProcessorEditor)
 };
+
 

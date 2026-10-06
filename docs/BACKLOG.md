@@ -20,7 +20,7 @@
 
 ### 1. Automated GUI Test Harness (Guardrail)
 *Detailed Plan: [`docs/gui_test_harness_plan.md`](gui_test_harness_plan.md)*
-Implement a functional state C++ testing harness (`gui_tests`) to simulate clicks and verify APVTS bindings. Integrated directly into the `/build-validate` skill to act as an industry-standard development guardrail (can be bypassed with `--skip-gui`). Now prioritized as **Item #1** to lock down test coverage and protect ongoing Editor work!
+Implement a comprehensive, single-binary C++ functional GUI testing harness (`gui_tests`) to test all three applications across the repository: The Klang Farmer, The Klang Planter, and The Klang Editor. Features synthetic mouse event simulation (drag, click, double-click), two-way APVTS parameter synchronization, page navigation transitions (Pages 0–6), dynamic FX slot reconfiguration, modal guide handling, offscreen smoke paint checks, and automated failure PNG snapshot capture in `test_artifacts/gui/`. Integrated directly into the `/build-validate` skill as an automated development guardrail (bypassed with `--skip-gui`). Now prioritized as **Item #1** to lock down test coverage and protect ongoing Editor work!
 
 ### 2. Standalone JSON Data & Theme Editor (TheKlangEditor) — Phase 2: Controls, Typography & Snapshots
 *Detailed Plan: [`docs/json_editor_tool_plan.md`](json_editor_tool_plan.md)*
