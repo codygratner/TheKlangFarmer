@@ -6,8 +6,9 @@
 > 1. **v0.3.0 (Architecture)**: The Klang Editor (TKE), Codebase Cruft Purge, & v0.2.0 Parity Audit.
 > 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, & Typography Engine.
 > 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, GitHub Version Checker, & Linux Headless CI.
-> 4. **v0.6.0 (Hardware & Embedded)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
-> 5. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack).
+> 4. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
+> 5. **v1.1.0 (Hardware Universe)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
+> 6. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack).
 
 > [!TIP]
 > **CODE QUALITY STANDARD**: The C++ codebase currently maintains an A+ standard for defensive programming, descriptive `camelCase` variable naming, and explicit algorithmic comments (e.g., documenting DSP math curves directly above the function). All future contributions must rigidly match this level of in-line documentation and readability!
@@ -163,7 +164,36 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 
 ---
 
-## 🚀 Milestone: v0.6.0 "The Hardware & Embedded Update"
+---
+
+## 🚀 Milestone: v1.0.0 "The General Availability Launch"
+*Focus: Official Commercial & Public Release of The Klang Farmer & The Klang Planter.*
+
+### 1. Multi-Platform Automated Installers & Distribution Packaging
+*Goal: Provide zero-friction, professional installers across all major operating systems.*
+- **Windows InnoSetup Installer**:
+  - Automatically installs VST3 binaries to `C:\Program Files\Common Files\VST3\`.
+  - Installs Standalone executables, factory preset library, and documentation.
+  - Registers uninstaller in Windows Control Panel / Settings.
+- **macOS Signed & Notarized `.pkg` Installer**:
+  - Automatically deploys VST3 to `/Library/Audio/Plug-Ins/VST3/` and AU component to `/Library/Audio/Plug-Ins/Components/`.
+  - Signed with Apple Developer ID and notarized via `notarytool`.
+
+### 2. Comprehensive User Manual & Interactive Guide
+*Goal: Empower sound designers and music producers to master the engine.*
+- Author an illustrated, searchable HTML and PDF documentation manual:
+  - Deep-dive diagrams explaining the dual FM carrier/modulator phase architecture.
+  - Complete 4-parameter reference guide for all 26 DSP effects in the catalog.
+  - Keyboard shortcuts, right-click quick-snap intervals, and MIDI CC mapping guide.
+
+### 3. Launch Demo Reel & Audio Showcase
+*Goal: Showcase the sonic versatility of the engine on GitHub and social media.*
+- Produce high-fidelity audio stems and video demos across multiple musical genres:
+  - Industrial Techno, Cyberpunk, 80s Gated Retro Synthwave, and Punchy Modern Trap/Hip-Hop.
+
+---
+
+## 🚀 Milestone: v1.1.0 "The Hardware Universe (Post-1.0)"
 *Focus: Standalone Hardware Synthesizer (The Klang Seed), dadamachines tbd-16 Integration, and Zynthian V5 Linux Port.*
 
 ### 1. dadamachines tbd-16 Groovebox Integration
