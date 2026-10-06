@@ -6,7 +6,8 @@
 > 1. **v0.3.0 (Architecture)**: The Klang Editor (TKE), Codebase Cruft Purge, & v0.2.0 Parity Audit.
 > 2. **v0.4.0 (Sound & Chaos)**: New Effects Expansion, Dual Sample Players, Parameter Randomization, & Typography Engine.
 > 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser, WAV Render, & Instant DAW Drag 'n' Drop.
-> 4. **Spin-Offs**: The Klang Mill (TKM) Standalone FX Rack.
+> 4. **v0.6.0 (Hardware & Embedded)**: The Klang Seed (TKS) & TBD-16 Multi-Page FX Controller.
+> 5. **Spin-Offs**: The Klang Mill (TKM) Standalone FX Rack.
 
 
 > [!TIP]
@@ -171,10 +172,7 @@ Create a new standalone VST3 plugin that strips away the synth engines and provi
 ### 9. 2x5 Eurorack Modular Layout Exploration
 - Investigate moving from the current 2x4 (8-card) chassis to an expanded **2-row by 5-column (2x5, 10-card)** layout.
 
-### 10. The Klang Seed (TKS) Standalone Synthesizer Port (BACK BURNER)
-- Put on the back burner per user instruction, but fully architected for execution:
-  - **Teensy 4.1 Hardware Drum Machine ("The Klang Seed 8-Voice Hardware")**: NXP i.MX RT1062 ARM Cortex-M7 running at 600 MHz.
-  - **Daisy Seed (Electro-Smith)**: Alternative open hardware platform.
+
 
 ---
 
