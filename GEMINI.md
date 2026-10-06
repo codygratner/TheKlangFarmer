@@ -70,3 +70,10 @@
 - **Alias Mapping**: Whenever the user mentions adding something to the "backlog", "back log", "back burner", "todolist", "todo list", "the todo", or similar phrases, you must strictly map that request to `docs/BACKLOG.md`.
 - **No Rogue Files or Artifacts**: You must NEVER create new files named `backlog.md`, `BACKLOG.md`, `TODO.md`, `future_backlog.md`, etc., in the root directory or as an artifact in your brain directory. 
 - **Modification Only**: Always search for and append to the existing `docs/BACKLOG.md` file in the repository.
+
+## Strict /grill-me Wrap-Up
+- **Proactive Housekeeping**: Whenever you complete a /grill-me interactive interview and arrive at a final design conclusion, you must ALWAYS explicitly ask the user how to proceed, offering these options:
+  1. Add this decision to the backlog (`docs/BACKLOG.md`)
+  2. Draft or update an implementation plan artifact for this design
+  3. Both (Add to backlog AND draft the plan)
+- **Never Auto-Execute**: Wait for the user's explicit confirmation before writing the plan or modifying the backlog.
