@@ -355,7 +355,7 @@ MainComponent::MainComponent()
         if (xmlC) controlsTree.restoreOpennessState(*xmlC, false);
         
         
-        if (selName.isNotEmpty()) {
+                if (selName.isNotEmpty()) {
             std::function<void(EditorTreeItem*)> findAndSelect = [&](EditorTreeItem* n) {
                 if (n->name == selName && n->pageId == selPage && n->productId == selProd) {
                     n->setSelected(true, true);
@@ -655,6 +655,7 @@ juce::String MainComponent::getControlFileForParam(const juce::String& paramId) 
 }
 
 void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
+    juce::Logger::writeToLog("onTreeItemSelected: " + item->name);
     if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme") && item->itemType != "control_file" && item->itemType != "layout_file" && item->itemType != "page" && item->itemType != "product") return;
     
     currentParamTarget = item->paramId;
@@ -788,14 +789,15 @@ void MainComponent::timerCallback() {
 }
 
 void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
+    juce::Logger::writeToLog("syncJsonToPreview");
     auto jsonString = forcedJson.isNotEmpty() ? forcedJson : layoutJsonDocument.getAllContent();
     bool isTheme = (currentProductId == "theme");
     
     auto parsed = juce::JSON::parse(jsonString);
     if (parsed.isVoid() || jsonString.isEmpty()) {
         emptyPlaceholder.setVisible(true);
-        previewWrapper.deleteAllChildren();
         activeSliders.clear();
+    previewWrapper.deleteAllChildren();
         compToParamId.clear();
     formEditor.clear();
         return;
@@ -808,8 +810,8 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
         RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent());
     }
     
-    previewWrapper.deleteAllChildren();
     activeSliders.clear();
+    previewWrapper.deleteAllChildren();
     compToParamId.clear();
 
     formEditor.clear();
@@ -1606,4 +1608,13 @@ void MainComponent::onTabChanged() {
         previewWrapper.deleteAllChildren();
     }
 }
+
+
+
+
+
+
+
+
+
 
