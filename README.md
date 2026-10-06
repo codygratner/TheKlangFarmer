@@ -27,12 +27,11 @@
 
 ## Overview
 
-This repository provides two complementary synthesizers sharing a unified, high-performance DSP and UI architecture:
+**The Klang Suite** is a unified audio percussion ecosystem built in modern C++20 with JUCE 9.0.3, comprising three synchronized tools:
 
-1. **The Klang Farmer**: A flagship 22-module paged modular dual-FM percussion synthesizer with 8 assignable multi-instance FX slots, dual voice engines, ring modulation, 3 modulation envelopes, analog slop emulation, and deep Bode/oscilloscope visualizers.
-2. **The Klang Planter**: A stripped-down, laser-focused 8-module single-voice FM drum synthesizer in a direct 2x4 rack layout. Features a dedicated FM synthesis pair, percussive pitch envelope, S&H noise transient, pre-filter crossfader, multimode filter with pre-filter drive, amplifier with velocity curve/floor controls, and master limiting with live visualizer reduction metering.
-
-It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-column (2x4)** modular rack (1040 &times; 740 px). The interface provides immediate access to dual FM voice pairs, multimode filters, noise and burst transients, 8 multi-instance FX slots, analog drift emulation, and real-time phase-locked visualizers.
+1. **The Klang Farmer**: A flagship 22-module paged modular dual-FM percussion synthesizer with 8 assignable multi-instance FX slots, dual voice engines, ring modulation, 3 modulation envelopes, analog slop emulation, and deep Bode/oscilloscope visualizers in an ergonomic 2x4 rack chassis (1040 &times; 740 px).
+2. **The Klang Planter**: A compact, laser-focused single-voice FM drum synthesizer in an immediate 2x4 rack layout. Features a dedicated FM synthesis pair, percussive pitch envelope, S&H noise transient, pre-filter crossfader, multimode filter with pre-filter drive, amplifier with velocity curve/floor controls, and a dedicated lookahead brickwall Limiter card with live visualizer reduction metering.
+3. **The Klang Editor**: A standalone desktop parameter inspection and JSON layout tool for sound designers and developers, offering real-time card previewing, control validation, and snapshot management.
 
 ---
 
@@ -70,16 +69,16 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 ### 2. Multi-Instance FX Engine (8 Independent Slots)
 - **4 Pre-Amp FX Slots** and **4 Post-Amp FX Slots**.
 - **No Slot Restrictions**: Any of the 13 effect processors can be instantiated into any slot. You can cascade up to 8 instances of the exact same effect in series (e.g., 8 wavefolders) or mix and match freely.
-- **13 Effect Processors**:
+- **13 Effect Processors (Alphabetical Catalog)**:
   1. **Bell EQ**: Peaking parametric boost/cut and DJ-style dual filter tilt with Bode magnitude visualizer.
   2. **Chorus**: Dual quadrature sine LFOs driving stereo fractional delays with soft-saturation feedback.
   3. **Comb Filter**: Resonant feedback delay line with bipolar wet/dry mix (-100%:0% to +100%:0%, default +50%:50%, double-click reset to dry).
-  4. **Phase Smear**: Cascaded all-pass filter network with selectable **2nd Order** or **4th Order** topology for subtle acoustic strike zapping or extreme dispersion.
-  5. **Drive**: Soft-clipping saturation with DC bias, post-filter, and limiter (+6 dB default gain, 0 dB double-click reset).
-  6. **Filter**: Standalone multi-mode filter (LPF, BPF, HPF, BRF) with selectable slopes (6 dB to 36 dB/oct) and Bode visualizer.
-  7. **Flanger**: Sub-millisecond delay line (0.2 ms – 5 ms) with bipolar resonant feedback (-95% to +95%).
-  8. **Frequency Shifter**: True quadrature single-sideband frequency shifting with bipolar wet/dry blend (+50%:50% default, double-click reset to dry).
-  9. **Grit FX (Bitcrusher)**: Word-length reduction (1.0 to 16.0 bits), sample-rate reduction, and dual-shelf tone shaping.
+  4. **Drive**: Soft-clipping saturation with DC bias, post-filter, and limiter (+6 dB default gain, 0 dB double-click reset).
+  5. **Filter**: Standalone multi-mode filter (LPF, BPF, HPF, BRF) with selectable slopes (6 dB to 36 dB/oct) and Bode visualizer.
+  6. **Flanger**: Sub-millisecond delay line (0.2 ms – 5 ms) with bipolar resonant feedback (-95% to +95%).
+  7. **Frequency Shifter**: True quadrature single-sideband frequency shifting with bipolar wet/dry blend (+50%:50% default, double-click reset to dry).
+  8. **Grit FX (Bitcrusher)**: Word-length reduction (1.0 to 16.0 bits), sample-rate reduction, and dual-shelf tone shaping.
+  9. **Phase Smear**: Cascaded all-pass filter network with selectable **2nd Order** or **4th Order** topology for subtle acoustic strike zapping or extreme dispersion.
   10. **Phaser**: 6-stage cascaded allpass ladder with regenerative feedback.
   11. **RingMod**: Morphable oscillator ring modulation with rate, amount, and stereo phase width.
   12. **Tempo Delay**: Pre-allocated stereo delay synced to host musical divisions (1/32 to 1/2) with damping tone filter and ping-pong crossfeed.
@@ -107,11 +106,14 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 - **Bode Magnitude Plots**: Real-time logarithmic X-Y response curves for filters and bell EQs ($20\,\text{Hz} - 24\,\text{kHz}$) with grid reference markers.
 - **Auto-Tracking & Lock Toggle**: The visualizer automatically follows whichever module card you click or hover over. A padlock toggle lets you freeze the display on a specific module while tweaking others.
 - **Visualizer OFF Button**: An `OFF` toggle badge directly in the visualizer header strip (dim grey when active, glowing red when off) suspends all scope and Bode rendering, locking to a calm flat baseline and saving CPU.
+- **Settings & About Modal**: Access system diagnostics, build metadata, and community links via the top-header Gear icon.
+- **GitHub Release Version Checker**: Background release checker alerting users with an illuminated emerald header badge when a new update is released.
 - **INIT 3-Option Confirmation Dialog**: Clicking `INIT` launches an interactive confirmation modal with three distinct choices: `Default` (factory preset), `Clean` (factory sound with all 8 FX slots stripped to empty racks), and `Cancel`.
 
-### 5. Rock-Solid Audio Thread Stability
+### 5. Rock-Solid Audio Thread Stability & Rigorous Testing
 - **Zero Real-Time Allocations**: Strictly **no dynamic heap memory allocations** (`malloc`/`new`) on the audio rendering thread.
 - **DAW & Renoise Bounce Stability**: All burst arrays, delay lines, and FFT/scope buffers are pre-allocated, guaranteeing zero audio dropouts or offline bounce crashes across arbitrary host block sizes (64 to 2048+ samples).
+- **Automated Test Harness**: Validated by `gui_tests` (82 GUI assertions covering dynamic reflection, mouse simulation, and page routing) and `dsp_tests` (32 tests verifying mathematical curve accuracy, filter slopes, and DSP stability).
 
 ---
 
@@ -119,18 +121,18 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 
 Download the latest pre-compiled binaries from the **[Releases Page](https://github.com/codygratner/TheKlangSuite/releases)**:
 
-### VST3 Plugin (Windows)
-1. Download `TheKlangFarmer-v0.2.0-VST3.zip`.
-2. Extract `The Klang Farmer.vst3` into your standard VST3 folder:
+### macOS (.pkg Installer / .dmg)
+1. **Automated Installer**: Download `TheKlangSuite-v0.3.0-macOS.pkg` and run the installer. The installer automatically deploys the VST3, AU, and Standalone bundles to `/Library/Audio/Plug-Ins/` and executes the post-install unquarantine script so your DAWs immediately recognize the plugins with zero Gatekeeper friction.
+2. **Portable DMG**: Alternatively, download `TheKlangSuite-v0.3.0-macOS.dmg`, drag the plugins to the symlinked folders, and run `Fix_Mac_Permissions.command` if macOS displays an untrusted developer prompt. See the included [macOS Installation & Security Guide](scripts/mac/macOS_Install_Guide.html) for visual walkthroughs.
+
+### Windows (VST3 & Standalone)
+1. **Automated Deploy**: Download `TheKlangSuite-v0.3.0-Windows.zip`. Run `deploy_vst3.bat` as Administrator to instantly deploy `The Klang Farmer.vst3` and `The Klang Planter.vst3` directly to `C:\Program Files\Common Files\VST3\`.
+2. **Manual Copy**: Extract `.vst3` bundles into:
    ```
    C:\Program Files\Common Files\VST3\
    ```
-3. Rescan plugins in your DAW (Ableton Live, FL Studio, Reaper, Cubase, Bitwig, Studio One, Renoise).
-
-### Standalone Executable (Windows)
-1. Download `TheKlangFarmer-v0.2.0-Standalone.zip`.
-2. Extract and run `The Klang Farmer.exe`.
-3. Select your audio device and MIDI input in the audio settings dialog.
+3. **Standalone Apps**: Run `The Klang Farmer.exe`, `The Klang Planter.exe`, or `The Klang Editor.exe` directly from the `Standalone/` folder.
+4. Rescan plugins in your DAW (Ableton Live, FL Studio, Reaper, Cubase, Bitwig, Studio One, Logic, Renoise).
 
 ---
 
@@ -138,7 +140,7 @@ Download the latest pre-compiled binaries from the **[Releases Page](https://git
 
 ### Prerequisites
 - **CMake 3.22+**
-- **Visual Studio 2022 or 2026** (with the *Desktop development with C++* workload)
+- **Visual Studio 2022 or 2026** (Windows) / **Xcode 14+** (macOS) / **GCC/Clang** (Linux)
 - **Git**
 
 ### Build Instructions
@@ -152,6 +154,10 @@ cmake -B build
 
 # 3. Build Release binaries in parallel
 cmake --build build --config Release --parallel
+
+# 4. Run automated test suites
+./build/Release/dsp_tests.exe
+./build/Release/gui_tests.exe
 ```
 
 Compiled binaries will be generated at:
@@ -159,14 +165,16 @@ Compiled binaries will be generated at:
 - **The Klang Farmer (Standalone)**: `build/TheKlangFarmer_artefacts/Release/Standalone/The Klang Farmer.exe`
 - **The Klang Planter (VST3)**: `build/TheKlangPlanter_artefacts/Release/VST3/The Klang Planter.vst3`
 - **The Klang Planter (Standalone)**: `build/TheKlangPlanter_artefacts/Release/Standalone/The Klang Planter.exe`
-- **Test Runner**: `build/Release/dsp_tests.exe`
+- **The Klang Editor (Standalone)**: `build/TheKlangEditor_artefacts/Release/The Klang Editor.exe`
+- **Automated Test Runners**: `build/Release/dsp_tests.exe` and `build/Release/gui_tests.exe`
 
 ### Deploying VST3 Plugins Locally (Windows)
 Run [`deploy_vst3.bat`](deploy_vst3.bat) as Administrator (or double-click to prompt for UAC elevation) to automatically copy both plugins to `C:\Program Files\Common Files\VST3\`.
 
-### Running DSP Verification Tests
+### Running Verification Tests
 ```bash
 .\build\Release\dsp_tests.exe
+.\build\Release\gui_tests.exe
 ```
 
 ---

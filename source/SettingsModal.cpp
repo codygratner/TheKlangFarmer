@@ -248,7 +248,7 @@ void SettingsModalComponent::updateStatusDisplay()
             break;
 
         case VersionChecker::Status::UpToDate:
-            statusLabel.setText(RlyehSound::ParameterManager::getInstance().getGlobalString("settings_status_up_to_date", "The Klang Farmer is up to date!"), juce::dontSendNotification);
+            statusLabel.setText(productName + " is up to date!", juce::dontSendNotification);
             statusLabel.setColour(juce::Label::textColourId, juce::Colour(0xff00e676));
             downloadButton.setVisible(false);
             break;

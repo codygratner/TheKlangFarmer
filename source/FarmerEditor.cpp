@@ -790,8 +790,8 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
     juce::StringArray b2 = {
         "• 7-PAGE NAVIGATION (Slot 1): Instant 1-click access to Voice 1, Voice 2, Transients, Pre-Amp FX, Amplifier, Post-Amp FX, and Modulations.",
         "• AUTO-TRACKING VISUALIZER (Slot 5): Automatically switches to display real-time analysis for whichever module card or knob you click or edit.",
-        "• BODE & OSCILLOSCOPE: Filters and EQ show interactive X-Y frequency response curves; Oscillators and FX display real-time triggered waveforms.",
-        "• PADLOCK ICON (Top Right): Grey = auto-tracking active. Yellow = LOCKED! Lock visualizer to an FX (e.g. Wavefolder), then switch pages to sculpt sound while watching the locked waveform!"
+        "• BODE & OSCILLOSCOPE: Interactive X-Y frequency curves for Filters/EQ; real-time triggered waveforms for Oscillators and FX.",
+        "• PADLOCK LOCK & SETTINGS: Yellow Padlock locks visualizer to an FX while you tweak other pages. Click the Gear icon for Settings & Updates."
     };
     drawPanel(p2, "2. NAVIGATION & AUTO-VISUALIZER", juce::Colour(0xffffd600), b2);
 
@@ -811,7 +811,7 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
         "• PUNCHY KICK: Voice 1 Carrier in MIDI mode (pitch ~36), Sine shape; Pitch Env fast decay (25ms), Depth +36st; Pre-Amp Wavefolder (Fold 2-4) + Drive (30%); Post-Limiter ON.",
         "• METALLIC SNARE: Voice 1 snappy body; Transients metallic noise with Filter 3 set to BPF (2kHz); Post-Amp Comb Filter or Chorus for stereo width.",
         "• MODULATIONS: 3 freely assignable Mod Envelopes on top row targetable to any parameter; Map Velocity, Key Tracking, and analog Slop on bottom row.",
-        "• AUDITION HIT: Click the AUDITION HIT button in the top-right header at any time to audition the sound at full velocity."
+        "• AUDITION TRIGGER: Click the TRIGGER button in the top-right header at any time to audition the sound at full velocity."
     };
     drawPanel(p4, "4. SOUND DESIGN RECIPES & TIPS", juce::Colour(0xff00e5ff), b4);
 }

@@ -1,8 +1,11 @@
-# The Klang Farmer — Modular Drum Synthesizer Specification
+# The Klang Suite — Modular Percussion Synthesis System Specification
 
 ## 1. Architectural & Implementation Highlights
 
-"The Klang Farmer" is a 22-module dual-FM synthesizer drum voice engineered in modern C++20 and JUCE 8. It replicates the tactile immediacy of a boutique modular hardware drum rack within a compact, ergonomically structured 2-row by 4-column Eurorack-style chassis (1040 × 740 px).
+"The Klang Suite" is a comprehensive dual-FM and compact percussion synthesis system engineered in modern C++20 and JUCE 9.0.3. It comprises three unified, synchronized tools:
+1. **The Klang Farmer**: A flagship 22-module paged modular dual-FM percussion synthesizer with 8 assignable multi-instance FX slots, dual voice engines, ring modulation, 3 modulation envelopes, analog slop emulation, and deep Bode/oscilloscope visualizers within an ergonomic 2-row by 4-column Eurorack-style chassis (1040 × 740 px).
+2. **The Klang Planter**: A laser-focused, single-voice companion drum synthesizer in an immediate 2x4 rack layout (1040 × 740 px).
+3. **The Klang Editor**: A standalone desktop application for visual inspection, card previewing, real-time control validation, and JSON snapshot management.
 
 ### System & Engine Capabilities
 - **2x4 Paged Rack Architecture**:
@@ -501,27 +504,30 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 ## 5. Versioning & Release Management
 
 - **Semantic Versioning Standard (`MAJOR.MINOR.PATCH`)**:
-  - The plugins and standalone binaries adhere strictly to 3-part SemVer (e.g. `0.2.0`), with both **The Klang Farmer** and **The Klang Planter** sharing unified version numbering.
+  - The plugins and standalone binaries adhere strictly to 3-part SemVer (e.g. `0.3.0`), with all components of **The Klang Suite** sharing unified version numbering.
   - Major and minor numbers are bumped for architectural milestones and major features.
   - The patch number increments with each tagged release and distribution build.
 - **Header Display**:
-  - The active version is dynamically displayed in the top header bar next to plugin titles as an accent badge (e.g. `v0.2.0`), linked directly to JUCE's `JucePlugin_VersionString`.
+  - The active version is dynamically displayed in the top header bar next to plugin titles as an accent badge (e.g. `v0.3.0`), linked directly to JUCE's `JucePlugin_VersionString`.
+  - Accompanied by the Settings & About Gear button (`[⚙]`) and the dynamic glowing emerald update badge button.
 - **Release Packaging**:
-  - Distributed via GitHub Releases with multi-platform zip archives:
-    - `TheKlangFarmer-v<version>-Windows.zip`: contains `The Klang Farmer.vst3`, `The Klang Planter.vst3`, and standalone executables.
-    - `TheKlangFarmer-v<version>-macOS.zip`: Universal binaries for Apple Silicon & Intel (AU, VST3, Standalone).
-    - `TheKlangFarmer-v<version>-Linux.zip`: x86_64 VST3 and Standalone binaries.
+  - Distributed via GitHub Releases with multi-platform zip and installer packages:
+    - `TheKlangSuite-v<version>-Windows.zip`: Contains `The Klang Farmer.vst3`, `The Klang Planter.vst3`, standalone executables (`The Klang Farmer.exe`, `The Klang Planter.exe`, `The Klang Editor.exe`), and `deploy_vst3.bat`.
+    - `TheKlangSuite-v<version>-macOS.pkg`: Native macOS installer with automated quarantine stripping postinstall script (`xattr -rd com.apple.quarantine /Library/Audio/Plug-Ins/...`) for seamless Gatekeeper bypass.
+    - `TheKlangSuite-v<version>-macOS.dmg`: Stylized drag-and-drop disk image with permissions helper script (`Fix_Mac_Permissions.command`) and illustrated guide (`macOS_Install_Guide.html`).
+    - `TheKlangSuite-v<version>-macOS.zip`: Universal binaries for Apple Silicon & Intel (AU, VST3, Standalone).
+    - `TheKlangSuite-v<version>-Linux.zip`: x86_64 VST3 and Standalone binaries.
 
 ---
 
 ## 6. The Klang Planter — Compact FM Percussion Synthesizer
 
-"The Klang Planter" is the streamlined, single-voice companion drum synthesizer built alongside The Klang Farmer. It distills the core FM and noise drum synthesis capabilities into an immediate, non-paged 2x4 rack layout.
+"The Klang Planter" is the streamlined, single-voice companion drum synthesizer built alongside The Klang Farmer. It distills the core FM and noise drum synthesis capabilities into an immediate, non-paged 2x4 rack layout (1040 × 740 px).
 
 ### 2x4 Module Architecture
 ```
 +---------------------------------------------------------------------------------------------------+
-| THE KLANG PLANTER  v0.2.0    [Live Mini-Oscilloscope] [LIMIT] [Peak Meters]    [INIT]   [TRIGGER] |
+| THE KLANG PLANTER  v0.3.0    [Live Mini-Oscilloscope] [LIMIT] [Peak Meters]   [⚙] [INIT] [TRIGGER] |
 +---------------------------+---------------------------+-----------------------+-------------------+
 | [1] CARRIER               | [2] MODULATOR             | [3] PITCH ENV         | [4] NOISE TRANS   |
 | Accent: Red               | Accent: Cyan              | Accent: Silver        | Accent: Dark Grey |
@@ -543,6 +549,13 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
 |                           | 3. Decay                  | 3. Vel Slope (LIN/EXP)| 3. Slope          |
 |                           | 4. Pre-Filter Drive (Blue)| 4. Vel Min Level      | 4. Decay          |
 +---------------------------+---------------------------+-----------------------+-------------------+
+| [9] MASTER LIMITER (Dedicated Lookahead Brickwall Limiter)                                        |
+| Accent: Signal Red (#ff3b5c) | Faceplate: Brushed Aluminum                                         |
+| [ON / OFF]                                                                                        |
+| 1. Input Gain (0 to +24 dB)                                                                       |
+| 2. Threshold (-24 to 0 dB)                                                                        |
+| 3. Release (1 to 500 ms)                                                                          |
++---------------------------------------------------------------------------------------------------+
 ```
 
 ### Signal Flow & Key Features
@@ -565,11 +578,70 @@ Any of the following 13 processors (or `None / Bypass`) can be assigned to any o
    - Knob 2: **Stereo Pan** ($100\%\,\text{L} \dots \text{Center} \dots 100\%\,\text{R}$).
    - Knob 3: **Vel Slope**: Controls the curvature of velocity sensitivity (default Linear, double-click Exponential).
    - Knob 4: **Vel Min Level**: Sets the volume floor at velocity 1 from $1\%$ to $100\%$ (default 50%, double-click snaps to 50%).
-   - Permanent transparent master brickwall limiter with live `LIMIT` reduction warning indicator on the header oscilloscope.
-6. **Multi-Color Pitch Envelope Destination Buttons**:
+6. **Dedicated Master Limiter (`cardLimiter`)**:
+   - True brickwall lookahead `LimiterBlock` matching the mastering stage of The Klang Farmer.
+   - Dedicated controls: `limiter_enable` (toggle), `limiter_gain` ($0\,\text{dB} - +24\,\text{dB}$), `limiter_thresh` ($-24\,\text{dB} - 0\,\text{dB}$), and `limiter_release` ($1\,\text{ms} - 500\,\text{ms}$).
+   - Visual `LIMIT` reduction activity indicator on the header oscilloscope.
+7. **Multi-Color Pitch Envelope Destination Buttons**:
    - The Pitch Envelope destination selector (`[Car]`, `[Mod]`, `[Both]`, `[Opp]`) features per-button color routing:
      - `Car`: Carrier Red accent (`#ff3b30`).
      - `Mod`: Modulator Cyan accent (`#00d2ff`).
      - `Both`: Carrier Red text with Modulator Cyan outline and dual Red/Cyan LED halo.
      - `Opp`: Modulator Cyan text with Carrier Red outline and dual Cyan/Red LED halo.
      - Unselected states maintain 28% border tint and 38% text tint against `#b0bdd0`, preserving crisp readability.
+
+---
+
+## 7. The Klang Editor — Standalone Tooling Application
+
+"The Klang Editor" (TKE) is the official companion development and sound design tool for The Klang Suite. Built as an independent standalone executable (`The Klang Editor.exe`), it empowers sound designers, theme creators, and developers to visually sculpt UI cards, parameter mappings, typography, and color schemes without recompilation.
+
+### Capabilities & Ergonomics
+- **Visual Card Layout Preview**: Live rendered canvas presenting module cards with exact tactile knob travel, LED buttons, and typography matching plugin runtimes.
+- **Controls Inspector**: Interactive property grid showing APVTS identifiers, default values, min/max ranges, string formatting, and quick-snap intervals parsed from `assets/controls/`.
+- **Snapshot Management**:
+  - One-click snapshot export and import of active parameter state blocks.
+  - Factory restore button reverting parameters to JSON schema defaults.
+  - Visual validation checks flagging out-of-range values or broken property bindings.
+
+---
+
+## 8. Data-Driven Architecture & Parameter Reflection
+
+The entire parameter and UI architecture of The Klang Suite is strictly data-driven:
+- **JSON Single Source of Truth**: All parameter metadata is authored in modular JSON files under `assets/controls/`:
+  - `carrier.json`, `modulators.json`, `envelopes.json`, `filters.json`, `fx.json`, `dynamics.json`, `planter.json`, `theme.json`, and `global_ui.json`.
+- **Zero Hardcoded C++ Values**: APVTS parameter IDs, default values, min/max ranges, string labels, quick-snap intervals, and tooltips are parsed dynamically at runtime.
+- **BinaryData Embedding**: JSON files are bundled directly into the compiled executable via CMake's `juce_add_binary_data()`, guaranteeing single-file zero-dependency binary distribution.
+- **Reflection Engine (`RlyehSound::ParameterManager`)**: Thread-safe singleton providing automated `createParameterLayout()` generation, cached lookup tables, and fallback string localization.
+
+---
+
+## 9. Version Checker & Settings / About System
+
+The Klang Suite includes an automated background update notification mechanism:
+- **Asynchronous Worker Thread (`VersionChecker`)**:
+  - Queries the official GitHub Releases API (`https://api.github.com/repos/codygratner/TheKlangSuite/releases/latest`) on startup.
+  - Implements semantic version comparison (`MAJOR.MINOR.PATCH`) to detect newer releases without blocking the audio thread or UI message queue.
+  - User preference (`check_updates_on_launch`) persisted in `RlyehSound/TheKlangFarmer/preferences.json`.
+- **Header Notification Badge (`UpdateBadgeButton`)**:
+  - Displays a glowing emerald button in the header bar only when a newer release is detected. Clicking opens the official GitHub release download page in the default web browser.
+- **Settings & About Modal (`SettingsModalComponent`)**:
+  - Accessible via the header Gear button (`[⚙]`).
+  - Displays build diagnostics: Product Name, Version, JUCE Framework (9.0.3), C++ Standard (C++20), Architecture (64-bit), Build Date, License (GPL-3.0), Vendor (R'lyeh Sound), and Repository URL.
+  - Provides a manual "Check for Updates" button, "Download Update" action, and links to the GitHub repository and issue tracker.
+
+---
+
+## 10. Automated Universal Verification Harness
+
+The repository implements a comprehensive test-driven engineering discipline guaranteeing zero regressions and audio thread safety:
+- **Headless GUI Test Suite (`gui_tests`)**:
+  - 82 automated functional assertions executing headless offscreen tests across The Klang Farmer, The Klang Planter, and The Klang Editor.
+  - Simulates mouse clicks, APVTS slider movements, page changes, modal dialog interactions (INIT, Quickstart, Settings), and smoke painting.
+  - **Dynamic Reflection Compliance Guardrail**: Automatically sweeps 100% of all registered APVTS parameters and JSON assets. The test hard-fails if any parameter lacks a UI binding or test case.
+- **DSP Test Suite (`dsp_tests`)**:
+  - 32 automated DSP verification tests validating real-time audio thread invariants:
+    - Zero heap allocations (`malloc`/`new`) on the render path.
+    - Zero blocking locks (`std::mutex`, `CriticalSection`).
+    - Accurate mathematical curves for all FastMath transcendentals, 5-point warp decay curves, filter slopes (6 to 36 dB/oct), and stepped random Slop drift.

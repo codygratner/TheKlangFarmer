@@ -6,6 +6,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [0.3.0] - 2026-10-06 "The Architecture Update"
+
+### Added
+- **The Klang Suite Umbrella Identity**:
+  - Unified project architecture encompassing three synchronized targets: **The Klang Farmer** (flagship 22-module paged modular synthesizer), **The Klang Planter** (compact 8-module single-voice FM percussion synthesizer), and **The Klang Editor** (standalone JSON tooling and visual layout inspector).
+  - Common base class architecture (`KlangCoreProcessor` and `KlangCoreEditor`) eliminating boilerplate across plugin and standalone applications.
+- **Data-Driven Architecture & Parameter Reflection**:
+  - Complete migration of all DSP parameter declarations, min/max ranges, defaults, quick-snaps, string labels, and UI tooltips to modular JSON files (`assets/controls/`).
+  - Runtime reflection engine (`RlyehSound::ParameterManager`) embedding JSON assets into `BinaryData` with automated APVTS layout generation and dynamic layout binding.
+- **The Klang Editor (TKE Standalone Application)**:
+  - Dedicated visual inspection and parameter manipulation tool for sound designers and developers.
+  - Live card layout preview, interactive controls inspector, real-time JSON validation, and automated snapshot export/import/restore workflows.
+- **Automated Universal Test Harness (`gui_tests` & `dsp_tests`)**:
+  - Headless GUI test harness with 82 automated assertions verifying mouse simulation, APVTS synchronization, page switching, modal interactions, offscreen smoke painting, and dynamic reflection guardrails.
+  - DSP test suite with 32 real-time audio-thread safety checks verifying zero allocations, zero mutexes, FastMath accuracy, filter slopes, slop random distribution, and brickwall limiting.
+- **Automated GitHub Release Version Checker & Settings Modal**:
+  - Asynchronous background worker (`VersionChecker`) querying the GitHub Releases API on startup with semantic version comparison (`MAJOR.MINOR.PATCH`).
+  - Subtle, glowing emerald header badge (`UpdateBadgeButton`) notifying users when a newer release is published.
+  - Comprehensive Settings & About modal (`SettingsModalComponent`) featuring a startup check toggle, manual "Check Now" button, build and system metadata panel, and quick links to the repository and issue tracker.
+- **The Klang Planter Dedicated Limiter Card**:
+  - Replaced soft-saturation `tanh` approximation with the true lookahead brickwall `LimiterBlock` from The Klang Farmer.
+  - Exposed dedicated `cardLimiter` controls in The Klang Planter: Limiter Enable, Input Gain, Threshold, and Release.
+- **Zero-Cost macOS FOSS Distribution Pipeline**:
+  - Automated `.pkg` installer generated via native `pkgbuild` & `productbuild` in GitHub Actions.
+  - Automated root `postinstall` script stripping the Gatekeeper quarantine flag (`xattr -rd com.apple.quarantine`) from all VST3, AU, and Standalone bundles for instant DAW recognition.
+  - Stylized drag-and-drop `.dmg` with filesystem symlinks, standalone `Fix_Mac_Permissions.command` script, and illustrated `macOS_Install_Guide.html`.
+- **Automated v0.2.0 Parity Audit**:
+  - Automated cross-reference script verifying all 204 legacy parameters against v0.3.0 JSON definitions with 0 regressions. Generated slide-deck printable PDF and HTML audit reports.
+- **Toolchain & Framework Upgrade**:
+  - Upgraded toolchain to modern C++20 (`CMAKE_CXX_STANDARD 20`) and JUCE 9.0.3.
+  - Enforced strict timer hygiene (`stopTimer()` on destructors) across all `juce::Timer` subclasses to prevent JUCE 9 unload crashes.
+
+### Changed
+- **Comprehensive Cruft Purge & 8-Slot Multi-Instance Architecture**:
+  - Purged all obsolete legacy fixed-slot FX blocks and orphaned APVTS parameters.
+  - Fully standardized on 8 assignable multi-instance FX slots (4 Pre-Amp, 4 Post-Amp) capable of hosting any of the 13 DSP algorithms in any sequence or combination.
+- **Quickstart Guide Copywriting**:
+  - Refined Quickstart Guide modal in The Klang Farmer to document the Settings & About modal, the Trigger audition button, and updated signal flow.
+- **Repository URLs**:
+  - Updated all internal links and release checker endpoints to `https://github.com/codygratner/TheKlangSuite`.
+
+---
+
 ## [0.2.0] - 2026-10-04
 
 ### Added
