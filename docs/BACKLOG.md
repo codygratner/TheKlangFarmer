@@ -111,7 +111,8 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Modal Lifecycle Test**: Simulated opening and closing all modals (Settings, About, Quickstart) with zero timer leaks.
 - **Verification Metric**: 117 / 117 `gui_tests` passed successfully with 100% assertion pass rate.
 
-### 4. Planter Header Interactions: VU Meter Panic & Limiter CalloutBox
+### 4. Planter Header Interactions: VU Meter Panic & Limiter CalloutBox — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_planter_header_and_status_bar.md`](completed_plans/2026-10-06_planter_header_and_status_bar.md)*
 *Goal: Transform The Klang Planter's header visualizer into an interactive control center with dedicated mouse targets for master panic and instant limiter adjustment.*
 - **Limiter Right-Click CalloutBox**:
   - Right-clicking the center `LIMIT` badge launches a floating mini-card `juce::CalloutBox`.
@@ -123,7 +124,8 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Parity Safety**:
   - Non-destructive: Binds directly to existing APVTS parameters without altering presets, audio DSP math, or Card 6.
 
-### 5. Interactive Two-Line Status Bar (Values, Mouse Shortcuts & Tooltip Feed)
+### 5. Interactive Two-Line Status Bar (Values, Mouse Shortcuts & Tooltip Feed) — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_planter_header_and_status_bar.md`](completed_plans/2026-10-06_planter_header_and_status_bar.md)*
 *Goal: Implement a Kilohearts/Ableton style 36px bottom status bar across The Klang Farmer and The Klang Planter, providing permanent value readouts, mouse shortcut badges, and a full-width tooltip feed.*
 - **Line 1 (Top Bar - Permanent)**:
   - Left: Control Name and formatted Parameter Value in bold (e.g., `Carrier 1: Pitch  +12.0 st [440 Hz]`).
@@ -131,6 +133,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Line 2 (Bottom Bar - Tooltip Feed)**:
   - Full-width parameter description and functional explanation.
   - Toggled dynamically by the header `TOOLTIPS` button (when off, Line 2 is quiet or shows engine status).
+- **Verification Metric**: 164 / 164 `gui_tests` passed successfully with 100% assertion pass rate across all limiter controls and status bar hover callbacks.
 
 ## ?? Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*

@@ -10,12 +10,16 @@
 - **Mandatory In-Chat Model Banner**: Whenever an agent presents a plan, discusses starting a new task, or prepares to execute code, the agent MUST explicitly output this prominent visual markdown block directly in its chat response:
   > 🧠 **MODEL ADVISORY: Tier [1 | 2 | 3]**
   > - **Recommended Setting**: [Gemini 3.1 Pro (Thinking: High) | Gemini 3.8 Flash (Thinking: High) | Gemini 3.8 Flash (Low/Medium)]
+  > - **Quota Impact**: [⚠️ HIGH IMPACT (Heavy allowance burn — reserve for deep math/DSP/architecture) | 🟢 SUSTAINABLE (Economical — standard UI & test engineering) | ⚡ MINIMAL (Near-zero burn — rapid JSON & documentation)]
   > - **Active Model Check**: Please verify your model dropdown in the IDE footer matches this tier before proceeding!
 
 - **The Three Complexity Tiers**:
   - **Tier 1 (High Reasoning / Critical DSP)**: Complex audio DSP math, polyphonic voice allocation, SIMD FastMath, lock-free concurrency, memory safety forensics, deep architectural planning (`/strict-plan`). -> *Setting: Gemini 3.1 Pro (Thinking: High)*.
+    - *Quota Impact*: `⚠️ HIGH IMPACT` — Burns significant 5-hour rolling pool and weekly Pro quota. Use only when deep reasoning is strictly necessary, and switch back to Flash High as soon as planning finishes.
   - **Tier 2 (Balanced Engineering & UI Testing)**: Standard JUCE UI components, modal dialogues, APVTS parameter attachments, building/expanding `gui_tests` or `dsp_tests`, standard phase execution. -> *Setting: Gemini 3.8 Flash (Thinking: High)*.
+    - *Quota Impact*: `🟢 SUSTAINABLE` — Fast, highly capable, and draws very lightly against quota. The optimal daily driver for building and testing.
   - **Tier 3 (Rapid Iteration, Data & Tooling)**: Editing JSON schemas in `assets/controls/`, documentation/backlog updates, git operations, mechanical find-and-replace, CMake tweaks. -> *Setting: Gemini 3.8 Flash (Thinking: Low or Medium)*.
+    - *Quota Impact*: ⚡ `MINIMAL` — Near-zero burn rate. Perfect for rapid planning check-ins, git telemetry, and schema maintenance.
 - **Builder Pause Gate**: Before Klang Industries calls any editing or compilation tool on a new plan, it MUST use `ask_question` or pause so the user can verify/adjust their model dropdown.
 - **Subagent Policy**: Always use `Model="flash"` for read-only research subagents (`invoke_subagent`), and `Model="pro"` only for heavy multi-file reasoning.
 

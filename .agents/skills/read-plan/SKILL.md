@@ -39,9 +39,10 @@ Print the summary and Model Advisory:
 **Objective:** <Objective>
 **Phases:** <N> Total Phases
 
-> 🧠 **MODEL ADVISORY**
-> **Recommended Setting:** <Recommended Model & Thinking Budget from PLAN.md>
-> **Task Tier:** <Tier 1 (DSP/Architecture) | Tier 2 (Features/Tests) | Tier 3 (Data/Docs)>
+> 🧠 **MODEL ADVISORY: Tier <1 | 2 | 3>**
+> - **Recommended Setting:** <Recommended Model & Thinking Budget from PLAN.md>
+> - **Quota Impact:** <⚠️ HIGH IMPACT | 🟢 SUSTAINABLE | ⚡ MINIMAL>
+> - **Active Model Check:** Please verify your model dropdown in the IDE footer matches this tier before proceeding!
 ```
 
 **CRITICAL GUARDRAIL:** You must NEVER automatically start implementation. You MUST invoke the `ask_question` tool to present the user with an interactive clickable modal:

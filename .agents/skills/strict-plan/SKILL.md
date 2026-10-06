@@ -82,9 +82,10 @@ Once `PLAN.md` is written to disk, do NOT begin coding. Output an executive summ
 **Target:** <Objective>  
 **Total Phases:** <N> Phases
 
-> 🧠 **MODEL ADVISORY**
-> **Recommended Setting:** <Recommended Model & Thinking Budget>
-> **Task Tier:** <Tier 1 | Tier 2 | Tier 3>
+> 🧠 **MODEL ADVISORY: Tier <1 | 2 | 3>**
+> - **Recommended Setting:** <Recommended Model & Thinking Budget>
+> - **Quota Impact:** <⚠️ HIGH IMPACT | 🟢 SUSTAINABLE | ⚡ MINIMAL>
+> - **Active Model Check:** Please verify your model dropdown in the IDE footer matches this tier before proceeding!
 
 ### Architectural Summary
 <2-3 concise sentences on how the design works>
