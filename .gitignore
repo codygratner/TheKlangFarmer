@@ -16,3 +16,13 @@ PLAN_BACKUP*.md
 # Build artifacts
 /current_build/
 current_build/
+
+# Python Scratch Scripts & Temp Logs
+*.py
+*.txt
+!CMakeLists.txt
+*.diff
+*.patch
+test.cpp
+test_assets.cpp
+runner.cs
