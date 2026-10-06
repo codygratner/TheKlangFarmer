@@ -21,9 +21,16 @@ To achieve your exact layout request ("1 card and 4 parameters per page, fill up
 
 **CSS Layout Rules:**
 - `@media print { .card-container { page-break-after: always; } }` guarantees exactly one Card per printed page.
-- **Visual Reference**: The script will embed an `<img>` tag of the corresponding UI Card at the top of each page (using cropped images from the `screenshots/` directory) so you have immediate visual context of what the parameters look like.
+- **Side-by-Side Visual Reference**: The report will embed *fresh* screenshots of both the `v0.2.0` Card and the `Current` Card side-by-side at the top of the page. *(See the Dual-Compilation note below).*
 - Massive font sizes (`font-size: 24px`) to fill the page.
 - Differences will be wrapped in `<mark style="background-color: #ffcccc; font-weight: bold;">` to immediately draw your eye.
+
+### 3. The Dual-Compilation Pipeline (For Fresh Screenshots)
+Getting *fresh* screenshots of `v0.2.0` means we can't just parse text—we actually have to compile and render the `v0.2.0` GUI. To do this safely without nuking your current uncommitted Git working tree:
+1. The script will use `git worktree add` to create a temporary, isolated folder of the `v0.2.0` codebase.
+2. It will invoke CMake to compile the headless `capture_screenshot` utility in both the `v0.2.0` worktree and your current directory.
+3. It will run both utilities to dump fresh `.png` files of every card into a `tools/audit_temp/` directory.
+4. The HTML report will load these images side-by-side.
 
 You will simply open the HTML file in Chrome/Edge, hit **Print -> Save as PDF**, and you'll have your perfect, readable audit document.
 
