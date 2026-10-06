@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized milestones below:
-> 1. **v0.3.0 (Architecture)**: The Klang Editor (TKE) & Automated v0.2.0 Parity Audit.
+> 1. **v0.3.0 (Architecture)**: The Klang Editor (TKE), Codebase Cruft Purge, & v0.2.0 Parity Audit.
 > 2. **v0.4.0 (Sound & Chaos)**: New Effects Expansion, Dual Sample Players, Parameter Randomization, & Typography Engine.
 > 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser, WAV Render, & Instant DAW Drag 'n' Drop.
 > 4. **Spin-Offs**: The Klang Mill (TKM) Standalone FX Rack.
@@ -19,17 +19,22 @@ Create a dedicated JUCE GUI application using a **Unified Tabbed Layout** (`[THE
 *Note: Ensure the UI can handle the split between TKF (The Klang Farmer) and TKP (The Klang Planter) cards if they have different parameter groupings or coloring needs.*
 *Text/Localization Extraction*: Extract all hardcoded C++ UI strings (slider names, tooltips, special formatting) into their respective module JSON files (using the **Component Model** architecture to explicitly keep text out of structural layout files). Global text (button labels, plugin names) will live in a new `global_ui.json` file. All text will be edited directly alongside numerical bounds inside the `[CONTROLS]` tab.
 
-### 2. Automated v0.2.0 Parity Audit
+### 2. Comprehensive Codebase Cruft Purge
+*Goal: Remove all orphaned UI components, unused classes, and hardcoded variables rendered obsolete by the JSON transition.*
+- **Hard Deletion**: Aggressively delete all dead code from the C++ source files (relying entirely on Git for the archive).
+- **Sequencing**: Must be executed *before* the Parity Audit to mathematically prove the purged cruft was not structurally load-bearing.
+
+### 3. Automated v0.2.0 Parity Audit
 *Detailed Plan: [`docs/v020_parity_audit_plan.md`](v020_parity_audit_plan.md)*
 Run an automated Python script to extract legacy v0.2.0 C++ parameters, string formatters, and hex colors, and cross-reference them against the new JSON architecture to ensure 1:1 user parity. Outputs a highlighted HTML/PDF report with embedded card screenshots.
 
 
-### 3. Automated GUI Test Harness (Guardrail)
+### 4. Automated GUI Test Harness (Guardrail)
 *Detailed Plan: [`docs/gui_test_harness_plan.md`](gui_test_harness_plan.md)*
 Implement a functional state C++ testing harness (`gui_tests`) to simulate clicks and verify APVTS bindings. Integrated directly into the `/build-validate` skill to act as an industry-standard development guardrail (can be bypassed with `--skip-gui`).
 
 
-### 4. GitHub CLI Integration & Repository Tagging
+### 5. GitHub CLI Integration & Repository Tagging
 *Goal: Improve repository discoverability for audio-plugin developers and the vibe coding community.*
 - Have the AI install the GitHub CLI (`gh`) via `winget` and authenticate.
 - Automatically apply curated repository tags (Topics) covering Audio Plugin/JUCE (`vst3`, `juce-framework`), FM Drum Synthesis (`drum-machine`, `fm-synthesis`), and the Vibe Coding (`vibe-coding`, `agentic-coding`) communities.
