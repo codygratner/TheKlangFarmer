@@ -1,8 +1,6 @@
-﻿#define JUCE_LOG_ASSERTIONS 1
-#include <juce_gui_basics/juce_gui_basics.h>
+#include <JuceHeader.h>
 #include "MainComponent.h"
 #include <juce_gui_basics/juce_gui_basics.h>
-#include <juce_gui_extra/juce_gui_extra.h> // for ProjectInfo::versionString
 
 class TheKlangEditorApplication : public juce::JUCEApplication {
 public:
