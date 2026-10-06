@@ -1,13 +1,20 @@
-# Feature: New Effects Processors Catalog Expansion (Effects 14–19) & Universal Mix Standard
+# Feature: New Effects Processors Catalog Expansion (Effects 14–26) & Universal Mix Standard
 
 ## Objective
-Implement six new studio-grade, zero-allocation multi-instance effects for `TheKlangFarmer`'s 8-slot FX rack:
+Implement 13 new studio-grade, zero-allocation multi-instance effects for `TheKlangFarmer`'s 8-slot FX rack:
 1. **Transient Shaper** (Envelope dynamics: Attack, Pump, Sustain, Speed)
 2. **Custom Waveshaper** (Nonlinear transfer curve morphing: Sine/Tri/Saw/Square/PWM, Drive, DJ Filter, Universal Mix)
 3. **Channel Mixer** (4-knob cross-channel matrix mixer: L->L, R->L, L->R, R->R)
 4. **Stereo Enhancer** (Mid/Side field shaper: Mid, Width up to 600%, Pan, Analog Slop drift)
 5. **Haas Delay** (Micro-delay spatial widener: Bipolar -100ms..+100ms, Tone damping, Feedback, Universal Mix)
 6. **Lo-Fi Gated Reverb** (Dense 80s early reflections: Room Time, DJ Filter, BPM-synced Gate Time, Universal Mix)
+7. **Juno-60 Chorus** (Roland BBD emulation: 4-State Mode, Dirt/Vintage filtering & hiss, Stereo Width, 50% 1:1 Mix)
+8. **Waveguide Resonator** (Volca Drum physical model: Tube vs String modes, Tune, Decay resonance, Universal Mix)
+9. **Sub Generator** (Phase-locked 808 sub oscillator: Tune 30-120 Hz, Decay tail, Harmonic Warmth drive, Universal Mix)
+10. **Analog Tape Warmth** (Magnetic tape/cassette: Tape Drive soft clipping, Tone/Bias HF damping, Wow/Flutter, Universal Mix)
+11. **Dynamic Envelope Filter** (Transient-following auto-sweep: Cutoff, Bipolar Env Depth, Resonance/Q, Universal Mix)
+12. **Harmonic Pitch Transposer** (Semitone/cent transposition: Semitones -12..+12, Detune cents, Feedback loop, Universal Mix)
+13. **Rhythmic Stutter Gate** (Tempo-synced chopper: Synced Rate divisions, Duty/Gate slice duration, Smoothing, Universal Mix)
 
 And standardize **Universal Dual-Mode Mix** (Knob 4: `-100%` Wet Crossfade ↔ `0%` Dry ↔ `+100%` Parallel Blend) across all applicable effects.
 
@@ -15,7 +22,7 @@ And standardize **Universal Dual-Mode Mix** (Knob 4: `-100%` Wet Crossfade ↔ `
 - **Audio-Thread Safety (CRITICAL):** Zero heap allocations (`new`, `malloc`, `std::vector::push_back`, dynamic resizing) in `processStereo()` or `process()`. All delay lines, reflection buffers, and envelope history buffers must be pre-allocated in `init()` for maximum sample rate ($96\,\text{kHz}$).
 - **Zero Locks & Zero Blocking I/O:** No mutexes, atomics in hot loops, or console/disk I/O.
 - **FastMath Acceleration:** All trigonometric and transcendental functions must utilize `TbdAudio::FastMath` (`fastTanh`, `fastSin`, `fastCos`, `fastPow2`).
-- **Backward Compatibility:** Append new algorithms to the end of the catalog (`fxChoices` 14..19) so existing DAW projects and presets (types 0..13) maintain exact 1:1 index alignment without XML migration drift.
+- **Backward Compatibility:** Append new algorithms to the end of the catalog (`fxChoices` 14..26) so existing DAW projects and presets (types 0..13) maintain exact 1:1 index alignment without XML migration drift.
 
 ---
 
@@ -63,7 +70,7 @@ And standardize **Universal Dual-Mode Mix** (Knob 4: `-100%` Wet Crossfade ↔ `
     - BPM-synchronized gate envelope cutoff timer (1/64, 1/32, 1/16, 1/8, 1/4 notes) tied to `ctx.bpm` and `ctx.isTriggered`.
     - Universal Dual-Mode Mix on Knob 4.
   - [ ] **1.7: Engine Factory Registry:**
-    - Update `ModularDrumEngine::createFXBlock(int type)` to instantiate cases 14..19.
+    - Update `ModularDrumEngine::createFXBlock(int type)` to instantiate cases 14..26.
 - **Verification Condition:** Code compiles cleanly with zero warnings under Clang/MSVC, all static buffers pre-allocated, zero memory allocations in process callbacks.
 
 ---
@@ -73,9 +80,9 @@ And standardize **Universal Dual-Mode Mix** (Knob 4: `-100%` Wet Crossfade ↔ `
 - **Target Files:** `source/PluginProcessor.h`, `source/PluginProcessor.cpp`
 - **Action Items:**
   - [ ] **2.1: Expand `fxChoices` List:**
-    - Add `"Transient Shaper"`, `"Custom Waveshaper"`, `"Channel Mixer"`, `"Stereo Enhancer"`, `"Haas Delay"`, and `"Gated Reverb"` to `fxChoices` (indices 14..19).
+    - Add `"Transient Shaper"`, `"Custom Waveshaper"`, `"Channel Mixer"`, `"Stereo Enhancer"`, `"Haas Delay"`, and `"Gated Reverb"` to `fxChoices` (indices 14..26).
   - [ ] **2.2: Slot Defaults Initialization:**
-    - Update `setFXSlotDefaults(int slotIndex, bool isPost, int type)` in `PluginProcessor.cpp` and `PluginEditor.cpp` with musical default values for effects 14..19.
+    - Update `setFXSlotDefaults(int slotIndex, bool isPost, int type)` in `PluginProcessor.cpp` and `PluginEditor.cpp` with musical default values for effects 14..26.
   - [ ] **2.3: Universal Mix Standardization Audit:**
     - Verify that all effects utilizing a Mix control (Drive, Comb Filter, Chorus, Flanger, Phaser, Tempo Delay, Waveshaper, Haas Delay, Gated Reverb) uniformly map to Knob 4 with bipolar `-100%` ↔ `0%` ↔ `+100%` dual-mode behavior.
 - **Verification Condition:** APVTS initializes without crashes, parameters bind to slots 1..4 correctly, and parameter value trees save/restore cleanly.
@@ -87,15 +94,15 @@ And standardize **Universal Dual-Mode Mix** (Knob 4: `-100%` Wet Crossfade ↔ `
 - **Target Files:** `source/UIComponents.h`, `source/UIComponents.cpp`, `source/PluginEditor.h`, `source/PluginEditor.cpp`
 - **Action Items:**
   - [ ] **3.1: Tooltip & Metadata Helper Additions (`source/UIComponents.cpp`):**
-    - Add cases 14..19 to `TooltipHelper::getFxAlgorithmTooltip(int fxIndex)` with rich descriptions.
-    - Add cases 14..19 to `TooltipHelper::getFxKnobTooltip(int fxIndex, int knobIndex)` specifying parameter titles, descriptions, default values, and bipolar flags.
+    - Add cases 14..26 to `TooltipHelper::getFxAlgorithmTooltip(int fxIndex)` with rich descriptions.
+    - Add cases 14..26 to `TooltipHelper::getFxKnobTooltip(int fxIndex, int knobIndex)` specifying parameter titles, descriptions, default values, and bipolar flags.
   - [ ] **3.2: Custom Text Formatters & Parsers (`source/PluginEditor.cpp`):**
     - Add `formatHaasDelay(double val)`: displays `-XX.X ms (L)` / `Center (0 ms)` / `+XX.X ms (R)`.
     - Add `formatGateTime(double val)`: displays musical beat divisions (`1/64`, `1/32`, `1/16T`, `1/16`, `1/8`, etc.).
     - Add `formatWidthPct(double val)`: displays `0% (Mono)` up to `600% (Super-Wide)`.
     - Add `formatMatrixGain(double val)`: displays `-100%` to `+100%`.
   - [ ] **3.3: `FXSlotCardComponent::configureForType` Wiring:**
-    - Add cases 14..19 in `source/PluginEditor.cpp` to bind knob names, accent colors, bipolar detents, formatters, and diagram types to the card UI.
+    - Add cases 14..26 in `source/PluginEditor.cpp` to bind knob names, accent colors, bipolar detents, formatters, and diagram types to the card UI.
 - **Verification Condition:** Switching to any of the 6 new effects renders proper labels, formatting readouts, and tooltips across all 4 knobs.
 
 ---
@@ -105,7 +112,7 @@ And standardize **Universal Dual-Mode Mix** (Knob 4: `-100%` Wet Crossfade ↔ `
 - **Target Files:** `test/dsp_tests.cpp`
 - **Action Items:**
   - [ ] **4.1: Multi-Rate Stability & Audio Energy Test:**
-    - Instantiate each new effect (types 14..19) at $44.1\,\text{kHz}$, $48\,\text{kHz}$, and $96\,\text{kHz}$.
+    - Instantiate each new effect (types 14..26) at $44.1\,\text{kHz}$, $48\,\text{kHz}$, and $96\,\text{kHz}$.
     - Feed impulse and sine test signals; assert zero `NaN`, zero `Inf`, and expected RMS gain changes.
   - [ ] **4.2: Channel Mixer & Stereo Width Phase Verification:**
     - Verify `ChannelMixerBlock` cross-feed mathematics ($L \to R$ and $R \to L$ isolation).
