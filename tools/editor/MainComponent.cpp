@@ -1195,8 +1195,8 @@ if (isTheme && parsed.isObject()) {
     auto* tree = navigationTabs.getCurrentTabIndex() == 0 ? &controlsTree : &layoutsTree;
     auto* selected = tree->getSelectedItem(0);
     juce::String selType = selected ? static_cast<EditorTreeItem*>(selected)->itemType : "";
-    bool showLayout = (selType != "card_param");
-    bool showParams = (selType != "card_theme");
+    bool showLayout = (navigationTabs.getCurrentTabIndex() == 1); // Only in LAYOUTS tab
+    bool showParams = (navigationTabs.getCurrentTabIndex() == 0); // Only in CONTROLS tab
 
     juce::Array<juce::PropertyComponent*> props;
     if (showLayout && parsed.isObject()) {
@@ -1213,8 +1213,10 @@ if (isTheme && parsed.isObject()) {
                 continue;
             }
             
-            juce::PropertyComponent* pc = nullptr;
             juce::String pName = prop.name.toString();
+            if (pName == "parameters") continue; // Hide the parameters array from the UI!
+            
+            juce::PropertyComponent* pc = nullptr;
             if (pName == "color" || pName == "accent" || pName == "background" || pName.startsWithIgnoreCase("col")) {
                 pc = new ThemeColorPropertyComponent(pName, valStr, [this, pName](const juce::String& newHex) {
                     auto parsedObj = juce::JSON::parse(layoutJsonDocument.getAllContent());
