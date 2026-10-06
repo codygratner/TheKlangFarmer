@@ -48,7 +48,12 @@
       "Freq",
       "Note"
     ],
-    "default": 0
+    "default": 0,
+    "choice_tooltips": [
+      "MIDI: Tracks incoming MIDI note pitch chromatically with transpose offset.",
+      "FREQ: Free-running continuous frequency in Hertz (20 Hz - 24 kHz).",
+      "NOTE: Quantizes base carrier frequency to discrete musical semitones."
+    ]
   },
   "carrier1_pitch": {
     "type": "float",
@@ -127,6 +132,11 @@
       "Note"
     ],
     "default": 0,
-    "double_click": 0
+    "double_click": 0,
+    "choice_tooltips": [
+      "MIDI: Tracks incoming MIDI note pitch chromatically with transpose offset.",
+      "FREQ: Free-running continuous frequency in Hertz (20 Hz - 24 kHz).",
+      "NOTE: Quantizes base carrier frequency to discrete musical semitones."
+    ]
   }
 }

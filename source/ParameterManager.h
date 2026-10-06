@@ -29,10 +29,19 @@ struct ControlDef {
     float defaultFloat { 0.0f };
     float doubleClickValue { 0.0f };
     std::vector<SnapPoint> snapPoints;
+    juce::String defaultLabel;
 
     // Choice specifics
     juce::StringArray choices;
     int defaultChoice { 0 };
+    juce::StringArray choiceTooltips;
+};
+
+struct FxAlgorithmDef {
+    juce::String id;
+    juce::String name;
+    juce::String description;
+    juce::StringArray knobParams; // Virtual parameter IDs mapped to knobs 1-4
 };
 
 class ParameterManager {
@@ -53,6 +62,22 @@ public:
         return controls;
     }
 
+    const FxAlgorithmDef* getFxAlgorithmDef(int fxIndex) const {
+        auto it = fxAlgorithms.find(fxIndex);
+        if (it != fxAlgorithms.end()) {
+            return &it->second;
+        }
+        return nullptr;
+    }
+
+    juce::String getGlobalString(const juce::String& id, const juce::String& fallback = "") const {
+        auto it = globalStrings.find(id);
+        if (it != globalStrings.end()) {
+            return it->second;
+        }
+        return fallback;
+    }
+
     juce::String getTooltip(const juce::String& id) const {
         if (auto def = getControlDef(id))
             return def->description;
@@ -71,6 +96,8 @@ private:
 
     std::unordered_map<juce::String, juce::Colour> moduleColors;
     std::unordered_map<juce::String, ControlDef> controls;
+    std::unordered_map<int, FxAlgorithmDef> fxAlgorithms;
+    std::unordered_map<juce::String, juce::String> globalStrings;
 
     void parseJsonBlob(const char* data, int size);
 };

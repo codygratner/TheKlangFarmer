@@ -1,5 +1,6 @@
 #include "FarmerEditor.h"
 #include "UIComponents.h"
+#include "ParameterManager.h"
 
 
 // --- FX SLOT CARD COMPONENT ---
@@ -2681,7 +2682,7 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
 
     g.setFont(juce::FontOptions(17.0f, juce::Font::bold));
     g.setColour(juce::Colours::white);
-    g.drawText("THE KLANG FARMER", 14, 0, 180, 36, juce::Justification::centredLeft);
+    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkf_title", "THE KLANG FARMER"), 14, 0, 180, 36, juce::Justification::centredLeft);
 
     g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff4a9eff));
@@ -2702,7 +2703,7 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
     int subtitleWidth = juce::jmax(0, getWidth() - 434 - subX);
     g.setFont(juce::FontOptions(12.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("PAGED MODULAR DUAL FM SYNTHESIS DRUM VOICE", subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
+    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkf_subtitle", "PAGED MODULAR DUAL FM SYNTHESIS DRUM VOICE"), subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangFarmerAudioProcessorEditor::resized() {

@@ -249,7 +249,13 @@
       "Saturator",
       "Wave Folder"
     ],
-    "default": 0
+    "default": 0,
+    "choice_tooltips": [
+      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
+      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
+      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
+      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
+    ]
   },
   "pitchenv2_target": {
     "type": "choice",
@@ -261,7 +267,13 @@
       "Both",
       "Opp"
     ],
-    "default": 0
+    "default": 0,
+    "choice_tooltips": [
+      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
+      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
+      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
+      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
+    ]
   },
   "modenv2_target": {
     "type": "choice",
@@ -273,7 +285,13 @@
       "Carrier 2 Pitch",
       "Filter 1 Cutoff"
     ],
-    "default": 0
+    "default": 0,
+    "choice_tooltips": [
+      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
+      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
+      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
+      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
+    ]
   },
   "modenv3_target": {
     "type": "choice",
@@ -285,6 +303,12 @@
       "Carrier 2 Pitch",
       "Filter 1 Cutoff"
     ],
-    "default": 0
+    "default": 0,
+    "choice_tooltips": [
+      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
+      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
+      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
+      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
+    ]
   }
 }

@@ -58,6 +58,7 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
                 def.isBipolar = vObj->hasProperty("is_bipolar") ? static_cast<bool>(vObj->getProperty("is_bipolar")) : false;
                 def.format = vObj->hasProperty("format") ? vObj->getProperty("format").toString() : juce::String();
                 def.defaultFloat = vObj->hasProperty("default") ? static_cast<float>(vObj->getProperty("default")) : 0.0f;
+                def.defaultLabel = vObj->hasProperty("default_label") ? vObj->getProperty("default_label").toString() : juce::String();
                 def.doubleClickValue = vObj->hasProperty("double_click") ? static_cast<float>(vObj->getProperty("double_click")) : def.defaultFloat;
 
                 if (vObj->hasProperty("range")) {
@@ -91,6 +92,14 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
                     if (choicesArray.isArray()) {
                         for (auto& choiceVar : *choicesArray.getArray()) {
                             def.choices.add(choiceVar.toString());
+                        }
+                    }
+                }
+                if (vObj->hasProperty("choice_tooltips")) {
+                    auto& tooltipsArray = vObj->getProperty("choice_tooltips");
+                    if (tooltipsArray.isArray()) {
+                        for (auto& tVar : *tooltipsArray.getArray()) {
+                            def.choiceTooltips.add(tVar.toString());
                         }
                     }
                 }

@@ -1411,7 +1411,7 @@ void SliderCalloutComponent::paint(juce::Graphics& g) {
         // Header
         g.setFont(juce::FontOptions(10.0f, juce::Font::bold));
         g.setColour(juce::Colour(0xff8a99ad));
-        g.drawText("ACTIVE MODULATION", 10.0f, curY, bounds.getWidth() - 20.0f, 14.0f, juce::Justification::centredLeft, true);
+        g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("active_modulation", "ACTIVE MODULATION"), 10.0f, curY, bounds.getWidth() - 20.0f, 14.0f, juce::Justification::centredLeft, true);
         curY += 16.0f;
 
         // Sources
@@ -2320,85 +2320,11 @@ juce::String makeKnobTooltipFromParam(juce::AudioProcessorValueTreeState& apvts,
     return makeKnobTooltip(paramId, desc, "", isBipolar);
 }
 
-juce::StringArray getLedSelectorItemTooltips(const juce::String& selectorCategory)
+juce::StringArray getLedSelectorItemTooltips(const juce::String& paramId)
 {
-    auto cat = selectorCategory.trim().toLowerCase();
-    if (cat.contains("target") || cat.contains("routing")) {
-        return {
-            "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
-            "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
-            "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
-            "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
-        };
-    }
-    if (cat.contains("carrier_tracking") || cat.contains("tracking")) {
-        return {
-            "MIDI: Tracks incoming MIDI note pitch chromatically with transpose offset.",
-            "FREQ: Free-running continuous frequency in Hertz (20 Hz - 24 kHz).",
-            "NOTE: Quantizes base carrier frequency to discrete musical semitones."
-        };
-    }
-    if (cat.contains("mod_track")) {
-        return {
-            "FIXED: Modulator runs at a fixed independent frequency in Hz.",
-            "FOLLOW: Modulator tracks carrier pitch at an offset in semitones.",
-            "FM: Modulator tracks carrier as a musical harmonic frequency ratio."
-        };
-    }
-    if (cat.contains("mod_type")) {
-        return {
-            "OSC: Standard continuous audio-rate oscillator waveform.",
-            "CYCLIC: Low-frequency cyclical modulation / subtle pitch wobble.",
-            "NOISE: Filtered noise-driven FM for aggressive grit and metallic textures."
-        };
-    }
-    if (cat == "filter_type_5" || (cat.contains("filter_type") && cat.contains("5"))) {
-        return {
-            "LPF: Low-Pass Filter — passes lows, attenuates frequencies above cutoff.",
-            "BPF: Band-Pass Filter — isolates a resonant frequency band around cutoff.",
-            "HPF: High-Pass Filter — cuts lows, passes harmonic content above cutoff.",
-            "BRF: Band-Reject (Notch) Filter — carves out a narrow frequency notch at cutoff.",
-            "APF: All-Pass Filter — preserves amplitude, shifts phase for phaser-like resonance."
-        };
-    }
-    if (cat.contains("filter_type")) {
-        return {
-            "LPF: Low-Pass Filter — passes lows, attenuates frequencies above cutoff.",
-            "BPF: Band-Pass Filter — isolates a resonant frequency band around cutoff.",
-            "HPF: High-Pass Filter — cuts lows, passes harmonic content above cutoff.",
-            "BRF: Band-Reject (Notch) Filter — carves out a narrow frequency notch at cutoff."
-        };
-    }
-    if (cat == "filter_slope_5" || (cat.contains("filter_slope") && cat.contains("5"))) {
-        return {
-            "6 dB/oct: Gentle 1-pole attenuation curve.",
-            "12 dB/oct: Classic 2-pole musical roll-off.",
-            "18 dB/oct: 3-pole steep transition.",
-            "24 dB/oct: Punchy 4-pole ladder filter slope.",
-            "36 dB/oct: Maximum 6-pole brickwall attenuation."
-        };
-    }
-    if (cat.contains("filter_slope") || cat.contains("slope")) {
-        return {
-            "6 dB/oct: Gentle 1-pole attenuation curve.",
-            "12 dB/oct: Classic 2-pole musical roll-off.",
-            "18 dB/oct: 3-pole steep transition.",
-            "24 dB/oct: Punchy 4-pole ladder filter slope.",
-            "30 dB/oct: Ultra-steep 5-pole surgical roll-off.",
-            "36 dB/oct: Maximum 6-pole brickwall attenuation."
-        };
-    }
-    if (cat.contains("limiter") || cat.contains("toggle")) {
-        return {
-            "OFF: Feature bypassed.",
-            "ON: Feature actively engaged."
-        };
-    }
-    if (cat.contains("smear") || cat.contains("order")) {
-        return {
-            "2ND: 2nd-order all-pass dispersion network for gentle laser smearing.",
-            "4TH: 4th-order all-pass dispersion network for deep, resonant laser zaps."
-        };
+    auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+    if (def && !def->choiceTooltips.isEmpty()) {
+        return def->choiceTooltips;
     }
     return {};
 }
@@ -2423,100 +2349,13 @@ juce::String getFxAlgorithmTooltip(int fxIndex) {
 }
 
 juce::String getFxKnobTooltip(int fxIndex, int knobIndex) {
-    switch (fxIndex) {
-        case 1: { // Bell EQ
-            if (knobIndex == 0) return makeKnobTooltip("Center Frequency", "Peak/notch filter frequency (20 Hz - 24 kHz)", "1.00 kHz");
-            if (knobIndex == 1) return makeKnobTooltip("Width", "Bandwidth / Q factor in octaves (0.1 to 10.0 oct)", "1.00 oct");
-            if (knobIndex == 2) return makeKnobTooltip("Gain", "Parametric boost or cut range", "0.0 dB", true);
-            if (knobIndex == 3) return makeKnobTooltip("DJ Filter", "Macro low-pass / high-pass tilt filter", "Flat", true);
-            break;
+    auto* alg = RlyehSound::ParameterManager::getInstance().getFxAlgorithmDef(fxIndex);
+    if (alg && knobIndex >= 0 && knobIndex < alg->knobParams.size()) {
+        auto paramId = alg->knobParams[knobIndex];
+        auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+        if (def) {
+            return makeKnobTooltip(def->name, def->description, def->defaultLabel, def->isBipolar);
         }
-        case 2: { // Chorus
-            if (knobIndex == 0) return makeKnobTooltip("Rate", "Modulation LFO speed in Hz (0.1 - 10.0 Hz)", "1.2 Hz");
-            if (knobIndex == 1) return makeKnobTooltip("Depth", "LFO pitch modulation depth percentage", "50%");
-            if (knobIndex == 2) return makeKnobTooltip("Feedback", "Bipolar delay regeneration feedback", "0%", true);
-            if (knobIndex == 3) return makeKnobTooltip("Mix", "Dry/Wet balance percentage", "50%");
-            break;
-        }
-        case 3: { // Comb Filter
-            if (knobIndex == 0) return makeKnobTooltip("Dampening", "High-frequency feedback damping cutoff", "8.0 kHz");
-            if (knobIndex == 1) return makeKnobTooltip("Cutoff", "Tuned resonant frequency / pitch of the delay loop", "440 Hz");
-            if (knobIndex == 2) return makeKnobTooltip("Resonance", "Bipolar comb feedback resonance amount", "0%", true);
-            if (knobIndex == 3) return makeKnobTooltip("Mix", "Dry / Wet signal blend percentage", "Dry (0%)", true);
-            break;
-        }
-        case 4: { // Drive
-            if (knobIndex == 0) return makeKnobTooltip("Drive", "Nonlinear saturation input gain in dB (-12 to +24 dB)", "0.0 dB");
-            if (knobIndex == 1) return makeKnobTooltip("Bias", "Asymmetrical DC offset for even/odd harmonics", "0%", true);
-            if (knobIndex == 2) return makeKnobTooltip("Filter", "Pre-saturation tilt / tone filter emphasis", "0%", true);
-            if (knobIndex == 3) return makeKnobTooltip("Limiter", "Output brickwall peak limiter toggle", "Off");
-            break;
-        }
-        case 5: { // FX Filter
-            if (knobIndex == 0) return makeKnobTooltip("Type", "Select filter shape: LPF, BPF, HPF, or BRF (Notch)", "LPF");
-            if (knobIndex == 1) return makeKnobTooltip("Slope", "Select attenuation slope: 6, 12, 18, 24, or 36 dB/oct", "12 dB/oct");
-            if (knobIndex == 2) return makeKnobTooltip("Cutoff", "Filter corner / center frequency (20 Hz - 24 kHz)", "20.0 kHz");
-            if (knobIndex == 3) return makeKnobTooltip("Resonance", "Q factor resonance boost at cutoff", "0%");
-            break;
-        }
-        case 6: { // Flanger
-            if (knobIndex == 0) return makeKnobTooltip("Rate", "Modulation LFO rate in Hz (0.05 - 5.0 Hz)", "0.25 Hz");
-            if (knobIndex == 1) return makeKnobTooltip("Depth", "LFO sweep range percentage", "70%");
-            if (knobIndex == 2) return makeKnobTooltip("Feedback", "Bipolar regeneration feedback for intense metallic jet sweeps", "0%", true);
-            if (knobIndex == 3) return makeKnobTooltip("Mix", "Dry/Wet balance percentage", "50%");
-            break;
-        }
-        case 7: { // Frequency Shifter
-            if (knobIndex == 0) return makeKnobTooltip("Shift", "Bipolar frequency shift amount in Hz", "0.0 Hz", true);
-            if (knobIndex == 1) return makeKnobTooltip("Range", "Maximum shift frequency scaling range (3 Hz to 10 kHz)", "500 Hz");
-            if (knobIndex == 2) return makeKnobTooltip("Blend", "Dry / Wet signal blend percentage", "Dry (0%)", true);
-            if (knobIndex == 3) return makeKnobTooltip("Width", "Stereo phase offset width between left and right channels", "0%", true);
-            break;
-        }
-        case 8: { // Grit FX
-            if (knobIndex == 0) return makeKnobTooltip("Bit Rate", "Bit depth quantizer reduction (1 to 16 bits)", "16 bits");
-            if (knobIndex == 1) return makeKnobTooltip("Sample Rate", "Sample rate crusher frequency downsampling (100 Hz to 48 kHz)", "48.0 kHz");
-            if (knobIndex == 2) return makeKnobTooltip("Low", "Post-grit low shelf tone boost/cut in dB", "0.0 dB", true);
-            if (knobIndex == 3) return makeKnobTooltip("High", "Post-grit high shelf tone boost/cut in dB", "0.0 dB", true);
-            break;
-        }
-        case 9: { // Phase Smear
-            if (knobIndex == 0) return makeKnobTooltip("Stages", "All-pass filter network order (2nd order vs 4th order)", "2nd Order");
-            if (knobIndex == 1) return makeKnobTooltip("Amount", "Number of all-pass stages in series (dispersion strength)", "4 Stages");
-            if (knobIndex == 2) return makeKnobTooltip("Cutoff", "Dispersion center frequency (20 Hz - 24 kHz)", "1.0 kHz");
-            if (knobIndex == 3) return makeKnobTooltip("Resonance", "Bipolar all-pass feedback resonance for laser zaps", "0%", true);
-            break;
-        }
-        case 10: { // Phaser
-            if (knobIndex == 0) return makeKnobTooltip("Rate", "Modulation LFO sweep speed in Hz (0.05 - 8.0 Hz)", "0.50 Hz");
-            if (knobIndex == 1) return makeKnobTooltip("Depth", "LFO sweep depth percentage", "60%");
-            if (knobIndex == 2) return makeKnobTooltip("Feedback", "Bipolar all-pass feedback resonance", "0%", true);
-            if (knobIndex == 3) return makeKnobTooltip("Mix", "Dry/Wet mix percentage", "50%");
-            break;
-        }
-        case 11: { // RingMod FX
-            if (knobIndex == 0) return makeKnobTooltip("Waveform", "Internal carrier oscillator shape (Sine -> Triangle -> Saw -> Square)", "Sine (0%)");
-            if (knobIndex == 1) return makeKnobTooltip("Rate", "Carrier oscillator modulation frequency in Hz (0.1 Hz to 5.0 kHz)", "250 Hz");
-            if (knobIndex == 2) return makeKnobTooltip("Amount", "Modulation depth / wet mix percentage", "100%");
-            if (knobIndex == 3) return makeKnobTooltip("Width", "Bipolar stereo phase spread between left and right carrier oscillators", "0%", true);
-            break;
-        }
-        case 12: { // Tempo Delay
-            if (knobIndex == 0) return makeKnobTooltip("Division", "Host-synchronized musical beat subdivision (1/32 to 1/2)", "1/8");
-            if (knobIndex == 1) return makeKnobTooltip("Feedback", "Delay echo regeneration percentage", "40%");
-            if (knobIndex == 2) return makeKnobTooltip("Tone", "Low-pass damping filter cutoff frequency on feedback loop", "8.0 kHz");
-            if (knobIndex == 3) return makeKnobTooltip("Mix", "Dry/Wet delay balance percentage", "30%");
-            break;
-        }
-        case 13: { // Wave Folder
-            if (knobIndex == 0) return makeKnobTooltip("Limiter", "Output hard limiter toggle", "Off");
-            if (knobIndex == 1) return makeKnobTooltip("Fold", "Harmonic wavefolding multiplier (1x to 16x folds)", "1.0x");
-            if (knobIndex == 2) return makeKnobTooltip("Bias", "DC symmetry offset bias adding even harmonics", "0%", true);
-            if (knobIndex == 3) return makeKnobTooltip("Filter", "Pre-folding tilt tone filter emphasis", "0%", true);
-            break;
-        }
-        default:
-            break;
     }
     return makeKnobTooltip("Parameter " + juce::String(knobIndex + 1), "Slot parameter for the active effect");
 }

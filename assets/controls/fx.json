@@ -1,115 +1,126 @@
 {
   "fxfilter_cutoff": {
     "type": "float",
-    "name": "FX Filter: Cutoff",
-    "description": "",
+    "name": "Cutoff",
+    "description": "Filter corner / center frequency (20 Hz - 24 kHz)",
     "is_bipolar": false,
     "default": 1.0,
-    "double_click": 1.0
+    "double_click": 1.0,
+    "default_label": "20.0 kHz"
   },
   "fxfilter_resonance": {
     "type": "float",
-    "name": "FX Filter: Resonance",
-    "description": "",
+    "name": "Resonance",
+    "description": "Q factor resonance boost at cutoff",
     "is_bipolar": false,
     "default": 0.0,
-    "double_click": 0.0
+    "double_click": 0.0,
+    "default_label": "0%"
   },
   "wavefolder_fold": {
     "type": "float",
-    "name": "WaveFolder: Fold",
-    "description": "",
+    "name": "Fold",
+    "description": "Harmonic wavefolding multiplier (1x to 16x folds)",
     "is_bipolar": false,
     "default": 0.0,
-    "double_click": 0.0
+    "double_click": 0.0,
+    "default_label": "1.0x"
   },
   "wavefolder_bias": {
     "type": "float",
-    "name": "WaveFolder: Bias",
-    "description": "",
+    "name": "Bias",
+    "description": "DC symmetry offset bias adding even harmonics",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0 DC Bias"
+    "default_label": "0%"
   },
   "freqshift_shift": {
     "type": "float",
-    "name": "FreqShift: Shift",
-    "description": "",
-    "is_bipolar": false,
-    "default": 0.5,
-    "double_click": 0.5
-  },
-  "freqshift_blend": {
-    "type": "float",
-    "name": "FreqShift: Blend",
-    "description": "",
-    "is_bipolar": false,
-    "default": 0.75,
-    "double_click": 0.75,
-    "format": "wet_dry"
-  },
-  "freqshift_width": {
-    "type": "float",
-    "name": "FreqShift: Width",
-    "description": "",
+    "name": "Shift",
+    "description": "Bipolar frequency shift amount in Hz",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "Center"
+    "default_label": "0.0 Hz"
+  },
+  "freqshift_blend": {
+    "type": "float",
+    "name": "Blend",
+    "description": "Dry / Wet signal blend percentage",
+    "is_bipolar": true,
+    "default": 0.75,
+    "double_click": 0.75,
+    "format": "wet_dry",
+    "default_label": "Dry (0%)"
+  },
+  "freqshift_width": {
+    "type": "float",
+    "name": "Width",
+    "description": "Stereo phase offset width between left and right channels",
+    "is_bipolar": true,
+    "default": 0.5,
+    "double_click": 0.5,
+    "default_label": "0%"
   },
   "grit_bits": {
     "type": "float",
-    "name": "Grit: Bit Reduction",
-    "description": "",
+    "name": "Bit Rate",
+    "description": "Bit depth quantizer reduction (1 to 16 bits)",
     "is_bipolar": false,
     "default": 1.0,
-    "double_click": 1.0
+    "double_click": 1.0,
+    "default_label": "16 bits"
   },
   "grit_rate": {
     "type": "float",
-    "name": "Grit: Sample Rate",
-    "description": "",
+    "name": "Sample Rate",
+    "description": "Sample rate crusher frequency downsampling (100 Hz to 48 kHz)",
     "is_bipolar": false,
     "default": 1.0,
-    "double_click": 1.0
+    "double_click": 1.0,
+    "default_label": "48.0 kHz"
   },
   "grit_low": {
     "type": "float",
-    "name": "Grit: Low Shelf",
-    "description": "",
-    "is_bipolar": false,
+    "name": "Low",
+    "description": "Post-grit low shelf tone boost/cut in dB",
+    "is_bipolar": true,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "default_label": "0.0 dB"
   },
   "grit_high": {
     "type": "float",
-    "name": "Grit: High Shelf",
-    "description": "",
-    "is_bipolar": false,
+    "name": "High",
+    "description": "Post-grit high shelf tone boost/cut in dB",
+    "is_bipolar": true,
     "default": 0.5,
-    "double_click": 0.5
+    "double_click": 0.5,
+    "default_label": "0.0 dB"
   },
   "comb_dampening": {
     "type": "float",
-    "name": "Comb: Dampening",
-    "description": "",
+    "name": "Dampening",
+    "description": "High-frequency feedback damping cutoff",
     "is_bipolar": false,
     "default": 1.0,
-    "double_click": 1.0
+    "double_click": 1.0,
+    "default_label": "8.0 kHz"
   },
   "comb_cutoff": {
     "type": "float",
-    "name": "Comb: Cutoff",
-    "description": "",
+    "name": "Cutoff",
+    "description": "Tuned resonant frequency / pitch of the delay loop",
     "is_bipolar": false,
     "default": 1.0,
-    "double_click": 1.0
+    "double_click": 1.0,
+    "default_label": "440 Hz"
   },
   "comb_resonance": {
     "type": "float",
-    "name": "Comb: Resonance",
-    "description": "",
+    "name": "Resonance",
+    "description": "Bipolar comb feedback resonance amount",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -117,25 +128,27 @@
   },
   "comb_mix": {
     "type": "float",
-    "name": "Comb: Mix",
-    "description": "",
-    "is_bipolar": false,
+    "name": "Mix",
+    "description": "Dry / Wet signal blend percentage",
+    "is_bipolar": true,
     "default": 0.75,
     "double_click": 0.75,
-    "format": "wet_dry"
+    "format": "wet_dry",
+    "default_label": "Dry (0%)"
   },
   "phasesmear_cutoff": {
     "type": "float",
-    "name": "Phase Smear: Cutoff",
-    "description": "",
+    "name": "Cutoff",
+    "description": "Dispersion center frequency (20 Hz - 24 kHz)",
     "is_bipolar": false,
     "default": 0.62124,
-    "double_click": 0.62124
+    "double_click": 0.62124,
+    "default_label": "1.0 kHz"
   },
   "phasesmear_resonance": {
     "type": "float",
-    "name": "Phase Smear: Resonance",
-    "description": "",
+    "name": "Resonance",
+    "description": "Bipolar all-pass feedback resonance for laser zaps",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -175,8 +188,8 @@
   },
   "fxfilter_type": {
     "type": "choice",
-    "name": "FX Filter: Type",
-    "description": "",
+    "name": "Type",
+    "description": "Select filter shape: LPF, BPF, HPF, or BRF (Notch)",
     "choices": [
       "LPF",
       "BPF",
@@ -184,12 +197,14 @@
       "BRF"
     ],
     "default": 0,
-    "double_click": 0
+    "double_click": 0,
+    "default_label": "LPF",
+    "is_bipolar": false
   },
   "fxfilter_slope": {
     "type": "choice",
-    "name": "FX Filter: Slope",
-    "description": "",
+    "name": "Slope",
+    "description": "Select attenuation slope: 6, 12, 18, 24, or 36 dB/oct",
     "choices": [
       "6",
       "12",
@@ -198,7 +213,9 @@
       "36"
     ],
     "default": 1,
-    "double_click": 1
+    "double_click": 1,
+    "default_label": "12 dB/oct",
+    "is_bipolar": false
   },
   "wavefolder_type": {
     "type": "choice",
@@ -213,30 +230,34 @@
   },
   "phasesmear_type": {
     "type": "choice",
-    "name": "Phase Smear: Order",
-    "description": "",
+    "name": "Stages",
+    "description": "All-pass filter network order (2nd order vs 4th order)",
     "choices": [
       "2nd",
       "4th"
     ],
     "default": 0,
-    "double_click": 0
+    "double_click": 0,
+    "default_label": "2nd Order",
+    "is_bipolar": false
   },
   "freqshift_range": {
     "type": "float",
-    "name": "FreqShift: Range",
-    "description": "",
+    "name": "Range",
+    "description": "Maximum shift frequency scaling range (3 Hz to 10 kHz)",
     "is_bipolar": false,
     "default": 0.03806,
-    "double_click": 0.03806
+    "double_click": 0.03806,
+    "default_label": "500 Hz"
   },
   "phasesmear_amount": {
     "type": "float",
-    "name": "Phase Smear: Amount",
-    "description": "",
+    "name": "Amount",
+    "description": "Number of all-pass stages in series (dispersion strength)",
     "is_bipolar": false,
     "default": 0.125,
-    "double_click": 0.125
+    "double_click": 0.125,
+    "default_label": "4 Stages"
   },
   "pre_fx_1_type": {
     "type": "choice",
@@ -440,6 +461,380 @@
       "Mixer Noise"
     ],
     "default": 0,
-    "double_click": 0
+    "double_click": 0,
+    "choice_tooltips": [
+      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
+      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
+      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
+      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
+    ]
+  },
+  "fx_algorithms": [
+    {
+      "index": 1,
+      "id": "bell_eq",
+      "name": "Bell EQ",
+      "description": "A versatile parametric peaking or notch filter with adjustable bandwidth and macro DJ tilt filter.",
+      "knobs": [
+        "bell_eq_freq",
+        "bell_eq_width",
+        "bell_eq_gain",
+        "bell_eq_djfilter"
+      ]
+    },
+    {
+      "index": 2,
+      "id": "chorus",
+      "name": "Chorus",
+      "description": "A lush, multi-voice modulation effect creating a thick, shimmering ensemble sound.",
+      "knobs": [
+        "chorus_rate",
+        "chorus_depth",
+        "chorus_feedback",
+        "chorus_mix"
+      ]
+    },
+    {
+      "index": 3,
+      "id": "comb_filter",
+      "name": "Comb Filter",
+      "description": "A short, resonant delay line that creates metallic, hollow, or flanging acoustic resonances.",
+      "knobs": [
+        "comb_dampening",
+        "comb_cutoff",
+        "comb_resonance",
+        "comb_mix"
+      ]
+    },
+    {
+      "index": 4,
+      "id": "drive",
+      "name": "Drive",
+      "description": "An aggressive nonlinear saturation and distortion unit with asymmetrical clipping and filtering.",
+      "knobs": [
+        "drive_amount",
+        "drive_bias",
+        "drive_filter",
+        "drive_limiter"
+      ]
+    },
+    {
+      "index": 5,
+      "id": "fx_filter",
+      "name": "FX Filter",
+      "description": "A multi-mode resonant filter (Low-pass, Band-pass, High-pass, Notch) with variable slopes.",
+      "knobs": [
+        "fxfilter_type",
+        "fxfilter_slope",
+        "fxfilter_cutoff",
+        "fxfilter_resonance"
+      ]
+    },
+    {
+      "index": 6,
+      "id": "flanger",
+      "name": "Flanger",
+      "description": "A sweeping phase cancellation effect created by mixing a slightly delayed signal with the original.",
+      "knobs": [
+        "flanger_rate",
+        "flanger_depth",
+        "flanger_feedback",
+        "flanger_mix"
+      ]
+    },
+    {
+      "index": 7,
+      "id": "frequency_shifter",
+      "name": "Frequency Shifter",
+      "description": "An advanced modulation effect that shifts all frequencies by a linear amount, destroying harmonic relationships.",
+      "knobs": [
+        "freqshift_shift",
+        "freqshift_range",
+        "freqshift_blend",
+        "freqshift_width"
+      ]
+    },
+    {
+      "index": 8,
+      "id": "grit_fx",
+      "name": "Grit FX",
+      "description": "A digital degradation processor combining bitcrushing, sample rate reduction, and EQ for lo-fi textures.",
+      "knobs": [
+        "grit_bits",
+        "grit_rate",
+        "grit_low",
+        "grit_high"
+      ]
+    },
+    {
+      "index": 9,
+      "id": "phase_smear",
+      "name": "Phase Smear",
+      "description": "A network of all-pass filters that disperses transient energy, creating laser-like 'pew' sweeps and smeared stereo fields.",
+      "knobs": [
+        "phasesmear_type",
+        "phasesmear_amount",
+        "phasesmear_cutoff",
+        "phasesmear_resonance"
+      ]
+    },
+    {
+      "index": 10,
+      "id": "phaser",
+      "name": "Phaser",
+      "description": "A sweeping sequence of all-pass filters creating moving notches and peaks in the frequency spectrum.",
+      "knobs": [
+        "phaser_rate",
+        "phaser_depth",
+        "phaser_feedback",
+        "phaser_mix"
+      ]
+    },
+    {
+      "index": 11,
+      "id": "ringmod",
+      "name": "RingMod",
+      "description": "An amplitude modulator using an internal oscillator, creating dissonant, metallic, or robotic sidebands.",
+      "knobs": [
+        "ringmod_wave",
+        "ringmod_rate",
+        "ringmod_amount",
+        "ringmod_width"
+      ]
+    },
+    {
+      "index": 12,
+      "id": "tempo_delay",
+      "name": "Tempo Delay",
+      "description": "A host-synchronized echo and delay effect with filtering and analog-style regeneration.",
+      "knobs": [
+        "delay_div",
+        "delay_feedback",
+        "delay_tone",
+        "delay_mix"
+      ]
+    },
+    {
+      "index": 13,
+      "id": "wave_folder",
+      "name": "Wave Folder",
+      "description": "A nonlinear distortion that folds waveforms back on themselves when they exceed a threshold, adding rich complex harmonics.",
+      "knobs": [
+        "wavefolder_limiter",
+        "wavefolder_fold",
+        "wavefolder_bias",
+        "wavefolder_filter"
+      ]
+    }
+  ],
+  "bell_eq_freq": {
+    "type": "float",
+    "name": "Center Frequency",
+    "description": "Peak/notch filter frequency (20 Hz - 24 kHz)",
+    "default_label": "1.00 kHz",
+    "is_bipolar": false
+  },
+  "bell_eq_width": {
+    "type": "float",
+    "name": "Width",
+    "description": "Bandwidth / Q factor in octaves (0.1 to 10.0 oct)",
+    "default_label": "1.00 oct",
+    "is_bipolar": false
+  },
+  "bell_eq_gain": {
+    "type": "float",
+    "name": "Gain",
+    "description": "Parametric boost or cut range",
+    "default_label": "0.0 dB",
+    "is_bipolar": true
+  },
+  "bell_eq_djfilter": {
+    "type": "float",
+    "name": "DJ Filter",
+    "description": "Macro low-pass / high-pass tilt filter",
+    "default_label": "Flat",
+    "is_bipolar": true
+  },
+  "chorus_rate": {
+    "type": "float",
+    "name": "Rate",
+    "description": "Modulation LFO speed in Hz (0.1 - 10.0 Hz)",
+    "default_label": "1.2 Hz",
+    "is_bipolar": false
+  },
+  "chorus_depth": {
+    "type": "float",
+    "name": "Depth",
+    "description": "LFO pitch modulation depth percentage",
+    "default_label": "50%",
+    "is_bipolar": false
+  },
+  "chorus_feedback": {
+    "type": "float",
+    "name": "Feedback",
+    "description": "Bipolar delay regeneration feedback",
+    "default_label": "0%",
+    "is_bipolar": true
+  },
+  "chorus_mix": {
+    "type": "float",
+    "name": "Mix",
+    "description": "Dry/Wet balance percentage",
+    "default_label": "50%",
+    "is_bipolar": false
+  },
+  "drive_amount": {
+    "type": "float",
+    "name": "Drive",
+    "description": "Nonlinear saturation input gain in dB (-12 to +24 dB)",
+    "default_label": "0.0 dB",
+    "is_bipolar": false
+  },
+  "drive_bias": {
+    "type": "float",
+    "name": "Bias",
+    "description": "Asymmetrical DC offset for even/odd harmonics",
+    "default_label": "0%",
+    "is_bipolar": true
+  },
+  "drive_filter": {
+    "type": "float",
+    "name": "Filter",
+    "description": "Pre-saturation tilt / tone filter emphasis",
+    "default_label": "0%",
+    "is_bipolar": true
+  },
+  "drive_limiter": {
+    "type": "float",
+    "name": "Limiter",
+    "description": "Output brickwall peak limiter toggle",
+    "default_label": "Off",
+    "is_bipolar": false
+  },
+  "flanger_rate": {
+    "type": "float",
+    "name": "Rate",
+    "description": "Modulation LFO rate in Hz (0.05 - 5.0 Hz)",
+    "default_label": "0.25 Hz",
+    "is_bipolar": false
+  },
+  "flanger_depth": {
+    "type": "float",
+    "name": "Depth",
+    "description": "LFO sweep range percentage",
+    "default_label": "70%",
+    "is_bipolar": false
+  },
+  "flanger_feedback": {
+    "type": "float",
+    "name": "Feedback",
+    "description": "Bipolar regeneration feedback for intense metallic jet sweeps",
+    "default_label": "0%",
+    "is_bipolar": true
+  },
+  "flanger_mix": {
+    "type": "float",
+    "name": "Mix",
+    "description": "Dry/Wet balance percentage",
+    "default_label": "50%",
+    "is_bipolar": false
+  },
+  "phaser_rate": {
+    "type": "float",
+    "name": "Rate",
+    "description": "Modulation LFO sweep speed in Hz (0.05 - 8.0 Hz)",
+    "default_label": "0.50 Hz",
+    "is_bipolar": false
+  },
+  "phaser_depth": {
+    "type": "float",
+    "name": "Depth",
+    "description": "LFO sweep depth percentage",
+    "default_label": "60%",
+    "is_bipolar": false
+  },
+  "phaser_feedback": {
+    "type": "float",
+    "name": "Feedback",
+    "description": "Bipolar all-pass feedback resonance",
+    "default_label": "0%",
+    "is_bipolar": true
+  },
+  "phaser_mix": {
+    "type": "float",
+    "name": "Mix",
+    "description": "Dry/Wet mix percentage",
+    "default_label": "50%",
+    "is_bipolar": false
+  },
+  "ringmod_wave": {
+    "type": "float",
+    "name": "Waveform",
+    "description": "Internal carrier oscillator shape (Sine -> Triangle -> Saw -> Square)",
+    "default_label": "Sine (0%)",
+    "is_bipolar": false
+  },
+  "ringmod_rate": {
+    "type": "float",
+    "name": "Rate",
+    "description": "Carrier oscillator modulation frequency in Hz (0.1 Hz to 5.0 kHz)",
+    "default_label": "250 Hz",
+    "is_bipolar": false
+  },
+  "ringmod_amount": {
+    "type": "float",
+    "name": "Amount",
+    "description": "Modulation depth / wet mix percentage",
+    "default_label": "100%",
+    "is_bipolar": false
+  },
+  "ringmod_width": {
+    "type": "float",
+    "name": "Width",
+    "description": "Bipolar stereo phase spread between left and right carrier oscillators",
+    "default_label": "0%",
+    "is_bipolar": true
+  },
+  "delay_div": {
+    "type": "float",
+    "name": "Division",
+    "description": "Host-synchronized musical beat subdivision (1/32 to 1/2)",
+    "default_label": "1/8",
+    "is_bipolar": false
+  },
+  "delay_feedback": {
+    "type": "float",
+    "name": "Feedback",
+    "description": "Delay echo regeneration percentage",
+    "default_label": "40%",
+    "is_bipolar": false
+  },
+  "delay_tone": {
+    "type": "float",
+    "name": "Tone",
+    "description": "Low-pass damping filter cutoff frequency on feedback loop",
+    "default_label": "8.0 kHz",
+    "is_bipolar": false
+  },
+  "delay_mix": {
+    "type": "float",
+    "name": "Mix",
+    "description": "Dry/Wet delay balance percentage",
+    "default_label": "30%",
+    "is_bipolar": false
+  },
+  "wavefolder_limiter": {
+    "type": "float",
+    "name": "Limiter",
+    "description": "Output hard limiter toggle",
+    "default_label": "Off",
+    "is_bipolar": false
+  },
+  "wavefolder_filter": {
+    "type": "float",
+    "name": "Filter",
+    "description": "Pre-folding tilt tone filter emphasis",
+    "default_label": "0%",
+    "is_bipolar": true
   }
 }

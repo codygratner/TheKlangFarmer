@@ -574,11 +574,7 @@ void TheKlangPlanterAudioProcessorEditor::bindSelector(LedSelectorComponent& sel
     }
     sel.setItems(items, columns);
     if (paramId.isNotEmpty()) {
-        juce::String cat = paramId;
-        if (paramId.contains("slope") && items.size() == 5) {
-            cat = "filter_slope_5";
-        }
-        auto itemTips = TooltipHelper::getLedSelectorItemTooltips(cat);
+        auto itemTips = TooltipHelper::getLedSelectorItemTooltips(paramId);
         sel.setItemTooltips(itemTips);
     }
     sel.onChange = [&box](int index) {
@@ -694,7 +690,7 @@ void TheKlangPlanterAudioProcessorEditor::paint(juce::Graphics& g) {
     // Title
     g.setFont(juce::FontOptions(17.0f, juce::Font::bold));
     g.setColour(juce::Colours::white);
-    g.drawText("THE KLANG PLANTER", 14, 0, 190, 36, juce::Justification::centredLeft);
+    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkp_title", "THE KLANG PLANTER"), 14, 0, 190, 36, juce::Justification::centredLeft);
 
     // Version
     g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
@@ -717,7 +713,7 @@ void TheKlangPlanterAudioProcessorEditor::paint(juce::Graphics& g) {
     int subtitleWidth = juce::jmax(0, getWidth() - 554 - subX);
     g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("COMPACT FM PERCUSSION SYNTHESIZER", subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
+    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkp_subtitle", "COMPACT FM PERCUSSION SYNTHESIZER"), subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangPlanterAudioProcessorEditor::resized() {

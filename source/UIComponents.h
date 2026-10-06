@@ -455,7 +455,7 @@ namespace TooltipHelper {
                                           const juce::String& description,
                                           bool isBipolar = false);
 
-    juce::StringArray getLedSelectorItemTooltips(const juce::String& selectorCategory);
+    juce::StringArray getLedSelectorItemTooltips(const juce::String& paramId);
     juce::String getFxAlgorithmTooltip(int fxIndex);
     juce::String getFxKnobTooltip(int fxIndex, int knobIndex);
 }

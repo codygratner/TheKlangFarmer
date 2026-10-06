@@ -74,7 +74,13 @@
     "description": "Pitch Envelope Target",
     "name": "PitchEnv: Target",
     "defaultChoice": 0,
-    "type": "choice"
+    "type": "choice",
+    "choice_tooltips": [
+      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
+      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
+      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
+      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
+    ]
   },
   "planter_amp_pan": {
     "name": "Amp: Pan",
@@ -206,7 +212,11 @@
     "description": "Modulator Tracking",
     "name": "Modulator: Tracking",
     "defaultChoice": 2,
-    "type": "choice"
+    "type": "choice",
+    "choice_tooltips": [
+      "FIXED: Modulator runs at a fixed independent frequency in Hz.",
+      "RATIO: Modulator frequency is a harmonic ratio scalar of the Carrier frequency (FM synthesis)."
+    ]
   },
   "planter_mod_shape": {
     "name": "Modulator: Shape",
@@ -342,7 +352,12 @@
     "description": "Carrier Tracking",
     "name": "Carrier: Tracking",
     "defaultChoice": 0,
-    "type": "choice"
+    "type": "choice",
+    "choice_tooltips": [
+      "MIDI: Tracks incoming MIDI note pitch chromatically with transpose offset.",
+      "FREQ: Free-running continuous frequency in Hertz (20 Hz - 24 kHz).",
+      "NOTE: Quantizes base carrier frequency to discrete musical semitones."
+    ]
   },
   "planter_noise_decay": {
     "name": "Noise: Decay",
