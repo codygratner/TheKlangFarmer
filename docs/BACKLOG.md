@@ -22,6 +22,7 @@
 Create a dedicated JUCE GUI application using a **Unified Tabbed Layout** (`[THEME]` vs `[CONTROLS]`) to cleanly separate visual styling from DSP parameter calibration, sharing a Live UI Preview and Raw JSON text editor pane.
 *Note: Ensure the UI can handle the split between TKF (The Klang Farmer) and TKP (The Klang Planter) cards if they have different parameter groupings or coloring needs.*
 *Text/Localization Extraction*: Extract all hardcoded C++ UI strings (slider names, tooltips, special formatting) into their respective module JSON files (using the **Component Model** architecture to explicitly keep text out of structural layout files). Global text (button labels, plugin names) will live in a new `global_ui.json` file. All text will be edited directly alongside numerical bounds inside the `[CONTROLS]` tab.
+*Automated Build Tracking*: Use CMake to inject the Git Commit Count and Hash into the C++ preprocessor, displaying it in the Editor's title bar (e.g., `v0.3.0 (Build 171 - 155333f)`) while strictly avoiding timestamps to preserve Reproducible Builds.
 
 ### 2. Automated GUI Test Harness (Guardrail)
 *Detailed Plan: [`docs/gui_test_harness_plan.md`](gui_test_harness_plan.md)*
