@@ -123,13 +123,6 @@ Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's ad
   - **Lo-Fi & Character (6)**: Custom Waveshaper, Grit FX, RingMod, Stereo Enhancer, Tape Warmth, Wave Folder
 - **Visual Polish**: Keyboard escape to dismiss, mouse hover highlights with algorithm descriptions, and currently loaded effect highlighted with active indicator dot.
 
-
-### 10. Universal Drag-and-Drop Modulation System (TKF & TKM)
-*Goal: Introduce modular, visual modulation across all synth and effect parameters.*
-- **Drag-and-Drop UX**: Drag crosshair handles from modulators onto any continuous slider to assign bipolar modulation depth with animated colored rings (Kilohearts / Vital style).
-- **Decoupled Performance Modulators**: Decouple Velocity, Key Tracking, and Slop from fixed hardcoded destinations, allowing them to be freely routed to any card or effect knob.
-- **New General Modulators**: Introduce Tempo-Synced Multi-Wave LFO, Audio Envelope Follower, and Smooth/Stepped Random generator to the core modular architecture.
-
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Pro Workflow Update"
