@@ -1,64 +1,92 @@
-# Implementation Plan: The Klang Mill (Standalone VST)
+# Implementation Plan: The Klang Mill (Standalone Multi-FX VST)
 
 ## Goal Description
-Create a third standalone VST3 plugin in the ecosystem named **The Klang Mill**. This plugin strips away all synthesizer, noise, and envelope generation, serving purely as a serial multi-effects rack for external audio. 
+Create a standalone VST3/AU multi-effects plugin in the ecosystem named **The Klang Mill (TKM)**. Stripping away drum voice synthesis, it acts as a modular serial multi-effects rack and modulation sandbox for external audio tracks (guitars, vocals, drums, master bus).
 
-It reuses the exact DSP algorithms and UI components from `TheKlangFarmer` but runs them in a streamlined 1x6 layout.
+Inspired by Kilohearts Snap Heap, it features a **2-Row Chassis**:
+- **Row 1: 4-Slot Effects Rack + Limiter & I/O**
+- **Row 2: Dedicated Modular Modulation Rack** (LFO, Envelope Follower, Random/S&H, Macros) with **Drag-and-Drop Modulation Routing**.
 
 ## User Review Required
 > [!IMPORTANT] 
-> **Base Class Dependency**
-> This plugin will be built *after* the "Core Architecture Base Class Refactor" (Priority #1) is complete. `TheKlangMill` will inherit directly from `KlangCoreProcessor` and `KlangCoreEditor`. This means it automatically gets the JSON preset browser, standard LookAndFeel, and preset serialization for free!
+> **Base Class & DSP Reuse**
+> The Klang Mill inherits directly from `KlangCoreProcessor` and `KlangCoreEditor`, gaining JSON preset management, theme styling, and the full 26-algorithm FX catalog from `source/ModularBlocks.h`.
 
-## Proposed Changes
+---
 
-### 1. CMake Integration
-Add a new VST3 target in the root CMake file that links to the shared core and effects DSP, but omits the synth engine.
-#### [MODIFY] `CMakeLists.txt`
-```cmake
-juce_add_plugin(TheKlangMill
-    PLUGIN_MANUFACTURER_CODE "Tbd!"
-    PLUGIN_CODE "Tkm1"
-    FORMATS VST3 AU Standalone
-    PRODUCT_NAME "The Klang Mill")
+## Proposed Architecture: 2x6 Modular Chassis
 
-target_sources(TheKlangMill PRIVATE
-    source/EffectsProcessor.cpp
-    source/EffectsEditor.cpp
-    # Shared Core sources
-    source/KlangCoreProcessor.cpp 
-    source/KlangCoreEditor.cpp
-)
+```mermaid
+flowchart TD
+    subgraph Row1["Row 1: Effects Rack (Audio Path)"]
+        IN["Card 1: Input & Gain"] --> FX1["Card 2: FX Slot 1"]
+        FX1 --> FX2["Card 3: FX Slot 2"]
+        FX2 --> FX3["Card 4: FX Slot 3"]
+        FX3 --> FX4["Card 5: FX Slot 4"]
+        FX4 --> OUT["Card 6: Master Limiter & Out"]
+    end
+
+    subgraph Row2["Row 2: Modulation Rack (Control Signals)"]
+        MOD1["Card 1: LFO (Sync / Free)"]
+        MOD2["Card 2: Envelope Follower"]
+        MOD3["Card 3: Random / S&H (Slew/Drift)"]
+        MOD4["Card 4: Macro Controllers 1 & 2"]
+        MOD5["Card 5: Sidechain / Transient Tracker"]
+        MOD6["Card 6: Mod Matrix Overview"]
+    end
+
+    MOD1 -.->|Drag-and-Drop Modulation Handle| FX1
+    MOD2 -.->|Dynamic Duck / Filter Sweep| FX2
+    MOD3 -.->|Analog Drift Arc| FX3
 ```
 
-### 2. DSP Processor
-#### [NEW] `source/EffectsProcessor.h` & `.cpp`
-- Inherits from `KlangCoreProcessor`.
-- Contains an APVTS with parameters for 4 FX slots and 1 Master Limiter.
-- `processBlock(buffer, midiMessages)`: 
-  1. Takes external DAW audio buffer.
-  2. Processes through `FXSlot 1 -> 2 -> 3 -> 4`.
-  3. Processes through the Master Limiter.
-  4. Outputs buffer.
-- **Init Override**: When the standard `init` preset is called, it explicitly forces the APVTS FX selector parameters to `0` (Empty) and `limiter_on` to `false`.
+### 1. Row 1: Effects Rack Layout
+- **Card 1: Input Stage**: Input Trim gain, Phase Invert, Mono/Stereo link, Global Dry/Wet blend.
+- **Cards 2–5: Multi-FX Slots 1–4**:
+  - Clicking title opens the 5-column **Categorized FX Browser Modal** (26 algorithms).
+  - 4 dynamic parameter knobs reflecting the loaded effect.
+  - Active colored modulation arcs drawn around each knob when modulated.
+- **Card 6: Master Limiter & Output**: Master Ceiling, Release, Saturation Fold/Bias, and Output Volume.
 
-### 3. UI Layout
-#### [NEW] `source/EffectsEditor.h` & `.cpp`
-- Inherits from `KlangCoreEditor`.
-- **Window Size**: 1 Row, 6 Columns. Fixed width of ~1200px (6 cards * 200px) and height of ~350px.
-- **Layout Definitions**:
-  - **Card 1**: Global FX Routing. Contains the 4 dropdown selectors to pick the algorithm for Slots 1-4.
-  - **Card 2..5**: The active UI knobs for the 4 selected effects (dynamically rendered just like TKF).
-  - **Card 6**: Master Out & Limiter. Contains a `juce::ToggleButton` mapped to `limiter_on` and sliders for Fold, Bias, and Filter.
+### 2. Row 2: Modulation Rack Layout
+- **Card 1: Multi-Wave LFO**:
+  - Knob 1: **Rate** (BPM sync divisions `1/32` to `8 Bars` or Free `0.01 Hz` – `50 Hz`).
+  - Knob 2: **Shape / Waveform** (Continuous morph: Sine -> Tri -> Saw -> Square -> Random).
+  - Knob 3: **Phase / Offset** ($0^\circ$ to $360^\circ$).
+  - Knob 4: **Depth** (Master bipolar scale).
+- **Card 2: Audio Envelope Follower**:
+  - Dynamically extracts amplitude envelope from incoming audio.
+  - Knob 1: **Attack** ($0.1\,	ext{ms} - 100\,	ext{ms}$).
+  - Knob 2: **Release** ($10\,	ext{ms} - 2000\,	ext{ms}$).
+  - Knob 3: **Sensitivity / Gain** (Input threshold multiplier).
+  - Knob 4: **Mode / Slew** (Linear vs Logarithmic response).
+- **Card 3: Random / Sample & Hold**:
+  - Generates organic analog drift, stepped sample-and-hold, or smooth Perlin noise.
+  - Knob 1: **Rate / Frequency**.
+  - Knob 2: **Smoothing / Slew** (Stepped staircase $\leftrightarrow$ continuous wander).
+  - Knob 3: **Jitter / Chaos** (Irregularity factor).
+  - Knob 4: **Depth**.
+- **Card 4: Macro Knobs 1 & 2**:
+  - Dual global performance macros to control multiple targets simultaneously.
+- **Card 5: Transient / Audio Gate**:
+  - Detects percussive transients to fire one-shot modulation bursts.
+- **Card 6: Modulation Manager**:
+  - Clear all assignments button, mute modulations toggle.
+
+### 3. Drag-and-Drop Modulation Routing Engine
+- **Visual Handles**: Every modulator card displays a crosshair/drag handle icon.
+- **Drag Target Highlighting**: Clicking and dragging the handle highlights all valid knobs in Row 1.
+- **Modulation Rings**: Dropping onto a knob attaches a modulation connection with an adjustable bipolar range arc rendered in the modulator's accent color (e.g. Yellow for LFO, Cyan for Env Follower, Magenta for Random).
+
+---
 
 ## Verification Plan
 
 ### Automated Tests
-1. `cmake --build build --target TheKlangMill_VST3` compiles cleanly.
+1. `cmake --build build --target TheKlangMill_VST3` compiles cleanly with zero allocations in `processBlock`.
+2. Audio-thread verification: modulation calculations run in block chunks without heap allocation or mutex locking.
 
 ### Manual Verification
-1. Load `The Klang Mill.vst3` into a DAW on an audio track.
-2. Verify the GUI draws a clean 1x6 grid of cards.
-3. Pass audio (like a drum loop) into the plugin.
-4. Select "Overdrive" on Slot 1 and increase Drive. Verify audio is distorted.
-5. Click the "Init" button in the preset bar. Verify all 4 slots reset to "Empty", the audio passes through cleanly, and the Limiter toggle switches off.
+1. Load `The Klang Mill` into a DAW on an audio track.
+2. Drag LFO handle onto FX 1 Cutoff knob; verify colored modulation arc appears and modulates in real-time.
+3. Feed audio; verify Envelope Follower responds dynamically to input volume.

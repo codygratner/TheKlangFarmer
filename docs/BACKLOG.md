@@ -123,6 +123,13 @@ Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's ad
   - **Lo-Fi & Character (6)**: Custom Waveshaper, Grit FX, RingMod, Stereo Enhancer, Tape Warmth, Wave Folder
 - **Visual Polish**: Keyboard escape to dismiss, mouse hover highlights with algorithm descriptions, and currently loaded effect highlighted with active indicator dot.
 
+
+### 10. Universal Drag-and-Drop Modulation System (TKF & TKM)
+*Goal: Introduce modular, visual modulation across all synth and effect parameters.*
+- **Drag-and-Drop UX**: Drag crosshair handles from modulators onto any continuous slider to assign bipolar modulation depth with animated colored rings (Kilohearts / Vital style).
+- **Decoupled Performance Modulators**: Decouple Velocity, Key Tracking, and Slop from fixed hardcoded destinations, allowing them to be freely routed to any card or effect knob.
+- **New General Modulators**: Introduce Tempo-Synced Multi-Wave LFO, Audio Envelope Follower, and Smooth/Stepped Random generator to the core modular architecture.
+
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Pro Workflow Update"
@@ -172,9 +179,12 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 
 ## 🚀 Spin-Off Products & Explorations
 
-### 8. The Klang Mill (Standalone VST)
+### 8. The Klang Mill (Standalone VST) — Snap Heap-Style 2x6 Multi-FX & Modulation Rack
 *Detailed Plan: [`docs/the_klang_mill_plan.md`](the_klang_mill_plan.md)*
-Create a new standalone VST3 plugin that strips away the synth engines and provides purely the 4-slot multi-FX rack and Limiter from TKF. Designed as a 1x6 UI grid.
+Create a standalone multi-effects VST3 plugin with a 2-row modular chassis:
+- **Row 1 (Effects Path)**: 4 Multi-FX slots + Master Limiter + Input/Output routing.
+- **Row 2 (Modulation Rack)**: LFO, Envelope Follower, Random/S&H, and Macro controllers.
+- **Drag-and-Drop Modulation**: Drag crosshairs from modulators onto effect knobs with animated, colored sweep arcs.
 
 ### 9. 2x5 Eurorack Modular Layout Exploration
 - Investigate moving from the current 2x4 (8-card) chassis to an expanded **2-row by 5-column (2x5, 10-card)** layout.
