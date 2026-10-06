@@ -4,11 +4,10 @@
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized milestones below:
 > 1. **v0.3.0 (Architecture)**: The Klang Editor (TKE), Codebase Cruft Purge, & v0.2.0 Parity Audit.
-> 2. **v0.4.0 (Sound & Chaos)**: New Effects Expansion, Dual Sample Players, Parameter Randomization, & Typography Engine.
-> 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser, WAV Render, & Instant DAW Drag 'n' Drop.
-> 4. **v0.6.0 (Hardware & Embedded)**: The Klang Seed (TKS) & TBD-16 Multi-Page FX Controller.
-> 5. **Spin-Offs**: The Klang Mill (TKM) Standalone FX Rack.
-
+> 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, & Typography Engine.
+> 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, GitHub Version Checker, & Linux Headless CI.
+> 4. **v0.6.0 (Hardware & Embedded)**: The Klang Seed (TKS Teensy/Daisy), TBD-16 16-Encoder Controller, & Zynthian V5 Port.
+> 5. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack).
 
 > [!TIP]
 > **CODE QUALITY STANDARD**: The C++ codebase currently maintains an A+ standard for defensive programming, descriptive `camelCase` variable naming, and explicit algorithmic comments (e.g., documenting DSP math curves directly above the function). All future contributions must rigidly match this level of in-line documentation and readability!
@@ -53,7 +52,7 @@ Run an automated Python script to extract legacy v0.2.0 C++ parameters, string f
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
 
-### 3. Parameter Randomization Engine (d6)
+### 1. Parameter Randomization Engine (d6)
 Add a fully JSON-driven contextual randomization system:
 - **d6 Icon UI**: Placed on the top-right of every Card (randomizes card), every Page (randomizes page), the global Header (randomizes synth), and the FX selection card (randomizes FX selectors).
 - **Right-Click Modal**: Sets the 'Depth' (5%, 15%, 25%, 50%, 75%, 100%).
@@ -62,87 +61,78 @@ Add a fully JSON-driven contextual randomization system:
   - **Discrete Selectors**: Probability Flip (Depth percentage defines the literal chance that the selector randomly flips to a new choice).
   - **Continuous Sliders**: Incremental Jitter (Slider randomly shifts up to $\pm$Depth% away from its *current* position).
 
-### 4. New Effects Processors Catalog Expansion (Effects 14–26) & Universal Mix Standard
+### 2. New Effects Processors Catalog Expansion (Effects 14–26), Universal Mix, & 5-Column Browser Modal
 *Detailed Plan: [`docs/new_effects_plan.md`](new_effects_plan.md)*  
-Expand the FX catalog from 13 to 26 algorithms (appended as indices 14–26 for 100% backward preset compatibility) and standardize Knob 4 across all modulation/time-based FX to the Universal Dual-Mode Mix:
+Expand the FX catalog from 13 to 26 algorithms (appended as indices 14–26 for 100% backward preset compatibility) and bundle the Kilohearts-style 5-column categorized modal browser:
 - **Phase 1: Universal Dual-Mode Mix Helper & Core Enums**:
-  - Implement shared computeDualModeMix(float normParam, float& dryGain, float& wetGain) in source/DSPBlock.h (-100% wet crossfade -> 0% pure dry -> +100% parallel additive blend).
-  - Update createFXBlock() factory and BlockType enum in source/ModularBlocks.h with TransientShaper (14), CustomWaveshaper (15), ChannelMixer (16), StereoEnhancer (17), HaasDelay (18), GatedReverb (19), JunoChorus (20), WaveguideResonator (21), SubGenerator (22), TapeWarmth (23), DynamicFilter (24), PitchTransposer (25), and StutterGate (26).
-  - Register algorithms in PluginProcessor.cpp and PlanterProcessor.cpp fxChoices list.
-- **Phase 2: DSP Implementations (source/ModularBlocks.h)**:
-  - TransientShaperBlock: Bipolar Attack, Pump, Sustain, Speed with stereo-linked envelope detector.
-  - CustomWaveshaperBlock: Morphing transfer function, Drive, Pre-DJ Filter tilt, Universal Mix.
-  - ChannelMixerBlock: 4-quadrant matrix mixer with unity defaults.
-  - StereoEnhancerBlock: Mid/Side balance, piecewise width, Pan, and per-trigger analog Slop drift.
-  - HaasDelayBlock: Bipolar circular delay, Tone 6 dB/oct tilt, cross-feedback, and parallel blend phase protection.
-  - GatedReverbBlock: 8-tap diffuser, 12-bit lo-fi damping, deterministic note-trigger sample countdown gate with micro-fade, Universal Mix.
+  - Implement shared `computeDualModeMix(float normParam, float& dryGain, float& wetGain)` in `source/DSPBlock.h` (-100% wet crossfade $\to$ 0% pure dry $\to$ +100% parallel additive blend).
+  - Update `createFXBlock()` factory and `BlockType` enum with: TransientShaper (14), CustomWaveshaper (15), ChannelMixer (16), StereoEnhancer (17), HaasDelay (18), GatedReverb (19), JunoChorus (20), WaveguideResonator (21), SubGenerator (22), TapeWarmth (23), DynamicFilter (24), PitchTransposer (25), and StutterGate (26).
+- **Phase 2: DSP Implementations (`source/ModularBlocks.h`)**:
+  - TransientShaperBlock (14), CustomWaveshaperBlock (15), ChannelMixerBlock (16), StereoEnhancerBlock (17), HaasDelayBlock (18), GatedReverbBlock (19), JunoChorusBlock (20), WaveguideResonatorBlock (21), SubGeneratorBlock (22), TapeWarmthBlock (23), DynamicFilterBlock (24), PitchTransposerBlock (25), and StutterGateBlock (26).
 - **Phase 3: Standardize Existing FX Mix Knobs**:
-  - Migrate Chorus, Comb, Flanger, Phaser, Tempo Delay, and Drive to use computeDualModeMix.
-- **Phase 4: UI / UX Integration (source/UIComponents.cpp)**:
-  - Add parameter labels, units, and ranges in TooltipHelper.
-  - Add custom quick-snap presets for all 6 new effects in SliderCalloutComponent.
-- **Phase 5: Automated DSP Unit Tests (test/dsp_tests.cpp)**:
-  - Verification suite testing zero-allocation rendering, dual-mode mix curve math, and stereo image preservation.
+  - Migrate Chorus, Comb, Flanger, Phaser, Tempo Delay, and Drive to use `computeDualModeMix`.
+- **Phase 4: Categorized FX Selection Modal (Kilohearts-Style Browser)**:
+  - 5-Column Categorized Modal: Dynamics & Gain, Filters & Tone, Modulation & Pitch, Delay & Space, Lo-Fi & Character.
+  - Left-click on FX card header launches browser modal; `<` / `>` steppers continue to cycle sequentially.
+- **Phase 5: Automated DSP Unit Tests (`test/dsp_tests.cpp`)**:
+  - Zero-allocation verification suite testing dual-mode mix curves and stereo imaging.
 
-### 5. Dual Sample Players for Noise Transient Page (Plugin Only)
+### 3. Dual Sample Players for Noise Transient Page (Plugin Only)
 - Add two dedicated sample player modules to the Transients page (desktop plugin specific).
 - **Controls per Player**:
   1. **File Picker**: File browser / drag-and-drop audio file loader.
-  2. **Play Speed**: Bipolar playback speed with reverse: -400% -> 0% -> +400%.
+  2. **Play Speed**: Bipolar playback speed with reverse: -400% $\to$ 0% $\to$ +400%.
   3. **Decay Time**: Percussive sample amplitude decay envelope.
   4. **Level**: Output gain level.
 - **Choke / Split Modal**: Modal dialog to configure split/choke groups (e.g. allowing one player to be an open hi-hat and the other a closed hi-hat that chokes the open sound).
 
-### 6. Advanced Typography Engine (JUCE 9)
+### 4. Advanced Typography Engine (JUCE 9)
 *Detailed Plan: [`docs/typography_engine_plan.md`](typography_engine_plan.md)*
 Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's advanced text rendering pipeline.
 - **Embedded Binary Assets**: `.ttf`/`.otf` files are baked into `BinaryData` for 100% cross-platform consistency.
 - **CSS-Style JSON Classes**: Define global text profiles (e.g., `HeaderStyle`, `TooltipStyle`) in the layout JSON, exposing Font Family, Size, Weight, Tracking (letter-spacing), and Justification.
 - **Editor Integration**: The JSON Editor tool provides sliders/fields to instantly visualize tracking and weight changes across the UI.
 
-
-### 7. Continuous Fuzz Testing (DSP Stability)
+### 5. Continuous Fuzz Testing (DSP Stability)
 *Goal: Guarantee absolute DSP stability during extreme generative parameter changes.*
 - Implement an automated fuzzing harness that blasts the `processBlock` and `apvts` with randomized, out-of-bounds, and extreme NaN garbage data to mathematically ensure the synth will never crash a host DAW.
 
-
-### 8. Selector Right-Click Callout 'Reset to Default' Action
+### 6. Selector Right-Click Callout 'Reset to Default' Action
 *Goal: Provide instant, discoverable default reset capability for discrete selector buttons.*
 - Add a top/bottom action button `[Default: <Preset/Mode>]` inside `SelectorCalloutComponent` / right-click menu.
 - Clicking the button instantly restores the selector parameter to its JSON-defined default value.
 
-
-### 9. Categorized FX Selection Modal (Kilohearts Snapin-Style Browser)
-*Goal: Fast, visual selection across all 26 effects without scrolling linear dropdowns.*
-- **Trigger Interaction**: Left-clicking the effect title on any FX Card opens the modal; `<` and `>` arrow steppers continue to cycle sequentially.
-- **5-Column Categorized Layout (Alphabetical within columns)**:
-  - **Dynamics & Gain (5)**: Channel Mixer, Drive, Stutter Gate, Sub Generator, Transient Shaper
-  - **Filters & Tone (4)**: Bell EQ, Comb Filter, Dynamic Filter, Filter (SVF)
-  - **Modulation & Pitch (6)**: Chorus, Flanger, Frequency Shifter, Juno Chorus, Phaser, Pitch Transposer
-  - **Delay & Space (5)**: Gated Reverb, Haas Delay, Phase Smear, Tempo Delay, Waveguide Resonator
-  - **Lo-Fi & Character (6)**: Custom Waveshaper, Grit FX, RingMod, Stereo Enhancer, Tape Warmth, Wave Folder
-- **Visual Polish**: Keyboard escape to dismiss, mouse hover highlights with algorithm descriptions, and currently loaded effect highlighted with active indicator dot.
-
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Pro Workflow Update"
-
-
-*Focus: Professional DAW Integration, File Management, and Export.*
+*Focus: Professional DAW Integration, File Management, Preset Library, and Export.*
 
 ### 1. JSON Preset Browser, Tagging & State Migration
 *Detailed Plan: [`docs/preset_system_plan.md`](preset_system_plan.md)*  
 Implement a professional, tag-based preset management system utilizing JSON files for storage.
-- **Phase 1: JSON Schema & StateMigrator (source/PresetManager.h, source/StateMigrator.h)**:
+- **Phase 1: JSON Schema & StateMigrator (`source/PresetManager.h`, `source/StateMigrator.h`)**:
   - Background scanner to instantly build a database from metadata headers without loading full state.
   - Intercept older patches via StateMigrator to inject missing default values.
-- **Phase 2: UI Browser Overlay (source/PresetBrowserComponent.h)**:
+- **Phase 2: UI Browser Overlay (`source/PresetBrowserComponent.h`)**:
   - Dual-column UI (Tags on Left, Results on Right) with fuzzy text search.
   - "Save As" modal with text inputs for name, author, and tokenized tags.
 - **Phase 3: Header Integration & Automated Tests**:
-  - LCD-style preset display and < > stepper buttons in the main header.
+  - LCD-style preset display and `<` `>` stepper buttons in the main header.
 
-### 2. WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17)
+### 2. Curated Factory Preset Library & Sound Design Pack (64–128 Patches)
+*Goal: Provide professional out-of-the-box sounds showcasing the expanded DSP and sample players.*
+- Author 64–128 production-ready drum patches categorised across:
+  - **Kicks**: Sub-heavy 808s, punchy acoustic-style kicks, hardstyle industrial distortion kicks.
+  - **Snares & Claps**: Metallic FM snares, 80s gated reverb claps, organic transient layers.
+  - **Toms & Percs**: Physical modeling resonant tubes, FM bells, alien zaps, and cowbells.
+  - **Hi-Hats & Cymbals**: Transient sample-layered hats, choked pairs, and FM metallic cymbal washes.
+
+### 3. One-Click Preset Bank Sharing (`.tkfbank` / `.zip` Import/Export)
+*Goal: Zero-friction sharing of user presets and community expansion packs.*
+- **Export Bank**: Bundles selected presets, tags, and custom transient sample files into a single compressed `.tkfbank` archive.
+- **Import Bank**: Drag-and-drop `.tkfbank` file onto the preset browser to automatically install, categorize, and rebuild the tag cache.
+
+### 4. WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17)
 *Detailed Plan: [`docs/wav_render_sf2_export_dragndrop_plan.md`](wav_render_sf2_export_dragndrop_plan.md)*  
 Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generation, and zero-friction DAW integration:
 - **Phase 1: Offline Render Pipeline & SF2 Builder**:
@@ -156,41 +146,59 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 - **Phase 4: Header Integration & Automated Unit Tests**:
   - Add renderButton and dragBadge to plugin headers.
 
-### 3. Automated GitHub Release Version Checker & Settings Modal
+### 5. Automated GitHub Release Version Checker & Settings Modal
 *Goal: Provide seamless, non-intrusive notification of new releases directly inside the plugin.*
-- **Non-Blocking Background Worker**: Uses an async background thread (`juce::Thread` / `juce::URL`) to query GitHub's latest release API (`https://api.github.com/repos/.../releases/latest`) on plugin load. Zero audio thread or UI stalling.
-- **Header Notification Badge**: When a newer semver tag is detected, a subtle, glowing 'Update Available' badge appears next to the version text in the header. Clicking opens the release URL in the system browser.
-- **Settings & About Modal**: 
-  - Accessed via a new gear / info icon in the header.
-  - Contains: 'Check for updates on launch' toggle (persisted in config JSON), manual 'Check for Updates Now' button, and current build metadata.
+- **Non-Blocking Background Worker**: Async background thread querying GitHub release API on plugin load.
+- **Header Notification Badge**: Subtle, glowing 'Update Available' tag next to version text. Clicking opens release page.
+- **Settings & About Modal**: Gear icon in header exposing 'Check for updates on launch' toggle, manual 'Check Now' button, and build metadata.
 
-### 4. Automated macOS Notarization & Code Signing
-*Goal: Prepare the final binaries for commercial distribution.*
-- Integrate a code-signing and Apple Notarization pipeline so the VST3/AU binaries clear macOS Gatekeeper and Windows SmartScreen without throwing 'unidentified developer' warnings to users.
+### 6. Automated macOS Notarization & Code Signing Pipeline
+*Goal: Prepare final binaries for public distribution.*
+- Integrate Apple Developer ID code-signing and `notarytool` automated ticket stapling in CI so AU/VST3 binaries pass macOS Gatekeeper without warnings.
+- Integrate Windows Authenticode code-signing for SmartScreen trust.
+
+### 7. Headless Linux CLAP / VST3 Automated CI/CD Runner
+*Goal: Ensure multi-platform stability and continuous validation for Linux audio.*
+- Add an Ubuntu `aarch64` / `x86_64` container to GitHub Actions building headless Linux CLAP/VST3 binaries on every commit.
 
 ---
 
-## 🚀 Spin-Off Products & Explorations
+## 🚀 Milestone: v0.6.0 "The Hardware & Embedded Update"
+*Focus: Standalone Hardware Synthesizer (The Klang Seed), TBD-16 Physical Control Surface, and Embedded Microcontroller Engine.*
 
-### 8. The Klang Mill (Standalone VST) — Industrial 1x6 Multi-FX Pedalboard Rack
-*Detailed Plan: [`docs/the_klang_mill_plan.md`](the_klang_mill_plan.md)*
-Create a standalone multi-effects VST3 plugin styled after vintage studio rackmounts and high-end pedalboards:
-- **1x6 Horizontal Chassis**: Input/Slop $	o$ 4 Serial Multi-FX Pedal Slots (26 algorithms) $	o$ Master Limiter & Output.
-- **Immediate & Tactile**: Zero routing matrices or drag-and-drop clutter; dedicated stomp bypasses per slot.
-- **Global Slop**: Injects organic, non-linear analog drift across all 4 pedals for instant vintage character.
+### 1. The Klang Seed (TKS) Standalone Hardware Synthesizer Port
+*Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](embedded_dsp_and_hardware_port_plan.md)*
+Port the zero-dependency pure C++ DSP engine to dedicated embedded hardware:
+- **Teensy 4.1 Platform**: NXP i.MX RT1062 ARM Cortex-M7 @ 600 MHz running 8 mono drum voices (~14.7% CPU load) with CS42448 8-channel DAC delivering discrete individual physical voice outputs.
+- **Daisy Seed Platform**: STM32H750 @ 480 MHz open-source reference module for breadboard and custom enclosure builds.
 
-### 9. 2x5 Eurorack Modular Layout Exploration
-- Investigate moving from the current 2x4 (8-card) chassis to an expanded **2-row by 5-column (2x5, 10-card)** layout.
+### 2. TBD-16 Physical Control Surface & Multi-Page Effects Engine
+*Detailed Plan: [`docs/tbd16_klang_seed_effects_plan.md`](tbd16_klang_seed_effects_plan.md)*
+Integrate the 26-algorithm Effects engine into the physical 16-encoder (4x4 grid) TBD-16 controller:
+- **Multi-Page FX Banking**: 
+  - **Page 1 (Pre-Amp FX)**: Slots 1–4 mapped across the 16 encoders (4 knobs/effects per row).
+  - **Page 2 (Post-Amp FX)**: Slots 5–8 mapped across the 16 encoders.
+- **Zero-Allocation Buffer Pooling**: Static ring-buffer allocation in 8 MB external PSRAM / 64 MB SDRAM for real-time interrupt processing.
+- **Hardware Interaction**: Push-encoder algorithm selector with hardware OLED screen display feedback.
 
-
-
-
-### 12. Zynthian V5 / V4 Standalone Hardware Port (TENTATIVE)
+### 3. Zynthian V5 / V4 Standalone Hardware Port (TENTATIVE)
 *Detailed Plan: [`docs/zynthian_port_plan.md`](zynthian_port_plan.md)*
 Tentative exploration to deploy headless Linux LV2 / CLAP plugins onto the open-source Zynthian hardware ecosystem (Raspberry Pi 5 ARM64):
 - **Zero GUI Overhead**: Compiles purely the audio processor and APVTS state tree with no desktop GUI overhead.
 - **1:1 4-Encoder Page Mapping**: Each 4-knob card in our engine corresponds directly to one 4-encoder screen page on Zynthian V5's display, controlled by its 4 physical push-rotary optical encoders.
 - **Native Zynthian Host**: Leverages ZynthianOS for native preset storage, MIDI routing, and snapshot management.
+
+---
+
+## 🚀 Spin-Off Products & Explorations
+
+### 1. The Klang Mill (Standalone VST) — Industrial 1x6 Multi-FX Pedalboard Rack
+*Detailed Plan: [`docs/the_klang_mill_plan.md`](the_klang_mill_plan.md)*
+Create a standalone multi-effects VST3 plugin styled after vintage studio rackmounts and boutique pedalboards (e.g., Soundtoys Effect Rack):
+- **1x6 Horizontal Chassis**: Input/Slop $\to$ 4 Serial Multi-FX Pedal Slots (26 algorithms) $\to$ Master Limiter & Output.
+- **Immediate & Tactile**: Zero routing matrices or drag-and-drop clutter; dedicated stomp bypasses per slot.
+- **Global Slop**: Injects organic, non-linear analog drift across all 4 pedals for instant vintage character.
+- **Codebase Integration**: Built as a sibling build target (`TheKlangMill_VST3`) inheriting directly from `KlangCoreProcessor` and `KlangCoreEditor`.
 
 ---
 

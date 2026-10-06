@@ -156,3 +156,11 @@ Refactor codebase to use a "Common Core" base-class architecture (KlangCoreProce
 
 ### [COMPLETED] Data-Driven UI Layout & Colors (	heme.json)
 Extract the remaining hardcoded UI configuration out of C++ (PluginEditor.cpp) into JSON assets (ssets/controls/theme.json or layout.json).
+
+---
+
+## 🚫 Archived Explorations & Deprecated Concepts
+
+### [DEPRECATED] 2x5 Eurorack Modular Layout Exploration
+- **Original Proposal**: Investigate moving from the current 2x4 (8-card) chassis to an expanded 2-row by 5-column (2x5, 10-card) layout.
+- **Reason for Deprecation**: Closed in favor of strict opinionated 2x4 (8-card) design identity. Expanding to 10 cards breaks the mathematical 16-encoder banking on TBD-16 hardware ($4 	imes 4 = 16$), breaks existing JSON layout schemas, and causes screen layout bloat on standard laptop displays. Preserved for historical context only.
