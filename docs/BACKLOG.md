@@ -3,9 +3,9 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized milestones below:
-> 1. **v0.3.0 (Architecture)**: GUI Test Harness (Guardrail), The Klang Editor (TKE) & Snapshots, Cruft Purge, & Parity Audit.
+> 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit.
 > 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, & Typography Engine.
-> 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, GitHub Version Checker, & Linux Headless CI.
+> 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, & Linux Headless CI.
 > 4. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
 > 5. **v1.1.0 (Hardware Universe)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
 > 6. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack).
@@ -63,6 +63,12 @@ Run an automated Python script to extract legacy v0.2.0 C++ parameters, string f
   - Packages a stylized `.dmg` with drag-and-drop symlinks to `/Library/Audio/Plug-Ins/`.
   - Includes a double-clickable `Fix_Mac_Permissions.command` helper script.
   - Includes an illustrated `macOS_Install_Guide.html` showing the 2-step bypass in System Settings -> Privacy & Security.
+
+### 8. Automated GitHub Release Version Checker & Settings Modal
+*Goal: Provide seamless, non-intrusive notification of new releases directly inside the plugin so v0.3.0 users automatically know when v0.4.0 and beyond drop.*
+- **Non-Blocking Background Worker**: Async background thread querying GitHub release API on plugin load.
+- **Header Notification Badge**: Subtle, glowing 'Update Available' tag next to version text. Clicking opens release page.
+- **Settings & About Modal**: Gear icon in header exposing 'Check for updates on launch' toggle, manual 'Check Now' button, and build metadata.
 
 ---
 
@@ -163,13 +169,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 - **Phase 4: Header Integration & Automated Unit Tests**:
   - Add renderButton and dragBadge to plugin headers.
 
-### 5. Automated GitHub Release Version Checker & Settings Modal
-*Goal: Provide seamless, non-intrusive notification of new releases directly inside the plugin.*
-- **Non-Blocking Background Worker**: Async background thread querying GitHub release API on plugin load.
-- **Header Notification Badge**: Subtle, glowing 'Update Available' tag next to version text. Clicking opens release page.
-- **Settings & About Modal**: Gear icon in header exposing 'Check for updates on launch' toggle, manual 'Check Now' button, and build metadata.
-
-### 6. Headless Linux CLAP / VST3 Automated CI/CD Runner
+### 5. Headless Linux CLAP / VST3 Automated CI/CD Runner
 *Goal: Ensure multi-platform stability and continuous validation for Linux audio.*
 - Add an Ubuntu `aarch64` / `x86_64` container to GitHub Actions building headless Linux CLAP/VST3 binaries on every commit.
 
