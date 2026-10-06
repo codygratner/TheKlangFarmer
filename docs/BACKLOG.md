@@ -4,7 +4,7 @@
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized milestones below:
 > 1. **v0.3.0 (Architecture)**: The Klang Editor (TKE) & Automated v0.2.0 Parity Audit.
-> 2. **v0.4.0 (Sound & Chaos)**: New Effects Expansion, Dual Sample Players, & Parameter Randomization (d6).
+> 2. **v0.4.0 (Sound & Chaos)**: New Effects Expansion, Dual Sample Players, Parameter Randomization, & Typography Engine.
 > 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser, WAV Render, & Instant DAW Drag 'n' Drop.
 > 4. **Spin-Offs**: The Klang Mill (TKM) Standalone FX Rack.
 
@@ -68,9 +68,25 @@ Expand the FX catalog from 13 to 19 algorithms (appended as indices 14–19 for 
   4. **Level**: Output gain level.
 - **Choke / Split Modal**: Modal dialog to configure split/choke groups (e.g. allowing one player to be an open hi-hat and the other a closed hi-hat that chokes the open sound).
 
+### 6. Advanced Typography Engine (JUCE 9)
+*Detailed Plan: [`docs/typography_engine_plan.md`](typography_engine_plan.md)*
+Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's advanced text rendering pipeline.
+- **Embedded Binary Assets**: `.ttf`/`.otf` files are baked into `BinaryData` for 100% cross-platform consistency.
+- **CSS-Style JSON Classes**: Define global text profiles (e.g., `HeaderStyle`, `TooltipStyle`) in the layout JSON, exposing Font Family, Size, Weight, Tracking (letter-spacing), and Justification.
+- **Editor Integration**: The JSON Editor tool provides sliders/fields to instantly visualize tracking and weight changes across the UI.
+
+### 6. Advanced Typography Engine (JUCE 9)
+*Detailed Plan: [`docs/typography_engine_plan.md`](typography_engine_plan.md)*
+Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's advanced text rendering pipeline.
+- **Embedded Binary Assets**: `.ttf`/`.otf` files are baked into `BinaryData` for 100% cross-platform consistency.
+- **CSS-Style JSON Classes**: Define global text profiles (e.g., `HeaderStyle`, `TooltipStyle`) in the layout JSON, exposing Font Family, Size, Weight, Tracking (letter-spacing), and Justification.
+- **Editor Integration**: The JSON Editor tool provides sliders/fields to instantly visualize tracking and weight changes across the UI.
+
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Pro Workflow Update"
+
+
 *Focus: Professional DAW Integration, File Management, and Export.*
 
 ### 6. JSON Preset Browser, Tagging & State Migration
