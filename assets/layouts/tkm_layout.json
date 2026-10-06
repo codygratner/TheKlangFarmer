@@ -1,102 +1,102 @@
 {
-    "Comb Filter":  {
-                        "color":  "colOrange",
-                        "style":  "StandardDark",
-                        "parameters":  [
-                                           "comb_dampening",
-                                           "comb_cutoff",
-                                           "comb_resonance",
-                                           "comb_mix"
-                                       ]
-                    },
-    "EQ":  {
-               "color":  "colOrange",
-               "style":  "StandardDark",
-               "parameters":  [
-                                  "eq_freq",
-                                  "eq_width",
-                                  "eq_gain",
-                                  "eq_filter"
-                              ]
-           },
-    "Phase Smear":  {
-                        "color":  "colOrange",
-                        "style":  "StandardDark",
-                        "parameters":  [
-                                           "phasesmear_type",
-                                           "phasesmear_amount",
-                                           "phasesmear_cutoff",
-                                           "phasesmear_resonance"
-                                       ]
-                    },
-    "Pre-Limiter":  {
-                        "color":  "colOrange",
-                        "style":  "StandardDark",
-                        "parameters":  [
-                                           "pre_limiter_enable",
-                                           "pre_limiter_thresh",
-                                           "pre_limiter_release",
-                                           "pre_limiter_gain"
-                                       ]
-                    },
-    "Wavefolder":  {
-                       "color":  "colOrange",
-                       "style":  "StandardDark",
-                       "parameters":  [
-                                          "wavefolder_type",
-                                          "wavefolder_fold",
-                                          "wavefolder_bias",
-                                          "wavefolder_filter"
-                                      ]
-                   },
-    "Ring Modulator":  {
-                           "color":  "colOrange",
-                           "style":  "StandardDark",
-                           "parameters":  [
-                                              "ringmod_shape",
-                                              "ringmod_rate",
-                                              "ringmod_amount",
-                                              "ringmod_width"
-                                          ]
-                       },
-    "Post-Limiter":  {
-                         "color":  "colOrange",
-                         "style":  "StandardDark",
-                         "parameters":  [
-                                            "post_limiter_enable",
-                                            "post_limiter_thresh",
-                                            "post_limiter_release",
-                                            "post_limiter_gain"
-                                        ]
-                     },
-    "Drive":  {
-                  "color":  "colOrange",
-                  "style":  "StandardDark",
-                  "parameters":  [
-                                     "drive_amount",
-                                     "drive_bias",
-                                     "drive_filter",
-                                     "drive_limiter"
-                                 ]
-              },
-    "Frequency Shifter":  {
-                              "color":  "colOrange",
-                              "style":  "StandardDark",
-                              "parameters":  [
-                                                 "freqshift_range",
-                                                 "freqshift_shift",
-                                                 "freqshift_blend",
-                                                 "freqshift_width"
-                                             ]
-                          },
-    "Grit":  {
-                 "color":  "colOrange",
-                 "style":  "StandardDark",
-                 "parameters":  [
-                                    "grit_bits",
-                                    "grit_rate",
-                                    "grit_low",
-                                    "grit_high"
-                                ]
-             }
+  "Comb Filter": {
+    "color": "0xFFFF9100",
+    "style": "StandardDark",
+    "parameters": [
+      "comb_dampening",
+      "comb_cutoff",
+      "comb_resonance",
+      "comb_mix"
+    ]
+  },
+  "EQ": {
+    "color": "0xFFFF9100",
+    "style": "StandardDark",
+    "parameters": [
+      "eq_freq",
+      "eq_width",
+      "eq_gain",
+      "eq_filter"
+    ]
+  },
+  "Phase Smear": {
+    "color": "0xFFFF9100",
+    "style": "StandardDark",
+    "parameters": [
+      "phasesmear_type",
+      "phasesmear_amount",
+      "phasesmear_cutoff",
+      "phasesmear_resonance"
+    ]
+  },
+  "Pre-Limiter": {
+    "color": "0xFFFF9100",
+    "style": "StandardDark",
+    "parameters": [
+      "pre_limiter_enable",
+      "pre_limiter_thresh",
+      "pre_limiter_release",
+      "pre_limiter_gain"
+    ]
+  },
+  "Wavefolder": {
+    "color": "0xFFFF9100",
+    "style": "StandardDark",
+    "parameters": [
+      "wavefolder_type",
+      "wavefolder_fold",
+      "wavefolder_bias",
+      "wavefolder_filter"
+    ]
+  },
+  "Ring Modulator": {
+    "color": "0xFFFF9100",
+    "style": "StandardDark",
+    "parameters": [
+      "ringmod_shape",
+      "ringmod_rate",
+      "ringmod_amount",
+      "ringmod_width"
+    ]
+  },
+  "Post-Limiter": {
+    "color": "0xFFFF9100",
+    "style": "StandardDark",
+    "parameters": [
+      "post_limiter_enable",
+      "post_limiter_thresh",
+      "post_limiter_release",
+      "post_limiter_gain"
+    ]
+  },
+  "Drive": {
+    "color": "0xFFFF9100",
+    "style": "StandardDark",
+    "parameters": [
+      "drive_amount",
+      "drive_bias",
+      "drive_filter",
+      "drive_limiter"
+    ]
+  },
+  "Frequency Shifter": {
+    "color": "0xFFFF9100",
+    "style": "StandardDark",
+    "parameters": [
+      "freqshift_range",
+      "freqshift_shift",
+      "freqshift_blend",
+      "freqshift_width"
+    ]
+  },
+  "Grit": {
+    "color": "0xFFFF9100",
+    "style": "StandardDark",
+    "parameters": [
+      "grit_bits",
+      "grit_rate",
+      "grit_low",
+      "grit_high"
+    ]
+  }
 }

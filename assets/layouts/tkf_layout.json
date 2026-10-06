@@ -1,7 +1,7 @@
 {
   "VOICE 1": {
     "Carrier 1": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "carrier1_tracking",
@@ -11,7 +11,7 @@
       ]
     },
     "Modulator 1": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "mod1_track",
@@ -21,7 +21,7 @@
       ]
     },
     "Pitch Env 1": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "pitchenv1_slope",
@@ -30,7 +30,7 @@
       ]
     },
     "Filter 1": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "filter1_type",
@@ -40,7 +40,7 @@
       ]
     },
     "Filter Env 1": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "filterenv1_slope",
@@ -50,7 +50,7 @@
       ]
     },
     "Mixer": {
-      "color": "colRed",
+      "color": "0xFFFF1744",
       "style": "DoepferSilver",
       "parameters": [
         "mixer_carrier1_level",
@@ -62,7 +62,7 @@
   },
   "VOICE 2": {
     "Carrier 2": {
-      "color": "colRed",
+      "color": "0xFFFF1744",
       "style": "StandardDark",
       "parameters": [
         "carrier2_tracking",
@@ -73,7 +73,7 @@
     },
     "Modulator 2": null,
     "Pitch Env 2": {
-      "color": "colSilver",
+      "color": "0xFFCFD8DC",
       "style": "StandardDark",
       "parameters": [
         "pitchenv2_slope",
@@ -82,7 +82,7 @@
       ]
     },
     "Filter 2": {
-      "color": "colBlue",
+      "color": "0xFF2979FF",
       "style": "StandardDark",
       "parameters": [
         "filter2_type",
@@ -92,7 +92,7 @@
       ]
     },
     "Filter Env 2": {
-      "color": "colAmber",
+      "color": "0xFFFFB300",
       "style": "StandardDark",
       "parameters": [
         "filterenv2_slope",
@@ -102,7 +102,7 @@
       ]
     },
     "Mixer": {
-      "color": "colRed",
+      "color": "0xFFFF1744",
       "style": "DoepferSilver",
       "parameters": [
         "mixer_carrier1_level",
@@ -114,7 +114,7 @@
   },
   "TRANSIENTS": {
     "Noise Transient": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "noise_rate",
@@ -124,7 +124,7 @@
       ]
     },
     "Filter 3": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "filter3_type",
@@ -134,7 +134,7 @@
       ]
     },
     "Filter Env 3": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "filterenv3_slope",
@@ -144,7 +144,7 @@
       ]
     },
     "Mixer": {
-      "color": "colRed",
+      "color": "0xFFFF1744",
       "style": "DoepferSilver",
       "parameters": [
         "mixer_carrier1_level",
@@ -156,7 +156,7 @@
   },
   "PRE-AMP FX": {
     "Mod Env 1": {
-      "color": "colAmber",
+      "color": "0xFFFFB300",
       "style": "StandardDark",
       "parameters": [
         "mod_env1_target",
@@ -166,7 +166,7 @@
       ]
     },
     "Mod Env 2": {
-      "color": "colAmber",
+      "color": "0xFFFFB300",
       "style": "StandardDark",
       "parameters": [
         "mod_env2_target",
@@ -176,7 +176,7 @@
       ]
     },
     "Mod Env 3": {
-      "color": "colAmber",
+      "color": "0xFFFFB300",
       "style": "StandardDark",
       "parameters": [
         "mod_env3_target",
@@ -186,7 +186,7 @@
       ]
     },
     "Velocity": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "vel_slope",
@@ -196,7 +196,7 @@
       ]
     },
     "Key Track": {
-      "color": "colTeal",
+      "color": "0xFF1DE9B6",
       "style": "StandardDark",
       "parameters": [
         "key_slope",
@@ -206,7 +206,7 @@
       ]
     },
     "Slop": {
-      "color": "colPurple",
+      "color": "0xFFD500F9",
       "style": "StandardDark",
       "parameters": [
         "slop_freq",
@@ -216,7 +216,7 @@
       ]
     },
     "Mixer": {
-      "color": "colRed",
+      "color": "0xFFFF1744",
       "style": "DoepferSilver",
       "parameters": [
         "mixer_carrier1_level",
@@ -228,7 +228,7 @@
   },
   "AMPLIFIER": {
     "Pre Limiter": {
-      "color": "colRed",
+      "color": "0xFFFF1744",
       "style": "DoepferSilver",
       "parameters": [
         "pre_limiter_enable",
@@ -238,7 +238,7 @@
       ]
     },
     "Post Limiter": {
-      "color": "colRed",
+      "color": "0xFFFF1744",
       "style": "DoepferSilver",
       "parameters": [
         "post_limiter_enable",
@@ -248,7 +248,7 @@
       ]
     },
     "Amp Envelope": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "amp_env_claps",
@@ -258,7 +258,7 @@
       ]
     },
     "Amplifier": {
-      "color": "colCyan",
+      "color": "0xFF00D2FF",
       "style": "StandardDark",
       "parameters": [
         "amp_limiter",
