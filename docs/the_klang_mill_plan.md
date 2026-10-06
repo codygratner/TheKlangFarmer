@@ -80,6 +80,20 @@ flowchart TD
 
 ---
 
+### 4. Vital-Style Tabbed Modulation Matrix (`[ MAIN ]` vs `[ MATRIX ]`)
+To provide 100% visibility over complex routings and avoid 'ghost modulation' confusion, the header features a top-level tab switcher:
+- **`[ MAIN ]` Tab**: The primary 2x6 chassis (Row 1 Effects Rack + Row 2 Modulation Rack with drag-and-drop handles).
+- **`[ MATRIX ]` Tab**: A full-width tabular routing overview styled after Vital, with each active modulation connection displayed as a row:
+  1. **Source**: Primary modulator icon and name (`LFO 1`, `Env Follower`, `Random`, `Macro 1`, `Transient Gate`).
+  2. **Amount / Depth**: Bipolar slider ($-100\%$ to $+100\%$) controlling the modulation sweep excursion.
+  3. **Destination**: Target parameter in the effects chain (e.g. `FX 1: Drive`, `FX 2: Haas Delay`, `Limiter: Fold`).
+  4. **Aux / Scale By**: Optional secondary modulator acting as a VCA scale multiplier (e.g., `Env Follower` or `Macro 1` scaling the depth of an `LFO`).
+  5. **Curve / Shape**: Bipolar transfer function curve (Linear $\leftrightarrow$ Log/Exp $\leftrightarrow$ S-Curve) to sculpt the response feel.
+  6. **Bypass**: Quick toggle switch to temporarily mute the routing without disconnecting it.
+  7. **Delete (`×`)**: Instantly removes the modulation routing and clears the colored sweep arc on the target knob.
+
+---
+
 ## Verification Plan
 
 ### Automated Tests
