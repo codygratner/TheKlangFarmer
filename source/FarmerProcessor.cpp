@@ -57,10 +57,6 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     mixerNoiseLevelParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("mixer_noise_level"));
 
     // 9. Drive
-    driveAmountParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("drive_amount"));
-    driveBiasParam       = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("drive_bias"));
-    driveFilterParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("drive_filter"));
-    driveLimiterParam    = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("drive_limiter"));
 
     // Voice 1 Filter & Env
     filter1TypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("filter1_type"));
@@ -96,10 +92,6 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     filterEnv3PostDriveParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("filterenv3_postdrive"));
 
     // Standalone FX Filter
-    fxFilterTypeParam      = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("fxfilter_type"));
-    fxFilterSlopeParam     = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("fxfilter_slope"));
-    fxFilterCutoffParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("fxfilter_cutoff"));
-    fxFilterResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("fxfilter_resonance"));
 
     // Limiters
     preLimiterEnableParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("pre_limiter_enable"));
@@ -124,46 +116,18 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     postFX4TypeParam = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("post_fx_4_type"));
 
     // 12. Wave Folder
-    waveFolderTypeParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("wavefolder_type"));
-    waveFolderFoldParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("wavefolder_fold"));
-    waveFolderBiasParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("wavefolder_bias"));
-    waveFolderFilterParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("wavefolder_filter"));
 
     // 13. RingMod
-    ringModShapeParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ringmod_shape"));
-    ringModRateParam     = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ringmod_rate"));
-    ringModAmountParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ringmod_amount"));
-    ringModWidthParam    = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("ringmod_width"));
 
     // 14. Frequency Shifter
-    freqShiftShiftParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("freqshift_shift"));
-    freqShiftRangeParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("freqshift_range"));
-    freqShiftBlendParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("freqshift_blend"));
-    freqShiftWidthParam  = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("freqshift_width"));
 
     // 15. Grit FX
-    gritBitsParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_bits"));
-    gritRateParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_rate"));
-    gritLowParam         = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_low"));
-    gritHighParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("grit_high"));
 
     // 16. Comb Filter
-    combDampeningParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_dampening"));
-    combCutoffParam      = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_cutoff"));
-    combResonanceParam   = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_resonance"));
-    combMixParam         = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("comb_mix"));
 
     // 17. PhaseSmear
-    phasesmearTypeParam   = dynamic_cast<juce::AudioParameterChoice*>(apvts.getParameter("phasesmear_type"));
-    phasesmearAmountParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("phasesmear_amount"));
-    phasesmearCutoffParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("phasesmear_cutoff"));
-    phasesmearResonanceParam = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("phasesmear_resonance"));
 
     // 18. EQ (bell EQ)
-    eqFreqParam          = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("eq_freq"));
-    eqWidthParam         = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("eq_width"));
-    eqGainParam          = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("eq_gain"));
-    eqFilterParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("eq_filter"));
 
     // 19. Amp
     ampLevelParam        = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("amp_level"));
@@ -484,10 +448,6 @@ void TheKlangFarmerAudioProcessor::applyBaseParameters() {
     if (mixerNoiseLevelParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MIXER, 3, getNorm(mixerNoiseLevelParam));
 
     // 9. Drive
-    if (driveAmountParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 0, getNorm(driveAmountParam));
-    if (driveBiasParam)       engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 1, getNorm(driveBiasParam));
-    if (driveFilterParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 2, getNorm(driveFilterParam));
-    if (driveLimiterParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_DRIVE, 3, static_cast<float>(driveLimiterParam->getIndex()));
 
     // Voice 1 Filter & Env
     if (filter1TypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 0, static_cast<float>(filter1TypeParam->getIndex()) / 3.0f);
@@ -523,10 +483,6 @@ void TheKlangFarmerAudioProcessor::applyBaseParameters() {
     if (filterEnv3PostDriveParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTERENV3, 3, getNorm(filterEnv3PostDriveParam));
 
     // Standalone FX Filter
-    if (fxFilterTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 0, static_cast<float>(fxFilterTypeParam->getIndex()) / 3.0f);
-    if (fxFilterSlopeParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 1, static_cast<float>(fxFilterSlopeParam->getIndex()) / 4.0f);
-    if (fxFilterCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 2, getNorm(fxFilterCutoffParam));
-    if (fxFilterResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FXFILTER, 3, getNorm(fxFilterResonanceParam));
 
     // Limiters
     if (preLimiterEnableParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PRE_LIMITER, 0, static_cast<float>(preLimiterEnableParam->getIndex()));
@@ -558,46 +514,18 @@ void TheKlangFarmerAudioProcessor::applyBaseParameters() {
     }
 
     // 12. Wave Folder
-    if (waveFolderTypeParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER, 0, static_cast<float>(waveFolderTypeParam->getIndex()));
-    if (waveFolderFoldParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER, 1, getNorm(waveFolderFoldParam));
-    if (waveFolderBiasParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER, 2, getNorm(waveFolderBiasParam));
-    if (waveFolderFilterParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_WAVEFOLDER, 3, getNorm(waveFolderFilterParam));
 
     // 13. RingMod
-    if (ringModShapeParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_RINGMOD, 0, getNorm(ringModShapeParam));
-    if (ringModRateParam)     engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_RINGMOD, 1, getNorm(ringModRateParam));
-    if (ringModAmountParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_RINGMOD, 2, getNorm(ringModAmountParam));
-    if (ringModWidthParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_RINGMOD, 3, getNorm(ringModWidthParam));
 
     // 14. Frequency Shifter
-    if (freqShiftShiftParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 0, getNorm(freqShiftShiftParam));
-    if (freqShiftRangeParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 1, getNorm(freqShiftRangeParam));
-    if (freqShiftBlendParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 2, getNorm(freqShiftBlendParam));
-    if (freqShiftWidthParam)  engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FREQSHIFT, 3, getNorm(freqShiftWidthParam));
 
     // 15. Grit FX
-    if (gritBitsParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 0, getNorm(gritBitsParam));
-    if (gritRateParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 1, getNorm(gritRateParam));
-    if (gritLowParam)         engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 2, getNorm(gritLowParam));
-    if (gritHighParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_GRIT, 3, getNorm(gritHighParam));
 
     // 16. Comb Filter
-    if (combDampeningParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 0, getNorm(combDampeningParam));
-    if (combCutoffParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 1, getNorm(combCutoffParam));
-    if (combResonanceParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 2, getNorm(combResonanceParam));
-    if (combMixParam)         engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_COMB, 3, getNorm(combMixParam));
 
     // 17. PhaseSmear
-    if (phasesmearTypeParam)      engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 0, static_cast<float>(phasesmearTypeParam->getIndex()));
-    if (phasesmearAmountParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 1, getNorm(phasesmearAmountParam));
-    if (phasesmearCutoffParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 2, getNorm(phasesmearCutoffParam));
-    if (phasesmearResonanceParam) engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_PHASE_SMEAR, 3, getNorm(phasesmearResonanceParam));
 
     // 18. EQ (bell EQ)
-    if (eqFreqParam)             engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_EQ, 0, getNorm(eqFreqParam));
-    if (eqWidthParam)            engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_EQ, 1, getNorm(eqWidthParam));
-    if (eqGainParam)             engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_EQ, 2, getNorm(eqGainParam));
-    if (eqFilterParam)           engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_EQ, 3, getNorm(eqFilterParam));
 
     // 19. Amp
     if (ampLevelParam)        engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_AMP, 0, getNorm(ampLevelParam));
@@ -851,10 +779,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("mixer_noise_level", "Mixer: Noise Level", 0.0f));       // 0% (double click returns 100%)
 
     // --- 9. DRIVE ---
-    layout.add(makeFloatParam("drive_amount", "Drive: Amount", 0.4f));              // +6 dB (def)
-    layout.add(makeFloatParam("drive_bias", "Drive: Bias", 0.5f));                  // 0 DC Bias
-    layout.add(makeFloatParam("drive_filter", "Drive: Filter", 0.5f));              // Flat (50%)
-    layout.add(makeChoiceParam("drive_limiter", "Drive: Limiter", juce::StringArray{ "Off", "On"  }, 1));                                      // On
 
     // --- VOICE 1 FILTER & FILTER ENVELOPE ---
     layout.add(makeChoiceParam("filter1_type", "Filter 1: Type", juce::StringArray{ "LPF", "BPF", "HPF", "BRF"  }, 0));
@@ -890,12 +814,6 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("filterenv3_postdrive", "FilterEnv 3: Post-Drive", 0.5f));
 
     // --- STANDALONE FX FILTER ---
-    layout.add(makeChoiceParam("fxfilter_type", "FX Filter: Type", juce::StringArray{ "LPF", "BPF", "HPF", "BRF"  }, 0));
-    layout.add(makeChoiceParam("fxfilter_slope", "FX Filter: Slope", juce::StringArray{ "6", "12", "18", "24", "36"  }, 1));
-    layout.add(makeFloatParam("fxfilter_cutoff", "FX Filter: Cutoff", 1.0f));
-    layout.add(makeFloatParam("fxfilter_resonance", "FX Filter: Resonance", 0.0f));
-
-    // --- LIMITERS ---
     layout.add(makeChoiceParam("pre_limiter_enable", "Pre-Limiter: Enable", juce::StringArray{ "Off", "On"  }, 1));
     layout.add(makeFloatParam("pre_limiter_gain", "Pre-Limiter: Input Gain", 12.0f / 36.0f)); // 0 dB
     layout.add(makeFloatParam("pre_limiter_thresh", "Pre-Limiter: Threshold", 1.0f));          // 0 dB
@@ -957,46 +875,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     }
 
     // --- 12. WAVE FOLDER ---
-    layout.add(makeChoiceParam("wavefolder_type", "WaveFolder: Type", juce::StringArray{ "Off", "On"  }, 0));
-    layout.add(makeFloatParam("wavefolder_fold", "WaveFolder: Fold", 0.0f));        // 0 folds
-    layout.add(makeFloatParam("wavefolder_bias", "WaveFolder: Bias", 0.5f));        // 0 DC Bias
-    layout.add(makeFloatParam("wavefolder_filter", "WaveFolder: Filter", 0.5f));    // Flat (50%)
 
     // --- 13. RING MOD ---
-    layout.add(makeFloatParam("ringmod_shape", "RingMod: Waveform", 0.0f));     // Sine
-    layout.add(makeFloatParam("ringmod_rate", "RingMod: Rate", 0.50934f));      // 55 Hz (0.50934)
-    layout.add(makeFloatParam("ringmod_amount", "RingMod: Amount", 0.0f));      // 0% (Dry)
-    layout.add(makeFloatParam("ringmod_width", "RingMod: Width", 0.5f));        // Center (0%)
 
     // --- 14. FREQUENCY SHIFTER ---
-    layout.add(makeFloatParam("freqshift_shift", "FreqShift: Shift", 0.5f));    // 0 Hz
-    layout.add(makeFloatParam("freqshift_range", "FreqShift: Range", TbdAudio::rangeHzToNorm(3.0f))); // 3 Hz default
-    layout.add(makeFloatParam("freqshift_blend", "FreqShift: Blend", 0.75f));   // +50%:50% (def)
-    layout.add(makeFloatParam("freqshift_width", "FreqShift: Width", 0.5f));    // Center (0%)
 
     // --- 15. GRIT FX ---
-    layout.add(makeFloatParam("grit_bits", "Grit: Bit Reduction", 1.0f));       // 16.0 bits
-    layout.add(makeFloatParam("grit_rate", "Grit: Sample Rate", 1.0f));         // 24 kHz
-    layout.add(makeFloatParam("grit_low", "Grit: Low Shelf", 0.5f));            // 0 dB
-    layout.add(makeFloatParam("grit_high", "Grit: High Shelf", 0.5f));          // 0 dB
 
     // --- 16. COMB FILTER ---
-    layout.add(makeFloatParam("comb_dampening", "Comb: Dampening", 1.0f));      // 24 kHz
-    layout.add(makeFloatParam("comb_cutoff", "Comb: Cutoff", 1.0f));            // 24 kHz
-    layout.add(makeFloatParam("comb_resonance", "Comb: Resonance", 0.5f));      // 0% (bipolar center)
-    layout.add(makeFloatParam("comb_mix", "Comb: Mix", 0.75f));                // +50%:50% (def)
 
     // --- 17. PHASE SMEAR ---
-    layout.add(makeChoiceParam("phasesmear_type", "Phase Smear: Order", juce::StringArray{ "2nd", "4th"  }, 0));
-    layout.add(makeFloatParam("phasesmear_amount", "Phase Smear: Amount", 4.0f / 32.0f)); // 4 APFs
-    layout.add(makeFloatParam("phasesmear_cutoff", "Phase Smear: Cutoff", 0.62124f));     // 220 Hz
-    layout.add(makeFloatParam("phasesmear_resonance", "Phase Smear: Resonance", 0.5f));   // 0% (bipolar center)
 
     // --- 18. EQ (bell EQ) ---
-    layout.add(makeFloatParam("eq_freq", "EQ: Frequency", 1.0f));               // 24 kHz
-    layout.add(makeFloatParam("eq_width", "EQ: Width", 0.0f));                  // 0.1 octaves
-    layout.add(makeFloatParam("eq_gain", "EQ: Gain", 0.5f));                    // 0 dB
-    layout.add(makeFloatParam("eq_filter", "EQ: DJ Filter", 0.5f));             // Flat (50%)
 
     // --- 19. AMP ---
     layout.add(makeFloatParam("amp_level", "Amp: Level", 1.0f));                // 100%

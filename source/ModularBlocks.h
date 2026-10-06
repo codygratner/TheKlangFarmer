@@ -2393,15 +2393,6 @@ public:
         BLK_FILTER3,
         BLK_FILTERENV3,
         BLK_MIXER,
-        BLK_DRIVE,
-        BLK_FXFILTER,
-        BLK_WAVEFOLDER,
-        BLK_RINGMOD,
-        BLK_FREQSHIFT,
-        BLK_GRIT,
-        BLK_COMB,
-        BLK_PHASE_SMEAR,
-        BLK_EQ,
         BLK_AMP,
         BLK_AMPENV,
         BLK_PRE_LIMITER,
@@ -2469,17 +2460,6 @@ public:
         allBlocks[BLK_FILTERENV3] = std::make_unique<FilterEnvelopeBlock>(3);
 
         allBlocks[BLK_MIXER]      = std::make_unique<MixerBlock>();
-
-        allBlocks[BLK_DRIVE]      = std::make_unique<DriveBlock>();
-        allBlocks[BLK_FXFILTER]   = std::make_unique<FilterBlock>(0); // Standalone FX filter
-        allBlocks[BLK_WAVEFOLDER] = std::make_unique<WaveFolderBlock>();
-        allBlocks[BLK_RINGMOD]    = std::make_unique<RingModBlock>();
-        allBlocks[BLK_FREQSHIFT]  = std::make_unique<FrequencyShifterBlock>();
-        allBlocks[BLK_GRIT]       = std::make_unique<GritBlock>();
-        allBlocks[BLK_COMB]       = std::make_unique<CombFilterBlock>();
-        allBlocks[BLK_PHASE_SMEAR]  = std::make_unique<PhaseSmearBlock>();
-        allBlocks[BLK_EQ]         = std::make_unique<EQBlock>();
-
         allBlocks[BLK_AMP]        = std::make_unique<AmpBlock>();
         allBlocks[BLK_AMPENV]     = std::make_unique<AmpEnvelopeBlock>();
 
@@ -2591,52 +2571,6 @@ public:
         setPageParameter(BLK_MIXER, 3, 0.0f);
 
         // FX defaults
-        setPageParameter(BLK_DRIVE, 0, 0.4f); // +6 dB (def)
-        setPageParameter(BLK_DRIVE, 1, 0.5f);
-        setPageParameter(BLK_DRIVE, 2, 0.5f);
-        setPageParameter(BLK_DRIVE, 3, 1.0f);
-
-        setPageParameter(BLK_FXFILTER, 0, 0.0f);
-        setPageParameter(BLK_FXFILTER, 1, 0.25f);
-        setPageParameter(BLK_FXFILTER, 2, 1.0f);
-        setPageParameter(BLK_FXFILTER, 3, 0.0f);
-
-        setPageParameter(BLK_WAVEFOLDER, 0, 0.0f);
-        setPageParameter(BLK_WAVEFOLDER, 1, 0.0f);
-        setPageParameter(BLK_WAVEFOLDER, 2, 0.5f);
-        setPageParameter(BLK_WAVEFOLDER, 3, 0.5f);
-
-        setPageParameter(BLK_RINGMOD, 0, 0.0f);
-        setPageParameter(BLK_RINGMOD, 1, 0.50934f);
-        setPageParameter(BLK_RINGMOD, 2, 0.0f);
-        setPageParameter(BLK_RINGMOD, 3, 0.5f);
-
-        setPageParameter(BLK_FREQSHIFT, 0, 0.5f);
-        setPageParameter(BLK_FREQSHIFT, 1, rangeHzToNorm(3.0f));
-        setPageParameter(BLK_FREQSHIFT, 2, 0.75f); // +50%:50% (def)
-        setPageParameter(BLK_FREQSHIFT, 3, 0.5f);
-
-        setPageParameter(BLK_GRIT, 0, 1.0f);
-        setPageParameter(BLK_GRIT, 1, 1.0f);
-        setPageParameter(BLK_GRIT, 2, 0.5f);
-        setPageParameter(BLK_GRIT, 3, 0.5f);
-
-        setPageParameter(BLK_COMB, 0, 1.0f);  // Dampening
-        setPageParameter(BLK_COMB, 1, 1.0f);  // Cutoff
-        setPageParameter(BLK_COMB, 2, 0.5f);  // Resonance
-        setPageParameter(BLK_COMB, 3, 0.75f); // Mix (+50%:50% def)
-
-        setPageParameter(BLK_PHASE_SMEAR, 0, 0.0f); // 2nd Order
-        setPageParameter(BLK_PHASE_SMEAR, 1, 4.0f / 32.0f); // 4 APFs
-        setPageParameter(BLK_PHASE_SMEAR, 2, 0.62124f);
-        setPageParameter(BLK_PHASE_SMEAR, 3, 0.5f);
-
-        setPageParameter(BLK_EQ, 0, 1.0f);
-        setPageParameter(BLK_EQ, 1, 0.0f);
-        setPageParameter(BLK_EQ, 2, 0.5f);
-        setPageParameter(BLK_EQ, 3, 0.5f);
-
-        // Amp defaults
         setPageParameter(BLK_AMP, 0, 1.0f);
         setPageParameter(BLK_AMP, 1, 0.5f);
         setPageParameter(BLK_AMP, 2, 0.5f);
@@ -2990,49 +2924,6 @@ public:
 
     void process(float* monoBuffer, int numSamples) {
         processStereo(monoBuffer, nullptr, numSamples);
-    }
-
-    void processFX(int fxType, float* left, float* right, int numSamples) {
-        switch (fxType) {
-            case 1:
-                allBlocks[BLK_DRIVE]->processStereo(left, right, numSamples, ctx);
-                scopes[BLK_DRIVE].pushBlock(left, numSamples);
-                break;
-            case 2:
-                allBlocks[BLK_FXFILTER]->processStereo(left, right, numSamples, ctx);
-                scopes[BLK_FXFILTER].pushBlock(left, numSamples);
-                break;
-            case 3:
-                allBlocks[BLK_WAVEFOLDER]->processStereo(left, right, numSamples, ctx);
-                scopes[BLK_WAVEFOLDER].pushBlock(left, numSamples);
-                break;
-            case 4:
-                allBlocks[BLK_RINGMOD]->processStereo(left, right, numSamples, ctx);
-                scopes[BLK_RINGMOD].pushBlock(left, numSamples);
-                break;
-            case 5:
-                allBlocks[BLK_FREQSHIFT]->processStereo(left, right, numSamples, ctx);
-                scopes[BLK_FREQSHIFT].pushBlock(left, numSamples);
-                break;
-            case 6:
-                allBlocks[BLK_GRIT]->processStereo(left, right, numSamples, ctx);
-                scopes[BLK_GRIT].pushBlock(left, numSamples);
-                break;
-            case 7:
-                allBlocks[BLK_COMB]->processStereo(left, right, numSamples, ctx);
-                scopes[BLK_COMB].pushBlock(left, numSamples);
-                break;
-            case 8:
-                allBlocks[BLK_PHASE_SMEAR]->processStereo(left, right, numSamples, ctx);
-                scopes[BLK_PHASE_SMEAR].pushBlock(left, numSamples);
-                break;
-            case 9:
-                allBlocks[BLK_EQ]->processStereo(left, right, numSamples, ctx);
-                scopes[BLK_EQ].pushBlock(left, numSamples);
-                break;
-            default:
-                break;
-        }
     }
 
     void processStereo(float* left, float* right, int numSamples) {

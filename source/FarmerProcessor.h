@@ -81,10 +81,6 @@ private:
     juce::AudioParameterFloat*  mixerNoiseLevelParam    = nullptr;
 
     // 9. Drive
-    juce::AudioParameterFloat*  driveAmountParam     = nullptr;
-    juce::AudioParameterFloat*  driveBiasParam       = nullptr;
-    juce::AudioParameterFloat*  driveFilterParam     = nullptr;
-    juce::AudioParameterChoice* driveLimiterParam    = nullptr;
 
     // Voice 1 Filter & Env
     juce::AudioParameterChoice* filter1TypeParam      = nullptr;
@@ -120,10 +116,6 @@ private:
     juce::AudioParameterFloat*  filterEnv3PostDriveParam = nullptr;
 
     // Standalone FX Filter
-    juce::AudioParameterChoice* fxFilterTypeParam      = nullptr;
-    juce::AudioParameterChoice* fxFilterSlopeParam     = nullptr;
-    juce::AudioParameterFloat*  fxFilterCutoffParam    = nullptr;
-    juce::AudioParameterFloat*  fxFilterResonanceParam = nullptr;
 
     // Limiters
     juce::AudioParameterChoice* preLimiterEnableParam   = nullptr;
@@ -148,46 +140,18 @@ private:
     juce::AudioParameterChoice* postFX4TypeParam = nullptr;
 
     // 12. Wave Folder
-    juce::AudioParameterChoice* waveFolderTypeParam   = nullptr;
-    juce::AudioParameterFloat*  waveFolderFoldParam   = nullptr;
-    juce::AudioParameterFloat*  waveFolderBiasParam   = nullptr;
-    juce::AudioParameterFloat*  waveFolderFilterParam = nullptr;
 
     // 13. RingMod
-    juce::AudioParameterFloat*  ringModShapeParam    = nullptr;
-    juce::AudioParameterFloat*  ringModRateParam     = nullptr;
-    juce::AudioParameterFloat*  ringModAmountParam   = nullptr;
-    juce::AudioParameterFloat*  ringModWidthParam    = nullptr;
 
     // 14. Frequency Shifter
-    juce::AudioParameterFloat*  freqShiftShiftParam  = nullptr;
-    juce::AudioParameterFloat*  freqShiftRangeParam  = nullptr;
-    juce::AudioParameterFloat*  freqShiftBlendParam  = nullptr;
-    juce::AudioParameterFloat*  freqShiftWidthParam  = nullptr;
 
     // 15. Grit FX
-    juce::AudioParameterFloat*  gritBitsParam        = nullptr;
-    juce::AudioParameterFloat*  gritRateParam        = nullptr;
-    juce::AudioParameterFloat*  gritLowParam         = nullptr;
-    juce::AudioParameterFloat*  gritHighParam        = nullptr;
 
     // 16. Comb Filter
-    juce::AudioParameterFloat*  combDampeningParam   = nullptr;
-    juce::AudioParameterFloat*  combCutoffParam      = nullptr;
-    juce::AudioParameterFloat*  combResonanceParam   = nullptr;
-    juce::AudioParameterFloat*  combMixParam         = nullptr;
 
     // 17. PhaseSmear
-    juce::AudioParameterChoice* phasesmearTypeParam   = nullptr;
-    juce::AudioParameterFloat*  phasesmearAmountParam = nullptr;
-    juce::AudioParameterFloat*  phasesmearCutoffParam = nullptr;
-    juce::AudioParameterFloat*  phasesmearResonanceParam = nullptr;
 
     // 18. EQ (bell EQ)
-    juce::AudioParameterFloat*  eqFreqParam          = nullptr;
-    juce::AudioParameterFloat*  eqWidthParam         = nullptr;
-    juce::AudioParameterFloat*  eqGainParam          = nullptr;
-    juce::AudioParameterFloat*  eqFilterParam        = nullptr;
 
     // 19. Amp
     juce::AudioParameterFloat*  ampLevelParam        = nullptr;
