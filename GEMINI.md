@@ -122,3 +122,7 @@
 - **Dynamic Reflection Compliance**: `gui_tests` dynamically sweeps 100% of all registered APVTS parameters and JSON assets. If any parameter lacks a UI binding or test case, `gui_tests` will hard-fail the build.
 - **Mandatory Planning Test Phase**: All architectural plans (`/plan`, `/strict-plan`, `/pasteplan`) MUST include an explicit Test Suite Update phase as a prerequisite for task completion.
 - **Pre-Merge Validation**: No feature may be considered done or deployed until both `dsp_tests` and `gui_tests` pass with zero failures.
+
+## Strict Context Management (Refresh Strategy)
+- **Proactive Context Refreshing**: When you notice the chat session getting long (multiple implementation iterations, large token usage, or when transitioning to a new plan phase), you MUST proactively suggest the user run the `/refresh-context` skill (or click "Replace with New" in the sidebar themselves).
+- **Two-Chat System Support**: Honor the two-chat system where one chat ("New Klang City") is purely for planning, and other chats are for implementation. During implementation, prioritize reading `PLAN.md` over generating raw instructions in the chat.

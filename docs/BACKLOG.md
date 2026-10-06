@@ -190,6 +190,11 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - Flushes all internal delay lines, reverb tanks, and comb filter feedback buffers to zero.
   - Resets active MIDI voice tracking and legato gate memory.
 
+### 8. Evaluate Agentic Workflow Strategy (Context Refresh vs Nuke & Replace)
+*Goal: After completing v0.4.0, review how well the two-chat "/clear and Refresh" workflow held up against prompt drift compared to the strict "Nuke & Replace" strategy.*
+- Did the `/clear` command with `context_clues.md` sufficiently protect against hidden state?
+- Document final workflow decision in `docs/post_v040_workflow_retro.md`.
+
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Pro Workflow Update"

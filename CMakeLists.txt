@@ -9,10 +9,10 @@ if (APPLE)
 endif()
 
 # 1. Project definition
-project(TheKlangSuite VERSION 0.3.0 LANGUAGES C CXX)
+project(TheKlangSuite VERSION 0.3.1 LANGUAGES C CXX)
 
 # Feature branch build tag (e.g., "-tooltips"). Stripped upon merge back to master.
-set(TKF_FEATURE_TAG "" CACHE STRING "Prerelease feature tag for development builds")
+set(TKF_FEATURE_TAG "-dev" CACHE STRING "Prerelease feature tag for development builds")
 add_compile_definitions(TKF_FEATURE_TAG="${TKF_FEATURE_TAG}")
 
 # Global JUCE configuration: disable unnecessary WebBrowser and cURL dependencies across all targets
