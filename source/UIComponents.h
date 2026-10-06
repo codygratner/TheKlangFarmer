@@ -67,6 +67,9 @@ juce::String formatVelocityFloor(double val);
 double parseVelocityFloor(const juce::String& text);
 juce::String formatBipolarDb(double val);
 double parseBipolarDb(const juce::String& text);
+juce::String formatWaveshape(double val);
+double parseWaveshape(const juce::String& text);
+
 juce::String formatWetDry(double val);
 double parseWetDry(const juce::String& text);
 juce::String formatMixerLevel(double val);
@@ -113,6 +116,57 @@ juce::String formatDelayTone(double val);
 double parseDelayTone(const juce::String& text);
 
 // Sleek LookAndFeel for rotary knobs
+
+class AdvancedColorPickerComponent : public juce::Component, public juce::Slider::Listener, public juce::TextEditor::Listener {
+public:
+    AdvancedColorPickerComponent(juce::Colour initialColor, std::function<void(juce::Colour)> onColorChangedFunc);
+    ~AdvancedColorPickerComponent() override;
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void mouseDown(const juce::MouseEvent& e) override;
+    void mouseDrag(const juce::MouseEvent& e) override;
+    void mouseUp(const juce::MouseEvent& e) override;
+
+    void sliderValueChanged(juce::Slider* slider) override;
+    void sliderDragEnded(juce::Slider* slider) override;
+    void textEditorTextChanged(juce::TextEditor& editor) override;
+    void textEditorReturnKeyPressed(juce::TextEditor& editor) override;
+
+private:
+    juce::Colour originalColor;
+    juce::Colour currentColor;
+    float currentHue, currentSat, currentVal, currentAlpha;
+    bool isUpdating = false;
+    bool isDraggingRing = false;
+
+    std::function<void(juce::Colour)> onColorChanged;
+
+    void updateFromColor(juce::Colour newColor, bool notify, bool updateSliders, bool updateHex);
+    void updateFromHSVA(bool notify, bool updateRGB, bool updateHex);
+    void updateFromRGBA(bool notify, bool updateHSV, bool updateHex);
+    void updateHexFromColor();
+    void updateSlidersFromColor();
+    
+    void loadPreferences();
+    void savePreferences();
+
+    juce::Rectangle<float> getRingBounds() const;
+    juce::Rectangle<float> getInnerSquareBounds() const;
+
+    juce::Slider rSlider, gSlider, bSlider, aSlider1;
+    juce::Slider hSlider, sSlider, vSlider, aSlider2;
+    juce::Label rLabel, gLabel, bLabel, aLabel1;
+    juce::Label hLabel, sLabel, vLabel, aLabel2;
+    juce::Label headerRgba, headerHsva, hexLabel;
+    juce::TextEditor hexInput;
+    juce::TextButton resetButton { "Reset" };
+
+    class PaletteSwatch;
+    std::array<juce::Colour, 16> customColors;
+    juce::OwnedArray<PaletteSwatch> swatches;
+};
+
 class RotaryKnobLookAndFeel : public juce::LookAndFeel_V4 {
 public:
     RotaryKnobLookAndFeel();

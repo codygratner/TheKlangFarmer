@@ -19,41 +19,207 @@ public:
     }
 };
 
-class DiffViewerComponent : public juce::Component {
+#include "DiffViewer.h"
+#include "SaveConfirmComponent.h"
+class PoiRowPropertyComponent : public juce::PropertyComponent {
 public:
-    DiffViewerComponent(const juce::String& oldL, const juce::String& newL, const juce::String& oldC, const juce::String& newC) {
-        oldDoc.replaceAllContent("=== OLD LAYOUT ===\n" + oldL + "\n\n=== OLD CONTROLS ===\n" + oldC);
-        newDoc.replaceAllContent("=== NEW LAYOUT ===\n" + newL + "\n\n=== NEW CONTROLS ===\n" + newC);
+    PoiRowPropertyComponent(RlyehSound::ControlDef* def, int index, 
+                            std::function<void(const juce::String&, const juce::var&)> updateControlsJson,
+                            std::function<void()> rebuildPanel)
+        : juce::PropertyComponent(juce::String(index)), def(def), index(index),
+          updateControlsJson(updateControlsJson), rebuildPanel(rebuildPanel)
+    {
+        setPreferredHeight(24);
         
-        oldEditor = std::make_unique<juce::CodeEditorComponent>(oldDoc, nullptr);
-        newEditor = std::make_unique<juce::CodeEditorComponent>(newDoc, nullptr);
+        auto& poi = def->snapPoints[index];
+        labelInput.setText(poi.label, juce::dontSendNotification);
+        valueInput.setText(juce::String(poi.value, 3), juce::dontSendNotification);
         
-        oldEditor->setReadOnly(true);
-        newEditor->setReadOnly(true);
+        labelInput.setEditable(true);
+        valueInput.setEditable(true);
+        labelInput.setJustificationType(juce::Justification::centredLeft);
+        valueInput.setJustificationType(juce::Justification::centredLeft);
         
-        addAndMakeVisible(oldEditor.get());
-        addAndMakeVisible(newEditor.get());
-        setSize(1000, 700);
+        labelInput.onTextChange = [this]() {
+            this->def->snapPoints[this->index].label = labelInput.getText();
+            saveToJson();
+        };
+        valueInput.onTextChange = [this]() {
+            this->def->snapPoints[this->index].value = valueInput.getText().getFloatValue();
+            saveToJson();
+        };
+        
+        removeBtn.setButtonText("Remove");
+        removeBtn.onClick = [this]() {
+            this->def->snapPoints.erase(this->def->snapPoints.begin() + this->index);
+            saveToJson();
+            if (this->rebuildPanel) this->rebuildPanel();
+        };
+        
+        addAndMakeVisible(labelInput);
+        addAndMakeVisible(valueInput);
+        addAndMakeVisible(removeBtn);
     }
+    
+    void saveToJson() {
+        // Sort points by value
+        std::sort(def->snapPoints.begin(), def->snapPoints.end(), 
+                  [](const RlyehSound::SnapPoint& a, const RlyehSound::SnapPoint& b) { return a.value < b.value; });
+                  
+        juce::Array<juce::var> jsonPoiArr;
+        for (auto& p : def->snapPoints) {
+            auto* obj = new juce::DynamicObject();
+            obj->setProperty("value", p.value);
+            obj->setProperty("label", p.label);
+            jsonPoiArr.add(juce::var(obj));
+        }
+        updateControlsJson("snap_points", juce::var(jsonPoiArr));
+    }
+    
+    void refresh() override {}
     
     void resized() override {
         auto b = getLocalBounds();
-        oldEditor->setBounds(b.removeFromLeft(b.getWidth() / 2));
-        newEditor->setBounds(b);
+        b.removeFromLeft(b.getWidth() / 3);
+        labelInput.setBounds(b.removeFromLeft(b.getWidth() / 3).reduced(4, 0));
+        valueInput.setBounds(b.removeFromLeft(b.getWidth() / 2).reduced(4, 0));
+        removeBtn.setBounds(b.reduced(4, 2));
+    }
+    
+    void paint(juce::Graphics& g) override {
+        auto b = getLocalBounds();
+        auto nameBounds = b.withWidth(b.getWidth() / 3).reduced(4, 0);
+        g.setColour(juce::Colour(0xffe8edf5));
+        g.drawText(juce::String(index + 1) + ":", nameBounds, juce::Justification::centredLeft, true);
+    }
+private:
+    RlyehSound::ControlDef* def;
+    int index;
+    juce::Label labelInput, valueInput;
+    juce::TextButton removeBtn;
+    std::function<void(const juce::String&, const juce::var&)> updateControlsJson;
+    std::function<void()> rebuildPanel;
+};
+
+class PoiAddPropertyComponent : public juce::PropertyComponent {
+public:
+    PoiAddPropertyComponent(RlyehSound::ControlDef* def, 
+                            std::function<void(const juce::String&, const juce::var&)> updateControlsJson,
+                            std::function<void()> rebuildPanel)
+        : juce::PropertyComponent("Add"), def(def), 
+          updateControlsJson(updateControlsJson), rebuildPanel(rebuildPanel)
+    {
+        setPreferredHeight(24);
+        addBtn.setButtonText("Add Snap Point");
+        addBtn.onClick = [this]() {
+            this->def->snapPoints.push_back({0.0f, "New Point"});
+            
+            std::sort(this->def->snapPoints.begin(), this->def->snapPoints.end(), 
+                      [](const RlyehSound::SnapPoint& a, const RlyehSound::SnapPoint& b) { return a.value < b.value; });
+                      
+            juce::Array<juce::var> jsonPoiArr;
+            for (auto& p : this->def->snapPoints) {
+                auto* obj = new juce::DynamicObject();
+                obj->setProperty("value", p.value);
+                obj->setProperty("label", p.label);
+                jsonPoiArr.add(juce::var(obj));
+            }
+            this->updateControlsJson("snap_points", juce::var(jsonPoiArr));
+            
+            if (this->rebuildPanel) this->rebuildPanel();
+        };
+        addAndMakeVisible(addBtn);
+    }
+    void refresh() override {}
+    void resized() override {
+        auto b = getLocalBounds();
+        b.removeFromLeft(b.getWidth() * 2 / 3);
+        addBtn.setBounds(b.reduced(4, 2));
+    }
+    void paint(juce::Graphics& g) override {
+        auto b = getLocalBounds();
+        g.setColour(juce::Colour(0xffa0a0a0));
+        g.drawText("Snap Points:", b.withWidth(b.getWidth() / 3).reduced(4, 0), juce::Justification::centredLeft, true);
+    }
+private:
+    RlyehSound::ControlDef* def;
+    juce::TextButton addBtn;
+    std::function<void(const juce::String&, const juce::var&)> updateControlsJson;
+    std::function<void()> rebuildPanel;
+};
+
+
+class ThemeColorPropertyComponent : public juce::PropertyComponent {
+public:
+    ThemeColorPropertyComponent(const juce::String& name, const juce::String& initialVal, std::function<void(const juce::String&)> onValChanged)
+        : juce::PropertyComponent(name), currentVal(initialVal), onChange(onValChanged) {
+        
+        setPreferredHeight(30);
+        
+        addAndMakeVisible(textEditor);
+        textEditor.setText(initialVal, juce::dontSendNotification);
+        textEditor.onTextChange = [this]() {
+            currentVal = textEditor.getText();
+            updateButtonColor();
+            if (onChange) onChange(currentVal);
+        };
+        
+        addAndMakeVisible(colorButton);
+        updateButtonColor();
+        colorButton.onClick = [this]() {
+            auto hex = resolveToHex(currentVal);
+            
+            juce::Component::SafePointer<ThemeColorPropertyComponent> safeThis(this);
+            
+            std::function<void(const juce::String&)> onChangeCopy = onChange;
+            auto* picker = new AdvancedColorPickerComponent(juce::Colour::fromString(hex), [safeThis, onChangeCopy](juce::Colour newColor) {
+                juce::String newHex = "0x" + newColor.toDisplayString(true).toUpperCase();
+                if (safeThis != nullptr) {
+                    safeThis->currentVal = newHex;
+                    safeThis->textEditor.setText(newHex, juce::dontSendNotification);
+                    safeThis->updateButtonColor();
+                }
+                if (onChangeCopy) onChangeCopy(newHex);
+            });
+            juce::CallOutBox::launchAsynchronously(std::unique_ptr<juce::Component>(picker), colorButton.getScreenBounds(), this->getTopLevelComponent());
+        };
+    }
+    
+    juce::String resolveToHex(const juce::String& val) {
+        if (val.startsWithIgnoreCase("0x")) return val;
+        return RlyehSound::ParameterManager::getInstance().getThemeColour(val).toDisplayString(true);
+    }
+    
+    void updateButtonColor() {
+        auto c = juce::Colour::fromString(resolveToHex(currentVal));
+        colorButton.setColour(juce::TextButton::buttonColourId, c);
+        colorButton.setColour(juce::TextButton::buttonOnColourId, c);
+    }
+    
+    void refresh() override {}
+    
+    void resized() override {
+        auto b = getLocalBounds();
+        b.removeFromLeft(b.getWidth() / 3);
+        colorButton.setBounds(b.removeFromRight(40).reduced(4));
+        textEditor.setBounds(b.reduced(4));
     }
     
 private:
-    juce::CodeDocument oldDoc, newDoc;
-    std::unique_ptr<juce::CodeEditorComponent> oldEditor, newEditor;
+    juce::TextEditor textEditor;
+    juce::TextButton colorButton { "Edit" };
+    juce::String currentVal;
+    std::function<void(const juce::String&)> onChange;
 };
+
 class ParamRowPropertyComponent : public juce::PropertyComponent, private juce::Timer {
 public:
     ParamRowPropertyComponent(juce::Component* linkedComp, const juce::String& rowTitle, const juce::String& compType, const juce::StringArray& choices,
                               std::function<double()> getRawVal, std::function<juce::String()> getRenVal,
                               std::function<void(double)> onRawEdit = nullptr, std::function<void(juce::String)> onRenEdit = nullptr)
         : juce::PropertyComponent(rowTitle), component(linkedComp), compType(compType), choices(choices), 
-          getRaw(getRawVal), getRen(getRenVal), onRawEdit(onRawEdit), onRenEdit(onRenEdit)
-    {
+          getRaw(getRawVal), getRen(getRenVal), onRawEdit(onRawEdit), onRenEdit(onRenEdit)    {
+        setPreferredHeight(24);
         addAndMakeVisible(rawValueLabel);
         rawValueLabel.setEditable(onRawEdit != nullptr);
         rawValueLabel.setJustificationType(juce::Justification::centredLeft);
@@ -123,6 +289,7 @@ public:
             juce::String rawStr = juce::String(rVal, 3);
             if (compType == "choice" && getName() != "Choices") rawStr = juce::String(static_cast<int>(rVal));
             else if (getName() == "Choices") rawStr = juce::String(static_cast<int>(rVal)) + " items";
+            else if (compType == "string") rawStr = "-";
             
             if (rawValueLabel.getText() != rawStr) rawValueLabel.setText(rawStr, juce::dontSendNotification);
             if (renderedValueLabel.getText() != renStr) renderedValueLabel.setText(renStr, juce::dontSendNotification);
@@ -222,17 +389,14 @@ MainComponent::MainComponent()
         
         if (changes.isEmpty()) changes = "No changes detected.";
         
-        juce::MessageBoxOptions options = juce::MessageBoxOptions()
-            .withIconType(juce::MessageBoxIconType::QuestionIcon)
-            .withTitle("Confirm Save")
-            .withMessage("You are about to save changes to:\nProduct: " + currentProductId + 
-                         (currentPageId.isNotEmpty() ? "\nPage: " + currentPageId : "") + 
-                         "\nCard: " + currentCardId + "\n\nChanges detected:\n" + changes + "\n\nCommit to disk?")
-            .withButton("Commit").withButton("Show Diff").withButton("Cancel");
-            
-        juce::AlertWindow::showAsync(options, [this, parsedLayoutEdit, parsedControlsEdit, newControls](int result) {
-            if (result == 1) { // Commit
-                // Save Layout
+        juce::String oldLayoutStr = juce::JSON::toString(juce::JSON::parse(originalLayoutJson));
+        juce::String newLayoutStr = juce::JSON::toString(parsedLayoutEdit);
+        juce::String oldControlsStr = juce::JSON::toString(juce::JSON::parse(originalControlsJson));
+        juce::String newControlsStr = juce::JSON::toString(parsedControlsEdit);
+
+        auto* saveComp = new SaveConfirmComponent(oldLayoutStr, newLayoutStr, oldControlsStr, newControlsStr,
+            [this, parsedLayoutEdit, parsedControlsEdit, newControls](SaveConfirmComponent* comp) {
+                // Commit
                 auto file = getAssetFile(currentProductId == "theme" ? "controls" : "layouts", currentParamJsonFile);
                 if (file.existsAsFile()) {
                     if (currentProductId != "theme" && currentLayout.isObject()) {
@@ -253,39 +417,42 @@ MainComponent::MainComponent()
                     for (auto& prop : newControls->getProperties()) {
                         juce::String paramId = prop.name.toString();
                         if (paramToFileMap.count(paramId) > 0) {
-                            auto cFile = getAssetFile("controls", paramToFileMap[paramId]);
-                            if (cFile.existsAsFile()) {
-                                auto fullC = juce::JSON::parse(cFile.loadFileAsString());
-                                if (fullC.isObject()) {
-                                    fullC.getDynamicObject()->setProperty(paramId, prop.value);
-                                    cFile.replaceWithText(juce::JSON::toString(fullC));
+                            auto cfile = getAssetFile("controls", paramToFileMap[paramId]);
+                            if (cfile.existsAsFile()) {
+                                auto parsedC = juce::JSON::parse(cfile.loadFileAsString());
+                                if (parsedC.isObject()) {
+                                    parsedC.getDynamicObject()->setProperty(paramId, prop.value);
+                                    cfile.replaceWithText(juce::JSON::toString(parsedC));
                                 }
                             }
                         }
                     }
                 }
                 
-                originalLayoutJson = juce::JSON::toString(parsedLayoutEdit);
-                originalControlsJson = juce::JSON::toString(parsedControlsEdit);
-                
-                // Refresh models
                 RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent(), false);
                 buildTree();
                 
-            } else if (result == 2) { // Show Diff
-                auto* diffComp = new DiffViewerComponent(originalLayoutJson, layoutJsonDocument.getAllContent(), originalControlsJson, controlsJsonDocument.getAllContent());
-                juce::DialogWindow::LaunchOptions opts;
-                opts.content.setOwned(diffComp);
-                opts.dialogTitle = "Diff Viewer";
-                opts.dialogBackgroundColour = juce::Colour(0xff222222);
-                opts.escapeKeyTriggersCloseButton = true;
-                opts.useNativeTitleBar = true;
-                opts.resizable = true;
-                opts.launchAsync();
-            }
-        });
+                if (auto* dw = comp->findParentComponentOfClass<juce::DialogWindow>()) {
+                    dw->exitModalState(0);
+                    dw->setVisible(false);
+                }
+            },
+            [](SaveConfirmComponent* comp) {
+                if (auto* dw = comp->findParentComponentOfClass<juce::DialogWindow>()) {
+                    dw->exitModalState(0);
+                    dw->setVisible(false);
+                }
+            });
+            
+        juce::DialogWindow::LaunchOptions opts;
+        opts.content.setOwned(saveComp);
+        opts.dialogTitle = "Confirm Save";
+        opts.dialogBackgroundColour = juce::Colour(0xff1e1e1e);
+        opts.escapeKeyTriggersCloseButton = true;
+        opts.useNativeTitleBar = true;
+        opts.resizable = false;
+        opts.launchAsync();
     };
-    
     addAndMakeVisible(toggleOriginalButton);
     toggleOriginalButton.onClick = [this]() {
         showingOriginal = !showingOriginal;
@@ -368,11 +535,13 @@ void MainComponent::buildTree() {
     auto* root = new EditorTreeItem(this, "Root", "root");
     auto* themeNode = new EditorTreeItem(this, "Global Theme", "product", "theme");
     root->addSubItem(themeNode);
-
-    const char* products[] = { "The Klang Farmer", "The Klang Planter", "The Klang Seed" };
-    const char* productIds[] = { "tkf", "tkp", "tks" };
     
-        for (int p = 0; p < 3; ++p) {
+        
+
+    const char* products[] = { "The Klang Farmer", "The Klang Mill", "The Klang Planter", "The Klang Seed" };
+    const char* productIds[] = { "tkf", "tkm", "tkp", "tks" };
+    
+        for (int p = 0; p < 4; ++p) {
         auto* prodNode = new EditorTreeItem(this, products[p], "product", productIds[p]);
         
         juce::String layoutFile = juce::String(productIds[p]) + "_layout.json";
@@ -430,7 +599,7 @@ void MainComponent::buildTree() {
 }
 
 void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
-    if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme")) return;
+    if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme") && item->itemType != "control_file") return;
     
     currentParamTarget = item->paramId;
     
@@ -439,6 +608,11 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
         currentParamJsonFile = "theme.json";
         currentPageId = "";
         currentCardId = "theme";
+    } else if (item->itemType == "control_file") {
+        currentProductId = "all_controls";
+        currentParamJsonFile = item->pageId + ".json";
+        currentPageId = "";
+        currentCardId = item->pageId;
     } else {
         currentProductId = item->productId;
         currentParamJsonFile = currentProductId + "_layout.json";
@@ -446,15 +620,15 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
         currentCardId = item->cardId;
     }
 
-    auto file = getAssetFile(currentProductId == "theme" ? "controls" : "layouts", currentParamJsonFile);
-    filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : "") + (currentParamTarget.isNotEmpty() ? " -> [" + currentParamTarget + "]" : ""));
+    auto file = getAssetFile(currentProductId == "theme" ? "controls" : (currentProductId == "all_controls" ? "controls" : "layouts"), currentParamJsonFile);
+    filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" && currentProductId != "all_controls" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : "") + (currentParamTarget.isNotEmpty() ? " -> [" + currentParamTarget + "]" : ""));
 
+    juce::var cardJson;
     if (file.existsAsFile()) {
         auto fullJsonString = file.loadFileAsString();
         
-        if (currentProductId != "theme") {
+        if (currentProductId != "theme" && currentProductId != "all_controls") {
             currentLayout = juce::JSON::parse(fullJsonString);
-            juce::var cardJson;
             if (currentLayout.isObject()) {
                 auto* root = currentLayout.getDynamicObject();
                 if (currentPageId.isNotEmpty() && root->hasProperty(currentPageId)) {
@@ -492,19 +666,29 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
                 }
             }
             originalControlsJson = juce::JSON::toString(juce::var(controlsObj.get()));
+        } else if (currentProductId == "all_controls") {
+            originalLayoutJson = "{}";
+            originalControlsJson = fullJsonString;
             
-            if (item->itemType == "card_param") {
-                // Keep the layout intact in memory for preview, but maybe clear the editor
+            juce::DynamicObject::Ptr fakeCard = new juce::DynamicObject();
+            juce::Array<juce::var> paramArray;
+            auto parsedC = juce::JSON::parse(originalControlsJson);
+            paramToFileMap.clear();
+            if (parsedC.isObject()) {
+                for (auto& prop : parsedC.getDynamicObject()->getProperties()) {
+                    paramArray.add(prop.name.toString());
+                    paramToFileMap[prop.name.toString()] = currentParamJsonFile;
+                }
             }
+            fakeCard->setProperty("parameters", juce::var(paramArray));
+            cardJson = juce::var(fakeCard.get());
         } else {
             originalLayoutJson = fullJsonString;
             originalControlsJson = "{}";
         }
         
         layoutJsonDocument.replaceAllContent(originalLayoutJson);
-        controlsJsonDocument.replaceAllContent(originalControlsJson);
-        
-        if (item->itemType == "card_theme") {
+        controlsJsonDocument.replaceAllContent(originalControlsJson);        if (item->itemType == "card_theme") {
             jsonSplitterLayout.setItemLayout(0, -1.0, -1.0, -1.0); // Full layout
             jsonSplitterLayout.setItemLayout(1, 0, 0, 0);          // Hide splitter
             jsonSplitterLayout.setItemLayout(2, 0, 0, 0);          // Hide controls
@@ -541,18 +725,46 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
         previewWrapper.deleteAllChildren();
         activeSliders.clear();
         compToParamId.clear();
-        formEditor.clear();
+    formEditor.clear();
         return;
     }
     emptyPlaceholder.setVisible(false);
 
     if (isTheme) {
         RlyehSound::ParameterManager::getInstance().reloadFromJson(jsonString, true);
+    } else {
+        RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent(), false);
     }
     
     previewWrapper.deleteAllChildren();
     activeSliders.clear();
     compToParamId.clear();
+
+    formEditor.clear();
+
+if (isTheme && parsed.isObject()) {
+        juce::Array<juce::PropertyComponent*> props;
+        auto* obj = parsed.getDynamicObject();
+        if (obj->hasProperty("colors")) {
+            auto* colorsObj = obj->getProperty("colors").getDynamicObject();
+            if (colorsObj) {
+                for (auto& prop : colorsObj->getProperties()) {
+                    auto pc = new ThemeColorPropertyComponent(prop.name.toString(), prop.value.toString(), 
+                        [this, propName = prop.name.toString()](const juce::String& newHex) {
+                            auto parsedObj = juce::JSON::parse(layoutJsonDocument.getAllContent());
+                            if (parsedObj.isObject() && parsedObj.getDynamicObject()->hasProperty("colors")) {
+                                parsedObj.getDynamicObject()->getProperty("colors").getDynamicObject()->setProperty(propName, newHex);
+                                layoutJsonDocument.replaceAllContent(juce::JSON::toString(parsedObj));
+                            }
+                        });
+                    props.add(pc);
+                }
+            }
+        }
+        if (!props.isEmpty()) {
+            formEditor.addSection("Theme Colors", props);
+        }
+    }
     
     if (isTheme) {
         auto* card = new ModuleCardComponent("Theme Preview", 
@@ -600,6 +812,7 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                             auto* slider = new RotaryKnobSlider();
                             activeSliders.add(slider);
                             compToParamId[slider] = paramId;
+                            slider->setParamId(paramId);
                             
                             slider->setTooltip(def->description);
                             slider->setRange(def->min, def->max, def->step);
@@ -639,16 +852,25 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                                 slider->diagramType = RotaryKnobSlider::DiagramType::EnvelopeSlope;
                             }
                             
-                            slider->customFormatText = [paramId](double val) {
-                                if (paramId.containsIgnoreCase("pitch") || paramId.containsIgnoreCase("semi")) return juce::String(juce::roundToInt((val - 0.5) * 96.0)) + " st";
-                                if (paramId.containsIgnoreCase("depth") || paramId.containsIgnoreCase("crossfade") || paramId.containsIgnoreCase("pan") || paramId.containsIgnoreCase("filter")) return (val >= 0.5 ? "+" : "") + juce::String(juce::roundToInt((val - 0.5) * 200.0)) + " %";
-                                if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("ratio") || paramId.containsIgnoreCase("amount") || paramId.containsIgnoreCase("level") || paramId.containsIgnoreCase("res") || paramId.containsIgnoreCase("mix")) return juce::String(juce::roundToInt(val * 100.0)) + " %";
-                                if (paramId.containsIgnoreCase("decay") || paramId.containsIgnoreCase("speed") || paramId.containsIgnoreCase("time")) return juce::String(val * 2000.0, 0) + " ms";
-                                if (paramId.containsIgnoreCase("cutoff") || paramId.containsIgnoreCase("rate") || paramId.containsIgnoreCase("freq")) return juce::String(val * 20000.0, 0) + " Hz";
-                                if (paramId.containsIgnoreCase("drive") || paramId.containsIgnoreCase("gain")) return (val >= 0.5 ? "+" : "") + juce::String((val - 0.5) * 48.0, 1) + " dB";
-                                if (paramId.containsIgnoreCase("claps")) return juce::String(juce::roundToInt(val * 8.0));
-                                return juce::String(val, 2);
-                            };
+                            
+                            if (def->format == "waveshape") {
+                                slider->customFormatText = formatWaveshape;
+                                slider->customParseText = parseWaveshape;
+                            } else if (def->format == "wet_dry") {
+                                slider->customFormatText = formatWetDry;
+                                slider->customParseText = parseWetDry;
+                            } else {
+                                slider->customFormatText = [paramId](double val) {
+                                    if (paramId.containsIgnoreCase("pitch") || paramId.containsIgnoreCase("semi")) return juce::String(juce::roundToInt((val - 0.5) * 96.0)) + " st";
+                                    if (paramId.containsIgnoreCase("depth") || paramId.containsIgnoreCase("crossfade") || paramId.containsIgnoreCase("pan") || paramId.containsIgnoreCase("filter")) return (val >= 0.5 ? "+" : "") + juce::String(juce::roundToInt((val - 0.5) * 200.0)) + " %";
+                                    if (paramId.containsIgnoreCase("shape") || paramId.containsIgnoreCase("ratio") || paramId.containsIgnoreCase("amount") || paramId.containsIgnoreCase("level") || paramId.containsIgnoreCase("res") || paramId.containsIgnoreCase("mix")) return juce::String(juce::roundToInt(val * 100.0)) + " %";
+                                    if (paramId.containsIgnoreCase("decay") || paramId.containsIgnoreCase("speed") || paramId.containsIgnoreCase("time")) return juce::String(val * 2000.0, 0) + " ms";
+                                    if (paramId.containsIgnoreCase("cutoff") || paramId.containsIgnoreCase("rate") || paramId.containsIgnoreCase("freq")) return juce::String(val * 20000.0, 0) + " Hz";
+                                    if (paramId.containsIgnoreCase("drive") || paramId.containsIgnoreCase("gain")) return (val >= 0.5 ? "+" : "") + juce::String((val - 0.5) * 48.0, 1) + " dB";
+                                    if (paramId.containsIgnoreCase("claps")) return juce::String(juce::roundToInt(val * 8.0));
+                                    return juce::String(val, 2);
+                                };
+                            }
                             
                             card->addAndMakeVisible(slider);
                             card->setKnob(slot, def->name, slider);
@@ -700,7 +922,6 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     bool showLayout = (selType != "card_param");
     bool showParams = (selType != "card_theme");
 
-    formEditor.clear();
     juce::Array<juce::PropertyComponent*> props;
     if (showLayout && parsed.isObject()) {
         auto* obj = parsed.getDynamicObject();
@@ -716,8 +937,30 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                 continue;
             }
             
-                        juce::Value val (valStr);
-            auto* pc = new juce::TextPropertyComponent(val, prop.name.toString(), 256, false);
+            juce::PropertyComponent* pc = nullptr;
+            juce::String pName = prop.name.toString();
+            if (pName == "color" || pName == "accent" || pName == "background" || pName.startsWithIgnoreCase("col")) {
+                pc = new ThemeColorPropertyComponent(pName, valStr, [this, pName](const juce::String& newHex) {
+                    auto parsedObj = juce::JSON::parse(layoutJsonDocument.getAllContent());
+                    if (parsedObj.isObject()) {
+                        auto* root = parsedObj.getDynamicObject();
+                        if (currentPageId.isNotEmpty() && root->hasProperty(currentPageId)) {
+                            auto* page = root->getProperty(currentPageId).getDynamicObject();
+                            if (page && page->hasProperty(currentCardId)) {
+                                page->getProperty(currentCardId).getDynamicObject()->setProperty(pName, newHex);
+                                layoutJsonDocument.replaceAllContent(juce::JSON::toString(parsedObj));
+                            }
+                        } else if (currentPageId.isEmpty() && root->hasProperty(currentCardId)) {
+                            root->getProperty(currentCardId).getDynamicObject()->setProperty(pName, newHex);
+                            layoutJsonDocument.replaceAllContent(juce::JSON::toString(parsedObj));
+                        }
+                    }
+                });
+            } else {
+                juce::Value val (valStr);
+                
+                pc = new juce::TextPropertyComponent(val, pName, 256, false);
+            }
             
                         auto origParsed = juce::JSON::parse(originalJsonString);
             if (origParsed.isObject()) {
@@ -770,7 +1013,7 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                         }
                     }
                     
-                    juce::String sectionTitle = (currentProductId == "tkf" ? "TKF: " : (currentProductId == "tkp" ? "TKP: " : "TKS: ")) + currentCardId + ": " + def->name;
+                    juce::String sectionTitle = currentProductId.toUpperCase() + ": " + currentCardId + ": " + def->name;
                     pProps.add(new ParamHeaderPropertyComponent(sectionTitle));
                     
                     pProps.add(new ParamRowPropertyComponent(linkedComp, "Slider Value", def->type, def->choices,
@@ -884,8 +1127,7 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                                 }
                             }
                         ));
-                    }
-                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Tooltip", "string", juce::StringArray(),
+                    }                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Tooltip", "string", juce::StringArray(),
                             []() { return 0.0; },
                             [def]() { return def->description; },
                             nullptr,
@@ -894,34 +1136,15 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
                                 updateControlsJson("description", s);
                             }
                         ));
-                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Snap Points", "string", juce::StringArray(),
-                            []() { return 0.0; },
-                            [def]() {
-                                juce::StringArray parts;
-                                for (auto& p : def->pointsOfInterest) parts.add(juce::String(p.value, 3) + ": " + p.label);
-                                return parts.joinIntoString(", ");
-                            },
-                            nullptr,
-                            [def, updateControlsJson](juce::String s) {
-                                def->pointsOfInterest.clear();
-                                juce::StringArray parts;
-                                parts.addTokens(s, ",", "\"");
-                                juce::Array<juce::var> jsonPoiArr;
-                                for (auto& part : parts) {
-                                    auto p = part.trim();
-                                    if (p.contains(":")) {
-                                        float v = p.upToFirstOccurrenceOf(":", false, false).getFloatValue();
-                                        juce::String l = p.fromFirstOccurrenceOf(":", false, false).trim();
-                                        def->pointsOfInterest.push_back({v, l});
-                                        auto* obj = new juce::DynamicObject();
-                                        obj->setProperty("value", v);
-                                        obj->setProperty("label", l);
-                                        jsonPoiArr.add(juce::var(obj));
-                                    }
-                                }
-                                updateControlsJson("points_of_interest", juce::var(jsonPoiArr));
-                            }
-                        ));
+                        
+                        auto refreshPanel = [this]() {
+                            syncJsonToPreview("");
+                        };
+                        
+                        for (int i = 0; i < def->snapPoints.size(); ++i) {
+                            pProps.add(new PoiRowPropertyComponent(def, i, updateControlsJson, refreshPanel));
+                        }
+                        pProps.add(new PoiAddPropertyComponent(def, updateControlsJson, refreshPanel));
                         
                         formEditor.addSection("Param: " + def->name, pProps);
                 }
@@ -987,6 +1210,30 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
