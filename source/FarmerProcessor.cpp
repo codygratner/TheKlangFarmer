@@ -818,25 +818,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("pitchenv1_slope", "PitchEnv 1: Slope", 0.5886f));   // Exponential (def)
     layout.add(makeFloatParam("pitchenv1_depth", "PitchEnv 1: Depth", 0.5f));      // 0%
     layout.add(makeFloatParam("pitchenv1_decay", "PitchEnv 1: Decay", 0.3806f));   // 333 ms
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pitchenv1_target", 1), "PitchEnv 1: Target",
-        juce::StringArray{ "Car", "Mod", "Both", "Opp" }, 0));
+    layout.add(makeChoiceParam("pitchenv1_target", "PitchEnv 1: Target", juce::StringArray{ "Car", "Mod", "Both", "Opp" }, 0));
 
     // --- 4. CARRIER 2 ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("carrier2_tracking", 1), "Carrier 2: Tracking",
-        juce::StringArray{ "MIDI", "Freq", "Note" }, 0));
+    layout.add(makeChoiceParam("carrier2_tracking", "Carrier 2: Tracking", juce::StringArray{ "MIDI", "Freq", "Note"  }, 0));
     layout.add(makeFloatParam("carrier2_pitch", "Carrier 2: Pitch / Freq", 0.5f));
     layout.add(makeFloatParam("carrier2_shape", "Carrier 2: Shape", 0.0f));         // Sine (0%)
     layout.add(makeFloatParam("carrier2_depth", "Carrier 2: Modulation Depth", 0.5f)); // 0% Depth (-200% to +200%)
 
     // --- 5. MODULATOR 2 ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("mod2_track", 1), "Modulator 2: Pitch Tracking",
-        juce::StringArray{ "Fixed", "Follow", "FM" }, 0));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("mod2_type", 1), "Modulator 2: Type",
-        juce::StringArray{ "Osc", "Cyclic", "Noise" }, 0));
+    layout.add(makeChoiceParam("mod2_track", "Modulator 2: Pitch Tracking", juce::StringArray{ "Fixed", "Follow", "FM"  }, 0));
+    layout.add(makeChoiceParam("mod2_type", "Modulator 2: Type", juce::StringArray{ "Osc", "Cyclic", "Noise"  }, 0));
     layout.add(makeFloatParam("mod2_shape", "Modulator 2: Shape", 0.0f));          // Sine (0%)
     layout.add(makeFloatParam("mod2_speed", "Modulator 2: Speed", 0.5f));          // 1:1 ratio (0.5)
 
@@ -844,9 +836,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("pitchenv2_slope", "PitchEnv 2: Slope", 0.5886f));   // Exponential (def)
     layout.add(makeFloatParam("pitchenv2_depth", "PitchEnv 2: Depth", 0.5f));      // 0%
     layout.add(makeFloatParam("pitchenv2_decay", "PitchEnv 2: Decay", 0.3806f));   // 333 ms
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pitchenv2_target", 1), "PitchEnv 2: Target",
-        juce::StringArray{ "Car", "Mod", "Both", "Opp" }, 0));
+    layout.add(makeChoiceParam("pitchenv2_target", "PitchEnv 2: Target", juce::StringArray{ "Car", "Mod", "Both", "Opp"  }, 0));
 
     // --- 7. NOISE TRANSIENT ---
     layout.add(makeFloatParam("noise_sh_rate", "Noise: S&H Rate", 1.0f));       // 24 kHz
@@ -864,17 +854,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("drive_amount", "Drive: Amount", 0.4f));              // +6 dB (def)
     layout.add(makeFloatParam("drive_bias", "Drive: Bias", 0.5f));                  // 0 DC Bias
     layout.add(makeFloatParam("drive_filter", "Drive: Filter", 0.5f));              // Flat (50%)
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("drive_limiter", 1), "Drive: Limiter",
-        juce::StringArray{ "Off", "On" }, 1));                                      // On
+    layout.add(makeChoiceParam("drive_limiter", "Drive: Limiter", juce::StringArray{ "Off", "On"  }, 1));                                      // On
 
     // --- VOICE 1 FILTER & FILTER ENVELOPE ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("filter1_type", 1), "Filter 1: Type",
-        juce::StringArray{ "LPF", "BPF", "HPF", "BRF" }, 0));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("filter1_slope", 1), "Filter 1: Slope",
-        juce::StringArray{ "6", "12", "18", "24", "36" }, 1));
+    layout.add(makeChoiceParam("filter1_type", "Filter 1: Type", juce::StringArray{ "LPF", "BPF", "HPF", "BRF"  }, 0));
+    layout.add(makeChoiceParam("filter1_slope", "Filter 1: Slope", juce::StringArray{ "6", "12", "18", "24", "36"  }, 1));
     layout.add(makeFloatParam("filter1_cutoff", "Filter 1: Cutoff", 1.0f));
     layout.add(makeFloatParam("filter1_resonance", "Filter 1: Resonance", 0.0f));
 
@@ -884,12 +868,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("filterenv1_postdrive", "FilterEnv 1: Post-Drive", 0.5f));
 
     // --- VOICE 2 FILTER & FILTER ENVELOPE ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("filter2_type", 1), "Filter 2: Type",
-        juce::StringArray{ "LPF", "BPF", "HPF", "BRF" }, 0));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("filter2_slope", 1), "Filter 2: Slope",
-        juce::StringArray{ "6", "12", "18", "24", "36" }, 1));
+    layout.add(makeChoiceParam("filter2_type", "Filter 2: Type", juce::StringArray{ "LPF", "BPF", "HPF", "BRF"  }, 0));
+    layout.add(makeChoiceParam("filter2_slope", "Filter 2: Slope", juce::StringArray{ "6", "12", "18", "24", "36"  }, 1));
     layout.add(makeFloatParam("filter2_cutoff", "Filter 2: Cutoff", 1.0f));
     layout.add(makeFloatParam("filter2_resonance", "Filter 2: Resonance", 0.0f));
 
@@ -899,12 +879,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("filterenv2_postdrive", "FilterEnv 2: Post-Drive", 0.5f));
 
     // --- TRANSIENTS FILTER & FILTER ENVELOPE ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("filter3_type", 1), "Filter 3: Type",
-        juce::StringArray{ "LPF", "BPF", "HPF", "BRF" }, 0));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("filter3_slope", 1), "Filter 3: Slope",
-        juce::StringArray{ "6", "12", "18", "24", "36" }, 1));
+    layout.add(makeChoiceParam("filter3_type", "Filter 3: Type", juce::StringArray{ "LPF", "BPF", "HPF", "BRF"  }, 0));
+    layout.add(makeChoiceParam("filter3_slope", "Filter 3: Slope", juce::StringArray{ "6", "12", "18", "24", "36"  }, 1));
     layout.add(makeFloatParam("filter3_cutoff", "Filter 3: Cutoff", 1.0f));
     layout.add(makeFloatParam("filter3_resonance", "Filter 3: Resonance", 0.0f));
 
@@ -914,26 +890,18 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("filterenv3_postdrive", "FilterEnv 3: Post-Drive", 0.5f));
 
     // --- STANDALONE FX FILTER ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("fxfilter_type", 1), "FX Filter: Type",
-        juce::StringArray{ "LPF", "BPF", "HPF", "BRF" }, 0));
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("fxfilter_slope", 1), "FX Filter: Slope",
-        juce::StringArray{ "6", "12", "18", "24", "36" }, 1));
+    layout.add(makeChoiceParam("fxfilter_type", "FX Filter: Type", juce::StringArray{ "LPF", "BPF", "HPF", "BRF"  }, 0));
+    layout.add(makeChoiceParam("fxfilter_slope", "FX Filter: Slope", juce::StringArray{ "6", "12", "18", "24", "36"  }, 1));
     layout.add(makeFloatParam("fxfilter_cutoff", "FX Filter: Cutoff", 1.0f));
     layout.add(makeFloatParam("fxfilter_resonance", "FX Filter: Resonance", 0.0f));
 
     // --- LIMITERS ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_limiter_enable", 1), "Pre-Limiter: Enable",
-        juce::StringArray{ "Off", "On" }, 1));
+    layout.add(makeChoiceParam("pre_limiter_enable", "Pre-Limiter: Enable", juce::StringArray{ "Off", "On"  }, 1));
     layout.add(makeFloatParam("pre_limiter_gain", "Pre-Limiter: Input Gain", 12.0f / 36.0f)); // 0 dB
     layout.add(makeFloatParam("pre_limiter_thresh", "Pre-Limiter: Threshold", 1.0f));          // 0 dB
     layout.add(makeFloatParam("pre_limiter_release", "Pre-Limiter: Release", 0.6296f));       // 50 ms
 
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_limiter_enable", 1), "Post-Limiter: Enable",
-        juce::StringArray{ "Off", "On" }, 1));
+    layout.add(makeChoiceParam("post_limiter_enable", "Post-Limiter: Enable", juce::StringArray{ "Off", "On"  }, 1));
     layout.add(makeFloatParam("post_limiter_gain", "Post-Limiter: Input Gain", 12.0f / 36.0f)); // 0 dB
     layout.add(makeFloatParam("post_limiter_thresh", "Post-Limiter: Threshold", 1.0f));          // 0 dB
     layout.add(makeFloatParam("post_limiter_release", "Post-Limiter: Release", 0.6296f));       // 50 ms
@@ -955,23 +923,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
         "Tempo Delay",       // 12
         "Wave Folder"        // 13
     };
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_fx_1_type", 1), "Pre FX 1: Type", fxChoices, 4)); // Drive
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_fx_2_type", 1), "Pre FX 2: Type", fxChoices, 13)); // Wave Folder
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_fx_3_type", 1), "Pre FX 3: Type", fxChoices, 11)); // RingMod
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("pre_fx_4_type", 1), "Pre FX 4: Type", fxChoices, 7)); // Frequency Shifter
+    layout.add(makeChoiceParam("pre_fx_1_type", "Pre FX 1: Type", fxChoices, 4)); // Drive
+    layout.add(makeChoiceParam("pre_fx_2_type", "Pre FX 2: Type", fxChoices, 13)); // Wave Folder
+    layout.add(makeChoiceParam("pre_fx_3_type", "Pre FX 3: Type", fxChoices, 11)); // RingMod
+    layout.add(makeChoiceParam("pre_fx_4_type", "Pre FX 4: Type", fxChoices, 7)); // Frequency Shifter
 
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_1_type", 1), "Post FX 1: Type", fxChoices, 8)); // Grit FX
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_2_type", 1), "Post FX 2: Type", fxChoices, 3)); // Comb Filter
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_3_type", 1), "Post FX 3: Type", fxChoices, 9)); // Phase Smear
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("post_fx_4_type", 1), "Post FX 4: Type", fxChoices, 1)); // Bell EQ
+    layout.add(makeChoiceParam("post_fx_1_type", "Post FX 1: Type", fxChoices, 8)); // Grit FX
+    layout.add(makeChoiceParam("post_fx_2_type", "Post FX 2: Type", fxChoices, 3)); // Comb Filter
+    layout.add(makeChoiceParam("post_fx_3_type", "Post FX 3: Type", fxChoices, 9)); // Phase Smear
+    layout.add(makeChoiceParam("post_fx_4_type", "Post FX 4: Type", fxChoices, 1)); // Bell EQ
 
     // --- 32 MULTI-INSTANCE FX SLOT PARAMETERS ---
     for (int s = 0; s < 4; ++s) {
@@ -997,9 +957,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     }
 
     // --- 12. WAVE FOLDER ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("wavefolder_type", 1), "WaveFolder: Type",
-        juce::StringArray{ "Off", "On" }, 0));
+    layout.add(makeChoiceParam("wavefolder_type", "WaveFolder: Type", juce::StringArray{ "Off", "On"  }, 0));
     layout.add(makeFloatParam("wavefolder_fold", "WaveFolder: Fold", 0.0f));        // 0 folds
     layout.add(makeFloatParam("wavefolder_bias", "WaveFolder: Bias", 0.5f));        // 0 DC Bias
     layout.add(makeFloatParam("wavefolder_filter", "WaveFolder: Filter", 0.5f));    // Flat (50%)
@@ -1029,9 +987,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("comb_mix", "Comb: Mix", 0.75f));                // +50%:50% (def)
 
     // --- 17. PHASE SMEAR ---
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("phasesmear_type", 1), "Phase Smear: Order",
-        juce::StringArray{ "2nd", "4th" }, 0));
+    layout.add(makeChoiceParam("phasesmear_type", "Phase Smear: Order", juce::StringArray{ "2nd", "4th"  }, 0));
     layout.add(makeFloatParam("phasesmear_amount", "Phase Smear: Amount", 4.0f / 32.0f)); // 4 APFs
     layout.add(makeFloatParam("phasesmear_cutoff", "Phase Smear: Cutoff", 0.62124f));     // 220 Hz
     layout.add(makeFloatParam("phasesmear_resonance", "Phase Smear: Resonance", 0.5f));   // 0% (bipolar center)
@@ -1046,9 +1002,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("amp_level", "Amp: Level", 1.0f));                // 100%
     layout.add(makeFloatParam("amp_pan", "Amp: Pan", 0.5f));                    // Center
     layout.add(makeFloatParam("amp_drive", "Amp: Drive", 0.5f));                // 0 dB
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("amp_limiter", 1), "Amp: Limiter",
-        juce::StringArray{ "Off", "On" }, 1));                                  // On
+    layout.add(makeChoiceParam("amp_limiter", "Amp: Limiter", juce::StringArray{ "Off", "On"  }, 1));                                  // On
 
     // --- 20. AMP ENVELOPE ---
     layout.add(makeFloatParam("ampenv_claps", "AmpEnv: Claps", 0.0f));          // 0 claps
@@ -1079,25 +1033,19 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("modenv1_slope", "ModEnv 1: Slope", 0.5886f));     // Exponential (def)
     layout.add(makeFloatParam("modenv1_depth", "ModEnv 1: Depth", 0.5f));        // 0% (bipolar center)
     layout.add(makeFloatParam("modenv1_decay", "ModEnv 1: Decay", 0.3806f));     // 333 ms
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("modenv1_target", 1), "ModEnv 1: Destination",
-        modChoices, 0));
+    layout.add(makeChoiceParam("modenv1_target", "ModEnv 1: Destination", modChoices, 0));
 
     // --- 25. MOD ENVELOPE 2 ---
     layout.add(makeFloatParam("modenv2_slope", "ModEnv 2: Slope", 0.5886f));     // Exponential (def)
     layout.add(makeFloatParam("modenv2_depth", "ModEnv 2: Depth", 0.5f));        // 0% (bipolar center)
     layout.add(makeFloatParam("modenv2_decay", "ModEnv 2: Decay", 0.3806f));     // 333 ms
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("modenv2_target", 1), "ModEnv 2: Destination",
-        modChoices, 0));
+    layout.add(makeChoiceParam("modenv2_target", "ModEnv 2: Destination", modChoices, 0));
 
     // --- 26. MOD ENVELOPE 3 ---
     layout.add(makeFloatParam("modenv3_slope", "ModEnv 3: Slope", 0.5886f));     // Exponential (def)
     layout.add(makeFloatParam("modenv3_depth", "ModEnv 3: Depth", 0.5f));        // 0% (bipolar center)
     layout.add(makeFloatParam("modenv3_decay", "ModEnv 3: Decay", 0.3806f));     // 333 ms
-    layout.add(std::make_unique<juce::AudioParameterChoice>(
-        juce::ParameterID("modenv3_target", 1), "ModEnv 3: Destination",
-        modChoices, 0));
+    layout.add(makeChoiceParam("modenv3_target", "ModEnv 3: Destination", modChoices, 0));
 
     return layout;
 }
@@ -1263,5 +1211,8 @@ TheKlangFarmerAudioProcessor::ParamModulationInfo TheKlangFarmerAudioProcessor::
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
     return new TheKlangFarmerAudioProcessor();
 }
+
+
+
 
 

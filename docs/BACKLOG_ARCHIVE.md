@@ -4,7 +4,7 @@
 - **Waveshape Edit Modal**:
   - Add quick preset buttons directly into the right-click edit modal: **Sine** (0.0), **Triangle** (0.25), **Saw** (0.5), and **Square** (0.75 / 1.0).
 - **Contextual Quick-Snap Buttons Across the Synth**:
-  - Added via JSON `points_of_interest` system.
+  - Added via JSON `snap_points` system.
 
 
 This document serves as the permanent historical record of completed engineering tasks, feature implementations, bug fixes, and architectural decisions for **The Klang Farmer** and **The Klang Planter**.

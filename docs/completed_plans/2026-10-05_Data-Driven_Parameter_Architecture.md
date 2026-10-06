@@ -6,7 +6,7 @@ This refactor merges the UI Tooltips JSON plan and the Quick-Snap Presets plan i
 
 **Key Benefits:**
 1. **Modularity:** Parameters are defined in highly readable JSON files organized by module (e.g., `carrier.json`, `envelopes.json`, `fx_comb.json`).
-2. **Dynamic UI Generation:** The right-click edit modal will automatically generate "Quick-Snap" preset pills by reading the `points_of_interest` array defined in the JSON.
+2. **Dynamic UI Generation:** The right-click edit modal will automatically generate "Quick-Snap" preset pills by reading the `snap_points` array defined in the JSON.
 3. **Painless Expansion:** Adding the 6 new effects (Priority #4) will simply require dropping a new JSON file into the folder.
 
 ## User Review Required
@@ -44,7 +44,7 @@ Create a new directory `assets/controls/` to house individual module definitions
     "range": { "min": 0.0, "max": 1.0, "step": 0.0005, "skew": 1.0 },
     "default": 0.0,
     "double_click": 0.0,
-    "points_of_interest": [
+    "snap_points": [
       { "value": 0.0, "label": "Sine" },
       { "value": 0.25, "label": "Triangle" },
       { "value": 0.5, "label": "Sawtooth" },
@@ -99,7 +99,7 @@ Inject the parsed metadata directly into the frontend.
 
 #### [MODIFY] `source/UIComponents.cpp` & `source/PluginEditor.cpp`
 - [x] Remove hardcoded tooltips and replace them with `ParameterManager::getTooltip("carrier1_shape")`.
-- [x] Refactor the right-click `SliderCalloutComponent` to automatically fetch `points_of_interest`. If they exist, dynamically instantiate and layout custom `PresetButton` pills above the slider. Clicking a pill fires `slider.setValue()`.
+- [x] Refactor the right-click `SliderCalloutComponent` to automatically fetch `snap_points`. If they exist, dynamically instantiate and layout custom `PresetButton` pills above the slider. Clicking a pill fires `slider.setValue()`.
 
 ### 5. Piecemeal Execution Strategy
 To isolate risk, this plan will be executed incrementally. The agent will pause for user compilation and manual testing after *every* phase before proceeding.
@@ -118,5 +118,5 @@ To isolate risk, this plan will be executed incrementally. The agent will pause 
 ### Manual Verification
 1. Open the plugin in the Standalone wrapper.
 2. Verify all UI elements (knobs, sliders) accurately map to their parameters.
-3. Right-click the **Carrier 1 Shape** slider and verify that the exact points of interest ("Sine", "Triangle", "Sawtooth", "Square", "PWM") appear as clickable preset pills.
+3. Right-click the **Carrier 1 Shape** slider and verify that the exact snap points ("Sine", "Triangle", "Sawtooth", "Square", "PWM") appear as clickable preset pills.
 4. Hover over elements to ensure descriptions and tooltips have accurately propagated from the JSON files.

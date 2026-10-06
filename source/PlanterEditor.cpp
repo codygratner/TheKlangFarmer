@@ -148,8 +148,8 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
     // --- PAIR 1: CARRIER (Red) & MODULATOR (Cyan) ---
     // Carrier: Red accent with Cyan panel tint
-    const juce::Colour colRed = RlyehSound::ParameterManager::getInstance().getThemeColour("colRed", juce::Colour(0xffff3b30));
-    const juce::Colour colCyan = RlyehSound::ParameterManager::getInstance().getThemeColour("colCyan", juce::Colour(0xff00d2ff));
+    const juce::Colour colRed = RlyehSound::ParameterManager::getInstance().getModuleColor("carrier_accent", juce::Colour(0xffff3b30));
+    const juce::Colour colCyan = RlyehSound::ParameterManager::getInstance().getModuleColor("modulator_accent", juce::Colour(0xff00d2ff));
 
     cardCarrier = std::make_unique<ModuleCardComponent>("Carrier", colRed);
     cardCarrier->setPanelTintBaseColour(colCyan);
@@ -178,8 +178,8 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
     setupKnob(carrierShapeSlider, colRed, false, 0.0);
     carrierShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
-    carrierShapeSlider.customFormatText = formatPercent;
-    carrierShapeSlider.customParseText  = parsePercent;
+    carrierShapeSlider.customFormatText = formatWaveshape;
+    carrierShapeSlider.customParseText  = parseWaveshape;
 
     setupKnob(carrierDepthSlider, colCyan, true, 0.5);
     carrierDepthSlider.customFormatText = formatBipolarPercent;
@@ -242,8 +242,8 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
     // --- PAIR 2: PITCH ENV (Silver) & NOISE TRANSIENT (Dark/Silver) ---
     // Pitch Env: Silver accent with Dark Grey panel tint
-    const juce::Colour colSilver = RlyehSound::ParameterManager::getInstance().getThemeColour("colSilver", juce::Colour(0xffcfd8dc));
-    const juce::Colour colDarkGrey = RlyehSound::ParameterManager::getInstance().getThemeColour("colDarkGrey", juce::Colour(0xff263238));
+    const juce::Colour colSilver = RlyehSound::ParameterManager::getInstance().getModuleColor("pitch_env_accent", juce::Colour(0xffcfd8dc));
+    const juce::Colour colDarkGrey = RlyehSound::ParameterManager::getInstance().getModuleColor("transients_accent", juce::Colour(0xff263238));
 
     cardPitchEnv = std::make_unique<ModuleCardComponent>("Pitch Env", colSilver);
     cardPitchEnv->setPanelTintBaseColour(colDarkGrey);
@@ -311,8 +311,8 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     addAndMakeVisible(cardNoise.get());
 
     // --- PAIR 3: FILTER (Blue) & FILTER ENV (Amber) ---
-    const juce::Colour colBlue = RlyehSound::ParameterManager::getInstance().getThemeColour("colBlue", juce::Colour(0xff2979ff));
-    const juce::Colour colAmber = RlyehSound::ParameterManager::getInstance().getThemeColour("colAmber", juce::Colour(0xffffa000));
+    const juce::Colour colBlue = RlyehSound::ParameterManager::getInstance().getModuleColor("filter_accent", juce::Colour(0xff2979ff));
+    const juce::Colour colAmber = RlyehSound::ParameterManager::getInstance().getModuleColor("filter_env_accent", juce::Colour(0xffffa000));
 
     // Filter: Blue accent with Amber panel tint
     cardFilter = std::make_unique<ModuleCardComponent>("Filter", colBlue);
@@ -379,8 +379,8 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     addAndMakeVisible(cardFilterEnv.get());
 
     // --- PAIR 4: AMPLIFIER (Green) & AMP ENVELOPE (Magenta) ---
-    const juce::Colour colGreen = RlyehSound::ParameterManager::getInstance().getThemeColour("colGreen", juce::Colour(0xff00e676));
-    const juce::Colour colMagenta = RlyehSound::ParameterManager::getInstance().getThemeColour("colMagenta", juce::Colour(0xffe040fb));
+    const juce::Colour colGreen = RlyehSound::ParameterManager::getInstance().getModuleColor("amplifier_accent", juce::Colour(0xff00e676));
+    const juce::Colour colMagenta = RlyehSound::ParameterManager::getInstance().getModuleColor("amp_env_accent", juce::Colour(0xffe040fb));
 
     // Amplifier: Green accent with Magenta panel tint
     cardAmp = std::make_unique<ModuleCardComponent>("Amplifier", colGreen);
@@ -633,6 +633,8 @@ void TheKlangPlanterAudioProcessorEditor::updateModControls() {
         // Oscillator: Shape is Waveform, Speed is Frequency or Ratio
         cardMod->setKnobLabel(0, "Shape");
         modShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
+        modShapeSlider.customFormatText = formatWaveshape;
+        modShapeSlider.customParseText = parseWaveshape;
         modShapeSlider.setBipolar(false);
         modShapeSlider.getDefaultValue = []() { return 0.0; };
         modShapeSlider.setDoubleClickReturnValue(true, 0.0);
@@ -779,6 +781,8 @@ void TheKlangPlanterAudioProcessorEditor::timerCallback() {
 
     headerViz.updateData(scopeBuffer.data(), static_cast<int>(scopeBuffer.size()), peakL, peakR, limAct);
 }
+
+
 
 
 

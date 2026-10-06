@@ -1,0 +1,356 @@
+{
+  "planter_filter_cutoff": {
+    "name": "Filter: Cutoff",
+    "description": "Filter Cutoff",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 1
+  },
+  "planter_pitchenv_decay": {
+    "name": "PitchEnv: Decay",
+    "description": "Pitch Envelope Decay",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.3806
+  },
+  "planter_mod_speed": {
+    "name": "Modulator: Speed",
+    "description": "Modulator Speed",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5
+  },
+  "planter_noise_filter": {
+    "name": "Noise: DJ Filter",
+    "description": "Noise DJ Filter",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5
+  },
+  "planter_carrier_depth": {
+    "name": "Carrier: Mod Depth",
+    "description": "Carrier Mod Depth",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5,
+    "default": 0.5,
+    "double_click": 0.5
+  },
+  "planter_amp_vel_slope": {
+    "name": "Amp: Vel Slope",
+    "description": "Amp Velocity Slope",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.75
+  },
+  "planter_filterenv_decay": {
+    "name": "FilterEnv: Decay",
+    "description": "Filter Env Decay",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.3806
+  },
+  "planter_pitchenv_target": {
+    "choices": [
+      "Car",
+      "Mod",
+      "Both",
+      "Opp"
+    ],
+    "description": "Pitch Envelope Target",
+    "name": "PitchEnv: Target",
+    "defaultChoice": 0,
+    "type": "choice"
+  },
+  "planter_amp_pan": {
+    "name": "Amp: Pan",
+    "description": "Amp Pan",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5
+  },
+  "planter_carrier_shape": {
+    "name": "Carrier: Shape",
+    "description": "Carrier Shape",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0,
+    "snap_points": [
+      {
+        "value": 0.0,
+        "label": "Sine"
+      },
+      {
+        "value": 0.2,
+        "label": "Triangle"
+      },
+      {
+        "value": 0.4,
+        "label": "Sawtooth"
+      },
+      {
+        "value": 0.6,
+        "label": "Square"
+      },
+      {
+        "value": 1.0,
+        "label": "PWM"
+      }
+    ],
+    "format": "waveshape"
+  },
+  "planter_filter_slope": {
+    "choices": [
+      "6",
+      "12",
+      "18",
+      "24",
+      "36"
+    ],
+    "description": "Filter Slope",
+    "name": "Filter: Slope",
+    "defaultChoice": 1,
+    "type": "choice"
+  },
+  "planter_noise_sh_rate": {
+    "name": "Noise: S&H Rate",
+    "description": "Noise S&H Rate",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 1
+  },
+  "planter_filter_reso": {
+    "name": "Filter: Resonance",
+    "description": "Filter Resonance",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0
+  },
+  "planter_ampenv_claps": {
+    "name": "AmpEnv: Claps",
+    "description": "Amp Env Claps",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0
+  },
+  "planter_filterenv_slope": {
+    "name": "FilterEnv: Slope",
+    "description": "Filter Env Slope",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5886
+  },
+  "planter_mod_type": {
+    "choices": [
+      "Osc",
+      "Cyclic",
+      "Noise"
+    ],
+    "description": "Modulator Type",
+    "name": "Modulator: Type",
+    "defaultChoice": 0,
+    "type": "choice"
+  },
+  "planter_carrier_pitch": {
+    "name": "Carrier: Pitch",
+    "description": "Carrier Pitch",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5,
+    "default": 0.5,
+    "double_click": 0.5
+  },
+  "planter_pitchenv_depth": {
+    "name": "PitchEnv: Depth",
+    "description": "Pitch Envelope Depth",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5
+  },
+  "planter_mod_track": {
+    "choices": [
+      "Fixed",
+      "Follow",
+      "FM"
+    ],
+    "description": "Modulator Tracking",
+    "name": "Modulator: Tracking",
+    "defaultChoice": 2,
+    "type": "choice"
+  },
+  "planter_mod_shape": {
+    "name": "Modulator: Shape",
+    "description": "Modulator Shape",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0,
+    "snap_points": [
+      {
+        "value": 0.0,
+        "label": "Sine"
+      },
+      {
+        "value": 0.2,
+        "label": "Triangle"
+      },
+      {
+        "value": 0.4,
+        "label": "Sawtooth"
+      },
+      {
+        "value": 0.6,
+        "label": "Square"
+      },
+      {
+        "value": 1.0,
+        "label": "PWM"
+      }
+    ],
+    "format": "waveshape"
+  },
+  "planter_ampenv_slope": {
+    "name": "AmpEnv: Slope",
+    "description": "Amp Env Slope",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5886
+  },
+  "planter_filterenv_depth": {
+    "name": "FilterEnv: Depth",
+    "description": "Filter Env Depth",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5
+  },
+  "planter_pitchenv_slope": {
+    "name": "PitchEnv: Slope",
+    "description": "Pitch Envelope Slope",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5886
+  },
+  "planter_filter_type": {
+    "choices": [
+      "LPF",
+      "BPF",
+      "HPF",
+      "BRF"
+    ],
+    "description": "Filter Type",
+    "name": "Filter: Type",
+    "defaultChoice": 0,
+    "type": "choice"
+  },
+  "planter_amp_drive": {
+    "name": "Amp: Drive",
+    "description": "Amp Drive",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5
+  },
+  "planter_ampenv_clapspeed": {
+    "name": "AmpEnv: Clap Speed",
+    "description": "Amp Env Clap Speed",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.1428
+  },
+  "planter_ampenv_decay": {
+    "name": "AmpEnv: Decay",
+    "description": "Amp Env Decay",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.3806
+  },
+  "planter_noise_crossfade": {
+    "name": "Noise: FM / Noise",
+    "description": "Noise FM / Noise Crossfade",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 1
+  },
+  "planter_amp_vel_floor": {
+    "name": "Amp: Velocity",
+    "description": "Amp Velocity Floor",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5
+  },
+  "planter_filterenv_drive": {
+    "name": "FilterEnv: Drive",
+    "description": "Filter Env Drive",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.5
+  },
+  "planter_carrier_tracking": {
+    "choices": [
+      "MIDI",
+      "Freq",
+      "Note"
+    ],
+    "description": "Carrier Tracking",
+    "name": "Carrier: Tracking",
+    "defaultChoice": 0,
+    "type": "choice"
+  },
+  "planter_noise_decay": {
+    "name": "Noise: Decay",
+    "description": "Noise Decay",
+    "step": 0.001,
+    "min": 0,
+    "type": "float",
+    "max": 1,
+    "defaultFloat": 0.3078
+  }
+}

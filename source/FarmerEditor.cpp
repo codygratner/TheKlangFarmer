@@ -147,7 +147,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(0, "Rate", false, formatChorusRate, parseChorusRate);
             setupK(1, "Depth", false, formatPercent, parsePercent);
             setupK(2, "Feedback", true, formatBipolarPercent, parseBipolarPercent);
-            setupK(3, "Mix", false, formatPercent, parsePercent);
+            setupK(3, "Mix", true, formatWetDry, parseWetDry); knobs[3].setDoubleClickReturnValue(true, 0.5); knobs[3].getDefaultValue = []() { return 0.5; };
             break;
         }
         case 3: { // Comb Filter
@@ -208,7 +208,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(0, "Rate", false, formatFlangerRate, parseFlangerRate);
             setupK(1, "Depth", false, formatPercent, parsePercent);
             setupK(2, "Feedback", true, formatBipolarPercent, parseBipolarPercent);
-            setupK(3, "Mix", false, formatPercent, parsePercent);
+            setupK(3, "Mix", true, formatWetDry, parseWetDry); knobs[3].setDoubleClickReturnValue(true, 0.5); knobs[3].getDefaultValue = []() { return 0.5; };
             break;
         }
         case 7: { // Frequency Shifter
@@ -263,7 +263,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(0, "Rate", false, formatPhaserRate, parsePhaserRate);
             setupK(1, "Depth", false, formatPercent, parsePercent);
             setupK(2, "Feedback", true, formatBipolarPercent, parseBipolarPercent);
-            setupK(3, "Mix", false, formatPercent, parsePercent);
+            setupK(3, "Mix", true, formatWetDry, parseWetDry); knobs[3].setDoubleClickReturnValue(true, 0.5); knobs[3].getDefaultValue = []() { return 0.5; };
             break;
         }
         case 11: { // RingMod
@@ -282,7 +282,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
             setupK(0, "Division", false, formatDelayDiv, parseDelayDiv);
             setupK(1, "Feedback", false, formatPercent, parsePercent);
             setupK(2, "Tone", false, formatDelayTone, parseDelayTone);
-            setupK(3, "Mix", false, formatPercent, parsePercent);
+            setupK(3, "Mix", true, formatWetDry, parseWetDry); knobs[3].setDoubleClickReturnValue(true, 0.5); knobs[3].getDefaultValue = []() { return 0.5; };
             break;
         }
         case 13: { // Wave Folder
@@ -946,6 +946,8 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     setupKnob(carrier1ShapeSlider, juce::Colour(0xff00d2ff), false, 0.0);
     carrier1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
+    carrier1ShapeSlider.customFormatText = formatWaveshape;
+    carrier1ShapeSlider.customParseText = parseWaveshape;
 
     setupKnob(carrier1DepthSlider, juce::Colour(0xff00d2ff), true, 0.5);
     carrier1DepthSlider.customFormatText = formatBipolarPercent;
@@ -1116,6 +1118,8 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
 
     setupKnob(carrier2ShapeSlider, carrier2Colour, false, 0.0);
     carrier2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
+    carrier2ShapeSlider.customFormatText = formatWaveshape;
+    carrier2ShapeSlider.customParseText = parseWaveshape;
 
     setupKnob(carrier2DepthSlider, carrier2Colour, true, 0.5);
     carrier2DepthSlider.customFormatText = formatBipolarPercent;
@@ -2420,6 +2424,8 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
         if (curMod1Type == 0) {
             cardMod1->setKnobLabel(0, "Shape");
             mod1ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
+            mod1ShapeSlider.customFormatText = formatWaveshape;
+            mod1ShapeSlider.customParseText = parseWaveshape;
             mod1ShapeSlider.setBipolar(false);
             mod1ShapeSlider.getDefaultValue = []() { return 0.0; };
             mod1ShapeSlider.setDoubleClickReturnValue(true, 0.0);
@@ -2477,6 +2483,8 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
         if (curMod2Type == 0) {
             cardMod2->setKnobLabel(0, "Shape");
             mod2ShapeSlider.diagramType = RotaryKnobSlider::DiagramType::Waveform;
+            mod2ShapeSlider.customFormatText = formatWaveshape;
+            mod2ShapeSlider.customParseText = parseWaveshape;
             mod2ShapeSlider.setBipolar(false);
             mod2ShapeSlider.getDefaultValue = []() { return 0.0; };
             mod2ShapeSlider.setDoubleClickReturnValue(true, 0.0);
@@ -2795,6 +2803,7 @@ void TheKlangFarmerAudioProcessorEditor::mouseDrag(const juce::MouseEvent& e) {
 void TheKlangFarmerAudioProcessorEditor::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& /*d*/) {
     handleCardInteraction(e.eventComponent);
 }
+
 
 
 

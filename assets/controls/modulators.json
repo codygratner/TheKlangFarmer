@@ -1,32 +1,36 @@
 {
+  "ui_colors": {
+    "modulator_accent": "0xff00d2ff"
+  },
   "mod1_shape": {
     "type": "float",
     "name": "Modulator 1: Shape",
     "description": "Modulator 1 waveform shape / symmetry",
     "is_bipolar": false,
     "default": 0.0,
-    "points_of_interest": [
+    "snap_points": [
       {
         "value": 0.0,
         "label": "Sine"
       },
       {
-        "value": 0.25,
+        "value": 0.2,
         "label": "Triangle"
       },
       {
-        "value": 0.5,
+        "value": 0.4,
         "label": "Sawtooth"
       },
       {
-        "value": 0.75,
+        "value": 0.6,
         "label": "Square"
       },
       {
         "value": 1.0,
         "label": "PWM"
       }
-    ]
+    ],
+    "format": "waveshape"
   },
   "mod1_speed": {
     "type": "float",
@@ -41,28 +45,29 @@
     "description": "Modulator 2 waveform shape / symmetry",
     "is_bipolar": false,
     "default": 0.0,
-    "points_of_interest": [
+    "snap_points": [
       {
         "value": 0.0,
         "label": "Sine"
       },
       {
-        "value": 0.25,
+        "value": 0.2,
         "label": "Triangle"
       },
       {
-        "value": 0.5,
+        "value": 0.4,
         "label": "Sawtooth"
       },
       {
-        "value": 0.75,
+        "value": 0.6,
         "label": "Square"
       },
       {
         "value": 1.0,
         "label": "PWM"
       }
-    ]
+    ],
+    "format": "waveshape"
   },
   "mod2_speed": {
     "type": "float",
@@ -77,7 +82,7 @@
     "description": "Ring modulator (Carrier 1 x Carrier 2) mix level",
     "is_bipolar": false,
     "default": 0.0,
-    "points_of_interest": [
+    "snap_points": [
       {
         "value": 0.0,
         "label": "0%"
@@ -98,28 +103,29 @@
     "description": "",
     "is_bipolar": false,
     "default": 0.0,
-    "points_of_interest": [
+    "snap_points": [
       {
         "value": 0.0,
         "label": "Sine"
       },
       {
-        "value": 0.25,
+        "value": 0.2,
         "label": "Triangle"
       },
       {
-        "value": 0.5,
+        "value": 0.4,
         "label": "Sawtooth"
       },
       {
-        "value": 0.75,
+        "value": 0.6,
         "label": "Square"
       },
       {
         "value": 1.0,
         "label": "PWM"
       }
-    ]
+    ],
+    "format": "waveshape"
   },
   "ringmod_rate": {
     "type": "float",

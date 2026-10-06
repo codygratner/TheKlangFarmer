@@ -8,7 +8,7 @@
 
 namespace RlyehSound {
 
-struct PointOfInterest {
+struct SnapPoint {
     float value { 0.0f };
     juce::String label;
 };
@@ -21,13 +21,14 @@ struct ControlDef {
 
     // Float specifics
     bool isBipolar { false };
+    juce::String format;
     float min { 0.0f };
     float max { 1.0f };
     float step { 0.0005f };
     float skew { 1.0f };
     float defaultFloat { 0.0f };
     float doubleClickValue { 0.0f };
-    std::vector<PointOfInterest> pointsOfInterest;
+    std::vector<SnapPoint> snapPoints;
 
     // Choice specifics
     juce::StringArray choices;
@@ -58,11 +59,9 @@ public:
         return {};
     }
 
-    juce::Colour getThemeColour(const juce::String& colorId, juce::Colour defaultColour = juce::Colours::transparentBlack) const;
-    const juce::var& getThemeData() const { return themeData; }
 
-    void reloadFromJson(const juce::String& jsonString, bool isTheme = false);
-
+    juce::Colour getModuleColor(const juce::String& colorId, juce::Colour defaultFallback = juce::Colours::transparentBlack) const;
+    void reloadFromJson(const juce::String& jsonString);
 private:
     ParameterManager();
     ~ParameterManager() = default;
@@ -70,10 +69,16 @@ private:
     ParameterManager(const ParameterManager&) = delete;
     ParameterManager& operator=(const ParameterManager&) = delete;
 
+    std::unordered_map<juce::String, juce::Colour> moduleColors;
     std::unordered_map<juce::String, ControlDef> controls;
-    juce::var themeData;
 
-    void parseJsonBlob(const char* data, int size, bool isTheme = false);
+    void parseJsonBlob(const char* data, int size);
 };
 
 } // namespace RlyehSound
+
+
+
+
+
+

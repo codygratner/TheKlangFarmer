@@ -1,4 +1,9 @@
 {
+  "ui_colors": {
+    "pitch_env_accent": "0xffcfd8dc",
+    "filter_env_accent": "0xffffa000",
+    "amp_env_accent": "0xffe040fb"
+  },
   "pitchenv1_slope": {
     "type": "float",
     "name": "PitchEnv 1: Slope",

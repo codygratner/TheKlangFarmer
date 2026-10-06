@@ -187,7 +187,7 @@ public:
     
     juce::String resolveToHex(const juce::String& val) {
         if (val.startsWithIgnoreCase("0x")) return val;
-        return RlyehSound::ParameterManager::getInstance().getThemeColour(val).toDisplayString(true);
+        return juce::Colour(0xffcfd8dc).toDisplayString(true);
     }
     
     void updateButtonColor() {
@@ -335,7 +335,7 @@ MainComponent::MainComponent()
 
         addAndMakeVisible(refreshButton);
     refreshButton.onClick = [this]() { 
-        RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent(), false);
+        RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent());
         auto xml = navigationTree.getOpennessState(false);
         auto* selected = navigationTree.getSelectedItem(0);
         juce::String selName = selected ? static_cast<EditorTreeItem*>(selected)->name : "";
@@ -429,7 +429,7 @@ MainComponent::MainComponent()
                     }
                 }
                 
-                RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent(), false);
+                RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent());
                 buildTree();
                 
                 if (auto* dw = comp->findParentComponentOfClass<juce::DialogWindow>()) {
@@ -731,9 +731,9 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     emptyPlaceholder.setVisible(false);
 
     if (isTheme) {
-        RlyehSound::ParameterManager::getInstance().reloadFromJson(jsonString, true);
+        RlyehSound::ParameterManager::getInstance().reloadFromJson(jsonString);
     } else {
-        RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent(), false);
+        RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent());
     }
     
     previewWrapper.deleteAllChildren();
@@ -768,15 +768,14 @@ if (isTheme && parsed.isObject()) {
     
     if (isTheme) {
         auto* card = new ModuleCardComponent("Theme Preview", 
-            RlyehSound::ParameterManager::getInstance().getThemeColour("colRed"));
+            juce::Colour(0xffff3b30));
         previewWrapper.addAndMakeVisible(card);
         card->setBounds(10, 10, 280, 200);
     } else {
         if (parsed.isObject()) {
             auto moduleConfig = parsed;
             
-            juce::Colour c = RlyehSound::ParameterManager::getInstance().getThemeColour(
-                moduleConfig.getProperty("color", "colSilver").toString());
+            juce::Colour c = juce::Colour(0xffcfd8dc);
             auto styleStr = moduleConfig.getProperty("style", "StandardDark").toString();
             auto style = (styleStr == "DoepferSilver") ? ModuleCardComponent::PanelStyle::DoepferSilver : ModuleCardComponent::PanelStyle::StandardDark;
             
@@ -887,15 +886,15 @@ if (isTheme && parsed.isObject()) {
                                                         if (paramId.containsIgnoreCase("target")) {
                                 card->setSelectorAtBottom(true);
                                 if (currentProductId == "tkp") {
-                                    juce::Colour colRed = RlyehSound::ParameterManager::getInstance().getThemeColour("colRed");
-                                    juce::Colour colCyan = RlyehSound::ParameterManager::getInstance().getThemeColour("colCyan");
+                                    juce::Colour colRed = juce::Colour(0xffff3b30);
+                                    juce::Colour colCyan = juce::Colour(0xffcfd8dc);
                                     box->setItemStyle(0, { colRed,  std::nullopt, std::nullopt });
                                     box->setItemStyle(1, { colCyan, std::nullopt, std::nullopt });
                                     box->setItemStyle(2, { colCyan, colRed,       colRed       });
                                     box->setItemStyle(3, { colRed,  colCyan,      colCyan      });
                                 } else {
-                                    juce::Colour colCarrier = RlyehSound::ParameterManager::getInstance().getThemeColour("colCyan");
-                                    juce::Colour colMod = RlyehSound::ParameterManager::getInstance().getThemeColour("colOrange");
+                                    juce::Colour colCarrier = juce::Colour(0xffcfd8dc);
+                                    juce::Colour colMod = juce::Colour(0xffcfd8dc);
                                     box->setItemStyle(0, { colCarrier, std::nullopt, std::nullopt });
                                     box->setItemStyle(1, { colMod, std::nullopt, std::nullopt });
                                     box->setItemStyle(2, { colMod, colCarrier, colCarrier });
@@ -1210,6 +1209,9 @@ void MainComponent::resized() {
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
 }
+
+
+
 
 
 

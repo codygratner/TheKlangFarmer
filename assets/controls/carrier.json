@@ -1,4 +1,7 @@
 {
+  "ui_colors": {
+    "carrier_accent": "0xffff3b30"
+  },
   "carrier1_shape": {
     "type": "float",
     "name": "Carrier 1: Shape",
@@ -12,28 +15,29 @@
     },
     "default": 0.0,
     "double_click": 0.0,
-    "points_of_interest": [
+    "snap_points": [
       {
         "value": 0.0,
         "label": "Sine"
       },
       {
-        "value": 0.25,
+        "value": 0.2,
         "label": "Triangle"
       },
       {
-        "value": 0.5,
+        "value": 0.4,
         "label": "Sawtooth"
       },
       {
-        "value": 0.75,
+        "value": 0.6,
         "label": "Square"
       },
       {
         "value": 1.0,
         "label": "PWM"
       }
-    ]
+    ],
+    "format": "waveshape"
   },
   "carrier1_tracking": {
     "type": "choice",
@@ -45,5 +49,84 @@
       "Note"
     ],
     "default": 0
+  },
+  "carrier1_pitch": {
+    "type": "float",
+    "name": "Carrier 1: Pitch / Freq",
+    "description": "",
+    "is_bipolar": true,
+    "default": 0.5,
+    "double_click": 0.5,
+    "default_label": "0 st"
+  },
+  "carrier1_depth": {
+    "type": "float",
+    "name": "Carrier 1: Modulation Depth",
+    "description": "",
+    "is_bipolar": true,
+    "default": 0.5,
+    "double_click": 0.5,
+    "default_label": "0% Depth"
+  },
+  "carrier2_pitch": {
+    "type": "float",
+    "name": "Carrier 2: Pitch / Freq",
+    "description": "",
+    "is_bipolar": true,
+    "default": 0.5,
+    "double_click": 0.5,
+    "default_label": "0 st"
+  },
+  "carrier2_shape": {
+    "type": "float",
+    "name": "Carrier 2: Shape",
+    "description": "",
+    "is_bipolar": false,
+    "default": 0.0,
+    "double_click": 0.0,
+    "snap_points": [
+      {
+        "value": 0.0,
+        "label": "Sine"
+      },
+      {
+        "value": 0.2,
+        "label": "Triangle"
+      },
+      {
+        "value": 0.4,
+        "label": "Sawtooth"
+      },
+      {
+        "value": 0.6,
+        "label": "Square"
+      },
+      {
+        "value": 1.0,
+        "label": "PWM"
+      }
+    ],
+    "format": "waveshape"
+  },
+  "carrier2_depth": {
+    "type": "float",
+    "name": "Carrier 2: Modulation Depth",
+    "description": "",
+    "is_bipolar": true,
+    "default": 0.5,
+    "double_click": 0.5,
+    "default_label": "0% Depth"
+  },
+  "carrier2_tracking": {
+    "type": "choice",
+    "name": "Carrier 2: Tracking",
+    "description": "",
+    "choices": [
+      "MIDI",
+      "Freq",
+      "Note"
+    ],
+    "default": 0,
+    "double_click": 0
   }
 }

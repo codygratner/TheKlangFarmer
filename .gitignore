@@ -15,3 +15,4 @@ context_snapshot*.md
 PLAN_BACKUP*.md
 # Build artifacts
 /current_build/
+current_build/

@@ -1,4 +1,7 @@
 {
+  "ui_colors": {
+    "filter_accent": "0xff2979ff"
+  },
   "drive_filter": {
     "type": "float",
     "name": "Drive: Filter",
@@ -53,29 +56,7 @@
     "name": "WaveFolder: Filter",
     "description": "",
     "is_bipolar": false,
-    "default": 0.0,
-    "points_of_interest": [
-      {
-        "value": 0.0,
-        "label": "Sine"
-      },
-      {
-        "value": 0.25,
-        "label": "Triangle"
-      },
-      {
-        "value": 0.5,
-        "label": "Sawtooth"
-      },
-      {
-        "value": 0.75,
-        "label": "Square"
-      },
-      {
-        "value": 1.0,
-        "label": "PWM"
-      }
-    ]
+    "default": 0.0
   },
   "eq_filter": {
     "type": "float",

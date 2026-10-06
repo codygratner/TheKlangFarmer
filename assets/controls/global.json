@@ -1,45 +1,6 @@
 {
-  "mixer_noise_level": {
-    "type": "float",
-    "name": "Mixer: Noise Level",
-    "description": "Transients noise generator mix level",
-    "is_bipolar": false,
-    "default": 0.0,
-    "points_of_interest": [
-      {
-        "value": 0.0,
-        "label": "0%"
-      },
-      {
-        "value": 0.5,
-        "label": "50%"
-      },
-      {
-        "value": 1.0,
-        "label": "100%"
-      }
-    ]
-  },
-  "drive_amount": {
-    "type": "float",
-    "name": "Drive: Amount",
-    "description": "",
-    "is_bipolar": false,
-    "default": 0.0
-  },
-  "drive_bias": {
-    "type": "float",
-    "name": "Drive: Bias",
-    "description": "",
-    "is_bipolar": false,
-    "default": 0.0
-  },
-  "pre_limiter_gain": {
-    "type": "float",
-    "name": "Pre-Limiter: Input Gain",
-    "description": "Input boost gain into the pre-limiter",
-    "is_bipolar": false,
-    "default": 0.333333
+  "ui_colors": {
+    "amplifier_accent": "0xff00e676"
   },
   "pre_limiter_thresh": {
     "type": "float",
@@ -54,13 +15,6 @@
     "description": "Release recovery time for the pre-limiter",
     "is_bipolar": false,
     "default": 0.6296
-  },
-  "post_limiter_gain": {
-    "type": "float",
-    "name": "Post-Limiter: Input Gain",
-    "description": "Input boost gain into the master post-limiter",
-    "is_bipolar": false,
-    "default": 0.333333
   },
   "post_limiter_thresh": {
     "type": "float",
@@ -89,7 +43,8 @@
     "description": "Stereo panorama position (Left <-> Right)",
     "is_bipolar": true,
     "default": 0.5,
-    "points_of_interest": [
+    "double_click": 0.5,
+    "snap_points": [
       {
         "value": 0.0,
         "label": "Left"
@@ -102,8 +57,7 @@
         "value": 1.0,
         "label": "Right"
       }
-    ],
-    "double_click": 0.5
+    ]
   },
   "amp_drive": {
     "type": "float",
@@ -192,7 +146,7 @@
     "description": "Subtle stereo position wander per note strike",
     "is_bipolar": false,
     "default": 0.0,
-    "points_of_interest": [
+    "snap_points": [
       {
         "value": 0.0,
         "label": "Left"
@@ -246,5 +200,33 @@
       "On"
     ],
     "default": 0
+  },
+  "pre_limiter_gain": {
+    "type": "float",
+    "name": "Pre-Limiter: Input Gain",
+    "description": "Input boost gain into the pre-limiter",
+    "is_bipolar": false,
+    "default": 0.333333
+  },
+  "post_limiter_gain": {
+    "type": "float",
+    "name": "Post-Limiter: Input Gain",
+    "description": "Input boost gain into the master post-limiter",
+    "is_bipolar": false,
+    "default": 0.333333
+  },
+  "drive_amount": {
+    "type": "float",
+    "name": "Drive: Amount",
+    "description": "",
+    "is_bipolar": false,
+    "default": 0.0
+  },
+  "drive_bias": {
+    "type": "float",
+    "name": "Drive: Bias",
+    "description": "",
+    "is_bipolar": false,
+    "default": 0.0
   }
 }
