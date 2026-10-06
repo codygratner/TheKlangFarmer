@@ -789,11 +789,30 @@ if (isTheme && parsed.isObject()) {
         card->setBounds(10, 10, 280, 200);
     } else if (currentProductId == "all_controls") {
         if (parsed.isObject()) {
-            int yOffset = 10;
             const char* products[] = { "tkf", "tkm", "tkp", "tks" };
             const char* prodNames[] = { "The Klang Farmer", "The Klang Mill", "The Klang Planter", "The Klang Seed" };
+            const char* btnNames[] = { "Farmer", "Mill", "Planter", "Seed" };
+            
+            int btnX = 10;
+            for (int p = 0; p < 4; ++p) {
+                auto* btn = new juce::TextButton(btnNames[p]);
+                btn->setClickingTogglesState(true);
+                btn->setRadioGroupId(100);
+                btn->setToggleState(activePreviewProduct == products[p], juce::dontSendNotification);
+                btn->onClick = [this, prod = juce::String(products[p])]() {
+                    activePreviewProduct = prod;
+                    syncJsonToPreview("");
+                };
+                previewWrapper.addAndMakeVisible(btn);
+                btn->setBounds(btnX, 10, 60, 24);
+                btnX += 65;
+            }
+            
+            int yOffset = 45;
+            int cardsRendered = 0;
             
             for (int p = 0; p < 4; ++p) {
+                if (activePreviewProduct != products[p]) continue;
                 juce::File layoutFile = getAssetFile("layouts", juce::String(products[p]) + "_layout.json");
                 if (!layoutFile.existsAsFile()) continue;
                 
@@ -868,6 +887,7 @@ if (isTheme && parsed.isObject()) {
                             previewWrapper.addAndMakeVisible(card);
                             card->setBounds(10, yOffset, 280, 420);
                             yOffset += 430;
+                            cardsRendered++;
                         };
                         
                         if (pObj->hasProperty("parameters")) {
@@ -881,6 +901,14 @@ if (isTheme && parsed.isObject()) {
                         }
                     }
                 }
+            }
+            
+            if (cardsRendered == 0) {
+                auto* emptyLbl = new juce::Label({}, "No cards in this plugin use these parameters.");
+                emptyLbl->setColour(juce::Label::textColourId, juce::Colours::grey);
+                emptyLbl->setJustificationType(juce::Justification::centred);
+                previewWrapper.addAndMakeVisible(emptyLbl);
+                emptyLbl->setBounds(10, yOffset + 20, 280, 40);
             }
         }
     } else {

@@ -64,6 +64,7 @@ private:
     juce::StretchableLayoutResizerBar treeSplitter;
     
     juce::String currentProductId;
+    juce::String activePreviewProduct { "tkf" };
     juce::String currentPageId;
     juce::String currentCardId;
     juce::String currentParamTarget;
