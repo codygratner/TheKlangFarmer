@@ -21,6 +21,7 @@ To achieve your exact layout request ("1 card and 4 parameters per page, fill up
 
 **CSS Layout Rules:**
 - `@media print { .card-container { page-break-after: always; } }` guarantees exactly one Card per printed page.
+- **Visual Reference**: The script will embed an `<img>` tag of the corresponding UI Card at the top of each page (using cropped images from the `screenshots/` directory) so you have immediate visual context of what the parameters look like.
 - Massive font sizes (`font-size: 24px`) to fill the page.
 - Differences will be wrapped in `<mark style="background-color: #ffcccc; font-weight: bold;">` to immediately draw your eye.
 
