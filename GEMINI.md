@@ -74,6 +74,11 @@
 - **Allowed Types**: `feat:` (new features), `fix:` (bug fixes), `refactor:` (code restructuring), `chore:` (tooling, dependencies), `docs:` (documentation/plans).
 - **Example**: `feat(presets): add JSON preset browser modal`
 
+## Strict Git Branch Safety Gate (NEVER Work Directly on Master/Main)
+- **Branch Required for All Work**: Under no circumstances should new features, refactors, audits, or bug fixes be developed or committed directly on the `master` or `main` branch.
+- **Mandatory Branch Creation**: Before modifying any source files, assets, or beginning execution of a plan/task, you MUST check the active branch (`git branch --show-current`). If on `master` or `main`, you MUST immediately create and switch to a descriptive branch (`git checkout -b feat/<slug>` or `feature/<slug>`).
+- **Explicit Override Only**: You may ONLY work or commit directly on `master`/`main` if the user explicitly orders you to do so in the chat (e.g., "commit to master" or "do this on master"). Never assume permission.
+
 ## Strict Debugging Heuristics
 - **Initialization Order First**: When encountering garbage data, parse failures, or unexplained crashes during asset loading, you must ALWAYS verify the C++ object lifecycle and static initialization order *before* investigating file encoding or unicode issues. Memory corruption masquerades as unicode errors.
 - **JSON Merge Priority (The Overwrite Trap)**: When loading multiple JSON files into a central manager, strictly verify the logical sequence. Base/Master JSON files MUST be loaded *first*, followed by specific modules/effects. If loaded out of order, the master file will silently overwrite the specific module's data. Always verify the file iteration sequence before debugging "missing" parameters.
