@@ -161,6 +161,19 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Replace conditional phase wrapping with 32-bit fixed-point integer phase accumulators (`uint32_t`) and power-of-two lookup table indexing with bitwise masking (`& 4095`).
   - Completely eliminates CPU branch mispredictions and CRT transcendentals in hot FM feedback and cross-modulation loops.
 
+### 0.8. Automated VST3 Parameter Validation Suite & Headless `pluginval` Runner
+*Goal: Systematically validate 100% of registered VST3 parameters across The Klang Farmer and The Klang Planter through an in-engine 6-pillar reflection suite, backed by a portable headless pluginval runner.*
+- **In-Engine 6-Pillar Parameter Suite (`test/gui_tests.cpp` / `PluginIntensiveTestSuite`)**:
+  1. **Dynamic Reflection**: Recursively sweeps 100% of `processor.getParameters()` for both plugins without hardcoded parameter lists.
+  2. **Normalization Roundtrip**: Asserts `convertTo0to1(convertFrom0to1(x)) == x` across `[0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]` within floating-point epsilon.
+  3. **Boundary Clamping**: Tests out-of-bounds input (-1.0, 2.0) to mathematically verify parameters clamp safely without underflow or overflow.
+  4. **JSON Schema Parity**: Verifies all registered parameter IDs exist in `assets/controls/*.json` with matching defaults, min/max ranges, and skew factors.
+  5. **State Serialization Roundtrip**: Saves APVTS state to XML/MemoryBlock &rarr; randomizes all parameters &rarr; restores state &rarr; asserts 100% restoration parity.
+  6. **DSP Audio Smoke Pass**: Sweeps parameters from 0.0 to 1.0 while pumping audio through `processBlock()` to prove zero NaNs, Infs, or divisions by zero under rapid host automation.
+- **Headless `pluginval` Fallback Runner (`tools/pluginval.exe`)**:
+  - Integrate a portable, lightweight Tracktion `pluginval` binary into `tools/`.
+  - Runs headless VST3 COM interface validation, bus negotiation, and host thread-safety compliance checks at strictness level 5.
+
 ### 0. Automated Version Bump Guardrail (`/cut-release` Skill)
 *Goal: Formalize the "Version Bump = Clean Slate" workflow by building a dedicated AGY slash command to handle version bumps safely.*
 - **Action**: Build `C:\Users\codyg\.gemini\config\skills\cut-release\SKILL.md`.
