@@ -331,8 +331,8 @@ MainComponent::MainComponent()
       treeSplitter(&horizontalLayout, 1, false)
 {
     addAndMakeVisible(navigationTabs);
-    navigationTabs.addTab("LAYOUTS", juce::Colours::transparentBlack, &layoutsTree, false);
     navigationTabs.addTab("CONTROLS", juce::Colours::transparentBlack, &controlsTree, false);
+    navigationTabs.addTab("LAYOUTS", juce::Colours::transparentBlack, &layoutsTree, false);
     layoutsTree.setMultiSelectEnabled(false);
     controlsTree.setMultiSelectEnabled(false);
     navigationTabs.getTabbedButtonBar().setMinimumTabScaleFactor(0.5);
@@ -547,7 +547,8 @@ void MainComponent::buildTree() {
     const char* productIds[] = { "tkf", "tkm", "tkp", "tks" };
     
     for (int p = 0; p < 4; ++p) {
-        auto* prodNode = new EditorTreeItem(this, products[p], "product", productIds[p]);
+        auto* lProdNode = new EditorTreeItem(this, products[p], "product", productIds[p]);
+        auto* cProdNode = new EditorTreeItem(this, products[p], "product", productIds[p]);
         
         juce::String layoutFile = juce::String(productIds[p]) + "_layout.json";
         auto file = getAssetFile("layouts", layoutFile);
@@ -560,35 +561,58 @@ void MainComponent::buildTree() {
                         auto* pObj = prop.value.getDynamicObject();
                         if (pObj->hasProperty("parameters")) {
                             juce::String cardName = prop.name.toString();
-                            auto* cardNode = new EditorTreeItem(this, cardName, "card_theme", productIds[p], "", cardName);
-                            prodNode->addSubItem(cardNode);
+                            lProdNode->addSubItem(new EditorTreeItem(this, cardName, "card_theme", productIds[p], "", cardName));
+                            
+                            auto* cCardNode = new EditorTreeItem(this, cardName, "card", productIds[p], "", cardName);
+                            auto params = pObj->getProperty("parameters");
+                            if (params.isArray()) {
+                                int i = 1;
+                                for (auto& param : *params.getArray()) {
+                                    cCardNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", productIds[p], "", cardName, param.toString()));
+                                }
+                            }
+                            cProdNode->addSubItem(cCardNode);
                         } else {
                             juce::String pageName = prop.name.toString();
-                            auto* pageNode = new EditorTreeItem(this, pageName, "page", productIds[p], pageName);
+                            auto* lPageNode = new EditorTreeItem(this, pageName, "page", productIds[p], pageName);
+                            auto* cPageNode = new EditorTreeItem(this, pageName, "page", productIds[p], pageName);
+                            
                             for (auto& cardProp : pObj->getProperties()) {
                                 juce::String cardName = cardProp.name.toString();
-                                auto* cardNode = new EditorTreeItem(this, cardName, "card_theme", productIds[p], pageName, cardName);
-                                pageNode->addSubItem(cardNode);
+                                lPageNode->addSubItem(new EditorTreeItem(this, cardName, "card_theme", productIds[p], pageName, cardName));
+                                
+                                auto* cCardNode = new EditorTreeItem(this, cardName, "card", productIds[p], pageName, cardName);
+                                if (cardProp.value.isObject()) {
+                                    auto params = cardProp.value.getDynamicObject()->getProperty("parameters");
+                                    if (params.isArray()) {
+                                        int i = 1;
+                                        for (auto& param : *params.getArray()) {
+                                            cCardNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", productIds[p], pageName, cardName, param.toString()));
+                                        }
+                                    }
+                                }
+                                cPageNode->addSubItem(cCardNode);
                             }
-                            prodNode->addSubItem(pageNode);
+                            lProdNode->addSubItem(lPageNode);
+                            cProdNode->addSubItem(cPageNode);
                         }
                     }
                 }
             }
         }
-        lRoot->addSubItem(prodNode);
+        lRoot->addSubItem(lProdNode);
+        cRoot->addSubItem(cProdNode);
     }
     
     auto* layoutsRootNode = new EditorTreeItem(this, "Raw Layout JSONs", "product", "all_layouts");
     juce::DirectoryIterator iterL(getAssetFile("layouts", ""), false, "*.json");
     while (iterL.next()) {
         auto f = iterL.getFile();
-        juce::String fileName = f.getFileName();
-        juce::String pageId = f.getFileNameWithoutExtension();
-        layoutsRootNode->addSubItem(new EditorTreeItem(this, fileName, "layout_file", "all_layouts", pageId));
+        layoutsRootNode->addSubItem(new EditorTreeItem(this, f.getFileName(), "layout_file", "all_layouts", f.getFileNameWithoutExtension()));
     }
     lRoot->addSubItem(layoutsRootNode);
     
+    auto* controlsRootNode = new EditorTreeItem(this, "Raw Control JSONs", "product", "all_controls");
     juce::DirectoryIterator iterC(getAssetFile("controls", ""), false, "*.json");
     while (iterC.next()) {
         auto f = iterC.getFile();
@@ -606,8 +630,9 @@ void MainComponent::buildTree() {
                 }
             }
         }
-        cRoot->addSubItem(fileNode);
+        controlsRootNode->addSubItem(fileNode);
     }
+    cRoot->addSubItem(controlsRootNode);
     
     layoutsTree.setRootItem(lRoot);
     layoutsTree.setRootItemVisible(false);
@@ -714,18 +739,16 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
         }
         
         layoutJsonDocument.replaceAllContent(originalLayoutJson);
-        controlsJsonDocument.replaceAllContent(originalControlsJson);        if (item->itemType == "card_theme" || item->itemType == "layout_file") {
-            jsonSplitterLayout.setItemLayout(0, -1.0, -1.0, -1.0); // Full layout
-            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);          // Hide splitter
-            jsonSplitterLayout.setItemLayout(2, 0, 0, 0);          // Hide controls
-        } else if (item->itemType == "card_param" || item->itemType == "control_file") {
-            jsonSplitterLayout.setItemLayout(0, 0, 0, 0);          // Hide layout
-            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);          // Hide splitter
-            jsonSplitterLayout.setItemLayout(2, -1.0, -1.0, -1.0); // Full controls
-        } else {
-            jsonSplitterLayout.setItemLayout(0, -0.1, -0.9, -0.5);
-            jsonSplitterLayout.setItemLayout(1, 8, 8, 8);
-            jsonSplitterLayout.setItemLayout(2, -0.1, -0.9, -0.5);
+        controlsJsonDocument.replaceAllContent(originalControlsJson);
+        
+        if (navigationTabs.getCurrentTabIndex() == 1) { // LAYOUTS
+            jsonSplitterLayout.setItemLayout(0, -1.0, -1.0, -1.0);
+            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);          
+            jsonSplitterLayout.setItemLayout(2, 0, 0, 0);          
+        } else { // CONTROLS
+            jsonSplitterLayout.setItemLayout(0, 0, 0, 0);          
+            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);          
+            jsonSplitterLayout.setItemLayout(2, -1.0, -1.0, -1.0); 
         }
         resized();
         
