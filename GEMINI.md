@@ -101,6 +101,7 @@
 - **Scope**: This applies strictly to Source Code. Documentation files (like `BACKLOG_ARCHIVE.md` or PLAN artifacts) are exempt and should be preserved as requested.
 ## Strict Build Validation & Deployment
 - **Always Deploy**: Whenever you successfully build the project and fix a bug or add a feature, you MUST ensure you run the uild-validate skill or execute deploy_vst3.bat to copy the generated .exe and .vst3 artifacts into the current_build/ directory and C:\Program Files\Common Files\VST3\. Do not leave the user looking at stale builds.
+- **Mandatory Validation Hook**: You must **exclusively** use the uild-validate skill to compile the project (which runs tests and triggers deployment automatically), rather than running manual cmake --build commands.
 
 ## Strict Test-Driven Guardrail (Mandatory Test Parity)
 - **Zero Orphaned Features**: Under no circumstances should a new DSP algorithm, audio parameter, UI card, page, modal, or editor tool be merged without corresponding test coverage in `test/dsp_tests.cpp` and `test/gui_tests.cpp`.
