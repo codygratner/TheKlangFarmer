@@ -175,6 +175,38 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 
 ---
 
+## 🚀 Milestone: v0.6.0 "The Visual Polish & UI Mastery Update"
+*Focus: Professional Boutique Aesthetics, High-DPI Scaling, 60 FPS Visualizers, and Tactile Industrial Hardware Styling.*
+
+### 1. Dynamic UI Scaling (100% to 200%) & High-DPI Vector Crispness
+*Goal: Guarantee razor-sharp visuals on 4K, 5K, and Retina displays.*
+- **Interactive Free Resizing**: Bottom-right corner drag handle allowing smooth proportional scaling with fixed aspect ratio.
+- **Header Zoom Presets**: Stepped zoom selector (100%, 125%, 150%, 175%, 200%) persisted in global config JSON.
+- **100% Vector Rendering**: Replace any remaining raster graphics with pure JUCE vector paths and procedural glyphs so lines never blur at high scaling factors.
+
+### 2. Tactile Industrial Chassis Shading & Depth (Baby Audio / Elektron Aesthetic)
+*Goal: Transform flat 2D cards into a rich, tactile piece of boutique hardware.*
+- **Subtle Drop Shadows & Recessed Bezels**: Procedural soft drop shadows behind cards and sunken, beveled card slots.
+- **Chassis Texturing**: Powder-coated matte chassis background rendering with brushed aluminum card borders.
+- **Tactile Button Physics**: Depressed click animations with shadow shifts on buttons and selector steppers.
+
+### 3. 60 FPS Smooth Visualizers, Peak Meters & Realistic LED Glow
+*Goal: Bring the plugin to life with fluid, responsive feedback.*
+- **Tear-Free 60 FPS Oscilloscope**: Lock-free circular FIFO streaming audio waveform points to `MiniOscilloscopeComponent` rendering at a solid 60 FPS with zero audio-thread overhead.
+- **Analog-Style Meter Ballistics**: Smooth peak meters with calibrated attack and gentle exponential decay.
+- **Realistic LED Bloom**: Soft radial bloom/glow shaders for active LEDs, indicators, and visualizer traces.
+
+### 4. Curated Theme Palette Presets (JSON Driven)
+*Goal: Provide distinctive, switchable visual flavors for different studio moods.*
+- Author curated, pre-made theme palettes in `assets/themes/`:
+  - **Industrial Carbon (Default)**: Dark matte charcoal chassis with warm amber & orange accents.
+  - **Vintage Hardware (80s Cream)**: Retro off-white chassis with classic slate blue & brick red buttons.
+  - **Cyberpunk Neon**: Deep obsidian black with electric cyan, neon magenta, and radioactive green indicators.
+  - **High-Contrast Dark Studio**: Clean monochrome palette optimized for low-fatigue studio sessions.
+- Instant, non-destructive live theme switching from the Settings & About modal without restarting the DAW.
+
+---
+
 ## 🚀 Milestone: v1.0.0 "The General Availability Launch"
 *Focus: Official Public FOSS (GPLv3) Release of The Klang Farmer & The Klang Planter.*
 
