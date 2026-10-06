@@ -271,3 +271,14 @@ add_custom_command(TARGET TheKlangEditor POST_BUILD
     COMMAND "" -E copy "$<TARGET_FILE:TheKlangEditor>" "/Editor/"
 )
 
+
+# 11. Automated GUI Test Harness
+add_executable(gui_tests
+    test/gui_tests.cpp
+)
+target_link_libraries(gui_tests PRIVATE
+    TheKlangFarmer
+    juce::juce_gui_basics
+    juce::juce_graphics
+)
+target_include_directories(gui_tests PRIVATE source)
