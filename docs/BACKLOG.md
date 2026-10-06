@@ -203,6 +203,12 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
   - **Vintage Hardware (80s Cream)**: Retro off-white chassis with classic slate blue & brick red buttons.
   - **Cyberpunk Neon**: Deep obsidian black with electric cyan, neon magenta, and radioactive green indicators.
   - **High-Contrast Dark Studio**: Clean monochrome palette optimized for low-fatigue studio sessions.
+    - **The 'Vibe Coder' IDE Essentials Pack**:
+      - **Dracula**: Iconic vampire dark purple background (`#282A36`) with bright cyan, hot pink, and lime green LED accents.
+      - **Monokai Pro**: Classic code editor dark grey (`#2D2A2E`) with warm peach, yellow, and vibrant green controls.
+      - **Nord**: Arctic frost blue-grey palette with icy cyan and pastel aurora highlights.
+      - **Solarized Dark**: Precision teal-grey background with soft amber and cyan highlights.
+      - **Solarized Light (The Cursed Mode)**: Warm cream/beige background with high-contrast slate text and warm pastel LEDs for daylight studio sessions.
 - Instant, non-destructive live theme switching from the Settings & About modal without restarting the DAW.
 
 ---
