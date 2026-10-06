@@ -82,3 +82,9 @@
 - **Instant Cleanup**: When you create temporary Python scripts (`update_file.py`, `fix_code.py`, `script.py`) to execute refactors, tests, or file modifications, you must **ALWAYS** delete the script immediately upon completion.
 - **Execution Chain**: Always chain the removal directly in your terminal command. For example: `python script.py ; rm script.py`.
 - **No Clutter**: Under no circumstances should you leave temporary scripts tracked or untracked in the root project directory.
+
+## Git is the Archive (Ruthless Deletion)
+- **No Comment Graveyards**: When refactoring or removing obsolete C++ or JSON source code, you must ruthlessly and completely delete the dead code. Never comment out large blocks of obsolete code "just to be safe."
+- **No Legacy Files**: Never rename files to `old_Component.cpp` or move them to a `legacy/` directory. 
+- **Rely on Git**: Git is the only acceptable time machine. If we need to see how an old feature worked, we will look at the Git history.
+- **Scope**: This applies strictly to Source Code. Documentation files (like `BACKLOG_ARCHIVE.md` or PLAN artifacts) are exempt and should be preserved as requested.
