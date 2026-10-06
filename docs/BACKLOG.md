@@ -174,6 +174,14 @@ Create a new standalone VST3 plugin that strips away the synth engines and provi
 
 
 
+
+### 12. Zynthian V5 / V4 Standalone Hardware Port (TENTATIVE)
+*Detailed Plan: [`docs/zynthian_port_plan.md`](zynthian_port_plan.md)*
+Tentative exploration to deploy headless Linux LV2 / CLAP plugins onto the open-source Zynthian hardware ecosystem (Raspberry Pi 5 ARM64):
+- **Zero GUI Overhead**: Compiles purely the audio processor and APVTS state tree with no desktop GUI overhead.
+- **1:1 4-Encoder Page Mapping**: Each 4-knob card in our engine corresponds directly to one 4-encoder screen page on Zynthian V5's display, controlled by its 4 physical push-rotary optical encoders.
+- **Native Zynthian Host**: Leverages ZynthianOS for native preset storage, MIDI routing, and snapshot management.
+
 ---
 
 ## 📁 Completed & Archived Milestones
