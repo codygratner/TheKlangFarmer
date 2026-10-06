@@ -102,6 +102,11 @@ And standardize **Universal Dual-Mode Mix** (Knob 4: `-100%` Wet Crossfade ↔ `
     - Add `formatWidthPct(double val)`: displays `0% (Mono)` up to `600% (Super-Wide)`.
     - Add `formatMatrixGain(double val)`: displays `-100%` to `+100%`.
   - [ ] **3.3: `FXSlotCardComponent::configureForType` Wiring:**
+    - [ ] **3.4: Categorized FX Selection Modal (Kilohearts-Style Browser):**
+      - Full 5-column categorized modal browser overlay replacing linear popup menus for all 26 algorithms.
+      - Column categories (alphabetized within): Dynamics & Gain, Filters & Tone, Modulation & Pitch, Delay & Space, Lo-Fi & Character.
+      - Left-click on FX card header launches browser modal; `<` / `>` steppers continue to cycle sequentially.
+      - Real-time tooltips/descriptions on hover with active selection indicator dot.
     - Add cases 14..26 in `source/PluginEditor.cpp` to bind knob names, accent colors, bipolar detents, formatters, and diagram types to the card UI.
 - **Verification Condition:** Switching to any of the 6 new effects renders proper labels, formatting readouts, and tooltips across all 4 knobs.
 
