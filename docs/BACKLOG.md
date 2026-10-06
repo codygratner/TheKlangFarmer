@@ -135,7 +135,13 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Toggled dynamically by the header `TOOLTIPS` button (when off, Line 2 is quiet or shows engine status).
 - **Verification Metric**: 164 / 164 `gui_tests` passed successfully with 100% assertion pass rate across all limiter controls and status bar hover callbacks.
 
-## ?? Milestone: v0.4.0 "The Sound & Chaos Update"
+### 6. Diagnose & Restore Missing Two-Line Status Bar in Standalone & Plugin UI
+*Goal: Diagnose why the interactive two-line bottom status bar is not appearing or rendering visibly in The Klang Planter / The Klang Farmer standalone and plugin windows, and restore it to full visibility.*
+- **Diagnosis**: Check parent window bounds, z-ordering, layout resizing (`resized()` bottom margin allocation), and visibility flags in `PlanterEditor.cpp` and `FarmerEditor.cpp`.
+- **Restoration**: Ensure the 36px status bar is docked cleanly at the bottom, receives hover callbacks, and renders Line 1 (Permanent Control/Value + Shortcuts) and Line 2 (Tooltip feed).
+- **Verification**: Visual verification in standalone and headless component visibility assertions in `test/gui_tests.cpp`.
+
+## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
 
 ### 0.5. Interactive Parameter & Curve Overhaul (Breaking Parity)
