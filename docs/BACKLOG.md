@@ -199,15 +199,94 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 ### 4. Curated Theme Palette Presets (JSON Driven)
 *Goal: Provide distinctive, switchable visual flavors for different studio moods.*
 - Author curated, pre-made theme palettes in `assets/themes/`:
-    - **Cyberpunk Neon (Default — High-Impact Showcase)**: Deep obsidian black chassis with glowing electric cyan, hot magenta, and radioactive green LEDs (engineered for maximum visual punch in videos, thumbnails, and screenshots).
-    - **Cykranosh (Creator's Signature)**: Deep desaturated slate navy chassis (`#161B22` / `#1A202C`), muted deep blue card surfaces, with eerie ghostly teal (`#4EBEB1`), ice blue, and starlight silver indicators (custom tuned for zero eye fatigue during live sets and marathon studio sessions).
-    - **Industrial Carbon**: Dark matte charcoal chassis with warm amber & muted industrial orange accents.
-    - **Vintage Hardware (80s Cream)**: Retro off-white chassis with classic slate blue & brick red hardware buttons.
-    - **High-Contrast Dark Studio**: Ultra-clean monochrome palette for minimal distraction.
+  - **Cyberpunk Neon (Default — High-Impact Showcase)**: Deep obsidian black chassis with glowing electric cyan, hot magenta, and radioactive green LEDs (engineered for maximum visual punch in videos, thumbnails, and screenshots).
+  - **Cykranosh (Creator's Signature)**: Deep desaturated slate navy chassis (\#161B22\ / \#1A202C\), muted deep blue card surfaces, with eerie ghostly teal (\#4EBEB1\), ice blue, and starlight silver indicators (custom tuned for zero eye fatigue during live sets and marathon studio sessions).
+  - **Industrial Carbon**: Dark matte charcoal chassis with warm amber & muted industrial orange accents.
+  - **Vintage Hardware (80s Cream)**: Retro off-white chassis with classic slate blue & brick red hardware buttons.
+  - **High-Contrast Dark Studio**: Ultra-clean monochrome palette for minimal distraction.
     - **The 'Vibe Coder' IDE Essentials Pack**:
       - **Dracula**: Iconic vampire dark purple background (`#282A36`) with bright cyan, hot pink, and lime green LED accents.
       - **Monokai Pro**: Classic code editor dark grey (`#2D2A2E`) with warm peach, yellow, and vibrant green controls.
       - **Nord**: Arctic frost blue-grey palette with icy cyan and pastel aurora highlights.
       - **Solarized Dark**: Precision teal-grey background with soft amber and cyan highlights.
       - **Solarized Light (The Cursed Mode)**: Warm cream/beige background with high-contrast slate text and warm pastel LEDs for daylight studio sessions.
+- Instant, non-destructive live theme switching from the Settings & About modal without restarting the DAW.
 
+---
+
+## 🚀 Milestone: v1.0.0 "The General Availability Launch"
+*Focus: Official Public FOSS (GPLv3) Release of The Klang Farmer & The Klang Planter.*
+
+### 1. Multi-Platform Automated Installers & Distribution Packaging
+*Goal: Provide zero-friction, professional installers across all major operating systems.*
+- **Windows InnoSetup Installer**:
+  - Automatically installs VST3 binaries to `C:\Program Files\Common Files\VST3\`.
+  - Installs Standalone executables, factory preset library, and documentation.
+  - Registers uninstaller in Windows Control Panel / Settings.
+- **macOS Signed & Notarized `.pkg` Installer**:
+  - Automatically deploys VST3 to `/Library/Audio/Plug-Ins/VST3/` and AU component to `/Library/Audio/Plug-Ins/Components/`.
+  - Signed with Apple Developer ID and notarized via `notarytool`.
+
+### 2. Comprehensive User Manual & Interactive Guide
+*Goal: Empower sound designers and music producers to master the engine.*
+- Author an illustrated, searchable HTML and PDF documentation manual:
+  - Deep-dive diagrams explaining the dual FM carrier/modulator phase architecture.
+  - Complete 4-parameter reference guide for all 26 DSP effects in the catalog.
+  - Keyboard shortcuts, right-click quick-snap intervals, and MIDI CC mapping guide.
+
+### 3. Launch Demo Reel & Audio Showcase
+*Goal: Showcase the sonic versatility of the engine on GitHub and social media.*
+- Produce high-fidelity audio stems and video demos across multiple musical genres:
+  - Industrial Techno, Cyberpunk, 80s Gated Retro Synthwave, and Punchy Modern Trap/Hip-Hop.
+
+---
+
+## 🚀 Milestone: v1.1.0 "The Hardware Universe (Post-1.0)"
+*Focus: Standalone Hardware Synthesizer (The Klang Seed), dadamachines tbd-16 Integration, and Zynthian V5 Linux Port.*
+
+### 1. dadamachines tbd-16 Groovebox Integration
+*Detailed Plan: [`docs/tbd16_klang_seed_effects_plan.md`](tbd16_klang_seed_effects_plan.md)*
+Deploy the pure C++ DSP engine onto the open-source **dadamachines tbd-16** platform:
+- **Architecture**: Dual-core **ESP32-P4 RISC-V @ 400 MHz** (Audio DSP) + **RP2350B @ 150 MHz** (UI, Sequencer, 2.4" OLED, 30 RGB buttons) + **ESP32-C6** (Wi-Fi/Ableton Link).
+- **Native 4-Encoder Mapping**: The unit features **4 endless push-encoders**; each 4-knob card and 4-knob FX slot in our engine maps directly to one 4-encoder screen page on its 2.4" OLED!
+
+### 2. The Klang Seed: Daisy Edition (TKS-D) — Stereo Desktop & Eurorack Hardware
+*Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](embedded_dsp_and_hardware_port_plan.md)*
+A self-contained, portable stereo FM drum synthesizer and Eurorack module built on the **Electro-Smith Daisy Seed**:
+- **Processor & Memory**: STM32H750 ARM Cortex-M7 @ 480 MHz with **64 MB high-speed SDRAM** for immense reverb/delay buffers.
+- **Onboard Codec**: Integrated AK4556 24-bit 96 kHz stereo audio DAC/ADC.
+- **Hardware Build Complexity**: Low/Moderate. Simple breakout PCB housing Daisy Seed, 4 rotary encoders, 128x64 OLED screen, MIDI TRS/DIN, and 1/4" stereo outputs. Perfect for rapid hardware prototyping!
+
+### 3. The Klang Seed: Studio Edition (TKS-8) — Teensy 4.1 8-Voice Multi-Output Drum Machine
+*Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](embedded_dsp_and_hardware_port_plan.md)*
+A flagship studio drum machine built on **PJRC Teensy 4.1** featuring discrete individual analog voice routing:
+- **Processor**: NXP i.MX RT1062 ARM Cortex-M7 @ 600 MHz running 8 mono drum voices (~14.7% CPU load).
+- **Multi-Channel DAC**: Cirrus Logic **CS42448 8-Channel 24-bit 192 kHz Codec** driven via TDM.
+- **8 Discrete Analog Outputs**: 8 individual 1/4" phone jacks plus Master Stereo L/R. Switched normalled jacks automatically remove a voice from the master stereo mix when an external cable is plugged in, allowing each drum voice to be processed through separate outboard preamps, compressors, and mixing consoles!
+- **Hardware Build Complexity**: Advanced. Custom PCB housing Teensy 4.1, CS42448 daughterboard, 10 switched phone jacks, 4 encoders, and OLED screen.
+
+### 4. Zynthian V5 / V4 Standalone Hardware Port (TENTATIVE)
+*Detailed Plan: [`docs/zynthian_port_plan.md`](zynthian_port_plan.md)*
+Deploy headless Linux LV2 / CLAP plugins onto the open-source Zynthian hardware ecosystem:
+- **Compute**: Raspberry Pi 5 (Quad-core ARM Cortex-A76 @ 2.4 GHz) running 64-bit ZynthianOS.
+- **Zero GUI Overhead**: Pure headless real-time DSP without X11/OpenGL overhead.
+- **1:1 4-Encoder Page Mapping**: Maps 1:1 onto Zynthian V5's 4 physical optical push-encoders and 800x480 touchscreen.
+
+---
+
+## 🚀 Spin-Off Products & Explorations
+
+### 1. The Klang Mill (Standalone VST) — Industrial 1x6 Multi-FX Pedalboard Rack
+*Detailed Plan: [`docs/the_klang_mill_plan.md`](the_klang_mill_plan.md)*
+Create a standalone multi-effects VST3 plugin styled after vintage studio rackmounts and boutique pedalboards (e.g., Soundtoys Effect Rack):
+- **1x6 Horizontal Chassis**: Input/Slop $\to$ 4 Serial Multi-FX Pedal Slots (26 algorithms) $\to$ Master Limiter & Output.
+- **Immediate & Tactile**: Zero routing matrices or drag-and-drop clutter; dedicated stomp bypasses per slot.
+- **Global Slop**: Injects organic, non-linear analog drift across all 4 pedals for instant vintage character.
+- **Codebase Integration**: Built as a sibling build target (`TheKlangMill_VST3`) inheriting directly from `KlangCoreProcessor` and `KlangCoreEditor`.
+
+---
+
+## 📁 Completed & Archived Milestones
+All completed tasks, architectural decisions, and release summaries are archived in:
+👉 **[`docs/BACKLOG_ARCHIVE.md`](BACKLOG_ARCHIVE.md)**  
+*(Individual phase execution plans are preserved in `docs/completed_plans/`)*
