@@ -7,6 +7,7 @@
 #include "HardeningSuites.h"
 #include "VersionCheckerTestSuite.h"
 #include "ParameterSchemaAuditTest.h"
+#include "PluginIntensiveTestSuite.h"
 
 int main(int argc, char* argv[]) {
     juce::StringArray args;
@@ -47,6 +48,7 @@ int main(int argc, char* argv[]) {
             ReflectionGuardrailSuite::runSuite(reporter);
             HardeningSuites::runSuite(reporter);
             ParameterSchemaAuditTest::runSuite(reporter);
+            PluginIntensiveTestSuite::runSuite(reporter);
         }
     }
 

@@ -542,6 +542,9 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     ampEnvClapSpeedSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_ampenv_clapspeed", "Time interval spacing between handclap bursts", false));
     ampEnvSlopeSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_ampenv_slope", "Master amplitude decay curve contour", false));
     ampEnvDecaySlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_ampenv_decay", "Master amplitude decay duration", false));
+    limiterGainSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_gain", "Master limiter makeup and input boost gain", false));
+    limiterThreshSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_thresh", "Master limiter brickwall ceiling peak threshold", false));
+    limiterReleaseSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_release", "Master limiter gain reduction recovery release time", false));
 
     setSize(1040, 740);
     setResizable(true, true);
@@ -601,6 +604,7 @@ void TheKlangPlanterAudioProcessorEditor::bindSelector(LedSelectorComponent& sel
         box.addItem(items[i], i + 1);
     }
     sel.setItems(items, columns);
+    sel.setParamId(paramId);
     if (paramId.isNotEmpty()) {
         auto itemTips = TooltipHelper::getLedSelectorItemTooltips(paramId);
         sel.setItemTooltips(itemTips);
