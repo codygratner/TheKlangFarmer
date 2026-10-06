@@ -1739,15 +1739,21 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
     g.setGradientFill(sheen);
     g.fillRoundedRectangle(innerX, innerY, innerW, sheenH, 2.5f);
 
-    // 4. Fixed Right-Aligned Value Box
-    // Statically anchored so text length variations never move or push other elements!
+    // 4. Value Box & Justification
+    // When label is empty (e.g. mini callout cards), center the value in the trough.
     g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
     auto valStr = getTextFromValue(getValue());
-    float valStrW = juce::GlyphArrangement::getStringWidth(g.getCurrentFont(), valStr);
-    float valueBoxW = std::max(78.0f, valStrW + 4.0f);
-    constexpr float rightMargin = 8.0f;
-    auto valueBox = juce::Rectangle<float>(bounds.getRight() - rightMargin - valueBoxW,
-                                           bounds.getY(), valueBoxW, bounds.getHeight());
+    auto valJustification = label.isEmpty() ? juce::Justification::centred : juce::Justification::centredRight;
+    juce::Rectangle<float> valueBox;
+    if (label.isEmpty()) {
+        valueBox = bounds.reduced(2.0f, 0.0f);
+    } else {
+        float valStrW = juce::GlyphArrangement::getStringWidth(g.getCurrentFont(), valStr);
+        float valueBoxW = std::max(78.0f, valStrW + 4.0f);
+        constexpr float rightMargin = 8.0f;
+        valueBox = juce::Rectangle<float>(bounds.getRight() - rightMargin - valueBoxW,
+                                          bounds.getY(), valueBoxW, bounds.getHeight());
+    }
 
     // 5. Embedded Mini Diagram (if applicable)
     float labelRightLimit = valueBox.getX() - 6.0f;
@@ -1771,8 +1777,8 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
     if (isLightTrough) {
         // Base pass: Crisp solid black text on the white trough
         g.setColour(juce::Colour(0xff101318));
-        g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
-        g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
+        if (label.isNotEmpty()) g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
+        g.drawText(valStr, valueBox, valJustification, false);
 
         // Clipped pass: Over the colored fill, invert text to crisp white with dark drop shadow
         if (hasFill && fillRect.getWidth() > 1.0f) {
@@ -1781,25 +1787,25 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
 
             // Shadow
             g.setColour(juce::Colour(0x90000000));
-            g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
-            g.drawText(valStr, valueBox.translated(1.0f, 1.0f), juce::Justification::centredRight, false);
+            if (label.isNotEmpty()) g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
+            g.drawText(valStr, valueBox.translated(1.0f, 1.0f), valJustification, false);
 
             // Pure white text over fill
             g.setColour(juce::Colours::white);
-            g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
-            g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
+            if (label.isNotEmpty()) g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
+            g.drawText(valStr, valueBox, valJustification, false);
 
             g.restoreState();
         }
     } else {
         // Standard dark trough text rendering
         g.setColour(juce::Colour(0xd0000000));
-        g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
-        g.drawText(valStr, valueBox.translated(1.0f, 1.0f), juce::Justification::centredRight, false);
+        if (label.isNotEmpty()) g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
+        g.drawText(valStr, valueBox.translated(1.0f, 1.0f), valJustification, false);
 
         g.setColour(juce::Colour(0xffedf2fa));
-        g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
-        g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
+        if (label.isNotEmpty()) g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
+        g.drawText(valStr, valueBox, valJustification, false);
     }
 }
 

@@ -469,7 +469,7 @@ namespace PluginIntensiveTestSuite {
         // 2. Limiter Mini-Card Callout Component (100% of controls verified)
         {
             PlanterLimiterCalloutComponent callout(processor);
-            callout.setSize(260, 110);
+            callout.setSize(300, 130);
             pumpMessageLoop();
 
             // Schema defaults verification
@@ -479,6 +479,18 @@ namespace PluginIntensiveTestSuite {
             reporter.expect(defGain && std::abs(defGain->defaultFloat - 0.333333f) < 0.01f, "Schema: planter_limiter_gain defaultFloat parsed correctly");
             reporter.expect(defThresh && std::abs(defThresh->defaultFloat - 1.0f) < 0.01f, "Schema: planter_limiter_thresh defaultFloat parsed correctly");
             reporter.expect(defRel && std::abs(defRel->defaultFloat - 0.6296f) < 0.01f, "Schema: planter_limiter_release defaultFloat parsed correctly");
+
+            // Custom formatting verification
+            reporter.expect(callout.getGainSlider().customFormatText != nullptr, "Planter Callout: Gain slider has customFormatText attached");
+            reporter.expect(callout.getThreshSlider().customFormatText != nullptr, "Planter Callout: Thresh slider has customFormatText attached");
+            reporter.expect(callout.getReleaseSlider().customFormatText != nullptr, "Planter Callout: Release slider has customFormatText attached");
+
+            juce::String gainStr = callout.getGainSlider().getTextFromValue(12.0 / 36.0);
+            reporter.expect(gainStr.contains("dB"), "Planter Callout: Gain value formats to decibels (" + gainStr + ")");
+            juce::String threshStr = callout.getThreshSlider().getTextFromValue(1.0);
+            reporter.expect(threshStr.contains("dB"), "Planter Callout: Thresh value formats to decibels (" + threshStr + ")");
+            juce::String relStr = callout.getReleaseSlider().getTextFromValue(0.6296);
+            reporter.expect(relStr.contains("ms"), "Planter Callout: Release value formats to milliseconds (" + relStr + ")");
 
             // Control 1: planter_limiter_enable
             auto* enableParam = processor.apvts.getParameter("planter_limiter_enable");
@@ -521,7 +533,7 @@ namespace PluginIntensiveTestSuite {
             reporter.expect(!callout.getReleaseSlider().getTooltip().isEmpty(), "Planter Callout: Release slider has valid non-empty tooltip");
 
             // Offscreen paint pass
-            juce::Image calloutImg(juce::Image::ARGB, 260, 110, true);
+            juce::Image calloutImg(juce::Image::ARGB, 300, 130, true);
             juce::Graphics calloutG(calloutImg);
             callout.paintEntireComponent(calloutG, true);
             reporter.expect(true, "Planter Callout: Offscreen paint completed with zero errors");

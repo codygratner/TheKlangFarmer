@@ -1,40 +1,42 @@
 # Klang Industries Execution Report
 **Date:** 2026-10-06
 **Active Branch:** `0.3.1-dev`
-**Task:** Planter Standalone State Reset & Limiter Callout Fixes
+**Task:** Planter Limiter Callout Typography & Short Labels Fix
 
 ## Status: COMPLETE ✅
-The Limiter CalloutBox parenting and hit area improvements, right-click triggers on Card 6 (Limiter) / Card 2 (Amp), standalone factory state defaults in `planter.json`, and the `INIT` button panic & APVTS reset have been fully implemented, integrated, verified across 171 tests, and deployed.
+The Planter Limiter CalloutBox typography, column header labels, expanded 300x130 geometry, and short/punchy value formatters have been fully implemented, tested across 177 GUI unit tests, built in Release mode, and deployed.
 
 ## Execution Details
-- **Phase 1 (Robust Limiter Callout In-Window Parenting & Hit Targets)**:
-  - Updated `PlanterEditor.cpp` so `headerViz.onLimiterCalloutRequested` invokes `juce::CallOutBox::launchAsynchronously(std::move(callout), limitEditorArea, this)` with parent set to `this` (the editor). This embeds the popup directly inside the editor bounds on top of all children, eliminating the Windows OS desktop z-ordering issue where the popup spawned behind the standalone window.
-  - Expanded `PlanterHeaderVisualizer::getLimitArea().expanded(2.0f, 5.0f)` click target across the full header height and enabled trigger on left and right mouse clicks.
-  - Added `onCardMouseDown` hook to `ModuleCardComponent` and attached right-click triggers to both `cardLimiter` and `cardAmp` so users can right-click the Limiter card or Amplifier card directly to summon the Limiter callout.
-- **Phase 2 (Standalone State Cache & Default Initialization Verification)**:
-  - Updated `assets/controls/planter.json` to explicitly populate `"defaultFloat"` and `"defaultChoice"` across `planter_limiter_gain`, `planter_limiter_thresh`, `planter_limiter_release`, and `planter_limiter_enable`.
-  - Updated `initButton.onClick` in `PlanterEditor.cpp` to execute `audioProcessor.panic()` before restoring parameter defaults, flushing audio buffers, voices, and envelopes.
-  - Expanded `test/PluginIntensiveTestSuite.h`:
-    - Verified in-window `juce::CallOutBox` parenting (`editor->isParentOf(&box)`).
-    - Verified `planter.json` schema default float parsing matches within tolerance.
-    - Verified header limit badge triggers on left and right click.
-    - Verified `INIT` button click resets APVTS parameters to factory defaults and flushes the engine.
-- **Phase 3 (Verification & Build Validation)**:
-  - `gui_tests`: 171 / 171 passed (0 failures).
-  - `dsp_tests`: 100% passed (0 failures).
-  - Built Release targets for VST3, Standalone, and Editor.
-  - Deployed binaries to `current_build\VST3\`, `current_build\Standalone\`, `current_build\Editor\`, and `C:\Program Files\Common Files\VST3\`.
-
-## Test Results
-- **gui_tests:** 171 / 171 tests passed (0 failures).
-- **dsp_tests:** All DSP verification tests passed (0 failures).
-- **Deployed Artifacts:**
-  - `C:\Program Files\Common Files\VST3\The Klang Planter.vst3`
-  - `C:\Program Files\Common Files\VST3\The Klang Farmer.vst3`
-  - `current_build\Standalone\The Klang Planter.exe`
-  - `current_build\Standalone\The Klang Farmer.exe`
-  - `current_build\Editor\The Klang Editor.exe`
+- **Phase 1 (Callout Geometry & Column Header Labels)**:
+  - Enlarge `PlanterLimiterCalloutComponent` dimensions to `300x130` in [`source/PlanterEditor.cpp`](file:///c:/Dev/TheKlangSuite/source/PlanterEditor.cpp#L150).
+  - In `paint()`: added column header labels rendered in bold font (`11.0f` bold, `0xffcfd8dc`):
+    - `LIMIT` centered above `enableSelector`
+    - `GAIN` centered above `gainSlider`
+    - `CEIL` centered above `threshSlider`
+    - `REL` centered above `releaseSlider`
+  - In `resized()`: structured clean, symmetrical layout:
+    - `enableSelector`: X=10, Y=46, W=46, H=74
+    - 3 knobs: X starting at 64, W=72 each, gap=6px, H=74
+  - In [`source/UIComponents.cpp`](file:///c:/Dev/TheKlangSuite/source/UIComponents.cpp#L1740-L1805): enhanced `RotaryKnobSlider::paint()` to center the value text string (`juce::Justification::centred`) across the trough when `label.isEmpty()`, preventing text clipping or overflow on compact sliders.
+- **Phase 2 (Short & Punchy Value Formatters)**:
+  - Attached concise format and parse lambdas (`formatLimiterGain`, `formatLimiterThresh`, `formatLimiterRelease`) to `gainSlider`, `threshSlider`, and `releaseSlider` in `PlanterLimiterCalloutComponent`.
+  - Also bound the same formatters to Card 6's limiter sliders (`limiterGainSlider`, `limiterThreshSlider`, `limiterReleaseSlider`).
+  - Values render cleanly as:
+    - Gain: `+4.0 dB`, `0.0 dB`, `-6.0 dB`
+    - Ceiling: `0.0 dB`, `-3.0 dB`, `-12.0 dB`
+    - Release: `50 ms`, `150 ms`, `500 ms`
+- **Phase 3 (Verification & Deployment)**:
+  - Updated [`test/PluginIntensiveTestSuite.h`](file:///c:/Dev/TheKlangSuite/test/PluginIntensiveTestSuite.h#L470-L530) to test 300x130 callout dimensions, verify custom format attachments, and assert decibel/millisecond formatting.
+  - **`gui_tests.exe`**: 177 / 177 tests passed (0 failures).
+  - **`dsp_tests.exe`**: 100% passed (0 failures).
+  - Built Release binaries (`TheKlangFarmer_VST3`, `TheKlangFarmer_Standalone`, `TheKlangPlanter_VST3`, `TheKlangPlanter_Standalone`, `TheKlangEditor`).
+  - Deployed fresh artifacts to:
+    - `C:\Program Files\Common Files\VST3\The Klang Planter.vst3`
+    - `C:\Program Files\Common Files\VST3\The Klang Farmer.vst3`
+    - `current_build\Standalone\The Klang Planter.exe`
+    - `current_build\Standalone\The Klang Farmer.exe`
+    - `current_build\Editor\The Klang Editor.exe`
 
 ## Notes for New Klang City
-- `PLAN.md` has been archived to `docs/completed_plans/2026-10-06_planter_standalone_state_and_callout_parentage.md` and reset to `# No Active Plan`.
-- Note regarding standalone settings: JUCE Standalone applications persist last-used state to `%APPDATA%\The Klang Planter\The Klang Planter.settings`. If a user previously launched standalone with non-default values, those settings were reloaded on startup. The `INIT` button now reliably flushes audio and restores all 36 parameters to factory defaults in a single click.
+- `PLAN.md` has been archived to `docs/completed_plans/2026-10-06_planter_limiter_callout_typography.md` and reset to `# No Active Plan`.
+- The limiter callout is now spacious, beautifully aligned, and completely free of ellipses or truncated text boxes.

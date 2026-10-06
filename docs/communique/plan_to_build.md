@@ -1,8 +1,8 @@
 # Communiqué: New Klang City (Planner) ➔ Klang Industries (Builder)
 
-**Timestamp:** 2026-10-06 17:58  
+**Timestamp:** 2026-10-06 18:27  
 **Active Milestone:** v0.3.1 "Editor Quality & Data Schema"  
-**Task Name:** Planter Standalone State Reset & Limiter Callout Fixes  
+**Task Name:** Planter Limiter Callout Typography & Short Labels Fix  
 **Status:** `READY_FOR_EXECUTION`  
 **Recommended Model & Thinking Budget:** Tier 2 — Gemini 3.8 Flash (Thinking: High)  
 **Quota Impact:** 🟢 SUSTAINABLE (Standard UI & test engineering)  
@@ -10,15 +10,21 @@
 ---
 
 ## 🎯 Executive Objective
-Fix two user-reported issues in The Klang Planter:
-1. Ensure the Limiter CalloutBox renders reliably inside the plugin editor window (`parent = this` instead of `nullptr`), expand the click target on the header `LIMIT` badge, and support right-clicking on Card 6.
-2. Ensure parameter defaults match `planter.json` and document the `%APPDATA%\The Klang Planter\The Klang Planter.settings` standalone caching behavior.
+Fix ugly truncated text and missing labels in the Planter Limiter CalloutBox:
+1. Increase callout size to `300x130`.
+2. Draw bold, short labels above each control in `paint()`:
+   - `LIMIT` (above Enable selector)
+   - `GAIN` (above Gain knob)
+   - `CEIL` (above Ceiling/Threshold knob)
+   - `REL` (above Release knob)
+3. Add concise `customFormatText` lambdas on all 3 knobs so values are short and readable without ellipses:
+   - Gain: `+4.0 dB` (with +/- sign)
+   - Ceil: `-0.2 dB` (or `0.0 dB`)
+   - Rel: `150 ms`
+4. Conclude turn with the `🔔 JOB'S DONE!` chime.
 
 ## 📋 Active Plan Reference
 The execution checklist is published in [`PLAN.md`](file:///C:/Dev/TheKlangSuite/PLAN.md).
 
-### Directives for Klang Industries:
-- In `PlanterEditor.cpp`: Replace `launchAsynchronously(std::move(callout), limitScreenArea, nullptr)` with `launchAsynchronously(std::move(callout), area + headerViz.getPosition(), this)`.
-- Enlarge the header mouse click target in `PlanterHeaderVisualizer::getLimitArea()` so it spans the full 26px height.
-- Update `assets/controls/planter.json` to ensure `planter_limiter_gain`, `planter_limiter_thresh`, and `planter_limiter_release` have `"defaultFloat"` matching `"default"`.
-- Run `gui_tests` and deploy fresh binaries to `current_build\Standalone\` and `C:\Program Files\Common Files\VST3\`.
+> ⚠️ **Model Selection Gate**: Do NOT pop up an `ask_question` modal before beginning Phase 1. Present your briefing with the Model Advisory banner at the very end, and pause in chat text for the user to adjust their model dropdown and reply **`proceed`**.
+

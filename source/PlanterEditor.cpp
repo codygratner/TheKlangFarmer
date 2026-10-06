@@ -147,7 +147,7 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
 PlanterLimiterCalloutComponent::PlanterLimiterCalloutComponent(TheKlangPlanterAudioProcessor& p)
     : audioProcessor(p)
 {
-    setSize(260, 110);
+    setSize(300, 130);
 
     // 1. Enable Selector & ComboBox
     enableBox.clear(juce::dontSendNotification);
@@ -177,10 +177,12 @@ PlanterLimiterCalloutComponent::PlanterLimiterCalloutComponent(TheKlangPlanterAu
 
     // 2. Gain Slider
     gainSlider.setAccentColour(juce::Colour(0xffe53935));
-    gainSlider.setLabel("Gain");
+    gainSlider.setLabel("");
     gainSlider.setParamId("planter_limiter_gain");
     gainSlider.setDoubleClickReturnValue(true, 12.0 / 36.0);
     gainSlider.getDefaultValue = []() { return 12.0 / 36.0; };
+    gainSlider.customFormatText = formatLimiterGain;
+    gainSlider.customParseText  = parseLimiterGain;
     gainSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_gain", "Master limiter makeup and input boost gain", false));
     addAndMakeVisible(gainSlider);
     gainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
@@ -188,10 +190,12 @@ PlanterLimiterCalloutComponent::PlanterLimiterCalloutComponent(TheKlangPlanterAu
 
     // 3. Ceiling (Threshold) Slider
     threshSlider.setAccentColour(juce::Colour(0xffe53935));
-    threshSlider.setLabel("Ceiling");
+    threshSlider.setLabel("");
     threshSlider.setParamId("planter_limiter_thresh");
     threshSlider.setDoubleClickReturnValue(true, 1.0);
     threshSlider.getDefaultValue = []() { return 1.0; };
+    threshSlider.customFormatText = formatLimiterThresh;
+    threshSlider.customParseText  = parseLimiterThresh;
     threshSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_thresh", "Master limiter brickwall ceiling peak threshold", false));
     addAndMakeVisible(threshSlider);
     threshAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
@@ -199,10 +203,12 @@ PlanterLimiterCalloutComponent::PlanterLimiterCalloutComponent(TheKlangPlanterAu
 
     // 4. Release Slider
     releaseSlider.setAccentColour(juce::Colour(0xffe53935));
-    releaseSlider.setLabel("Release");
+    releaseSlider.setLabel("");
     releaseSlider.setParamId("planter_limiter_release");
     releaseSlider.setDoubleClickReturnValue(true, 0.6296);
     releaseSlider.getDefaultValue = []() { return 0.6296; };
+    releaseSlider.customFormatText = formatLimiterRelease;
+    releaseSlider.customParseText  = parseLimiterRelease;
     releaseSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_release", "Master limiter gain reduction recovery release time", false));
     addAndMakeVisible(releaseSlider);
     releaseAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
@@ -233,16 +239,29 @@ void PlanterLimiterCalloutComponent::paint(juce::Graphics& g) {
     g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xfff1f5f9));
     g.drawText("MASTER LIMITER", 24, 0, getWidth() - 30, 24, juce::Justification::centredLeft, true);
+
+    // Column header labels
+    g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+    g.setColour(juce::Colour(0xffcfd8dc));
+
+    auto drawColLabel = [&](const juce::String& text, const juce::Component& comp) {
+        g.drawText(text, comp.getX(), 27, comp.getWidth(), 16, juce::Justification::centred, true);
+    };
+
+    drawColLabel("LIMIT", enableSelector);
+    drawColLabel("GAIN", gainSlider);
+    drawColLabel("CEIL", threshSlider);
+    drawColLabel("REL", releaseSlider);
 }
 
 void PlanterLimiterCalloutComponent::resized() {
-    int topY = 28;
-    int h = getHeight() - topY - 4;
+    int topY = 46;
+    int h = getHeight() - topY - 10;
 
-    enableSelector.setBounds(8, topY + 4, 46, h - 8);
+    enableSelector.setBounds(10, topY, 46, h);
 
-    int knobW = 60;
-    int startX = 62;
+    int knobW = 72;
+    int startX = 64;
     int gap = (getWidth() - startX - knobW * 3) / 3;
 
     gainSlider.setBounds(startX, topY, knobW, h);
@@ -665,8 +684,16 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     bindSlider("planter_ampenv_decay", ampEnvDecaySlider);
 
     bindSlider("planter_limiter_gain", limiterGainSlider);
+    limiterGainSlider.customFormatText = formatLimiterGain;
+    limiterGainSlider.customParseText  = parseLimiterGain;
+
     bindSlider("planter_limiter_thresh", limiterThreshSlider);
+    limiterThreshSlider.customFormatText = formatLimiterThresh;
+    limiterThreshSlider.customParseText  = parseLimiterThresh;
+
     bindSlider("planter_limiter_release", limiterReleaseSlider);
+    limiterReleaseSlider.customFormatText = formatLimiterRelease;
+    limiterReleaseSlider.customParseText  = parseLimiterRelease;
 
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_carrier_tracking", carrierTrackingBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_mod_track", modTrackBox));
