@@ -45,32 +45,35 @@ Create the standard JUCE GUI app entry point.
 - Standard `juce::JUCEApplication` subclass.
 - Creates a `juce::DocumentWindow` containing `MainComponent`.
 
-### 3. The 3-Pane Interface
+### 3. The Unified Tabbed Interface
 #### [NEW] `tools/editor/MainComponent.h` & `.cpp`
-- **Layout**: Uses `juce::StretchableLayoutManager` for resizable vertical splitters.
-- **Top Bar (File Selection & Info)**: 
-  - `juce::ComboBox` for selecting the active JSON module (e.g., `carrier.json`, `theme.json`).
-  - Read-only, multi-line, word-wrapped text field (e.g. a `juce::TextEditor` set to `setMultiLine(true)` and `setReadOnly(true)`) sitting beneath the dropdown to clearly display the active file's absolute path without cutting off.
-- **Pane 1 (Form Editor)**: `juce::PropertyPanel` that dynamically populates controls based on the active JSON keys.
-  - **Parameter Fields**: Uses `juce::TextPropertyComponent` and `juce::SliderPropertyComponent` for numeric values.
-  - **Advanced Color Picker**: When `theme.json` is active, color fields will spawn a custom editor featuring:
-    - An interactive click-and-drag **Color Wheel**.
-    - Split out **RGBA** sliders/text boxes (Red, Green, Blue, Alpha).
-    - Split out **HSVA** sliders/text boxes (Hue, Saturation, Value, Alpha).
-    - A **Hex Code** input box formatted specifically for JUCE's required `0xAARRGGBB` format (Alpha must be included as the framework relies heavily on it for glows/shadows).
-    
-    ![Color Picker UI Mockup](../screenshots/tke_color_picker_mockup.jpg)
+To prevent the C++ code from becoming a tangled, state-management nightmare (by trying to force a generic Property Panel to morph between an advanced Color Wheel and numeric DSP sliders), the layout uses a clean, two-tab architecture:
 
-- **Pane 2 (Visual Preview)**: A wrapper `juce::Component`. Whenever the JSON updates, this destroys and re-instantiates the specific `SynthCardComponent` (e.g., the Carrier Card) using the new layout/theme data.
-- **Pane 3 (Raw Code)**: `juce::CodeEditorComponent` attached to a `juce::CodeDocument`. 
+**Top-Level Navigation:** Two massive tabs: `[ THEME ]` and `[ CONTROLS ]`.
 
-### 3.5 Handling Modularity (Theme vs. Parameters)
-The architecture explicitly keeps `theme.json` (colors/visuals) separate from module JSONs (DSP parameters). This allows users to share UI "Skins" without accidentally overwriting DSP algorithms or parameter ranges. 
-The Editor handles this modularity dynamically:
-- **Global Background State**: The editor always holds `theme.json` in memory so the Visual Preview pane can render correctly.
-- **Context Switching**: The active file in the ComboBox dictates what is shown in the Form Editor and Raw Code panes.
-  - *If `carrier.json` is selected*: You edit DSP parameters. The Preview pane renders just the Carrier Card (using the global theme).
-  - *If `theme.json` is selected*: You edit colors. The Preview pane switches to a "Style Guide" mode (or renders the full synth chassis) so you can instantly see global color changes applied everywhere.
+**Shared Components (Always visible regardless of the active tab):**
+- **Right Pane (Visual Preview)**: A wrapper `juce::Component`. Always shows the live rendering of the UI. Whenever the JSON updates, this destroys and re-instantiates the specific `SynthCardComponent` (e.g., the Carrier Card) using the live layout/theme data.
+- **Bottom Pane (Raw Code)**: `juce::CodeEditorComponent` attached to a `juce::CodeDocument`. Always shows the raw serialized JSON text of whatever file you're currently working on, allowing manual text adjustments with instant visual feedback.
+
+#### Tab 1: THEME (Specialized Visuals)
+When active, you are editing `theme.json`.
+- **Left Sidebar**: A scrolling list/palette of all the colors defined in the theme.
+- **Main View (Advanced Color Picker)**: Clicking a color from the list spawns a custom editor featuring:
+  - An interactive click-and-drag **Color Wheel**.
+  - Split out **RGBA** sliders/text boxes (Red, Green, Blue, Alpha).
+  - Split out **HSVA** sliders/text boxes (Hue, Saturation, Value, Alpha).
+  - A **Hex Code** input box formatted specifically for JUCE's required `0xAARRGGBB` format (Alpha must be included).
+  
+  ![Color Picker UI Mockup](../screenshots/tke_color_picker_mockup.jpg)
+- **Preview State**: The Visual Preview pane switches to a "Style Guide" mode (or renders the full synth chassis) so you can instantly see global color changes applied everywhere.
+
+#### Tab 2: CONTROLS (Specialized DSP Parameters)
+When active, you are editing DSP parameter schemas.
+- **Top Bar**:
+  - `juce::ComboBox` for selecting the active module (e.g., `carrier.json`, `filters.json`).
+  - Read-only, multi-line, word-wrapped text field clearly displaying the active file's absolute path.
+- **Main View (Form Editor)**: `juce::PropertyPanel` that dynamically populates controls based on the active JSON keys. Uses `juce::TextPropertyComponent` and `juce::SliderPropertyComponent` for calibrating min/max numeric bounds and defaults.
+- **Preview State**: The Visual Preview pane isolates and renders just the specific Card selected in the dropdown (using the global theme in the background).
 
 ### 4. Live Synchronization Engine
 A central state manager to handle bidirectional updates without infinite loops.
