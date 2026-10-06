@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized milestones below:
-> 1. **v0.3.0 (Architecture)**: The Klang Editor (TKE), Codebase Cruft Purge, & v0.2.0 Parity Audit.
+> 1. **v0.3.0 (Architecture)**: The Klang Editor (TKE), Cruft Purge, Parity Audit, & macOS .pkg Installer.
 > 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, & Typography Engine.
 > 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, GitHub Version Checker, & Linux Headless CI.
 > 4. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
@@ -47,6 +47,17 @@ Run an automated Python script to extract legacy v0.2.0 C++ parameters, string f
 *Goal: Improve repository discoverability for audio-plugin developers and the vibe coding community.*
 - Have the AI install the GitHub CLI (`gh`) via `winget` and authenticate.
 - Automatically apply curated repository tags (Topics) covering Audio Plugin/JUCE (`vst3`, `juce-framework`), FM Drum Synthesis (`drum-machine`, `fm-synthesis`), and the Vibe Coding (`vibe-coding`, `agentic-coding`) communities.
+
+
+### 7. Zero-Cost macOS FOSS Distribution Pipeline (.pkg + Quarantine Stripper + Visual Guide)
+*Goal: Ensure the v0.3.0 Mac release installs and upgrades with zero friction or Gatekeeper blocks.*
+- **Automated `.pkg` Installer Generator**: GitHub Actions runner uses macOS native `pkgbuild` & `productbuild` to generate a standard installer.
+- **Automated Post-Install Quarantine Stripper**: Installer runs an automated `postinstall` script (`xattr -rd com.apple.quarantine /Library/Audio/Plug-Ins/...`) that strips the internet quarantine flag so DAWs scan the VST3/AU immediately with zero Gatekeeper warnings!
+- **In-Place Seamless Upgrades**: Overwrites older `v0.2.0` bundles cleanly while preserving all user presets and DAW project compatibility.
+- **Manual Portable DMG & Helper Script**:
+  - Packages a stylized `.dmg` with drag-and-drop symlinks to `/Library/Audio/Plug-Ins/`.
+  - Includes a double-clickable `Fix_Mac_Permissions.command` helper script.
+  - Includes an illustrated `macOS_Install_Guide.html` showing the 2-step bypass in System Settings -> Privacy & Security.
 
 ---
 
@@ -153,16 +164,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 - **Header Notification Badge**: Subtle, glowing 'Update Available' tag next to version text. Clicking opens release page.
 - **Settings & About Modal**: Gear icon in header exposing 'Check for updates on launch' toggle, manual 'Check Now' button, and build metadata.
 
-### 6. Zero-Cost macOS FOSS Distribution Pipeline (.pkg + Quarantine Stripper + Visual Guide)
-*Goal: Completely eliminate macOS Gatekeeper friction without paying Apple $99/year.*
-- **Automated `.pkg` Installer Generator**: GitHub Actions runner uses macOS native `pkgbuild` & `productbuild` to generate a standard installer.
-- **Automated Post-Install Quarantine Stripper**: Installer runs an automated `postinstall` script (`xattr -rd com.apple.quarantine /Library/Audio/Plug-Ins/...`) that strips the internet quarantine flag so DAWs scan the VST3/AU immediately with zero Gatekeeper warnings!
-- **Manual Portable DMG & Helper Script**:
-  - Packages a stylized `.dmg` with drag-and-drop symlinks to `/Library/Audio/Plug-Ins/`.
-  - Includes a double-clickable `Fix_Mac_Permissions.command` helper script.
-  - Includes an illustrated `macOS_Install_Guide.html` showing the 2-step bypass in System Settings -> Privacy & Security.
-
-### 7. Headless Linux CLAP / VST3 Automated CI/CD Runner
+### 6. Headless Linux CLAP / VST3 Automated CI/CD Runner
 *Goal: Ensure multi-platform stability and continuous validation for Linux audio.*
 - Add an Ubuntu `aarch64` / `x86_64` container to GitHub Actions building headless Linux CLAP/VST3 binaries on every commit.
 
