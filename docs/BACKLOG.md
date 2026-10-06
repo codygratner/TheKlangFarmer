@@ -28,6 +28,12 @@ Run an automated Python script to extract legacy v0.2.0 C++ parameters, string f
 *Detailed Plan: [`docs/gui_test_harness_plan.md`](gui_test_harness_plan.md)*
 Implement a functional state C++ testing harness (`gui_tests`) to simulate clicks and verify APVTS bindings. Integrated directly into the `/build-validate` skill to act as an industry-standard development guardrail (can be bypassed with `--skip-gui`).
 
+
+### 4. GitHub CLI Integration & Repository Tagging
+*Goal: Improve repository discoverability for audio-plugin developers and the vibe coding community.*
+- Have the AI install the GitHub CLI (`gh`) via `winget` and authenticate.
+- Automatically apply curated repository tags (Topics) covering Audio Plugin/JUCE (`vst3`, `juce-framework`), FM Drum Synthesis (`drum-machine`, `fm-synthesis`), and the Vibe Coding (`vibe-coding`, `agentic-coding`) communities.
+
 ---
 
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
@@ -72,13 +78,6 @@ Expand the FX catalog from 13 to 19 algorithms (appended as indices 14–19 for 
   3. **Decay Time**: Percussive sample amplitude decay envelope.
   4. **Level**: Output gain level.
 - **Choke / Split Modal**: Modal dialog to configure split/choke groups (e.g. allowing one player to be an open hi-hat and the other a closed hi-hat that chokes the open sound).
-
-### 6. Advanced Typography Engine (JUCE 9)
-*Detailed Plan: [`docs/typography_engine_plan.md`](typography_engine_plan.md)*
-Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's advanced text rendering pipeline.
-- **Embedded Binary Assets**: `.ttf`/`.otf` files are baked into `BinaryData` for 100% cross-platform consistency.
-- **CSS-Style JSON Classes**: Define global text profiles (e.g., `HeaderStyle`, `TooltipStyle`) in the layout JSON, exposing Font Family, Size, Weight, Tracking (letter-spacing), and Justification.
-- **Editor Integration**: The JSON Editor tool provides sliders/fields to instantly visualize tracking and weight changes across the UI.
 
 ### 6. Advanced Typography Engine (JUCE 9)
 *Detailed Plan: [`docs/typography_engine_plan.md`](typography_engine_plan.md)*
