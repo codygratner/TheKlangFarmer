@@ -77,3 +77,8 @@
   2. Draft or update an implementation plan artifact for this design
   3. Both (Add to backlog AND draft the plan)
 - **Never Auto-Execute**: Wait for the user's explicit confirmation before writing the plan or modifying the backlog.
+
+## Strict Scratch Script Hygiene
+- **Instant Cleanup**: When you create temporary Python scripts (`update_file.py`, `fix_code.py`, `script.py`) to execute refactors, tests, or file modifications, you must **ALWAYS** delete the script immediately upon completion.
+- **Execution Chain**: Always chain the removal directly in your terminal command. For example: `python script.py ; rm script.py`.
+- **No Clutter**: Under no circumstances should you leave temporary scripts tracked or untracked in the root project directory.
