@@ -35,19 +35,19 @@
 ## Strict Background Task Etiquette & Watchdog Timer Policy
 - **No Polling or Pinging**: When a long-running command (like a build, test suite, or script) goes to the background, you must NEVER use `manage_task` to poll its status in a loop or spam the chat with progress checks.
 - **No Task Log Peeking**: You must NEVER inspect running task logs via `cat`, `Get-Content`, `type`, `head`, `tail`, or `view_file` on `.system_generated/tasks/task-*.log`. Reading logs while a background task is actively running is strictly prohibited.
-- **Two-Stage Watchdog Timer Protocol (5 min / 15 min)**:
-  1. **T = 0 (Launch & Yield)**: When a command goes to the background as `<task-id>`, schedule a single 5-minute watchdog timer:
-     `schedule(DurationSeconds=300, TimerCondition="<task-id>", Prompt="5-minute build watchdog: check if task is actively making progress or stuck.")`
-     Output a concise one-sentence notification to the user and yield turn immediately.
-     *(Note: When the task finishes normally in 30s–2m, the system auto-cancels this timer and wakes you up with the final output with zero chat spam).*
-  2. **T = 5 Minutes (Stage 1 Health Check)**: If the 5-minute timer expires, the task is still running. Perform a single silent health check using `manage_task(Action="status", TaskId="<task-id>")`.
-     - If the process is actively generating output (e.g. large rebuild), schedule the final 10-minute timeout watchdog:
-       `schedule(DurationSeconds=600, TimerCondition="<task-id>", Prompt="15-minute hard timeout: task has stalled or hung; terminate and investigate.")`
-       and yield turn silently without spamming the chat.
-  3. **T = 15 Minutes (Stage 2 Hard Timeout & Auto-Kill)**: If the 15-minute timer expires, the task is hung, stalled, or deadlocked:
-     - Immediately terminate the process via `manage_task(Action="kill", TaskId="<task-id>")`.
-     - Inspect the task log to diagnose the hang (e.g., infinite loop, deadlock, or prompt waiting for interactive stdin).
-     - Alert the user with a detailed failure report and recovery steps.
+- **Two-Stage Watchdog Timer Protocol (Target-Aware Adaptive Timing)**:
+  - **Quick Tasks & Single Targets (5 min / 15 min)**: For incremental builds, running single test executables (`dsp_tests`, `capture_screenshot`), git operations, or quick CLI scripts:
+    1. **T = 0 (Launch & Yield)**: Schedule a 5-minute watchdog timer:
+       `schedule(DurationSeconds=300, TimerCondition="<task-id>", Prompt="5-minute build watchdog: check if task is actively making progress or stuck.")`
+       Output a concise one-sentence notification and yield turn immediately.
+    2. **T = 5 Min (Stage 1 Health Check)**: Check status once silently via `manage_task(Action="status", TaskId="<task-id>")`. If actively progressing, schedule the final 10-minute timeout watchdog (`DurationSeconds=600`, Prompt="15-minute hard timeout: task has stalled or hung; terminate and investigate.") and yield silently.
+    3. **T = 15 Min (Stage 2 Hard Timeout & Auto-Kill)**: If the 15-minute timer expires, terminate via `manage_task(Action="kill", TaskId="<task-id>")`, inspect logs, and alert user.
+  - **Full Rebuilds & Multi-Target Test Suites (10 min / 20 min)**: For full multi-target builds (`TheKlangFarmer_VST3` + `TheKlangPlanter_VST3` + `TheKlangEditor` + test suites, full `/build-validate` pipeline, or `--clean-first`):
+    1. **T = 0 (Launch & Yield)**: Schedule a 10-minute watchdog timer:
+       `schedule(DurationSeconds=600, TimerCondition="<task-id>", Prompt="10-minute full build watchdog: check if compilation/tests are progressing or stuck.")`
+       Output a concise one-sentence notification and yield turn immediately.
+    2. **T = 10 Min (Stage 1 Health Check)**: Check status once silently via `manage_task(Action="status", TaskId="<task-id>")`. If actively progressing, schedule the final 10-minute timeout watchdog (`DurationSeconds=600`, Prompt="20-minute hard timeout: task has stalled or hung; terminate and investigate.") and yield silently.
+    3. **T = 20 Min (Stage 2 Hard Timeout & Auto-Kill)**: If the 20-minute timer expires, terminate via `manage_task(Action="kill", TaskId="<task-id>")`, inspect logs, and alert user.
 
 
 ## Strict C++ Formatting & Style
