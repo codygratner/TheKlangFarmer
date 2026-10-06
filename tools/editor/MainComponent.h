@@ -34,6 +34,7 @@ public:
 
 private:
     void buildTree();
+    juce::String getControlFileForParam(const juce::String& paramId);
     void syncJsonToPreview(const juce::String& forcedJson = "");
 
     class NavTabbedComponent : public juce::TabbedComponent {
