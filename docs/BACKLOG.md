@@ -154,7 +154,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 - **Settings & About Modal**: Gear icon in header exposing 'Check for updates on launch' toggle, manual 'Check Now' button, and build metadata.
 
 ### 6. Automated macOS Notarization & Code Signing Pipeline
-*Goal: Prepare final binaries for public distribution.*
+*Goal: Ensure public FOSS binaries install cleanly without OS security warnings.*
 - Integrate Apple Developer ID code-signing and `notarytool` automated ticket stapling in CI so AU/VST3 binaries pass macOS Gatekeeper without warnings.
 - Integrate Windows Authenticode code-signing for SmartScreen trust.
 
@@ -167,7 +167,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 ---
 
 ## 🚀 Milestone: v1.0.0 "The General Availability Launch"
-*Focus: Official Commercial & Public Release of The Klang Farmer & The Klang Planter.*
+*Focus: Official Public FOSS (GPLv3) Release of The Klang Farmer & The Klang Planter.*
 
 ### 1. Multi-Platform Automated Installers & Distribution Packaging
 *Goal: Provide zero-friction, professional installers across all major operating systems.*
