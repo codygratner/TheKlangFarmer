@@ -49,6 +49,13 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
                 continue;
             }
 
+            if (def.id == "ui_strings") {
+                for (auto& strProp : vObj->getProperties()) {
+                    globalStrings[strProp.name.toString()] = strProp.value.toString();
+                }
+                continue;
+            }
+
             def.type = vObj->getProperty("type").toString();
             def.name = vObj->getProperty("name").toString();
             def.description = vObj->getProperty("description").toString();

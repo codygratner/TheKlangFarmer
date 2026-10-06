@@ -718,7 +718,7 @@ void TheKlangPlanterAudioProcessorEditor::paint(juce::Graphics& g) {
 #ifdef JucePlugin_VersionString
     juce::String verStr = "v" JucePlugin_VersionString;
 #else
-    juce::String verStr = "v0.1.8";
+    juce::String verStr = "v0.3.0";
 #endif
 #ifdef TKF_FEATURE_TAG
     if (juce::String(TKF_FEATURE_TAG).isNotEmpty()) {
@@ -728,9 +728,14 @@ void TheKlangPlanterAudioProcessorEditor::paint(juce::Graphics& g) {
     int verWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), verStr) + 8;
     g.drawText(verStr, 206, 0, verWidth, 36, juce::Justification::centredLeft);
 
+    int badgeOffset = 0;
+    if (updateBadgeButton.isVisible()) {
+        badgeOffset = updateBadgeButton.getWidth() + 8;
+    }
+
     // Subtitle
-    int subX = 206 + verWidth + 8;
-    int subtitleWidth = juce::jmax(0, getWidth() - 554 - subX);
+    int subX = 206 + verWidth + 8 + badgeOffset;
+    int subtitleWidth = juce::jmax(0, getWidth() - 586 - subX);
     g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
     g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkp_subtitle", "COMPACT FM PERCUSSION SYNTHESIZER"), subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
@@ -754,10 +759,16 @@ void TheKlangPlanterAudioProcessorEditor::resized() {
     };
 
     // Header controls
-    headerViz.setBounds(getWidth() - 544, 5, 210, 26);
+    headerViz.setBounds(getWidth() - 580, 5, 214, 26);
+    settingsButton.setBounds(getWidth() - 356, 5, 26, 26);
     tooltipsButton.setBounds(getWidth() - 324, 5, 72, 26);
     initButton.setBounds(getWidth() - 246, 5, 90, 26);
     triggerButton.setBounds(getWidth() - 146, 5, 136, 26);
+
+    updateBadgeButton.setBounds(206 + 55 + 8, 7, 136, 22);
+
+    if (settingsModal)
+        settingsModal->setBounds(getLocalBounds());
 
     // Top Row: [0] Carrier, [1] Modulator, [2] Pitch Env, [3] Noise Transient
     if (cardCarrier)  cardCarrier->setBounds(getSlotBounds(0, 0));

@@ -9,11 +9,26 @@ KlangCoreEditor::KlangCoreEditor(KlangCoreProcessor& p)
     tooltipsButton.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("btn_tooltips_off", "TIPS: OFF"));
     guideButton.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("btn_guide", "QUICKSTART GUIDE"));
     setLookAndFeel(&knobLookAndFeel);
-    
+
     // Default tooltips window
     tooltipWindow = std::make_unique<juce::TooltipWindow>(this, 700);
     tooltipWindow->setOpaque(false);
     tooltipWindow->setMillisecondsBeforeTipAppears(400);
+
+    // Settings Modal & Button
+    settingsModal = std::make_unique<SettingsModalComponent>(coreProcessor.getName());
+    addChildComponent(*settingsModal);
+
+    settingsButton.onClick = [this] {
+        if (settingsModal) {
+            settingsModal->setVisible(true);
+            settingsModal->toFront(true);
+        }
+    };
+    addAndMakeVisible(settingsButton);
+
+    // Update Badge Button (hidden until an update is discovered)
+    addChildComponent(updateBadgeButton);
 
     // Setup buttons
     tooltipsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff181a20));
@@ -30,9 +45,14 @@ KlangCoreEditor::KlangCoreEditor(KlangCoreProcessor& p)
     triggerButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff181a20));
     triggerButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff8b99a6));
     addAndMakeVisible(triggerButton);
+
+    // Trigger update check on launch if enabled
+    if (VersionChecker::isCheckOnLaunchEnabled())
+        VersionChecker::getInstance().checkForUpdates(false);
 }
 
-void KlangCoreEditor::setTooltipsEnabled(bool enabled) {
+void KlangCoreEditor::setTooltipsEnabled(bool enabled)
+{
     tooltipsEnabled = enabled;
     if (enabled) {
         tooltipsButton.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("btn_tooltips_on", "TIPS: ON"));
@@ -45,9 +65,3 @@ void KlangCoreEditor::setTooltipsEnabled(bool enabled) {
         tooltipWindow->hideTip();
     }
 }
-
-
-
-
-
-

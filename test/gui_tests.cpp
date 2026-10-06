@@ -5,6 +5,7 @@
 #include "SmokePaintSuite.h"
 #include "ReflectionGuardrailSuite.h"
 #include "HardeningSuites.h"
+#include "VersionCheckerTestSuite.h"
 
 int main(int argc, char* argv[]) {
     juce::StringArray args;
@@ -38,8 +39,9 @@ int main(int argc, char* argv[]) {
         if (runPlanter) PlanterTestSuite::runSuite(reporter);
         if (runEditor)  EditorTestSuite::runSuite(reporter);
         
-        // Always run smoke, reflection and hardening if running all
+        // Always run smoke, reflection, version checker and hardening if running all
         if (runAll) {
+            VersionCheckerTestSuite::runSuite(reporter);
             SmokePaintSuite::runSuite(reporter);
             ReflectionGuardrailSuite::runSuite(reporter);
             HardeningSuites::runSuite(reporter);

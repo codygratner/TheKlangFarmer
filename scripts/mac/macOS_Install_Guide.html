@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>macOS Installation & Security Guide — The Klang Farmer & The Klang Planter</title>
+    <style>
+        :root {
+            --bg-page: #0a0c10;
+            --bg-card: #131722;
+            --bg-card-inner: #191f2e;
+            --border-card: #252e42;
+            --text-primary: #f0f4fc;
+            --text-secondary: #8b9bb4;
+            --accent-cyan: #00d2ff;
+            --accent-green: #00e676;
+            --accent-orange: #ff9100;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            font-family: var(--font-family);
+            line-height: 1.6;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-card);
+        }
+
+        .badge-brand {
+            display: inline-block;
+            background: rgba(0, 210, 255, 0.15);
+            color: var(--accent-cyan);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-card);
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-accent-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .strip-green { background: linear-gradient(90deg, var(--accent-green), var(--accent-cyan)); }
+        .strip-cyan { background: linear-gradient(90deg, var(--accent-cyan), #3d5afe); }
+        .strip-orange { background: linear-gradient(90deg, var(--accent-orange), #ff5252); }
+
+        h2 {
+            font-size: 1.35rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+            font-size: 0.98rem;
+        }
+
+        p strong {
+            color: var(--text-primary);
+        }
+
+        .step-list {
+            margin-left: 20px;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        .step-list li {
+            margin-bottom: 10px;
+        }
+
+        .code-box {
+            background: var(--bg-card-inner);
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            padding: 14px 18px;
+            font-family: ui-monospace, SFMono-Regular, Consolas, Menlo, monospace;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+            margin: 14px 0;
+            overflow-x: auto;
+        }
+
+        .gatekeeper-diagram {
+            background: var(--bg-card-inner);
+            border: 1px solid var(--border-card);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 18px 0;
+        }
+
+        .diagram-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .step-number {
+            background: var(--accent-orange);
+            color: #000;
+            font-weight: 800;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .step-desc {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .step-desc small {
+            display: block;
+            color: var(--text-secondary);
+            margin-top: 3px;
+        }
+
+        .button-mock {
+            display: inline-block;
+            background: #2a354d;
+            border: 1px solid #4a5c82;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .footer {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 40px;
+        }
+
+        .footer a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="badge-brand">macOS Installation & Security</div>
+            <h1>The Klang Farmer & The Klang Planter</h1>
+            <div class="subtitle">Universal Binaries for Apple Silicon (M1/M2/M3/M4) & Intel x86_64</div>
+        </header>
+
+        <!-- Method 1: PKG Installer -->
+        <div class="card">
+            <div class="card-accent-strip strip-green"></div>
+            <h2>1. Automatic .pkg Installer (Recommended)</h2>
+            <p>The standard macOS <code>.pkg</code> installer is the fastest, zero-friction install method:</p>
+            <ol class="step-list">
+                <li>Double-click <strong>TheKlangFarmer-vX.X.X-macOS-Installer.pkg</strong>.</li>
+                <li>Follow the on-screen installer prompts and authorize with your macOS administrator password or Touch ID.</li>
+                <li>The installer automatically installs all VST3, AU, and Standalone components and runs a built-in post-install script that <strong>automatically removes Gatekeeper quarantine flags</strong>.</li>
+                <li>Restart your DAW (Logic Pro, Ableton Live, Reaper, FL Studio) — the plugins will scan immediately without Gatekeeper prompts!</li>
+            </ol>
+        </div>
+
+        <!-- Method 2: Portable DMG -->
+        <div class="card">
+            <div class="card-accent-strip strip-cyan"></div>
+            <h2>2. Portable .dmg (Drag & Drop)</h2>
+            <p>If you prefer installing manually from the <code>.dmg</code> archive:</p>
+            <ol class="step-list">
+                <li>Double-click the <code>.dmg</code> to mount the volume.</li>
+                <li>Drag <strong>The Klang Farmer.vst3</strong> and <strong>The Klang Planter.vst3</strong> to the <em>Drag to VST3 Folder</em> shortcut.</li>
+                <li>Drag <strong>The Klang Farmer.component</strong> and <strong>The Klang Planter.component</strong> to the <em>Drag to AU Components Folder</em> shortcut.</li>
+                <li>Drag Standalone <strong>.app</strong> files to your <em>Applications</em> folder.</li>
+                <li>Double-click <strong>Fix_Mac_Permissions.command</strong> to unquarantine the installed files.</li>
+            </ol>
+        </div>
+
+        <!-- Method 3: Gatekeeper 2-Step Bypass -->
+        <div class="card">
+            <div class="card-accent-strip strip-orange"></div>
+            <h2>3. Manual Gatekeeper Bypass (If Ever Prompted)</h2>
+            <p>Because The Klang Farmer is free and open-source software distributed without a paid Apple Developer certificate, macOS Gatekeeper may occasionally display:</p>
+            <p style="color: #ffab00; font-style: italic; background: rgba(255, 171, 0, 0.1); padding: 8px 14px; border-radius: 6px;">
+                "The Klang Farmer.vst3 cannot be opened because Apple cannot check it for malicious software."
+            </p>
+            <p>To authorize the plugin in 2 quick clicks:</p>
+
+            <div class="gatekeeper-diagram">
+                <div class="diagram-step">
+                    <div class="step-number">1</div>
+                    <div class="step-desc">
+                        Open <strong>System Settings</strong> &rarr; <strong>Privacy & Security</strong>.
+                        <small>Scroll down to the <strong>Security</strong> section near the bottom.</small>
+                    </div>
+                </div>
+                <div class="diagram-step">
+                    <div class="step-number">2</div>
+                    <div class="step-desc">
+                        You will see a notification stating <em>"The Klang Farmer was blocked from use because it is not from an identified developer."</em>
+                        <small>Click the <span class="button-mock">Open Anyway</span> button right next to it, then confirm with your password.</small>
+                    </div>
+                </div>
+            </div>
+
+            <p>Alternatively, open <strong>Terminal.app</strong> and run this single command:</p>
+            <div class="code-box">
+                sudo xattr -rd com.apple.quarantine /Library/Audio/Plug-Ins/VST3/The\ Klang* /Library/Audio/Plug-Ins/Components/The\ Klang*
+            </div>
+        </div>
+
+        <!-- DAW Rescan Guide -->
+        <div class="card">
+            <div class="card-accent-strip strip-cyan"></div>
+            <h2>4. DAW Rescan Instructions</h2>
+            <ul class="step-list">
+                <li><strong>Logic Pro:</strong> Settings &rarr; Plug-in Manager &rarr; Select "R'lyeh Sound" &rarr; Click <em>Reset & Rescan Selection</em>.</li>
+                <li><strong>Ableton Live:</strong> Preferences &rarr; Plug-Ins &rarr; Hold <kbd>Option</kbd> and click <em>Rescan</em>.</li>
+                <li><strong>Reaper:</strong> Preferences &rarr; Plug-ins &rarr; VST &rarr; <em>Re-scan &rarr; Re-scan failed plug-ins</em>.</li>
+                <li><strong>FL Studio:</strong> Options &rarr; Manage Plugins &rarr; <em>Find installed plugins</em> with "Verify plugins" enabled.</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            Free & Open Source Software &bull; <a href="https://github.com/codygratner/TheKlangFarmer" target="_blank">GitHub Repository</a> &bull; R'lyeh Sound
+        </div>
+    </div>
+</body>
+</html>

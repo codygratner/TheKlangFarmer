@@ -53,38 +53,19 @@ jobs:
             ./build/Release/dsp_tests
           fi
 
-      - name: Codesign macOS Binaries (Ad-hoc)
+      - name: Build macOS Distribution Packages (.pkg Installer, .dmg, .zip)
         run: |
-          find build -name "*.vst3" -o -name "*.component" -o -name "*.app" | while read -r item; do
-            echo "Ad-hoc codesigning: $item"
-            codesign --force --deep -s - "$item"
-          done
+          chmod +x scripts/mac/build_mac_distribution.sh scripts/mac/postinstall scripts/mac/Fix_Mac_Permissions.command
+          ./scripts/mac/build_mac_distribution.sh "${{ steps.tag.outputs.tag }}" build
 
-      - name: Package macOS Universal Binaries
-        run: |
-          TAG="${{ steps.tag.outputs.tag }}"
-          ZIP_NAME="TheKlangFarmer-${TAG}-macOS.zip"
-          mkdir -p macos_dist
-          find build/TheKlangFarmer_artefacts -name "The Klang Farmer.vst3" -exec cp -R -P {} macos_dist/ \;
-          find build/TheKlangFarmer_artefacts -name "The Klang Farmer.component" -exec cp -R -P {} macos_dist/ \;
-          find build/TheKlangFarmer_artefacts -name "The Klang Farmer.app" -exec cp -R -P {} macos_dist/ \;
-          find build/TheKlangPlanter_artefacts -name "The Klang Planter.vst3" -exec cp -R -P {} macos_dist/ \;
-          find build/TheKlangPlanter_artefacts -name "The Klang Planter.component" -exec cp -R -P {} macos_dist/ \;
-                    find build/TheKlangPlanter_artefacts -name "The Klang Planter.app" -exec cp -R -P {} macos_dist/ \;
-          find build/TheKlangEditor_artefacts -name "The Klang Editor.app" -exec cp -R -P {} macos_dist/ \;
-          cp scripts/mac/Unlock_and_Install_Mac.command macos_dist/
-          cp scripts/mac/README_MAC_INSTALL.txt macos_dist/
-          chmod +x macos_dist/Unlock_and_Install_Mac.command
-          cd macos_dist
-          zip -r -y "../${ZIP_NAME}" *
-          cd ..
-          ls -lh "${ZIP_NAME}"
-
-      - name: Upload macOS Archive to GitHub Release
+      - name: Upload macOS Packages to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.tag.outputs.tag }}
-          files: TheKlangFarmer-*-macOS.zip
+          files: |
+            TheKlangFarmer-*-macOS-Installer.pkg
+            TheKlangFarmer-*-macOS.dmg
+            TheKlangFarmer-*-macOS.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

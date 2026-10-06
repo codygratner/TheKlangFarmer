@@ -73,6 +73,10 @@ target_sources(TheKlangFarmer PRIVATE
     source/FarmerProcessor.cpp
     source/FarmerEditor.h
     source/FarmerEditor.cpp
+    source/VersionChecker.h
+    source/VersionChecker.cpp
+    source/SettingsModal.h
+    source/SettingsModal.cpp
 )
 
 target_include_directories(TheKlangFarmer PRIVATE
@@ -147,6 +151,10 @@ target_sources(TheKlangPlanter PRIVATE
     source/PlanterProcessor.cpp
     source/PlanterEditor.h
     source/PlanterEditor.cpp
+    source/VersionChecker.h
+    source/VersionChecker.cpp
+    source/SettingsModal.h
+    source/SettingsModal.cpp
 )
 
 target_include_directories(TheKlangPlanter PRIVATE source)

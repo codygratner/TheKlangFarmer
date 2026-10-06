@@ -5,7 +5,7 @@
 > When opening the next session, review the prioritized milestones below:
 > 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit.
 > 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
-> 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, & Linux Headless CI.
+> 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
 > 4. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
 > 5. **v1.1.0 (Hardware Universe)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
 > 6. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
@@ -38,7 +38,7 @@ Purged legacy standalone FX blocks, orphaned APVTS parameters, and bypassed rout
 *Audit Report:* [`docs/parity_audit/tkf_parity_audit.html`](parity_audit/tkf_parity_audit.html) | [`docs/parity_audit/tkf_parity_audit.pdf`](parity_audit/tkf_parity_audit.pdf)
 Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters against current v0.3.0 JSON controls across The Klang Farmer and The Klang Planter. All calibrated legacy defaults, string formatters, and colors verified with 0 discrepancies (160 exact matches, 44 intentional multi-instance FX slot migrations, and 30 safe additions). Slide-deck printable PDF report generated.
 
-### 6. Zero-Cost macOS FOSS Distribution Pipeline (.pkg + Quarantine Stripper + Visual Guide)
+### 6. Zero-Cost macOS FOSS Distribution Pipeline (.pkg + Quarantine Stripper + Visual Guide) — ✅ COMPLETED
 *Goal: Ensure the v0.3.0 Mac release installs and upgrades with zero friction or Gatekeeper blocks.*
 - **Automated `.pkg` Installer Generator**: GitHub Actions runner uses macOS native `pkgbuild` & `productbuild` to generate a standard installer.
 - **Automated Post-Install Quarantine Stripper**: Installer runs an automated `postinstall` script (`xattr -rd com.apple.quarantine /Library/Audio/Plug-Ins/...`) that strips the internet quarantine flag so DAWs scan the VST3/AU immediately with zero Gatekeeper warnings!
@@ -48,16 +48,36 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Includes a double-clickable `Fix_Mac_Permissions.command` helper script.
   - Includes an illustrated `macOS_Install_Guide.html` showing the 2-step bypass in System Settings -> Privacy & Security.
 
-### 7. Automated GitHub Release Version Checker & Settings Modal
+### 7. Automated GitHub Release Version Checker & Settings Modal — ✅ COMPLETED
 *Goal: Provide seamless, non-intrusive notification of new releases directly inside the plugin so v0.3.0 users automatically know when v0.4.0 and beyond drop.*
-- **Non-Blocking Background Worker**: Async background thread querying GitHub release API on plugin load.
-- **Header Notification Badge**: Subtle, glowing 'Update Available' tag next to version text. Clicking opens release page.
-- **Settings & About Modal**: Gear icon in header exposing 'Check for updates on launch' toggle, manual 'Check Now' button, and build metadata.
+- **Non-Blocking Background Worker**: Async background thread querying GitHub release API on plugin load (`VersionChecker`).
+- **Header Notification Badge**: Subtle, glowing 'Update Available' tag next to version text (`UpdateBadgeButton`). Clicking opens release page.
+- **Settings & About Modal**: Gear icon in header (`GearButton`) exposing 'Check for updates on launch' toggle, manual 'Check Now' button, and build metadata (`SettingsModalComponent`).
 
-### 8. GitHub CLI Integration & Repository Tagging
+### 8. GitHub CLI Integration & Repository Tagging — ✅ COMPLETED
 *Goal: Improve repository discoverability for audio-plugin developers and the vibe coding community.*
-- Have the AI install the GitHub CLI (`gh`) via `winget` and authenticate.
-- Automatically apply curated repository tags (Topics) covering Audio Plugin/JUCE (`vst3`, `juce-framework`), FM Drum Synthesis (`drum-machine`, `fm-synthesis`), and the Vibe Coding (`vibe-coding`, `agentic-coding`) communities.
+- Installed GitHub CLI (`gh`) via `winget` and authenticated with user credentials.
+- Curated repository topics applied: `vst3`, `juce-framework`, `drum-machine`, `fm-synthesis`, `vibe-coding`, `agentic-coding`, `audio-plugin`, `synthesizer`, `dsp`, `c-plus-plus`.
+
+### 9. Post-v0.3.0 Tagged Release, Knowledge Distillation & Chat Archival
+*Detailed Plan: [`docs/post_v030_release_and_archive_plan.md`](post_v030_release_and_archive_plan.md)*  
+*Goal: Consolidate institutional memory across all 14+ chat sessions into a permanent Git-versioned Markdown knowledge base, tag and publish the v0.3.0 release, and safely close all active chats with zero lost knowledge.*
+- **Automated Transcript Harvester**:
+  - Python harvester script scans all `transcript.jsonl` files in `~/.gemini/antigravity/brain/*/` across all project chat sessions.
+  - Distills prompts, architectural decisions, solved bugs, and created artifacts into a structured, chronological `docs/DEV_HISTORY.md`.
+- **Executive Institutional Memory Index**:
+  - Curated cheat-sheet summarizing core DSP invariants, JUCE 9.0.3 hygiene, build heuristics, and data-driven design patterns at the top of `docs/DEV_HISTORY.md`.
+- **Git Tagging & GitHub Release**:
+  - Create and push Git tag `v0.3.0`.
+  - Author comprehensive release notes and publish GitHub Release with bundled artifacts (`.pkg`, `.vst3`, `.exe`).
+- **Primary Branch Migration (`master` &rarr; `main`)**:
+  - Fast-forward remote `main` with all 100+ commits from `master`.
+  - Switch default repository branch to `main` on GitHub (via `gh repo edit --default-branch main`).
+  - Update `CMakeLists.txt` comments and cleanly retire/delete obsolete remote `master` branch.
+- **Post-Release Housekeeping & Chat Purge**:
+  - Archive all completed v0.3.0 plan files into `docs/completed_plans/`.
+  - Update `CHANGELOG.md` with final v0.3.0 diff.
+  - Safe signal to close/kill all accumulated chat sessions in the Antigravity UI for a clean, lightning-fast v0.4.0 kickoff.
 
 ---
 
@@ -247,6 +267,23 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 - **Full Scrubbed Diagnostics**:
   - Gathers OS, host DAW name/version, buffer size, sample rate, Git commit hash, active preset/FX, and demangled C++ call stack.
   - Automatically scrubs local usernames from paths (e.g. `C:\Users\<redacted>\...` &rarr; `<UserPath>`) to protect privacy.
+
+### 9. One-Time Quick Tour & Gesture Revelation ("Right-Click is the Way")
+*Detailed Plan: [`docs/one_time_quick_tour_plan.md`](one_time_quick_tour_plan.md)*  
+*Goal: Provide a sleek, non-intrusive first-launch onboarding card that introduces users to the tactile power of right-click quick snaps, randomizer menus, voice articulation callouts, and double-click resets.*
+- **Unobtrusive Single-Screen Overlay**:
+  - Automatically pops up on first launch only; persistent state stored in `%APPDATA%/TheKlangFarmer/settings.json`.
+  - Dismissible with a single click outside the card, hitting `ESC`, or clicking `[ GOT IT, LET'S PLAY ]`.
+  - Can be reopened anytime via the header `[ ? ]` button or Settings gear menu.
+- **The Core Message**:
+  - Visual gesture breakdown emphasizing:
+    1. Right-click knobs & sliders for Quick-Snap intervals and MIDI CC Learn.
+    2. Right-click selectors for default resets and full dropdown lists.
+    3. Right-click card/page headers for the d6 Randomizer depth menu.
+    4. Right-click the Voice badge for Gated Bass & Glide, and right-click `[A|B]` to copy states.
+    5. Double-click any parameter to reset to factory default.
+- **100% JSON-Driven Copy**:
+  - All headings, icons, descriptions, and button labels parsed from `assets/controls/global_ui.json` under `"quick_tour"`.
 
 ---
 

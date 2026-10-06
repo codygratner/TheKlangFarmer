@@ -2690,7 +2690,7 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
 #ifdef JucePlugin_VersionString
     juce::String verStr = "v" JucePlugin_VersionString;
 #else
-    juce::String verStr = "v0.2.0";
+    juce::String verStr = "v0.3.0";
 #endif
 #ifdef TKF_FEATURE_TAG
     if (juce::String(TKF_FEATURE_TAG).isNotEmpty()) {
@@ -2700,18 +2700,30 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
     int verWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), verStr) + 8;
     g.drawText(verStr, 196, 0, verWidth, 36, juce::Justification::centredLeft);
 
-    int subX = 196 + verWidth + 8;
-    int subtitleWidth = juce::jmax(0, getWidth() - 434 - subX);
+    int badgeOffset = 0;
+    if (updateBadgeButton.isVisible()) {
+        badgeOffset = updateBadgeButton.getWidth() + 8;
+    }
+
+    int subX = 196 + verWidth + 8 + badgeOffset;
+    int subtitleWidth = juce::jmax(0, getWidth() - 464 - subX);
     g.setFont(juce::FontOptions(12.5f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
     g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkf_subtitle", "PAGED MODULAR DUAL FM SYNTHESIS DRUM VOICE"), subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangFarmerAudioProcessorEditor::resized() {
+    settingsButton.setBounds(getWidth() - 456, 5, 26, 26);
     tooltipsButton.setBounds(getWidth() - 424, 5, 72, 26);
     guideButton.setBounds(getWidth() - 346, 5, 90, 26);
     initButton.setBounds(getWidth() - 246, 5, 90, 26);
     triggerButton.setBounds(getWidth() - 146, 5, 136, 26);
+
+    updateBadgeButton.setBounds(196 + 55 + 8, 7, 136, 22);
+
+    if (settingsModal)
+        settingsModal->setBounds(getLocalBounds());
+
     quickstartGuide.setBounds(getLocalBounds());
 
     updatePageLayout();
