@@ -130,7 +130,7 @@ Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's ad
 
 *Focus: Professional DAW Integration, File Management, and Export.*
 
-### 6. JSON Preset Browser, Tagging & State Migration
+### 1. JSON Preset Browser, Tagging & State Migration
 *Detailed Plan: [`docs/preset_system_plan.md`](preset_system_plan.md)*  
 Implement a professional, tag-based preset management system utilizing JSON files for storage.
 - **Phase 1: JSON Schema & StateMigrator (source/PresetManager.h, source/StateMigrator.h)**:
@@ -142,7 +142,7 @@ Implement a professional, tag-based preset management system utilizing JSON file
 - **Phase 3: Header Integration & Automated Tests**:
   - LCD-style preset display and < > stepper buttons in the main header.
 
-### 7. WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17)
+### 2. WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17)
 *Detailed Plan: [`docs/wav_render_sf2_export_dragndrop_plan.md`](wav_render_sf2_export_dragndrop_plan.md)*  
 Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generation, and zero-friction DAW integration:
 - **Phase 1: Offline Render Pipeline & SF2 Builder**:
@@ -156,8 +156,15 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 - **Phase 4: Header Integration & Automated Unit Tests**:
   - Add renderButton and dragBadge to plugin headers.
 
+### 3. Automated GitHub Release Version Checker & Settings Modal
+*Goal: Provide seamless, non-intrusive notification of new releases directly inside the plugin.*
+- **Non-Blocking Background Worker**: Uses an async background thread (`juce::Thread` / `juce::URL`) to query GitHub's latest release API (`https://api.github.com/repos/.../releases/latest`) on plugin load. Zero audio thread or UI stalling.
+- **Header Notification Badge**: When a newer semver tag is detected, a subtle, glowing 'Update Available' badge appears next to the version text in the header. Clicking opens the release URL in the system browser.
+- **Settings & About Modal**: 
+  - Accessed via a new gear / info icon in the header.
+  - Contains: 'Check for updates on launch' toggle (persisted in config JSON), manual 'Check for Updates Now' button, and current build metadata.
 
-### 9. Automated macOS Notarization & Code Signing
+### 4. Automated macOS Notarization & Code Signing
 *Goal: Prepare the final binaries for commercial distribution.*
 - Integrate a code-signing and Apple Notarization pipeline so the VST3/AU binaries clear macOS Gatekeeper and Windows SmartScreen without throwing 'unidentified developer' warnings to users.
 
