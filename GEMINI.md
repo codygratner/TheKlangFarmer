@@ -6,6 +6,19 @@
 - **Zero Blocking I/O**: Never call filesystem operations, network APIs, or logging/console output (`std::cout`, `printf`, `DBG()`, `juce::Logger`) on the audio thread.
 - **SIMD & Fast Math**: Prefer `TbdAudio::FastMath` over standard CRT transcendentals (`std::pow`, `std::sin`, `std::tanh`) in hot audio loops.
 
+## Strict Model Advisory Protocol (MANDATORY IN EVERY CHAT)
+- **Mandatory In-Chat Model Banner**: Whenever an agent presents a plan, discusses starting a new task, or prepares to execute code, the agent MUST explicitly output this prominent visual markdown block directly in its chat response:
+  > 🧠 **MODEL ADVISORY: Tier [1 | 2 | 3]**
+  > - **Recommended Setting**: [Gemini 3.1 Pro (Thinking: High) | Gemini 3.8 Flash (Thinking: High) | Gemini 3.8 Flash (Low/Medium)]
+  > - **Active Model Check**: Please verify your model dropdown in the IDE footer matches this tier before proceeding!
+
+- **The Three Complexity Tiers**:
+  - **Tier 1 (High Reasoning / Critical DSP)**: Complex audio DSP math, polyphonic voice allocation, SIMD FastMath, lock-free concurrency, memory safety forensics, deep architectural planning (`/strict-plan`). -> *Setting: Gemini 3.1 Pro (Thinking: High)*.
+  - **Tier 2 (Balanced Engineering & UI Testing)**: Standard JUCE UI components, modal dialogues, APVTS parameter attachments, building/expanding `gui_tests` or `dsp_tests`, standard phase execution. -> *Setting: Gemini 3.8 Flash (Thinking: High)*.
+  - **Tier 3 (Rapid Iteration, Data & Tooling)**: Editing JSON schemas in `assets/controls/`, documentation/backlog updates, git operations, mechanical find-and-replace, CMake tweaks. -> *Setting: Gemini 3.8 Flash (Thinking: Low or Medium)*.
+- **Builder Pause Gate**: Before Klang Industries calls any editing or compilation tool on a new plan, it MUST use `ask_question` or pause so the user can verify/adjust their model dropdown.
+- **Subagent Policy**: Always use `Model="flash"` for read-only research subagents (`invoke_subagent`), and `Model="pro"` only for heavy multi-file reasoning.
+
 ## Target Toolchain & Standards
 - **C++ Standard**: C++20 (`CMAKE_CXX_STANDARD 20`).
 - **Framework**: JUCE 9.0.3.
@@ -98,7 +111,7 @@
 - **Modification Only**: Always search for and append to the existing `docs/BACKLOG.md` file in the repository.
 
 ## Smart /grill-me Wrap-Up & Mandatory Interactive Decision Modals
-- **Interactive Modal Required (Zero Plain-Text Number Menus)**: Whenever presenting decision options to the user—whether at the end of `/grill-me`, `/plan`, `/strict-plan`, `/paste-plan`, `/read-plan`, or any workflow fork—you must NEVER output raw numbered text lists (e.g. `1. Option A, 2. Option B, 3. Both`) in the chat forcing the user to type "3". You MUST ALWAYS invoke the `ask_question` tool so the user gets an interactive clickable modal.
+- **Interactive Modal Required (Zero Plain-Text Number Menus)**: Whenever presenting decision options to the userâwhether at the end of `/grill-me`, `/plan`, `/strict-plan`, `/paste-plan`, `/read-plan`, or any workflow forkâyou must NEVER output raw numbered text lists (e.g. `1. Option A, 2. Option B, 3. Both`) in the chat forcing the user to type "3". You MUST ALWAYS invoke the `ask_question` tool so the user gets an interactive clickable modal.
 - **Proactive Housekeeping**: Whenever you complete a /grill-me interactive interview, you must document the final design conclusion (Backlog, Plan, or Both).
 - **Contextual Bypass**: If the user's answers during the interview *explicitly* stated where the item should go (e.g., "put this in v0.4 of the backlog"), you are authorized to bypass the formal 3-option menu and immediately execute the documentation.
 - **When in Doubt, Ask via `ask_question`**: If the destination is ambiguous, you must call `ask_question` with the options formatted as user actions (e.g., `(Recommended) Both: Add to Backlog and draft Plan`, `Backlog Only`, `Draft Plan Only`).
@@ -126,3 +139,21 @@
 ## Strict Context Management (Refresh Strategy)
 - **Proactive Context Refreshing**: When you notice the chat session getting long (multiple implementation iterations, large token usage, or when transitioning to a new plan phase), you MUST proactively suggest the user run the `/refresh-context` skill (or click "Replace with New" in the sidebar themselves).
 - **Two-Chat System Support**: Honor the two-chat system where one chat ("New Klang City") is purely for planning, and other chats are for implementation. During implementation, prioritize reading `PLAN.md` over generating raw instructions in the chat.
+
+## Strict Chat Role Enforcement (Planner vs. Builder)
+- **Role Identification**: The agent must determine its role by checking the user's initial prompt or reading its dedicated context clues file (context_clues_plan.md or context_clues_build.md).
+- **New Klang City (Planner)**: This chat is strictly Read-Only for the C++ codebase. It is strictly forbidden from building features, modifying DSP/UI code, or running compiler tests. It may ONLY draft PLAN.md, update BACKLOG.md, write documentation, and build/modify agent Skills.
+  - **Live Factory Radar (Git Telemetry)**: New Klang City is explicitly authorized and encouraged to run non-mutating Git inspection commands (`git status --short`, `git diff --stat`) to observe active factory progress, file diffs, and implementation state in real time without waiting on manual reports.
+- **Klang Industries (Builder)**: This chat is strictly Read-Only for overarching architecture. It is strictly forbidden from modifying BACKLOG.md or drafting core PLAN.md features. If the user requests architectural planning while in the Builder chat, the agent MUST explicitly refuse and instruct the user to take the request to New Klang City.
+
+## Strict Inter-Chat Communique Protocol (PLAN.md Lifecycle)
+- **Communique Mailbox (docs/communique/)**:
+  - docs/communique/plan_to_build.md: Authored strictly by New Klang City. Contains the dispatch contract, active milestone, task name, recommended model tier, and architectural directives.
+  - docs/communique/build_to_plan.md: Authored strictly by Klang Industries. Contains live execution status, active branch, unit test results, roadblocks, and completion reports.
+- **PLAN.md as Ephemeral Execution Board**:
+  - PLAN.md at the repository root is the active check-off board during active engineering.
+  - While Klang Industries executes, it checks off items (- [x]) phase-by-phase.
+- **Auto-Archive & Reset on Task Finish**:
+  - As soon as Klang Industries completes all phases in PLAN.md and passes all test suites (gui_tests, dsp_tests), it MUST immediately archive PLAN.md to docs/completed_plans/<YYYY-MM-DD>_<task_slug>.md (via /task-finish or /clean-plan).
+  - Klang Industries must reset PLAN.md to an empty or idle state (# No Active Plan). Under no circumstances should completed or stale plans linger in PLAN.md to be accidentally re-executed.
+

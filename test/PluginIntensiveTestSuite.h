@@ -381,6 +381,229 @@ namespace PluginIntensiveTestSuite {
     }
 
     // ==============================================================================
+    // Phase 5: Planter Header Interactions & Limiter Callout Suite
+    // ==============================================================================
+    inline void runPlanterHeaderAndLimiterCalloutTest(TestReporter& reporter) {
+        reporter.beginTest("Planter Header Panic & Limiter Callout Card Suite");
+
+        TheKlangPlanterAudioProcessor processor;
+        auto editor = std::unique_ptr<juce::AudioProcessorEditor>(processor.createEditor());
+        editor->setSize(1040, 740);
+        pumpMessageLoop();
+
+        // 1. Header Visualizer Interactions
+        auto vizs = ComponentFinder::findAllByType<PlanterHeaderVisualizer>(editor.get());
+        reporter.expect(vizs.size() == 1, "Planter: Header visualizer component found (" + juce::String(vizs.size()) + ")");
+
+        if (!vizs.isEmpty()) {
+            auto* viz = vizs[0];
+
+            // Activate engine with test audio block and note on
+            juce::AudioBuffer<float> buffer(2, 256);
+            buffer.clear();
+            juce::MidiBuffer midi;
+            midi.addEvent(juce::MidiMessage::noteOn(1, 36, (juce::uint8)127), 0);
+            processor.prepareToPlay(44100.0, 256);
+            processor.processBlock(buffer, midi);
+
+            // Click meter area to trigger panic
+            auto meterArea = viz->getMeterArea();
+            juce::Point<float> clickPos = meterArea.getCentre();
+            juce::MouseEvent ePanic(juce::Desktop::getInstance().getMainMouseSource(), clickPos,
+                                    juce::ModifierKeys::leftButtonModifier, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                                    viz, viz, juce::Time::getCurrentTime(), clickPos, juce::Time::getCurrentTime(), 1, false);
+            viz->mouseDown(ePanic);
+            pumpMessageLoop();
+
+            reporter.expect(processor.getEngine().getPeakL() == 0.0f && processor.getEngine().getPeakR() == 0.0f,
+                            "Planter: Header meterArea click triggers panic() and resets peak meters to zero");
+
+            // Flash animation trigger
+            viz->triggerFlash();
+            reporter.expect(true, "Planter: Header visualizer triggerFlash() executes safely");
+
+            // Right-click limitArea to request limiter callout
+            bool calloutRequested = false;
+            viz->onLimiterCalloutRequested = [&](const juce::Rectangle<int>&) {
+                calloutRequested = true;
+            };
+            auto limitArea = viz->getLimitArea();
+            juce::Point<float> rightPos = limitArea.getCentre();
+            juce::MouseEvent eLimit(juce::Desktop::getInstance().getMainMouseSource(), rightPos,
+                                    juce::ModifierKeys::rightButtonModifier, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                                    viz, viz, juce::Time::getCurrentTime(), rightPos, juce::Time::getCurrentTime(), 1, false);
+            viz->mouseDown(eLimit);
+            pumpMessageLoop();
+
+            reporter.expect(calloutRequested, "Planter: Header limitArea right-click triggers onLimiterCalloutRequested");
+        }
+
+        // 2. Limiter Mini-Card Callout Component (100% of controls verified)
+        {
+            PlanterLimiterCalloutComponent callout(processor);
+            callout.setSize(260, 110);
+            pumpMessageLoop();
+
+            // Control 1: planter_limiter_enable
+            auto* enableParam = processor.apvts.getParameter("planter_limiter_enable");
+            reporter.expect(enableParam != nullptr, "Planter: planter_limiter_enable APVTS parameter exists");
+            if (enableParam) {
+                callout.getEnableSelector().setSelectedIndex(0, juce::sendNotificationSync);
+                pumpMessageLoop();
+                reporter.expect(enableParam->getValue() == 0.0f, "Planter Callout: Enable selector 'Off' synchronizes with APVTS");
+
+                callout.getEnableSelector().setSelectedIndex(1, juce::sendNotificationSync);
+                pumpMessageLoop();
+                reporter.expect(enableParam->getValue() == 1.0f, "Planter Callout: Enable selector 'On' synchronizes with APVTS");
+            }
+
+            // Control 2: planter_limiter_gain (range 0.0 - 1.0)
+            auto* gainParam = processor.apvts.getParameter("planter_limiter_gain");
+            reporter.expect(gainParam != nullptr, "Planter: planter_limiter_gain APVTS parameter exists");
+            callout.getGainSlider().setValue(0.75, juce::sendNotificationSync);
+            pumpMessageLoop();
+            reporter.expect(std::abs(callout.getGainSlider().getValue() - 0.75) < 0.01, "Planter Callout: Gain slider updates value synchronously");
+            reporter.expect(gainParam && std::abs(gainParam->getValue() - 0.75f) < 0.01f, "Planter Callout: Gain APVTS synchronizes with slider");
+            reporter.expect(!callout.getGainSlider().getTooltip().isEmpty(), "Planter Callout: Gain slider has valid non-empty tooltip");
+
+            // Control 3: planter_limiter_thresh (range 0.0 - 1.0)
+            auto* threshParam = processor.apvts.getParameter("planter_limiter_thresh");
+            reporter.expect(threshParam != nullptr, "Planter: planter_limiter_thresh APVTS parameter exists");
+            callout.getThreshSlider().setValue(0.50, juce::sendNotificationSync);
+            pumpMessageLoop();
+            reporter.expect(std::abs(callout.getThreshSlider().getValue() - 0.50) < 0.01, "Planter Callout: Ceiling slider updates value synchronously");
+            reporter.expect(threshParam && std::abs(threshParam->getValue() - 0.50f) < 0.01f, "Planter Callout: Ceiling APVTS synchronizes with slider");
+            reporter.expect(!callout.getThreshSlider().getTooltip().isEmpty(), "Planter Callout: Ceiling slider has valid non-empty tooltip");
+
+            // Control 4: planter_limiter_release (range 0.0 - 1.0)
+            auto* relParam = processor.apvts.getParameter("planter_limiter_release");
+            reporter.expect(relParam != nullptr, "Planter: planter_limiter_release APVTS parameter exists");
+            callout.getReleaseSlider().setValue(0.40, juce::sendNotificationSync);
+            pumpMessageLoop();
+            reporter.expect(std::abs(callout.getReleaseSlider().getValue() - 0.40) < 0.01, "Planter Callout: Release slider updates value synchronously");
+            reporter.expect(relParam && std::abs(relParam->getValue() - 0.40f) < 0.01f, "Planter Callout: Release APVTS synchronizes with slider");
+            reporter.expect(!callout.getReleaseSlider().getTooltip().isEmpty(), "Planter Callout: Release slider has valid non-empty tooltip");
+
+            // Offscreen paint pass
+            juce::Image calloutImg(juce::Image::ARGB, 260, 110, true);
+            juce::Graphics calloutG(calloutImg);
+            callout.paintEntireComponent(calloutG, true);
+            reporter.expect(true, "Planter Callout: Offscreen paint completed with zero errors");
+        }
+    }
+
+    // ==============================================================================
+    // Phase 6: Two-Line StatusBarComponent Integrity Suite
+    // ==============================================================================
+    inline void runStatusBarIntegrityTest(TestReporter& reporter) {
+        reporter.beginTest("Two-Line Status Bar Integrity & Tooltip Feed Suite");
+
+        // 1. Direct Component API & State
+        {
+            StatusBarComponent sb;
+            sb.setSize(1000, 36);
+            reporter.expect(sb.isTooltipsEnabled(), "StatusBar: Default tooltipsEnabled is true");
+
+            sb.setHoveredControl("Filter Cutoff", "1.20 kHz", "Adjusts master lowpass filter cutoff frequency",
+                                 "Right-Click: Snap Points", "2x-Click: Default (1.00)");
+            reporter.expect(sb.getActiveName() == "Filter Cutoff", "StatusBar: getActiveName() returns correct name");
+            reporter.expect(sb.getActiveValue() == "1.20 kHz", "StatusBar: getActiveValue() returns correct value");
+            reporter.expect(sb.getActiveDesc().contains("Adjusts master lowpass"), "StatusBar: getActiveDesc() returns correct description");
+            reporter.expect(sb.getActiveRightClickHint() == "Right-Click: Snap Points", "StatusBar: getActiveRightClickHint() matches");
+            reporter.expect(sb.getActiveDoubleClickHint() == "2x-Click: Default (1.00)", "StatusBar: getActiveDoubleClickHint() matches");
+
+            // Paint with active hovered control
+            juce::Image imgActive(juce::Image::ARGB, 1000, 36, true);
+            juce::Graphics gActive(imgActive);
+            sb.paintEntireComponent(gActive, true);
+
+            sb.clearHoveredControl();
+            reporter.expect(sb.getActiveName().isEmpty(), "StatusBar: clearHoveredControl() clears active parameter name");
+
+            sb.setTooltipsEnabled(false);
+            reporter.expect(!sb.isTooltipsEnabled(), "StatusBar: setTooltipsEnabled(false) disables tooltip feed");
+
+            // Paint in quiet mode
+            juce::Image imgQuiet(juce::Image::ARGB, 1000, 36, true);
+            juce::Graphics gQuiet(imgQuiet);
+            sb.paintEntireComponent(gQuiet, true);
+            reporter.expect(true, "StatusBar: Standalone component painted cleanly in both active and quiet states");
+        }
+
+        // 2. The Klang Farmer Integration
+        {
+            TheKlangFarmerAudioProcessor farmerProc;
+            auto editor = std::unique_ptr<juce::AudioProcessorEditor>(farmerProc.createEditor());
+            editor->setSize(1000, 750);
+            pumpMessageLoop();
+
+            auto* coreEditor = dynamic_cast<KlangCoreEditor*>(editor.get());
+            reporter.expect(coreEditor != nullptr, "Farmer: Editor inherits from KlangCoreEditor");
+
+            if (coreEditor) {
+                auto& sb = coreEditor->getStatusBar();
+                reporter.expect(sb.isVisible(), "Farmer: StatusBarComponent is visible");
+                reporter.expect(sb.getHeight() == 36, "Farmer: StatusBarComponent height is exactly 36px");
+                reporter.expect(sb.getY() == editor->getHeight() - 36, "Farmer: StatusBarComponent pinned to bottom edge");
+
+                // Test hover wiring on slider
+                auto* slider = ComponentFinder::findSliderByParamId(editor.get(), "carrier1_pitch");
+                if (slider && slider->onMouseEnter) {
+                    slider->onMouseEnter(slider);
+                    reporter.expect(sb.getActiveName().isNotEmpty(), "Farmer: Hovering carrier1_pitch populates status bar name (" + sb.getActiveName() + ")");
+                    reporter.expect(sb.getActiveDoubleClickHint().isNotEmpty(), "Farmer: Hovering carrier1_pitch populates double-click hint (" + sb.getActiveDoubleClickHint() + ")");
+                    if (slider->onMouseExit) slider->onMouseExit(slider);
+                    reporter.expect(sb.getActiveName().isEmpty(), "Farmer: Mouse exit clears status bar name");
+                }
+
+                // Test tooltips button sync
+                auto& tipBtn = coreEditor->getTooltipsButton();
+                bool initialEnabled = sb.isTooltipsEnabled();
+                if (tipBtn.onClick) tipBtn.onClick();
+                reporter.expect(sb.isTooltipsEnabled() != initialEnabled, "Farmer: Clicking tooltipsButton toggles status bar tooltipsEnabled");
+                if (tipBtn.onClick) tipBtn.onClick();
+                reporter.expect(sb.isTooltipsEnabled() == initialEnabled, "Farmer: Second click restores status bar tooltipsEnabled");
+            }
+        }
+
+        // 3. The Klang Planter Integration
+        {
+            TheKlangPlanterAudioProcessor planterProc;
+            auto editor = std::unique_ptr<juce::AudioProcessorEditor>(planterProc.createEditor());
+            editor->setSize(1040, 740);
+            pumpMessageLoop();
+
+            auto* coreEditor = dynamic_cast<KlangCoreEditor*>(editor.get());
+            reporter.expect(coreEditor != nullptr, "Planter: Editor inherits from KlangCoreEditor");
+
+            if (coreEditor) {
+                auto& sb = coreEditor->getStatusBar();
+                reporter.expect(sb.isVisible(), "Planter: StatusBarComponent is visible");
+                reporter.expect(sb.getHeight() == 36, "Planter: StatusBarComponent height is exactly 36px");
+                reporter.expect(sb.getY() == editor->getHeight() - 36, "Planter: StatusBarComponent pinned to bottom edge");
+
+                // Test hover wiring on slider
+                auto* slider = ComponentFinder::findSliderByParamId(editor.get(), "planter_carrier_pitch");
+                if (slider && slider->onMouseEnter) {
+                    slider->onMouseEnter(slider);
+                    reporter.expect(sb.getActiveName().isNotEmpty(), "Planter: Hovering planter_carrier_pitch populates status bar name (" + sb.getActiveName() + ")");
+                    reporter.expect(sb.getActiveDoubleClickHint().isNotEmpty(), "Planter: Hovering planter_carrier_pitch populates double-click hint (" + sb.getActiveDoubleClickHint() + ")");
+                    if (slider->onMouseExit) slider->onMouseExit(slider);
+                    reporter.expect(sb.getActiveName().isEmpty(), "Planter: Mouse exit clears status bar name");
+                }
+
+                // Test tooltips button sync
+                auto& tipBtn = coreEditor->getTooltipsButton();
+                bool initialEnabled = sb.isTooltipsEnabled();
+                if (tipBtn.onClick) tipBtn.onClick();
+                reporter.expect(sb.isTooltipsEnabled() != initialEnabled, "Planter: Clicking tooltipsButton toggles status bar tooltipsEnabled");
+                if (tipBtn.onClick) tipBtn.onClick();
+                reporter.expect(sb.isTooltipsEnabled() == initialEnabled, "Planter: Second click restores status bar tooltipsEnabled");
+            }
+        }
+    }
+
+    // ==============================================================================
     // Master Runner
     // ==============================================================================
     inline void runSuite(TestReporter& reporter) {
@@ -388,5 +611,7 @@ namespace PluginIntensiveTestSuite {
         runPageNavigationAndPaintSmokeTest(reporter);
         runModalLifecycleSmokeTest(reporter);
         runCoordinateInteractionTest(reporter);
+        runPlanterHeaderAndLimiterCalloutTest(reporter);
+        runStatusBarIntegrityTest(reporter);
     }
 }

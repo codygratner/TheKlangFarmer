@@ -24,6 +24,45 @@ void PlanterHeaderVisualizer::updateData(const float* scopeData, int numPoints, 
     repaint();
 }
 
+juce::Rectangle<float> PlanterHeaderVisualizer::getScopeArea() const {
+    auto b = getLocalBounds().toFloat();
+    return b.removeFromLeft(b.getWidth() - 76.0f).reduced(2.0f);
+}
+
+juce::Rectangle<float> PlanterHeaderVisualizer::getLimitArea() const {
+    auto b = getLocalBounds().toFloat();
+    b.removeFromLeft(b.getWidth() - 76.0f);
+    return b.removeFromLeft(38.0f).reduced(3.0f, 4.0f);
+}
+
+juce::Rectangle<float> PlanterHeaderVisualizer::getMeterArea() const {
+    auto b = getLocalBounds().toFloat();
+    return b.removeFromRight(38.0f).reduced(3.0f, 3.0f);
+}
+
+void PlanterHeaderVisualizer::triggerFlash() {
+    isFlashing = true;
+    repaint();
+    juce::Timer::callAfterDelay(150, [safe = juce::Component::SafePointer<PlanterHeaderVisualizer>(this)] {
+        if (safe) {
+            safe->isFlashing = false;
+            safe->repaint();
+        }
+    });
+}
+
+void PlanterHeaderVisualizer::mouseDown(const juce::MouseEvent& e) {
+    auto pos = e.position;
+    if (getMeterArea().contains(pos)) {
+        triggerFlash();
+        if (onPanic) onPanic();
+    } else if (getLimitArea().contains(pos) && (e.mods.isPopupMenu() || e.mods.isRightButtonDown())) {
+        if (onLimiterCalloutRequested) {
+            onLimiterCalloutRequested(getLimitArea().toNearestInt());
+        }
+    }
+}
+
 void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds().toFloat();
 
@@ -34,7 +73,7 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
     g.drawRoundedRectangle(bounds, 4.0f, 1.0f);
 
     // 1. Left area: Oscilloscope
-    auto scopeArea = bounds.removeFromLeft(bounds.getWidth() - 76.0f).reduced(2.0f);
+    auto scopeArea = getScopeArea();
     g.setColour(juce::Colour(0x2200d2ff));
     g.drawHorizontalLine(static_cast<int>(scopeArea.getCentreY()), scopeArea.getX(), scopeArea.getRight());
 
@@ -56,7 +95,7 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
     }
 
     // 2. Center area: LIMIT warning indicator badge
-    auto limitArea = bounds.removeFromLeft(38.0f).reduced(3.0f, 4.0f);
+    auto limitArea = getLimitArea();
     bool isLimiting = (liveLimiterAct > 0.01f);
     if (isLimiting) {
         float alpha = std::clamp(liveLimiterAct * 2.0f, 0.4f, 1.0f);
@@ -76,26 +115,139 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
     g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("badge_limit", "LIMIT"), limitArea, juce::Justification::centred, false);
 
     // 3. Right area: Stereo Peak Meters (L & R)
-    auto meterArea = bounds.reduced(3.0f, 3.0f);
-    float barW = (meterArea.getWidth() - 2.0f) * 0.5f;
+    auto meterArea = getMeterArea();
+    if (isFlashing) {
+        g.setColour(juce::Colours::white);
+        g.fillRoundedRectangle(meterArea, 2.0f);
+    } else {
+        float barW = (meterArea.getWidth() - 2.0f) * 0.5f;
 
-    auto drawMeterBar = [&](float x, float peakVal) {
-        juce::Rectangle<float> barBg(x, meterArea.getY(), barW, meterArea.getHeight());
-        g.setColour(juce::Colour(0xff1a1d26));
-        g.fillRect(barBg);
+        auto drawMeterBar = [&](float x, float peakVal) {
+            juce::Rectangle<float> barBg(x, meterArea.getY(), barW, meterArea.getHeight());
+            g.setColour(juce::Colour(0xff1a1d26));
+            g.fillRect(barBg);
 
-        float fillH = std::clamp(peakVal, 0.0f, 1.0f) * meterArea.getHeight();
-        if (fillH > 0.5f) {
-            juce::Rectangle<float> fillRect(x, meterArea.getBottom() - fillH, barW, fillH);
-            juce::Colour col = (peakVal > 0.95f) ? juce::Colour(0xffe53935) :
-                               ((peakVal > 0.75f) ? juce::Colour(0xffffb300) : juce::Colour(0xff00e676));
-            g.setColour(col);
-            g.fillRect(fillRect);
+            float fillH = std::clamp(peakVal, 0.0f, 1.0f) * meterArea.getHeight();
+            if (fillH > 0.5f) {
+                juce::Rectangle<float> fillRect(x, meterArea.getBottom() - fillH, barW, fillH);
+                juce::Colour col = (peakVal > 0.95f) ? juce::Colour(0xffe53935) :
+                                   ((peakVal > 0.75f) ? juce::Colour(0xffffb300) : juce::Colour(0xff00e676));
+                g.setColour(col);
+                g.fillRect(fillRect);
+            }
+        };
+
+        drawMeterBar(meterArea.getX(), livePeakL);
+        drawMeterBar(meterArea.getX() + barW + 2.0f, livePeakR);
+    }
+}
+
+// --- PLANTER LIMITER CALLOUT COMPONENT ---
+
+PlanterLimiterCalloutComponent::PlanterLimiterCalloutComponent(TheKlangPlanterAudioProcessor& p)
+    : audioProcessor(p)
+{
+    setSize(260, 110);
+
+    // 1. Enable Selector & ComboBox
+    enableBox.clear(juce::dontSendNotification);
+    enableBox.addItem("Off", 1);
+    enableBox.addItem("On", 2);
+    enableBox.setVisible(false);
+    addChildComponent(enableBox);
+
+    enableSelector.setItems({ "Off", "On" }, 1);
+    enableSelector.setParamId("planter_limiter_enable");
+    enableSelector.setTooltip("ENABLE LIMITER: Toggle master brickwall safety limiter.");
+    enableSelector.setItemTooltips(TooltipHelper::getLedSelectorItemTooltips("toggle"));
+    enableSelector.onChange = [this](int idx) {
+        enableBox.setSelectedId(idx + 1, juce::sendNotificationSync);
+        if (auto* param = audioProcessor.apvts.getParameter("planter_limiter_enable")) {
+            param->setValueNotifyingHost(param->convertTo0to1(static_cast<float>(idx)));
         }
     };
+    enableBox.onChange = [this]() {
+        enableSelector.setSelectedIndex(enableBox.getSelectedItemIndex(), juce::dontSendNotification);
+    };
+    addAndMakeVisible(enableSelector);
 
-    drawMeterBar(meterArea.getX(), livePeakL);
-    drawMeterBar(meterArea.getX() + barW + 2.0f, livePeakR);
+    enableAttachment = std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(
+        audioProcessor.apvts, "planter_limiter_enable", enableBox);
+    enableSelector.setSelectedIndex(enableBox.getSelectedItemIndex(), juce::dontSendNotification);
+
+    // 2. Gain Slider
+    gainSlider.setAccentColour(juce::Colour(0xffe53935));
+    gainSlider.setLabel("Gain");
+    gainSlider.setParamId("planter_limiter_gain");
+    gainSlider.setDoubleClickReturnValue(true, 12.0 / 36.0);
+    gainSlider.getDefaultValue = []() { return 12.0 / 36.0; };
+    gainSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_gain", "Master limiter makeup and input boost gain", false));
+    addAndMakeVisible(gainSlider);
+    gainAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        audioProcessor.apvts, "planter_limiter_gain", gainSlider);
+
+    // 3. Ceiling (Threshold) Slider
+    threshSlider.setAccentColour(juce::Colour(0xffe53935));
+    threshSlider.setLabel("Ceiling");
+    threshSlider.setParamId("planter_limiter_thresh");
+    threshSlider.setDoubleClickReturnValue(true, 1.0);
+    threshSlider.getDefaultValue = []() { return 1.0; };
+    threshSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_thresh", "Master limiter brickwall ceiling peak threshold", false));
+    addAndMakeVisible(threshSlider);
+    threshAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        audioProcessor.apvts, "planter_limiter_thresh", threshSlider);
+
+    // 4. Release Slider
+    releaseSlider.setAccentColour(juce::Colour(0xffe53935));
+    releaseSlider.setLabel("Release");
+    releaseSlider.setParamId("planter_limiter_release");
+    releaseSlider.setDoubleClickReturnValue(true, 0.6296);
+    releaseSlider.getDefaultValue = []() { return 0.6296; };
+    releaseSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_release", "Master limiter gain reduction recovery release time", false));
+    addAndMakeVisible(releaseSlider);
+    releaseAttachment = std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(
+        audioProcessor.apvts, "planter_limiter_release", releaseSlider);
+}
+
+void PlanterLimiterCalloutComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+
+    // Chassis background & border
+    g.setColour(juce::Colour(0xff141720));
+    g.fillRoundedRectangle(bounds, 5.0f);
+    g.setColour(juce::Colour(0xffe53935).withAlpha(0.6f));
+    g.drawRoundedRectangle(bounds, 5.0f, 1.2f);
+
+    // Header bar
+    auto headerArea = bounds.removeFromTop(24.0f);
+    g.setColour(juce::Colour(0xff1d222e));
+    g.fillRect(headerArea);
+    g.setColour(juce::Colour(0xffe53935));
+    g.drawHorizontalLine(24, 0.0f, bounds.getWidth());
+
+    // Red status indicator dot
+    g.setColour(juce::Colour(0xffe53935));
+    g.fillEllipse(10.0f, 8.0f, 8.0f, 8.0f);
+
+    // Title
+    g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+    g.setColour(juce::Colour(0xfff1f5f9));
+    g.drawText("MASTER LIMITER", 24, 0, getWidth() - 30, 24, juce::Justification::centredLeft, true);
+}
+
+void PlanterLimiterCalloutComponent::resized() {
+    int topY = 28;
+    int h = getHeight() - topY - 4;
+
+    enableSelector.setBounds(8, topY + 4, 46, h - 8);
+
+    int knobW = 60;
+    int startX = 62;
+    int gap = (getWidth() - startX - knobW * 3) / 3;
+
+    gainSlider.setBounds(startX, topY, knobW, h);
+    threshSlider.setBounds(startX + knobW + gap, topY, knobW, h);
+    releaseSlider.setBounds(startX + (knobW + gap) * 2, topY, knobW, h);
 }
 
 // --- THE KLANG PLANTER AUDIO PROCESSOR EDITOR ---
@@ -507,6 +659,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_pitchenv_target", pitchEnvTargetBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_filter_type", filterTypeBox));
     boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_filter_slope", filterSlopeBox));
+    boxAttachments.push_back(std::make_unique<ComboBoxAttachment>(audioProcessor.apvts, "planter_limiter_enable", limiterEnableBox));
 
     // Wire parameter tooltips
     carrierPitchSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_carrier_pitch", "Carrier oscillator pitch or frequency depending on tracking mode", true));
@@ -549,6 +702,16 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     setSize(1040, 740);
     setResizable(true, true);
     setResizeLimits(800, 560, 2400, 1600);
+
+    headerViz.onPanic = [this] {
+        audioProcessor.panic();
+    };
+
+    headerViz.onLimiterCalloutRequested = [this](const juce::Rectangle<int>& area) {
+        auto callout = std::make_unique<PlanterLimiterCalloutComponent>(audioProcessor);
+        auto limitScreenArea = area + headerViz.getScreenPosition();
+        juce::CallOutBox::launchAsynchronously(std::move(callout), limitScreenArea, nullptr);
+    };
 
     updateCarrierControls();
     updateModControls();
@@ -594,6 +757,21 @@ void TheKlangPlanterAudioProcessorEditor::bindSlider(const juce::String& paramId
         }
     }
     slider.setParamId(paramId);
+
+    slider.onMouseEnter = [this, paramId](RotaryKnobSlider* s) {
+        if (!s) return;
+        auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+        juce::String name = def ? def->name : (s->getLabel().isNotEmpty() ? s->getLabel() : paramId);
+        juce::String val = s->getTextFromValue(s->getValue());
+        juce::String desc = def ? def->description : "";
+        juce::String rc = (def && !def->snapPoints.empty()) ? "Right-Click: Snap Points" : "Right-Click: Details";
+        juce::String dc = def ? ("2x-Click: Reset (" + juce::String(def->doubleClickValue, 2) + ")") : "2x-Click: Default";
+        statusBar.setHoveredControl(name, val, desc, rc, dc);
+    };
+    slider.onMouseExit = [this](RotaryKnobSlider*) {
+        statusBar.clearHoveredControl();
+    };
+
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, paramId, slider));
 }
 
@@ -609,11 +787,26 @@ void TheKlangPlanterAudioProcessorEditor::bindSelector(LedSelectorComponent& sel
         auto itemTips = TooltipHelper::getLedSelectorItemTooltips(paramId);
         sel.setItemTooltips(itemTips);
     }
-    sel.onChange = [&box](int index) {
-        box.setSelectedItemIndex(index, juce::sendNotification);
+    sel.onChange = [this, &box, paramId](int index) {
+        box.setSelectedId(index + 1, juce::sendNotification);
+        if (auto* param = audioProcessor.apvts.getParameter(paramId)) {
+            param->setValueNotifyingHost(param->convertTo0to1(static_cast<float>(index)));
+        }
     };
     box.onChange = [&box, &sel]() {
         sel.setSelectedIndex(box.getSelectedItemIndex(), juce::dontSendNotification);
+    };
+
+    sel.onMouseEnter = [this, paramId](LedSelectorComponent* s) {
+        if (!s) return;
+        auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+        juce::String name = def ? def->name : paramId;
+        juce::String desc = s->getTooltip();
+        juce::String val = juce::String(s->getSelectedIndex() + 1) + "/" + juce::String(s->getNumItems());
+        statusBar.setHoveredControl(name, val, desc, "", "Click: Select Mode");
+    };
+    sel.onMouseExit = [this](LedSelectorComponent*) {
+        statusBar.clearHoveredControl();
     };
 }
 
@@ -757,7 +950,7 @@ void TheKlangPlanterAudioProcessorEditor::resized() {
     int margin = 6;
     int topOffset = 38;
     int totalW = getWidth() - 2 * margin;
-    int totalH = getHeight() - topOffset - margin;
+    int totalH = getHeight() - topOffset - margin - 36;
 
     int numCols = 4;
     int numRows = 2;
@@ -793,6 +986,8 @@ void TheKlangPlanterAudioProcessorEditor::resized() {
     if (cardFilterEnv) cardFilterEnv->setBounds(getSlotBounds(1, 1));
     if (cardAmp)       cardAmp->setBounds(getSlotBounds(2, 1));
     if (cardAmpEnv)    cardAmpEnv->setBounds(getSlotBounds(3, 1));
+
+    statusBar.setBounds(0, getHeight() - 36, getWidth(), 36);
 }
 
 void TheKlangPlanterAudioProcessorEditor::timerCallback() {
@@ -811,6 +1006,7 @@ void TheKlangPlanterAudioProcessorEditor::timerCallback() {
     syncSelector(pitchEnvTargetBox, pitchEnvTargetSelector, "planter_pitchenv_target", lastPitchEnvTarget);
     syncSelector(filterTypeBox, filterTypeSelector, "planter_filter_type", lastFilterType);
     syncSelector(filterSlopeBox, filterSlopeSelector, "planter_filter_slope", lastFilterSlope);
+    syncSelector(limiterEnableBox, limiterEnableSelector, "planter_limiter_enable", lastLimiterEnable);
 
     // 2. Fetch live oscilloscope data & peak levels
     audioProcessor.getEngine().getScopeData(scopeBuffer.data(), static_cast<int>(scopeBuffer.size()));

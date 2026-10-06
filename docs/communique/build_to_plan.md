@@ -1,21 +1,36 @@
 # Klang Industries Execution Report
 **Date:** 2026-10-06
 **Active Branch:** `0.3.1-dev`
-**Task:** Intensive GUI Test Suite for Plugins & Standalone (Task 3)
+**Task:** Planter Header Interactions & Two-Line Status Bar (Tasks 4 & 5)
 
 ## Status: COMPLETE ✅
-The full automated intensive GUI test harness for both plugins and standalone has been completed and verified with 100% pass rate.
+The interactive Planter header (VU meter panic flush, 150ms visual flash, limiter CalloutBox) and universal 36px two-line `StatusBarComponent` across both plugins have been fully implemented, integrated, and verified with 100% test pass rate.
 
 ## Execution Details
-- **Phase 1 (Component & APVTS Binding Deep Sweep)**: Recursively swept all child components in both `TheKlangFarmer` and `TheKlangPlanter`. Verified that 100% of sliders and selectors map to registered APVTS parameters with valid non-inverted ranges and complete non-empty tooltips. Caught and fixed 3 missing tooltips on Planter's limiter knobs, and wired `setParamId` for Planter's selectors.
-- **Phase 2 (Page Navigation & Paint Smoke Passes)**: Programmatically cycled all 7 pages of `TheKlangFarmer` and rendered offscreen snapshot buffers across 800x600, 1000x750, and 4K dimensions. Repeated multi-resolution paint verification for `TheKlangPlanter`. Zero crashes, zero division-by-zero, and zero null pointer exceptions.
-- **Phase 3 (Modal Lifecycle & Dialog Smoke Tests)**: Simulated opening and dismissing Settings Modal via GearButton and Escape key, Quickstart Guide modal, and right-click snap callouts on Desktop. Verified clean dismissal with zero timer leaks.
-- **Phase 4 (Synthetic Mouse & Coordinate Fallback Harness)**: Verified coordinate-based dragging up/down and double-click reset to parsed `ControlDef` default values with full host synchronization.
+- **Phase 1 (Planter Engine Panic & Header Interactions)**:
+  - Added real-time safe `PlanterDrumEngine::panic()` and `TheKlangPlanterAudioProcessor::panic()`: zero allocations, zero locks, flushing envelope trigger timings, clearing DJ filter and peak meters.
+  - In `PlanterHeaderVisualizer`: segmented bounds into oscilloscope, limiter warning badge, and peak meters. Wired mouse clicks: left click on peak meters triggers `panic()` + 150ms visual flash; right-click on LIMIT badge launches `PlanterLimiterCalloutComponent`.
+  - Built sleek Doepfer-styled mini-card `PlanterLimiterCalloutComponent` hosting an Enable selector and 3 rotary knobs (`planter_limiter_gain`, `planter_limiter_thresh`, `planter_limiter_release`) bound to APVTS.
+- **Phase 2 (Reusable Two-Line `StatusBarComponent`)**:
+  - Implemented 36px `StatusBarComponent` in `source/UIComponents.h/.cpp`.
+  - Line 1: Permanent high-contrast control name, live formatted value, and contextual shortcut pill badges (Right-Click snap points, Double-Click default reset).
+  - Line 2: Full-width tooltip description feed, dynamically toggled by the header `TOOLTIPS` button.
+- **Phase 3 (Plugin Integration)**:
+  - Integrated `StatusBarComponent` into both `FarmerEditor` and `PlanterEditor` (`removeFromBottom(36)`).
+  - Wired `onMouseEnter` and `onMouseExit` on 100% of sliders and selectors across both plugins to dynamically feed the status bar.
+  - Linked `tooltipsButton` toggle to update status bar tooltip visibility.
+- **Phase 4 (Automated GUI Test Verification)**:
+  - Expanded `test/PluginIntensiveTestSuite.h` with dedicated suites:
+    1. Header panic verification: simulated click on meter area zeroes peak meters and audio buffer timings safely.
+    2. Header right-click: verified `onLimiterCalloutRequested` trigger.
+    3. 100% Limiter Callout controls: verified synchronous APVTS synchronization on `planter_limiter_enable`, `planter_limiter_gain`, `planter_limiter_thresh`, and `planter_limiter_release`. Verified non-empty tooltips and offscreen paint passes.
+    4. Two-line status bar integrity: verified coordinate and hover wiring in Farmer and Planter, label formatting, shortcut pill badges, and `tooltipsButton` toggles.
 
-## Unit Test Results
-- **gui_tests:** 117 / 117 tests passed successfully (0 failures).
+## Test Results
+- **gui_tests:** 164 / 164 tests passed successfully (0 failures).
 - **dsp_tests:** All 22-block modular drum synth and Planter DSP tests passed successfully.
+- **Release Artifacts:** Deployed `The Klang Farmer.vst3` and `The Klang Planter.vst3` to `current_build\VST3\`, `current_build\Editor\`, and `C:\Program Files\Common Files\VST3\`.
 
 ## Notes for New Klang City
-- `PLAN.md` has been archived to `docs/completed_plans/2026-10-06_intensive_gui_tests.md` and reset to `# No Active Plan`.
-- All changes committed cleanly to `0.3.1-dev`. Milestone v0.3.1 is in a rock-solid, production-grade state!
+- `PLAN.md` has been archived to `docs/completed_plans/2026-10-06_planter_header_and_status_bar.md` and reset to `# No Active Plan`.
+- Tasks 4 & 5 are 100% complete and fully verified. Milestone v0.3.1 core objectives are accomplished!

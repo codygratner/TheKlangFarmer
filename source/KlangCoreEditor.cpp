@@ -46,6 +46,8 @@ KlangCoreEditor::KlangCoreEditor(KlangCoreProcessor& p)
     triggerButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff8b99a6));
     addAndMakeVisible(triggerButton);
 
+    addAndMakeVisible(statusBar);
+
     // Trigger update check on launch if enabled
     if (VersionChecker::isCheckOnLaunchEnabled())
         VersionChecker::getInstance().checkForUpdates(false);
@@ -54,6 +56,7 @@ KlangCoreEditor::KlangCoreEditor(KlangCoreProcessor& p)
 void KlangCoreEditor::setTooltipsEnabled(bool enabled)
 {
     tooltipsEnabled = enabled;
+    statusBar.setTooltipsEnabled(enabled);
     if (enabled) {
         tooltipsButton.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("btn_tooltips_on", "TIPS: ON"));
         tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff33ccff));

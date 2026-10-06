@@ -62,6 +62,17 @@ Synthesize the approach and write the result directly to `PLAN.md` at project ro
 - **Verification Condition:** <pluginval / manual audio test>
 ```
 
+### 3.5 Communiqué Dispatch (Graceful Fallback)
+<!-- [Strategy Experiment: Multi-Chat Communiqué Awareness] -->
+If `docs/communique/` exists in the repository:
+1. Update `docs/communique/plan_to_build.md` with:
+   - Current Timestamp & Active Milestone
+   - Task Name & `Status: READY_FOR_EXECUTION`
+   - `Recommended Model & Thinking Budget`
+   - Executive Objective & Plan Phase summary
+2. If `docs/communique/` does not exist, simply skip this step and proceed with `PLAN.md`.
+
+
 ### 4. Present Briefing & Await Approval via `ask_question`
 Once `PLAN.md` is written to disk, do NOT begin coding. Output an executive summary in the chat pane:
 
@@ -70,6 +81,10 @@ Once `PLAN.md` is written to disk, do NOT begin coding. Output an executive summ
 
 **Target:** <Objective>  
 **Total Phases:** <N> Phases
+
+> 🧠 **MODEL ADVISORY**
+> **Recommended Setting:** <Recommended Model & Thinking Budget>
+> **Task Tier:** <Tier 1 | Tier 2 | Tier 3>
 
 ### Architectural Summary
 <2-3 concise sentences on how the design works>

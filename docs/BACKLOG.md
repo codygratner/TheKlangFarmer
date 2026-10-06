@@ -85,8 +85,83 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 
 ---
 
-## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
+
+## ?? Milestone: v0.3.1 "Editor Quality & Data Schema"
+*Focus: Expanding the Editor's GUI tests, Tree View UX, and upgrading the JSON data schema for rigorous parameter definitions.*
+
+### 1. Editor GUI Test Suite Expansion & Tree View UX — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_editor_tree_ux.md`](completed_plans/2026-10-06_editor_tree_ux.md)*
+*Goal: Expand `gui_tests` to fully validate `The Klang Editor` through headless component testing, and improve the Tree View's user experience.*
+- **Headless Validation**: Added `juce::UnitTest` module simulating 100% parameter tree node selection with property manager synchronization.
+- **Global Tree Controls**: Added mini-toolbar with `Expand All` and `Collapse All` icon buttons.
+- **Contextual Tree Controls**: Added right-click context menu to tree items with `Collapse Others`, `Expand All`, and `Collapse All`.
+
+### 2. Extract Hardcoded C++ Parameter Metadata into JSON (Parity Preservation) — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_parameter_metadata_extraction.md`](completed_plans/2026-10-06_parameter_metadata_extraction.md)*
+*Goal: Pull all hardcoded parameter descriptions and bipolar flags out of `FarmerEditor.cpp` and populate them into `assets/controls/*.json` to match `PlanterEditor`'s modern `ControlDef` binding pattern, while maintaining 100% exact parity.*
+- **Extract Legacy Boilerplate**: Migrated ~120 lines from `getFarmerParamDescription()` into JSON asset schemas.
+- **Modernize `bindSlider`**: Refactored `FarmerEditor::bindSlider` to read `def->description`, `def->isBipolar`, `def->doubleClickValue`, and `def->snapPoints` from `ControlDef`.
+- **Zero Parity Breakage**: 84/84 tests passing with zero regressions.
+
+### 3. Intensive GUI Test Suite for Plugins & Standalone (Farmer & Planter) — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_intensive_gui_tests.md`](completed_plans/2026-10-06_intensive_gui_tests.md)*
+*Goal: Model intensive GUI testing after The Klang Editor's test harness, expanding `gui_tests` to comprehensively validate component trees, page navigation, modal popups, and offscreen rendering for both The Klang Farmer and The Klang Planter.*
+- **Headless Component & Parameter Sweep**: Programmatically verified 100% of cards, sliders, and selectors bind correctly to APVTS parameters and display non-empty tooltips (fixed 3 missing tooltips on Planter limiter).
+- **Page Navigation & Paint Smoke Test**: Cycled through all page views across 800x600, 1000x750, and 4K dimensions with offscreen paint passes (`paintEntireComponent()`). Zero crashes, zero division-by-zero.
+- **Modal Lifecycle Test**: Simulated opening and closing all modals (Settings, About, Quickstart) with zero timer leaks.
+- **Verification Metric**: 117 / 117 `gui_tests` passed successfully with 100% assertion pass rate.
+
+### 4. Planter Header Interactions: VU Meter Panic & Limiter CalloutBox
+*Goal: Transform The Klang Planter's header visualizer into an interactive control center with dedicated mouse targets for master panic and instant limiter adjustment.*
+- **Limiter Right-Click CalloutBox**:
+  - Right-clicking the center `LIMIT` badge launches a floating mini-card `juce::CalloutBox`.
+  - Houses an Enable toggle (`planter_limiter_enable`) and 3 mini rotary knobs for Gain (`planter_limiter_gain`), Ceiling/Threshold (`planter_limiter_thresh`), and Release (`planter_limiter_release`).
+  - Styled to match Card 6's Doepfer silver & red chassis theme (`0xffe53935`).
+- **Peak VU Meter Panic**:
+  - Clicking the stereo peak meters flushes all active voice and noise envelope timings, resets the S&H DJ filter, and clears master peak levels.
+  - Features a crisp 150ms visual flash on the meter bars upon panic trigger.
+- **Parity Safety**:
+  - Non-destructive: Binds directly to existing APVTS parameters without altering presets, audio DSP math, or Card 6.
+
+### 5. Interactive Two-Line Status Bar (Values, Mouse Shortcuts & Tooltip Feed)
+*Goal: Implement a Kilohearts/Ableton style 36px bottom status bar across The Klang Farmer and The Klang Planter, providing permanent value readouts, mouse shortcut badges, and a full-width tooltip feed.*
+- **Line 1 (Top Bar - Permanent)**:
+  - Left: Control Name and formatted Parameter Value in bold (e.g., `Carrier 1: Pitch  +12.0 st [440 Hz]`).
+  - Right: Contextual Mouse Shortcuts in subtle pill badges (e.g., `Right-Click: Snap Points | Double-Click: Reset (0.5)`). Always visible even if tooltips are toggled off.
+- **Line 2 (Bottom Bar - Tooltip Feed)**:
+  - Full-width parameter description and functional explanation.
+  - Toggled dynamically by the header `TOOLTIPS` button (when off, Line 2 is quiet or shows engine status).
+
+## ?? Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
+
+### 0.5. Interactive Parameter & Curve Overhaul (Breaking Parity)
+*Goal: Systematically audit and redesign the interactive tactile feel of all cards, adding custom snap points, logarithmic slider slopes, and ergonomic double-click defaults.*
+- Audit all card controls for optimal double-click reset values.
+- Tune slider skew factors (slopes) for frequency, time, and resonance controls.
+- Add discrete snap points and magnetism to key musical intervals and center points.
+
+### 0.6. Transparent Quota Telemetry & Language Server Probe (`/quota` Skill)
+*Goal: Provide instant, transparent visibility into Antigravity model quotas (5-hour rolling bucket, weekly tier allowances) without diving deep into IDE settings menus.*
+- **Investigation & Probing**:
+  - Probe the local running `language_server.exe` gRPC/HTTP bridge (`localhost:61440/61441`) and Google Cloud Code endpoint to determine if quota/bucket metrics are accessible via a lightweight local socket call.
+  - Evaluate creating a custom slash command skill (`/quota`) or status bar widget that displays active tier allowances on demand in <50ms without network roundtrips.
+- **Guardrails**:
+  - Strictly on-demand execution (never polled automatically during every model evaluation to prevent latency, token bloat, and rate-limiting).
+
+### 0. Automated Version Bump Guardrail (`/cut-release` Skill)
+*Goal: Formalize the "Version Bump = Clean Slate" workflow by building a dedicated AGY slash command to handle version bumps safely.*
+- **Action**: Build `C:\Users\codyg\.gemini\config\skills\cut-release\SKILL.md`.
+- **Requirements**:
+  - Automatically bumps the CMake `project(TheKlangSuite VERSION X.X.X)` string.
+  - Builds and tests the new version.
+  - Upon success, pops an interactive modal: "SUMMON THE HARVESTER?"
+  - If Yes:
+    - Runs a `clear_transcript.py --all` python script to scrape ALL active chats.
+    - Slices all previous `DEV_HISTORY.md` sessions into a new archive (`docs/archives/DEV_HISTORY_vX.X.X.md`).
+    - Globally wipes `transcript.jsonl` for every active chat.
+    - Overwrites both `context_clues_build.md` and `context_clues_plan.md` with a clean slate message.
+  - Commits the version bump.
 
 ### 1. Parameter Randomization Engine (d6)
 Add a fully JSON-driven contextual randomization system:
@@ -190,10 +265,11 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - Flushes all internal delay lines, reverb tanks, and comb filter feedback buffers to zero.
   - Resets active MIDI voice tracking and legato gate memory.
 
-### 8. Evaluate Agentic Workflow Strategy (Context Refresh vs Nuke & Replace)
-*Goal: After completing v0.4.0, review how well the two-chat "/clear and Refresh" workflow held up against prompt drift compared to the strict "Nuke & Replace" strategy.*
-- Did the `/clear` command with `context_clues.md` sufficiently protect against hidden state?
-- Document final workflow decision in `docs/post_v040_workflow_retro.md`.
+### 8. Evaluate Agentic Workflow Strategy (Context Wipes & Strict Chat Roles)
+*Goal: After completing v0.4.0, review how well the two-chat workflow held up against prompt drift and task bleeding.*
+- Did the `/clear` command with split `context_clues.md` files sufficiently protect against hidden state?
+- Did the strict "Planner vs Builder" guardrail successfully prevent task bleeding and keep architecture decisions centralized?
+- Document final workflow decisions in `docs/post_v040_workflow_retro.md`.
 
 ---
 

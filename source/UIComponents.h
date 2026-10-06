@@ -239,8 +239,10 @@ public:
     void mouseUp(const juce::MouseEvent& e) override;
     void mouseDoubleClick(const juce::MouseEvent& e) override;
     void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
-    void mouseEnter(const juce::MouseEvent&) override { repaint(); }
-    void mouseExit(const juce::MouseEvent&) override { repaint(); }
+    std::function<void(RotaryKnobSlider*)> onMouseEnter;
+    std::function<void(RotaryKnobSlider*)> onMouseExit;
+    void mouseEnter(const juce::MouseEvent&) override { repaint(); if (onMouseEnter) onMouseEnter(this); }
+    void mouseExit(const juce::MouseEvent&) override { repaint(); if (onMouseExit) onMouseExit(this); }
     void openHoveringEditor();
 
     void setLabel(const juce::String& l) { label = l; repaint(); }
@@ -374,6 +376,9 @@ public:
     std::function<void(int)> onChange;
 
     void paint(juce::Graphics& g) override;
+    std::function<void(LedSelectorComponent*)> onMouseEnter;
+    std::function<void(LedSelectorComponent*)> onMouseExit;
+    void mouseEnter(const juce::MouseEvent&) override { if (onMouseEnter) onMouseEnter(this); }
     void mouseMove(const juce::MouseEvent& e) override;
     void mouseExit(const juce::MouseEvent& e) override;
     void mouseDown(const juce::MouseEvent& e) override;
@@ -447,6 +452,40 @@ private:
     juce::Label labels[4];
     RotaryKnobSlider* knobs[4] = {};
     int numActiveKnobs = 4;
+};
+
+// Sleek two-line permanent bottom status bar and contextual mouse shortcut badge bar
+class StatusBarComponent : public juce::Component {
+public:
+    StatusBarComponent();
+    ~StatusBarComponent() override = default;
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+
+    void setHoveredControl(const juce::String& name,
+                           const juce::String& value,
+                           const juce::String& desc,
+                           const juce::String& rightClickHint = {},
+                           const juce::String& doubleClickHint = {});
+
+    void clearHoveredControl();
+    void setTooltipsEnabled(bool enabled);
+    bool isTooltipsEnabled() const { return tooltipsEnabled; }
+
+    const juce::String& getActiveName() const { return currentName; }
+    const juce::String& getActiveValue() const { return currentValue; }
+    const juce::String& getActiveDesc() const { return currentDesc; }
+    const juce::String& getActiveRightClickHint() const { return currentRightClickHint; }
+    const juce::String& getActiveDoubleClickHint() const { return currentDoubleClickHint; }
+
+private:
+    juce::String currentName;
+    juce::String currentValue;
+    juce::String currentDesc;
+    juce::String currentRightClickHint;
+    juce::String currentDoubleClickHint;
+    bool tooltipsEnabled = true;
 };
 
 // Centralized Tooltip Formatting & Metadata Helpers

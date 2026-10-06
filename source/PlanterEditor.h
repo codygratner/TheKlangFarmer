@@ -10,12 +10,53 @@ public:
     PlanterHeaderVisualizer();
     void updateData(const float* scopeData, int numPoints, float peakL, float peakR, float limiterActivity);
     void paint(juce::Graphics& g) override;
+    void mouseDown(const juce::MouseEvent& e) override;
+
+    std::function<void()> onPanic;
+    std::function<void(const juce::Rectangle<int>&)> onLimiterCalloutRequested;
+
+    juce::Rectangle<float> getScopeArea() const;
+    juce::Rectangle<float> getLimitArea() const;
+    juce::Rectangle<float> getMeterArea() const;
+
+    void triggerFlash();
 
 private:
     std::vector<float> points;
     float livePeakL = 0.0f;
     float livePeakR = 0.0f;
     float liveLimiterAct = 0.0f;
+    bool isFlashing = false;
+};
+
+// Sleek mini Doepfer callout card for Master Limiter parameters
+class PlanterLimiterCalloutComponent : public juce::Component {
+public:
+    explicit PlanterLimiterCalloutComponent(TheKlangPlanterAudioProcessor& processor);
+    ~PlanterLimiterCalloutComponent() override = default;
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+
+    RotaryKnobSlider& getGainSlider() { return gainSlider; }
+    RotaryKnobSlider& getThreshSlider() { return threshSlider; }
+    RotaryKnobSlider& getReleaseSlider() { return releaseSlider; }
+    juce::ComboBox& getEnableBox() { return enableBox; }
+    LedSelectorComponent& getEnableSelector() { return enableSelector; }
+
+private:
+    TheKlangPlanterAudioProcessor& audioProcessor;
+
+    juce::ComboBox enableBox;
+    LedSelectorComponent enableSelector { juce::Colour(0xffe53935) };
+    RotaryKnobSlider gainSlider;
+    RotaryKnobSlider threshSlider;
+    RotaryKnobSlider releaseSlider;
+
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> enableAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> gainAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> threshAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> releaseAttachment;
 };
 
 class TheKlangPlanterAudioProcessorEditor : public KlangCoreEditor, public juce::Timer {
@@ -125,6 +166,7 @@ private:
     int lastPitchEnvTarget = -1;
     int lastFilterType = -1;
     int lastFilterSlope = -1;
+    int lastLimiterEnable = -1;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangPlanterAudioProcessorEditor)
 };

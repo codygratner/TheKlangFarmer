@@ -28,6 +28,12 @@ protected:
     juce::TextButton guideButton;
 
     std::unique_ptr<SettingsModalComponent> settingsModal;
+    StatusBarComponent statusBar;
 
+public:
+    StatusBarComponent& getStatusBar() { return statusBar; }
+    juce::TextButton& getTooltipsButton() { return tooltipsButton; }
+
+protected:
     void setTooltipsEnabled(bool enabled);
 };

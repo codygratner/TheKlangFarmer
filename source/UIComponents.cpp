@@ -2713,3 +2713,134 @@ void AdvancedColorPickerComponent::sliderValueChanged(juce::Slider* slider) {
 void AdvancedColorPickerComponent::sliderDragEnded(juce::Slider* slider) {
     if (onColorChanged) onColorChanged(currentColor); // Notify only when released
 }
+
+// ==============================================================================
+// StatusBarComponent Implementation
+// ==============================================================================
+
+StatusBarComponent::StatusBarComponent() {
+    setOpaque(true);
+}
+
+void StatusBarComponent::setHoveredControl(const juce::String& name,
+                                           const juce::String& value,
+                                           const juce::String& desc,
+                                           const juce::String& rightClickHint,
+                                           const juce::String& doubleClickHint) {
+    currentName = name;
+    currentValue = value;
+    currentDesc = desc;
+    currentRightClickHint = rightClickHint;
+    currentDoubleClickHint = doubleClickHint;
+    repaint();
+}
+
+void StatusBarComponent::clearHoveredControl() {
+    currentName.clear();
+    currentValue.clear();
+    currentDesc.clear();
+    currentRightClickHint.clear();
+    currentDoubleClickHint.clear();
+    repaint();
+}
+
+void StatusBarComponent::setTooltipsEnabled(bool enabled) {
+    if (tooltipsEnabled != enabled) {
+        tooltipsEnabled = enabled;
+        repaint();
+    }
+}
+
+void StatusBarComponent::resized() {}
+
+void StatusBarComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds();
+
+    // Background: High-tech dark panel with top border
+    g.setColour(juce::Colour(0xff0d1117));
+    g.fillRect(bounds);
+
+    g.setColour(juce::Colour(0xff1f293d));
+    g.drawHorizontalLine(0, 0.0f, static_cast<float>(bounds.getWidth()));
+
+    int leftMargin = 12;
+    int rightMargin = bounds.getWidth() - 12;
+
+    // --- Line 1: Top Bar (Permanent: Name + Value + Shortcuts) ---
+    int line1Y = 3;
+    int line1H = 16;
+
+    // Badges on the right
+    int curBadgeRight = rightMargin;
+
+    auto drawBadge = [&](const juce::String& text, juce::Colour bgCol, juce::Colour textCol) {
+        if (text.isEmpty()) return;
+        juce::Font font(juce::FontOptions(9.5f, juce::Font::bold));
+        int textW = juce::GlyphArrangement::getStringWidthInt(font, text);
+        int badgeW = textW + 12;
+        int badgeX = curBadgeRight - badgeW;
+        juce::Rectangle<int> badgeRect(badgeX, line1Y, badgeW, line1H - 1);
+
+        g.setColour(bgCol);
+        g.fillRoundedRectangle(badgeRect.toFloat(), 3.0f);
+        g.setColour(bgCol.brighter(0.2f));
+        g.drawRoundedRectangle(badgeRect.toFloat(), 3.0f, 1.0f);
+
+        g.setColour(textCol);
+        g.setFont(font);
+        g.drawText(text, badgeRect, juce::Justification::centred, false);
+
+        curBadgeRight = badgeX - 6;
+    };
+
+    if (currentDoubleClickHint.isNotEmpty()) {
+        drawBadge(currentDoubleClickHint, juce::Colour(0xff161f30), juce::Colour(0xff94a3b8));
+    }
+    if (currentRightClickHint.isNotEmpty()) {
+        drawBadge(currentRightClickHint, juce::Colour(0xff161f30), juce::Colour(0xff38bdf8));
+    }
+
+    // Name + Live Value on the left
+    int leftAvailW = curBadgeRight - leftMargin - 10;
+    if (leftAvailW > 50) {
+        juce::Rectangle<int> nameRect(leftMargin, line1Y, leftAvailW, line1H);
+        if (currentName.isNotEmpty()) {
+            juce::Font boldFont(juce::FontOptions(11.5f, juce::Font::bold));
+            juce::Font plainFont(juce::FontOptions(11.5f, juce::Font::plain));
+
+            int nameW = juce::GlyphArrangement::getStringWidthInt(boldFont, currentName);
+            g.setColour(juce::Colour(0xfff1f5f9));
+            g.setFont(boldFont);
+            g.drawText(currentName, leftMargin, line1Y, nameW, line1H, juce::Justification::centredLeft, true);
+
+            if (currentValue.isNotEmpty()) {
+                g.setColour(juce::Colour(0xff38bdf8));
+                g.setFont(plainFont);
+                g.drawText("  " + currentValue, leftMargin + nameW, line1Y, leftAvailW - nameW, line1H, juce::Justification::centredLeft, true);
+            }
+        } else {
+            g.setColour(juce::Colour(0xff475569));
+            g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+            g.drawText("SYSTEM READY", nameRect, juce::Justification::centredLeft, true);
+        }
+    }
+
+    // --- Line 2: Bottom Bar (Tooltip Feed) ---
+    int line2Y = 19;
+    int line2H = 14;
+    juce::Rectangle<int> line2Rect(leftMargin, line2Y, bounds.getWidth() - leftMargin * 2, line2H);
+
+    g.setFont(juce::FontOptions(10.5f, juce::Font::plain));
+    if (tooltipsEnabled) {
+        if (currentDesc.isNotEmpty()) {
+            g.setColour(juce::Colour(0xff94a3b8));
+            g.drawText(currentDesc, line2Rect, juce::Justification::centredLeft, true);
+        } else {
+            g.setColour(juce::Colour(0xff334155));
+            g.drawText("Hover over any control for contextual parameter explanation and shortcuts.", line2Rect, juce::Justification::centredLeft, true);
+        }
+    } else {
+        g.setColour(juce::Colour(0xff334155));
+        g.drawText("Tooltips feed disabled (toggle TIPS in header to enable live parameter guide).", line2Rect, juce::Justification::centredLeft, true);
+    }
+}

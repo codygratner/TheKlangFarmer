@@ -1937,6 +1937,20 @@ void TheKlangFarmerAudioProcessorEditor::bindSlider(const juce::String& paramId,
         slider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, paramId, desc, isBipolar));
     }
 
+    slider.onMouseEnter = [this, paramId](RotaryKnobSlider* s) {
+        if (!s) return;
+        auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+        juce::String name = def ? def->name : (s->getLabel().isNotEmpty() ? s->getLabel() : paramId);
+        juce::String val = s->getTextFromValue(s->getValue());
+        juce::String desc = def ? def->description : "";
+        juce::String rc = (def && !def->snapPoints.empty()) ? "Right-Click: Snap Points" : "Right-Click: Details";
+        juce::String dc = def ? ("2x-Click: Reset (" + juce::String(def->doubleClickValue, 2) + ")") : "2x-Click: Default";
+        statusBar.setHoveredControl(name, val, desc, rc, dc);
+    };
+    slider.onMouseExit = [this](RotaryKnobSlider*) {
+        statusBar.clearHoveredControl();
+    };
+
     registeredSliders.push_back(&slider);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, paramId, slider));
 }
@@ -2058,6 +2072,18 @@ void TheKlangFarmerAudioProcessorEditor::bindSelector(LedSelectorComponent& sele
             param->setValueNotifyingHost(param->convertTo0to1(static_cast<float>(idx)));
         }
     };
+
+    selector.onMouseEnter = [this, paramId](LedSelectorComponent* s) {
+        if (!s) return;
+        auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+        juce::String name = def ? def->name : paramId;
+        juce::String desc = s->getTooltip();
+        juce::String val = juce::String(s->getSelectedIndex() + 1) + "/" + juce::String(s->getNumItems());
+        statusBar.setHoveredControl(name, val, desc, "", "Click: Select Mode");
+    };
+    selector.onMouseExit = [this](LedSelectorComponent*) {
+        statusBar.clearHoveredControl();
+    };
 }
 
 void TheKlangFarmerAudioProcessorEditor::setFXSlotDefaults(int slot, bool isPost, int fxType) {
@@ -2123,7 +2149,7 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
     int margin = 6;
     int topOffset = 38;
     int totalW = getWidth() - 2 * margin;
-    int totalH = getHeight() - topOffset - margin;
+    int totalH = getHeight() - topOffset - margin - 36;
     int numCols = 4;
     int numRows = 2;
     int slotW = (totalW - (numCols - 1) * margin) / numCols;
@@ -2617,6 +2643,8 @@ void TheKlangFarmerAudioProcessorEditor::resized() {
         settingsModal->setBounds(getLocalBounds());
 
     quickstartGuide.setBounds(getLocalBounds());
+
+    statusBar.setBounds(0, getHeight() - 36, getWidth(), 36);
 
     updatePageLayout();
 }
