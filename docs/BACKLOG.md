@@ -32,6 +32,7 @@ Continue development of the dedicated JUCE GUI editor with card preview and edit
   - `[ Export Snapshot ]`: Bundles all modular control/layout JSONs into a single timestamped `.json` archive.
   - `[ Import Snapshot ]`: Restores full UI state from an external snapshot file.
   - `[ Restore Factory Defaults ]`: One-click button reverting all on-disk JSONs to `assets/factory_defaults_snapshot.json` if a setting is borked.
+  - **Bugfix — Card Tree Parameter Population**: Fix issue where drilling down on cards from the plugins in the tree view fails to populate parameters in the property panel.
 
 ### 3. Automated C++ Linting & Formatting (`clang-format`)
 *Goal: Enforce the project's A+ code quality standards automatically.*

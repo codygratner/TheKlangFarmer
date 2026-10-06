@@ -106,3 +106,8 @@ To ensure rapid experimentation without fear of corrupting configuration files:
 4. Verify the visual slider in the Preview pane instantly snaps to the new default value.
 5. Change a hex code in the `theme.json` Color Picker and verify the Preview background instantly changes.
 6. Type a manual change in the Raw JSON pane and ensure the Form text boxes update automatically.
+
+---
+
+## Active Issues & Fixes
+- [ ] **Card Tree Parameter Population Bug**: When selecting/drilling down on specific cards from the plugins in the sidebar tree view, the parameter property panel fails to populate with controls. Fix the tree selection event listener in `MainComponent.cpp` to correctly resolve the card's parameter list from `ParameterManager` and re-populate the form.
