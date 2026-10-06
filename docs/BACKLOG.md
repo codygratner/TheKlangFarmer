@@ -38,13 +38,7 @@ Purged legacy standalone FX blocks, orphaned APVTS parameters, and bypassed rout
 *Audit Report:* [`docs/parity_audit/tkf_parity_audit.html`](parity_audit/tkf_parity_audit.html) | [`docs/parity_audit/tkf_parity_audit.pdf`](parity_audit/tkf_parity_audit.pdf)
 Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters against current v0.3.0 JSON controls across The Klang Farmer and The Klang Planter. All calibrated legacy defaults, string formatters, and colors verified with 0 discrepancies (160 exact matches, 44 intentional multi-instance FX slot migrations, and 30 safe additions). Slide-deck printable PDF report generated.
 
-### 6. GitHub CLI Integration & Repository Tagging
-*Goal: Improve repository discoverability for audio-plugin developers and the vibe coding community.*
-- Have the AI install the GitHub CLI (`gh`) via `winget` and authenticate.
-- Automatically apply curated repository tags (Topics) covering Audio Plugin/JUCE (`vst3`, `juce-framework`), FM Drum Synthesis (`drum-machine`, `fm-synthesis`), and the Vibe Coding (`vibe-coding`, `agentic-coding`) communities.
-
-
-### 7. Zero-Cost macOS FOSS Distribution Pipeline (.pkg + Quarantine Stripper + Visual Guide)
+### 6. Zero-Cost macOS FOSS Distribution Pipeline (.pkg + Quarantine Stripper + Visual Guide)
 *Goal: Ensure the v0.3.0 Mac release installs and upgrades with zero friction or Gatekeeper blocks.*
 - **Automated `.pkg` Installer Generator**: GitHub Actions runner uses macOS native `pkgbuild` & `productbuild` to generate a standard installer.
 - **Automated Post-Install Quarantine Stripper**: Installer runs an automated `postinstall` script (`xattr -rd com.apple.quarantine /Library/Audio/Plug-Ins/...`) that strips the internet quarantine flag so DAWs scan the VST3/AU immediately with zero Gatekeeper warnings!
@@ -54,11 +48,16 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Includes a double-clickable `Fix_Mac_Permissions.command` helper script.
   - Includes an illustrated `macOS_Install_Guide.html` showing the 2-step bypass in System Settings -> Privacy & Security.
 
-### 8. Automated GitHub Release Version Checker & Settings Modal
+### 7. Automated GitHub Release Version Checker & Settings Modal
 *Goal: Provide seamless, non-intrusive notification of new releases directly inside the plugin so v0.3.0 users automatically know when v0.4.0 and beyond drop.*
 - **Non-Blocking Background Worker**: Async background thread querying GitHub release API on plugin load.
 - **Header Notification Badge**: Subtle, glowing 'Update Available' tag next to version text. Clicking opens release page.
 - **Settings & About Modal**: Gear icon in header exposing 'Check for updates on launch' toggle, manual 'Check Now' button, and build metadata.
+
+### 8. GitHub CLI Integration & Repository Tagging
+*Goal: Improve repository discoverability for audio-plugin developers and the vibe coding community.*
+- Have the AI install the GitHub CLI (`gh`) via `winget` and authenticate.
+- Automatically apply curated repository tags (Topics) covering Audio Plugin/JUCE (`vst3`, `juce-framework`), FM Drum Synthesis (`drum-machine`, `fm-synthesis`), and the Vibe Coding (`vibe-coding`, `agentic-coding`) communities.
 
 ---
 
