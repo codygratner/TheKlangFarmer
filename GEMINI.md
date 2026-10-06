@@ -89,10 +89,11 @@
 - **No Rogue Files or Artifacts**: You must NEVER create new files named `backlog.md`, `BACKLOG.md`, `TODO.md`, `future_backlog.md`, etc., in the root directory or as an artifact in your brain directory. 
 - **Modification Only**: Always search for and append to the existing `docs/BACKLOG.md` file in the repository.
 
-## Smart /grill-me Wrap-Up
+## Smart /grill-me Wrap-Up & Mandatory Interactive Decision Modals
+- **Interactive Modal Required (Zero Plain-Text Number Menus)**: Whenever presenting decision options to the user—whether at the end of `/grill-me`, `/plan`, `/strict-plan`, `/paste-plan`, `/read-plan`, or any workflow fork—you must NEVER output raw numbered text lists (e.g. `1. Option A, 2. Option B, 3. Both`) in the chat forcing the user to type "3". You MUST ALWAYS invoke the `ask_question` tool so the user gets an interactive clickable modal.
 - **Proactive Housekeeping**: Whenever you complete a /grill-me interactive interview, you must document the final design conclusion (Backlog, Plan, or Both).
 - **Contextual Bypass**: If the user's answers during the interview *explicitly* stated where the item should go (e.g., "put this in v0.4 of the backlog"), you are authorized to bypass the formal 3-option menu and immediately execute the documentation.
-- **When in Doubt, Ask**: If the destination is ambiguous, you must explicitly ask the user whether to add it to the backlog, draft a plan, or both, before modifying any files.
+- **When in Doubt, Ask via `ask_question`**: If the destination is ambiguous, you must call `ask_question` with the options formatted as user actions (e.g., `(Recommended) Both: Add to Backlog and draft Plan`, `Backlog Only`, `Draft Plan Only`).
 
 ## Strict Scratch Script Hygiene
 - **Instant Cleanup**: When you create temporary Python scripts (`update_file.py`, `fix_code.py`, `script.py`) to execute refactors, tests, or file modifications, you must **ALWAYS** delete the script immediately upon completion.

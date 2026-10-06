@@ -17,17 +17,11 @@ If the user triggers `/readplan` without specifying a specific file name or feat
    - Search the `docs/` directory for any active feature plans (`*_plan.md`).
    - Search `docs/completed_plans/` for archived plans (if they wish to resume/review).
    - Parse `docs/BACKLOG.md` for the current Top Priority tickets.
-2. **Present the Picker:**
-   Output a numbered list of the discovered plans and backlog tickets:
-   ```markdown
-   # 📂 Discovered Plans
-   Please select a plan to load:
-   1. [Active] `PLAN.md` - <Derived Title>
-   2. [Backlog] `docs/preset_system_plan.md` - <Derived Title>
-   3. [Archived] `docs/completed_plans/...` - <Derived Title>
-   ...
-   ```
-3. **Wait for Selection:** Stop execution and await the user's response (e.g., "Load 2").
+2. **Present the Picker via `ask_question`:**
+   Invoke the `ask_question` tool with the list of discovered plans and backlog tickets:
+   - **Question:** *"Which plan would you like to load into the workspace?"*
+   - **Options:** Formatted as clickable choices (e.g., `(Recommended) [Active] PLAN.md - <Title>`, `[Backlog] docs/preset_system_plan.md - <Title>`, etc.)
+3. **Execution Proceeds Directly:** The selection is handled immediately from the user's click.
 
 ### 2. File Ingest (If Target Provided or Selected)
 If the user specifies a file (e.g., `/readplan preset_system_plan`) or selects one from the picker:
@@ -44,11 +38,12 @@ Print the summary:
 **Phases:** <N> Total Phases
 ```
 
-**CRITICAL GUARDRAIL:** You must NEVER automatically start implementation. Present the user with the mandatory interactive decision:
-> **How would you like to proceed with this plan?**
-> 1. `Start Phase 1 pipeline`: Check branch safety, bump version with feature tag, and begin automated engineering loop.
-> 2. `Defer to Backlog`: Move plan to `docs/<slug>_plan.md` (if not already there) and record it as a priority in `docs/BACKLOG.md`.
-> 3. `Review Only`: Keep `PLAN.md` active at project root and wait for manual instructions.
+**CRITICAL GUARDRAIL:** You must NEVER automatically start implementation. You MUST invoke the `ask_question` tool to present the user with an interactive clickable modal:
+- **Question:** *"How would you like to proceed with this plan?"*
+- **Options:**
+  - `(Recommended) Start Phase 1 pipeline: Check branch safety, bump version with feature tag, and begin automated engineering loop`
+  - `Defer to Backlog: Move plan to docs/<slug>_plan.md and record as a priority in docs/BACKLOG.md`
+  - `Review Only: Keep PLAN.md active at project root and wait for manual instructions`
 
 ### 4. Handoff
 - If the user selects **1**: Coordinate the Git Branch Safety Gate, the Feature Version Bump, and begin the Automated Execution Pipeline (delegating to the logic in `paste-plan` / `execute-task`).

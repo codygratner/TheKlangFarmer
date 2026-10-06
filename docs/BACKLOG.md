@@ -74,6 +74,10 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Fast-forward remote `main` with all 100+ commits from `master`.
   - Switch default repository branch to `main` on GitHub (via `gh repo edit --default-branch main`).
   - Update `CMakeLists.txt` comments and cleanly retire/delete obsolete remote `master` branch.
+- **Repository Umbrella Rename & Description Polish**:
+  - Rename GitHub repository from `TheKlangFarmer` &rarr; `TheKlangSuite` (GitHub automatically redirects all web traffic, Git clones, and release assets).
+  - Update repository About description: `"FM drum synthesizers, multi-effects, and sound design tools (VST3/AU). Pair-programmed and vibe-coded with Google Gemini."`
+  - Update local remote origin: `git remote set-url origin https://github.com/codygratner/TheKlangSuite.git`.
 - **Post-Release Housekeeping & Chat Purge**:
   - Archive all completed v0.3.0 plan files into `docs/completed_plans/`.
   - Update `CHANGELOG.md` with final v0.3.0 diff.

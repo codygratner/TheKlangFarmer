@@ -202,7 +202,7 @@ SettingsModalComponent::SettingsModalComponent(const juce::String& name)
     githubButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff181b22));
     githubButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffc5d1e0));
     githubButton.onClick = [] {
-        juce::URL("https://github.com/codygratner/TheKlangFarmer").launchInDefaultBrowser();
+        juce::URL("https://github.com/codygratner/TheKlangSuite").launchInDefaultBrowser();
     };
     addAndMakeVisible(githubButton);
 
@@ -210,7 +210,7 @@ SettingsModalComponent::SettingsModalComponent(const juce::String& name)
     issuesButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff181b22));
     issuesButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffc5d1e0));
     issuesButton.onClick = [] {
-        juce::URL("https://github.com/codygratner/TheKlangFarmer/issues").launchInDefaultBrowser();
+        juce::URL("https://github.com/codygratner/TheKlangSuite/issues").launchInDefaultBrowser();
     };
     addAndMakeVisible(issuesButton);
 
@@ -406,6 +406,13 @@ void SettingsModalComponent::paint(juce::Graphics& g)
     drawMetaRow(col2X, metaY + 20, "Build Date", __DATE__);
     drawMetaRow(col2X, metaY + 40, "License", "GPL-3.0 (FOSS)");
     drawMetaRow(col2X, metaY + 60, "Vendor", "R'lyeh Sound");
+
+    // Repository metadata row
+    g.setFont(juce::FontOptions(11.5f, juce::Font::plain));
+    g.setColour(juce::Colour(0xff75849b));
+    g.drawText("Repository:", col1X, metaY + 80, 100, 18, juce::Justification::left, true);
+    g.setColour(juce::Colour(0xff4a9eff));
+    g.drawText("github.com/codygratner/TheKlangSuite", col1X + 104, metaY + 80, 400, 18, juce::Justification::left, true);
 
     // Bottom divider line
     int botY = static_cast<int>(card.getBottom()) - 58;

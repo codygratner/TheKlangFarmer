@@ -62,7 +62,7 @@ Synthesize the approach and write the result directly to `PLAN.md` at project ro
 - **Verification Condition:** <pluginval / manual audio test>
 ```
 
-### 4. Present Briefing & Await Approval
+### 4. Present Briefing & Await Approval via `ask_question`
 Once `PLAN.md` is written to disk, do NOT begin coding. Output an executive summary in the chat pane:
 
 ```markdown
@@ -73,13 +73,11 @@ Once `PLAN.md` is written to disk, do NOT begin coding. Output an executive summ
 
 ### Architectural Summary
 <2-3 concise sentences on how the design works>
-
----
-
-### Ready for Review
-Review `PLAN.md` on disk. When satisfied, proceed with:
-- **`/readplan --build`** (or `/pasteplan --build` — fully autonomous audit and build loop)
-- **`/readplan`** (interactive decision gate: start Phase 1, defer, or review)
-- **`/readplan --backlog`** (defer to backlog for later)
-- **`Execute Phase 1`** (step-by-step with checkpoints)
 ```
+
+Then, you MUST immediately invoke the `ask_question` tool to present an interactive clickable decision modal:
+- **Question:** *"Plan drafted and saved to PLAN.md. How would you like to proceed?"*
+- **Options:**
+  - `(Recommended) Review PLAN.md on disk before taking action`
+  - `Start Phase 1 pipeline (/pasteplan --build)`
+  - `Defer to Backlog (/pasteplan --backlog)`

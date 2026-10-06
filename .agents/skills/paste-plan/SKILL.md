@@ -81,13 +81,14 @@ Print summary:
 ```
 
 - If `DEFER_BACKLOG == true`: Execute **Section 2.5 (Backlog Deferment Flow)**.
-- Otherwise, strictly enforce the Global Planning Guardrail. You MUST present the user with this interactive decision:
-  > **How would you like to proceed with this plan?**
-  > 1. `Start Phase 1 pipeline`: Check branch safety, bump version with feature tag, and begin automated engineering loop.
-  > 2. `Defer to Backlog`: Save plan to `docs/<slug>_plan.md`, add as an active priority in `docs/BACKLOG.md`, and record without writing code or building.
-  > 3. `Review Only`: Keep `PLAN.md` at project root and wait for manual instructions.
-  >
-  > Proceed according to user selection.
+- Otherwise, strictly enforce the Global Planning Guardrail. You MUST invoke the `ask_question` tool to present the user with an interactive clickable decision modal:
+  - **Question:** *"How would you like to proceed with this plan?"*
+  - **Options:**
+    - `(Recommended) Start Phase 1 pipeline: Check branch safety, bump version with feature tag, and begin automated engineering loop`
+    - `Defer to Backlog: Save plan to docs/<slug>_plan.md, add as an active priority in docs/BACKLOG.md, and record without writing code or building`
+    - `Review Only: Keep PLAN.md at project root and wait for manual instructions`
+
+Proceed according to user selection.
 
 ### 5. Automated Execution Pipeline Loop (Per Phase)
 *(Only if User Selected Option 1)*

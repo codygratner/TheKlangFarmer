@@ -214,16 +214,30 @@ void VersionChecker::run()
             return;
         }
 
-        // Query official GitHub releases API
-        juce::URL url("https://api.github.com/repos/codygratner/TheKlangFarmer/releases/latest");
-        juce::String extraHeaders = "User-Agent: TheKlangFarmer-App\r\nAccept: application/vnd.github.v3+json\r\n";
+        // Query official GitHub releases API (TheKlangSuite with transition fallback)
+        juce::URL url("https://api.github.com/repos/codygratner/TheKlangSuite/releases/latest");
+        juce::String extraHeaders = "User-Agent: TheKlangSuite-App\r\nAccept: application/vnd.github.v3+json\r\n";
         auto options = juce::URL::InputStreamOptions(juce::URL::ParameterHandling::inAddress)
                            .withExtraHeaders(extraHeaders)
                            .withConnectionTimeoutMs(4000);
 
         std::unique_ptr<juce::InputStream> stream(url.createInputStream(options));
+        juce::var parsed;
+        if (stream != nullptr) {
+            auto jsonString = stream->readEntireStreamAsString();
+            parsed = juce::JSON::parse(jsonString);
+        }
 
-        if (stream == nullptr) {
+        // Fallback to legacy repo if TheKlangSuite does not exist yet (pre-rename transition)
+        if (!parsed.isObject() || (parsed.getDynamicObject() != nullptr && !parsed.getDynamicObject()->hasProperty("tag_name"))) {
+            juce::URL fallbackUrl("https://api.github.com/repos/codygratner/TheKlangFarmer/releases/latest");
+            std::unique_ptr<juce::InputStream> fallbackStream(fallbackUrl.createInputStream(options));
+            if (fallbackStream != nullptr) {
+                parsed = juce::JSON::parse(fallbackStream->readEntireStreamAsString());
+            }
+        }
+
+        if (!parsed.isObject() || (parsed.getDynamicObject() != nullptr && !parsed.getDynamicObject()->hasProperty("tag_name"))) {
             {
                 const juce::ScopedLock sl(dataLock);
                 currentInfo.status = Status::Error;
@@ -233,39 +247,30 @@ void VersionChecker::run()
             return;
         }
 
-        auto jsonString = stream->readEntireStreamAsString();
-        auto parsed = juce::JSON::parse(jsonString);
-
-        if (parsed.isObject()) {
-            auto* obj = parsed.getDynamicObject();
-            juce::String tag = obj->hasProperty("tag_name") ? obj->getProperty("tag_name").toString() : juce::String();
-            juce::String releaseUrl = obj->hasProperty("html_url") ? obj->getProperty("html_url").toString() : juce::String();
-            juce::String releaseName = obj->hasProperty("name") ? obj->getProperty("name").toString() : tag;
-            juce::String publishedAt = obj->hasProperty("published_at") ? obj->getProperty("published_at").toString() : juce::String();
+        auto* obj = parsed.getDynamicObject();
+        juce::String tag = obj->hasProperty("tag_name") ? obj->getProperty("tag_name").toString() : juce::String();
+        juce::String releaseUrl = obj->hasProperty("html_url") ? obj->getProperty("html_url").toString() : juce::String();
+        juce::String releaseName = obj->hasProperty("name") ? obj->getProperty("name").toString() : tag;
+        juce::String publishedAt = obj->hasProperty("published_at") ? obj->getProperty("published_at").toString() : juce::String();
 
 #ifdef JucePlugin_VersionString
-            juce::String currentVer = JucePlugin_VersionString;
+        juce::String currentVer = JucePlugin_VersionString;
 #else
-            juce::String currentVer = "0.3.0";
+        juce::String currentVer = "0.3.0";
 #endif
 
-            {
-                const juce::ScopedLock sl(dataLock);
-                currentInfo.latestTag = tag;
-                currentInfo.releaseUrl = releaseUrl;
-                currentInfo.releaseName = releaseName;
-                currentInfo.publishedAt = publishedAt;
-                currentInfo.errorMessage = {};
-
-                if (tag.isNotEmpty() && compareVersionStrings(currentVer, tag) < 0)
-                    currentInfo.status = Status::UpdateAvailable;
-                else
-                    currentInfo.status = Status::UpToDate;
-            }
-        } else {
+        {
             const juce::ScopedLock sl(dataLock);
-            currentInfo.status = Status::Error;
-            currentInfo.errorMessage = "Invalid JSON response from GitHub API.";
+            currentInfo.latestTag = tag;
+            currentInfo.releaseUrl = releaseUrl;
+            currentInfo.releaseName = releaseName;
+            currentInfo.publishedAt = publishedAt;
+            currentInfo.errorMessage = {};
+
+            if (tag.isNotEmpty() && compareVersionStrings(currentVer, tag) < 0)
+                currentInfo.status = Status::UpdateAvailable;
+            else
+                currentInfo.status = Status::UpToDate;
         }
 
         sendChangeMessage();

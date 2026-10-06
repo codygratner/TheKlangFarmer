@@ -61,7 +61,7 @@ namespace VersionCheckerTestSuite {
             reporter.expect(badgeBtn != nullptr, "Farmer has UpdateBadgeButton in header");
 
             // Mock an update available: v0.4.0
-            VersionChecker::getInstance().setMockRelease("v0.4.0", "https://github.com/codygratner/TheKlangFarmer/releases/tag/v0.4.0");
+            VersionChecker::getInstance().setMockRelease("v0.4.0", "https://github.com/codygratner/TheKlangSuite/releases/tag/v0.4.0");
             pumpMessageLoop();
 
             if (badgeBtn) {
@@ -70,7 +70,7 @@ namespace VersionCheckerTestSuite {
             }
 
             // Mock up to date
-            VersionChecker::getInstance().setMockRelease("v0.2.0", "https://github.com/codygratner/TheKlangFarmer/releases/tag/v0.2.0");
+            VersionChecker::getInstance().setMockRelease("v0.2.0", "https://github.com/codygratner/TheKlangSuite/releases/tag/v0.2.0");
             pumpMessageLoop();
 
             if (badgeBtn) {

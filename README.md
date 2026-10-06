@@ -1,11 +1,11 @@
 # The Klang Farmer & The Klang Planter
 
 > **Modular Dual-FM & Compact Percussion Synthesis System**  
-> Built in modern C++20 with JUCE 8. Available as **VST3 Plugins** and **Standalone Applications**.
+> Built in modern C++20 with JUCE 9.0.3. Available as **VST3 Plugins** and **Standalone Applications**.
 
-[![Release](https://img.shields.io/github/v/release/codygratner/TheKlangFarmer?color=4a9eff&label=Release)](https://github.com/codygratner/TheKlangFarmer/releases)
+[![Release](https://img.shields.io/github/v/release/codygratner/TheKlangSuite?color=4a9eff&label=Release)](https://github.com/codygratner/TheKlangSuite/releases)
 [![Standard](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://en.cppreference.com/w/cpp/20)
-[![Framework](https://img.shields.io/badge/JUCE-8-orange.svg)](https://juce.com/)
+[![Framework](https://img.shields.io/badge/JUCE-9.0.3-orange.svg)](https://juce.com/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 [![Format](https://img.shields.io/badge/Format-VST3%20%7C%20Standalone-brightgreen.svg)](#installation)
 
@@ -117,7 +117,7 @@ It arranges 22 discrete sound-shaping modules inside an ergonomic **2-row by 4-c
 
 ## Installation
 
-Download the latest pre-compiled binaries from the **[Releases Page](https://github.com/codygratner/TheKlangFarmer/releases)**:
+Download the latest pre-compiled binaries from the **[Releases Page](https://github.com/codygratner/TheKlangSuite/releases)**:
 
 ### VST3 Plugin (Windows)
 1. Download `TheKlangFarmer-v0.2.0-VST3.zip`.
@@ -144,8 +144,8 @@ Download the latest pre-compiled binaries from the **[Releases Page](https://git
 ### Build Instructions
 ```bash
 # 1. Clone the repository with submodules/JUCE
-git clone https://github.com/codygratner/TheKlangFarmer.git
-cd TheKlangFarmer
+git clone https://github.com/codygratner/TheKlangSuite.git
+cd TheKlangSuite
 
 # 2. Configure CMake
 cmake -B build
