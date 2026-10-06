@@ -23,6 +23,11 @@ Create a dedicated JUCE GUI application using a **Unified Tabbed Layout** (`[THE
 *Detailed Plan: [`docs/v020_parity_audit_plan.md`](v020_parity_audit_plan.md)*
 Run an automated Python script to extract legacy v0.2.0 C++ parameters, string formatters, and hex colors, and cross-reference them against the new JSON architecture to ensure 1:1 user parity. Outputs a highlighted HTML/PDF report with embedded card screenshots.
 
+
+### 3. Automated GUI Test Harness (Guardrail)
+*Detailed Plan: [`docs/gui_test_harness_plan.md`](gui_test_harness_plan.md)*
+Implement a functional state C++ testing harness (`gui_tests`) to simulate clicks and verify APVTS bindings. Integrated directly into the `/build-validate` skill to act as an industry-standard development guardrail (can be bypassed with `--skip-gui`).
+
 ---
 
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
