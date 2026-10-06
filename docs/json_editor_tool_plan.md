@@ -83,6 +83,17 @@ A central state manager to handle bidirectional updates without infinite loops.
 
 ---
 
+### 5. Consolidated JSON Snapshot & Factory Restore (Un-Borkable Safety Net)
+To ensure rapid experimentation without fear of corrupting configuration files:
+- **Header Actions**:
+  - `[ Export Snapshot ]`: Serializes all modular JSON files (`assets/controls/*.json`, `global_ui.json`, `theme.json`, and `assets/layouts/*.json`) into a single timestamped JSON bundle (e.g. `tke_snapshot_2026-10-06.json`).
+  - `[ Import Snapshot ]`: Prompts to load an existing consolidated snapshot and unpacks it cleanly to the `assets/` subdirectories.
+  - `[ Restore Factory Defaults ]`: Reverts all on-disk JSON assets back to the pristine baked-in reference state, instantly rescuing the user if a setting or layout is accidentally borked.
+- **Reference Factory Snapshot**:
+  - A clean pre-made export (`assets/factory_defaults_snapshot.json`) is committed to the repository, serving as the immutable recovery anchor.
+
+---
+
 ## Verification Plan
 
 ### Automated Tests

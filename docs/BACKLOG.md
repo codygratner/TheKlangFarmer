@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized milestones below:
-> 1. **v0.3.0 (Architecture)**: The Klang Editor (TKE), Cruft Purge, Parity Audit, & macOS .pkg Installer.
+> 1. **v0.3.0 (Architecture)**: GUI Test Harness (Guardrail), The Klang Editor (TKE) & Snapshots, Cruft Purge, & Parity Audit.
 > 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, & Typography Engine.
 > 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, GitHub Version Checker, & Linux Headless CI.
 > 4. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
@@ -18,16 +18,20 @@
 ## 🚀 Milestone: v0.3.0 "The Architecture Update"
 *Focus: Tooling, Data-Driven Architecture, and 1:1 Legacy Parity.*
 
-### 1. Standalone JSON Data & Theme Editor (TheKlangEditor)
-*Detailed Plan: [`docs/json_editor_tool_plan.md`](json_editor_tool_plan.md)*
-Create a dedicated JUCE GUI application using a **Unified Tabbed Layout** (`[THEME]` vs `[CONTROLS]`) to cleanly separate visual styling from DSP parameter calibration, sharing a Live UI Preview and Raw JSON text editor pane.
-*Note: Ensure the UI can handle the split between TKF (The Klang Farmer) and TKP (The Klang Planter) cards if they have different parameter groupings or coloring needs.*
-*Text/Localization Extraction*: Extract all hardcoded C++ UI strings (slider names, tooltips, special formatting) into their respective module JSON files (using the **Component Model** architecture to explicitly keep text out of structural layout files). Global text (button labels, plugin names) will live in a new `global_ui.json` file. All text will be edited directly alongside numerical bounds inside the `[CONTROLS]` tab.
-*Automated Build Tracking*: Use CMake to inject the Git Commit Count and Hash into the C++ preprocessor, displaying it in the Editor's title bar (e.g., `v0.3.0 (Build 171 - 155333f)`) while strictly avoiding timestamps to preserve Reproducible Builds.
-
-### 2. Automated GUI Test Harness (Guardrail)
+### 1. Automated GUI Test Harness (Guardrail)
 *Detailed Plan: [`docs/gui_test_harness_plan.md`](gui_test_harness_plan.md)*
-Implement a functional state C++ testing harness (`gui_tests`) to simulate clicks and verify APVTS bindings. Integrated directly into the `/build-validate` skill to act as an industry-standard development guardrail (can be bypassed with `--skip-gui`).
+Implement a functional state C++ testing harness (`gui_tests`) to simulate clicks and verify APVTS bindings. Integrated directly into the `/build-validate` skill to act as an industry-standard development guardrail (can be bypassed with `--skip-gui`). Now prioritized as **Item #1** to lock down test coverage and protect ongoing Editor work!
+
+### 2. Standalone JSON Data & Theme Editor (TheKlangEditor) — Phase 2: Controls, Typography & Snapshots
+*Detailed Plan: [`docs/json_editor_tool_plan.md`](json_editor_tool_plan.md)*
+Continue development of the dedicated JUCE GUI editor with card preview and editing:
+- **Unified Tabbed Layout**: `[THEME]` (Color Wheel, hex inputs) vs `[CONTROLS]` (parameter bounds, labels, tooltips).
+- **Text/Localization Extraction**: Extract all remaining hardcoded C++ UI strings into their respective module JSON files and `global_ui.json`.
+- **Automated Build Tracking**: CMake injection of Git Commit Count & Hash in the title bar.
+- **Consolidated JSON Snapshot & Factory Restore**:
+  - `[ Export Snapshot ]`: Bundles all modular control/layout JSONs into a single timestamped `.json` archive.
+  - `[ Import Snapshot ]`: Restores full UI state from an external snapshot file.
+  - `[ Restore Factory Defaults ]`: One-click button reverting all on-disk JSONs to `assets/factory_defaults_snapshot.json` if a setting is borked.
 
 ### 3. Automated C++ Linting & Formatting (`clang-format`)
 *Goal: Enforce the project's A+ code quality standards automatically.*
