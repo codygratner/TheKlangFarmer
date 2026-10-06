@@ -202,7 +202,7 @@ The Klang Farmer and The Klang Planter follow strict Semantic Versioning. Develo
 | :--- | :--- | :--- | :--- |
 | **`v0.2.0`** | **Initial Release** | Flagship dual-FM drum synth, 13 effects, modular pages, and visualizers. | ✅ Complete |
 | **`v0.3.0`** | **The Architecture Update** | Data-driven JSON architecture, The Klang Editor (TKE), automated GUI regression harness, zero-cost macOS `.pkg` installer, and automated GitHub version checker. | 🔄 Active Development |
-| **`v0.4.0`** | **The Sound & Chaos Update** | 26-algorithm FX expansion, Kilohearts-style 5-column browser modal, dual transient sample players, and d6 parameter randomization. | 📋 Planned |
+| **`v0.4.0`** | **The Sound & Chaos Update** | 26-algorithm FX expansion, 5-column browser modal, dual transient sample players, d6 parameter randomization, and gated staccato bass mode. | 📋 Planned |
 | **`v0.5.0`** | **The Pro Workflow Update** | JSON preset browser & tagging, 64–128 curated factory sound pack, one-click `.tkfbank` sharing, WAV/SF2 multi-sample export dialog, and Linux headless CI. | 📋 Planned |
 | **`v0.6.0`** | **The Visual Polish & UI Mastery Update** | High-DPI UI scaling (100%–200%), tactile industrial hardware depth, 60 FPS tear-free visualizers, and curated theme palettes (Cyberpunk, Cykranosh, Dracula, Monokai, Nord). | 📋 Planned |
 | **`v1.0.0`** | **General Availability (GA)** | Official Public FOSS (GPLv3) Release, multi-platform automated installers, illustrated user manual, and launch demo reel. | 🚀 Target |

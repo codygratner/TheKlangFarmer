@@ -4,7 +4,7 @@
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized milestones below:
 > 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit.
-> 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, & Typography Engine.
+> 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass Engine, & Typography Engine.
 > 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, & Linux Headless CI.
 > 4. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
 > 5. **v1.1.0 (Hardware Universe)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
@@ -124,6 +124,22 @@ Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's ad
 *Goal: Provide instant, discoverable default reset capability for discrete selector buttons.*
 - Add a top/bottom action button `[Default: <Preset/Mode>]` inside `SelectorCalloutComponent` / right-click menu.
 - Clicking the button instantly restores the selector parameter to its JSON-defined default value.
+
+### 7. Gated Trigger Mode & Settable Note-Off Release (Staccato Bass Engine)
+*Detailed Plan: [`docs/gated_bass_note_off_plan.md`](gated_bass_note_off_plan.md)*  
+Transform the dual-FM drum synthesizer into a dual-threat bass machine capable of tight, punchy, articulate staccato basslines and sustained drones:
+- **Header Front-Panel Badge (`ONE-SHOT` vs `GATED`)**:
+  - `ONE-SHOT` (Default): Traditional drum-machine behavior; ignores MIDI Note-Offs so envelopes decay naturally.
+  - `GATED`: MIDI Note-Off immediately cuts the voice with a smooth, pop-free release ramp.
+  - Left-click toggles mode; right-click launches `GatedReleaseCalloutComponent`.
+- **Right-Click Callout Popup**:
+  - Mode selector (`[One-Shot]` / `[Gated]`).
+  - Note-Off Release Slider (`1.0 ms` to `30.0 ms`, default `5.0 ms`) with logarithmic skew and quick-snaps.
+- **Click-Free Exponential Release DSP**:
+  - Captures instantaneous amplitude level on note release and applies an exponential fade-out curve via `TbdAudio::FastMath::fastExp`.
+  - Zero DC clicks, zero heap allocations, and zero mutexes.
+- **Monophonic Legato Tracking**:
+  - Tracks `activeMidiNote` to guarantee fast legato bass playing never cuts off subsequent notes prematurely.
 
 ---
 
