@@ -1,8 +1,8 @@
-# Gated Trigger Mode & Settable Note-Off Release (Staccato Bass Engine)
+# Voice & Articulation Engine: Gated Staccato Bass, Note-Off Release & Portamento Glide
 
 **Target Milestone**: v0.4.0 "The Sound & Chaos Update"  
 **Scope**: Both Plugins (*The Klang Farmer* and *The Klang Planter*)  
-**Architecture**: Data-Driven JSON Parameters + Audio Thread Invariants + Header UI Callout  
+**Architecture**: Data-Driven JSON Parameters + Audio Thread Invariants + Unified Voice & Articulation Modal  
 
 ---
 
@@ -10,12 +10,9 @@
 
 While *The Klang Farmer* and *The Klang Planter* were originally conceptualized as one-shot dual-FM drum synthesizers, their versatile carrier/modulator engines, pitch envelopes, and multi-mode filters make them monstrous platforms for synthesizing modern electronic basslines (Reese bass, aggressive acid bass, 808 subs, and resonant FM talk-bass).
 
-However, in one-shot drum mode, releasing a MIDI key is completely ignored: notes ring out for their full decay time. When programming fast 16th-note basslines or staccato grooves, notes bleed together into a sustained drone unless the main decay knob is kept unnaturally short.
-
-This feature introduces an integrated **Gated Trigger Mode** with a **Settable Note-Off Release** (1 ms to 30 ms). When activated:
-- Holding a MIDI key sustains/decays the voice normally.
-- Releasing the key triggers an immediate, analog-style, pop-free exponential release ramp (default 5 ms) to zero.
-- Allows producers to seamlessly toggle between one-shot percussive hits and tight, punchy, articulate basslines.
+This architectural plan expands the synth engine from a purely percussive one-shot instrument into a dual-threat **Drum & Bass Synthesizer**. It unifies two critical performance capabilities into a dedicated **Voice & Articulation** system:
+1. **Gated Trigger Mode & Settable Note-Off Release**: Releasing MIDI keys immediately cuts the voice with a customizable, click-free exponential release ramp (1 ms to 30 ms).
+2. **Polyphonic/Monophonic Portamento Glide & Legato Retrigger**: Smooth pitch transitions between notes with dual-mode timing (Milliseconds vs Musical Tempo Sync), customizable 3-point slope curves (Exp &rarr; Lin &rarr; Log), and a Legato Retrigger switch for choosing between punchy 808 glides and continuous acid slides.
 
 ```
                      ┌───────────────────────────────────┐
@@ -26,40 +23,72 @@ This feature introduces an integrated **Gated Trigger Mode** with a **Settable N
                      ▼                                   ▼
              [ Note-On Event ]                   [ Note-Off Event ]
                      │                                   │
-                     ▼                                   ▼
-        engine.trigger(velocity)                Is Mode == GATED?
-        activeMidiNote = note;                 and note == activeNote?
-        inReleaseRamp = false;                           │
-                     │                     ┌─────────────┴─────────────┐
-                     ▼                     ▼                           ▼
-        Normal Envelope Attack/Decay      NO                          YES
-                                      (One-Shot)            inReleaseRamp = true;
-                                      Ignore event          Capture current level;
-                                                            Exp ramp to 0 in 1–30 ms
+                     ├─────────────────────────┐         ▼
+                     ▼                         ▼    Is Mode == GATED?
+             Is GLIDE active?             Retrigger? and note == activeNote?
+             - Legato (overlap)           - OFF: Continuous     │
+             - Always (all notes)         - ON: Re-strike  ┌────┴────┐
+                     │                                     ▼         ▼
+                     ▼                                    NO        YES
+        Slew pitch in semitone space:                 (One-Shot)  Exp Ramp
+        Exp / Lin / Log slope curve                    Ignore     to 0.0 in
+        Time: 5ms–2000ms or 1/64–1/2 bar                          1–30 ms
 ```
 
 ---
 
 ## 1. User Interface & Experience
 
-### 1.1 Header Front-Panel Badge (`ONE-SHOT` / `GATED`)
-- Located on the top-right header control strip, beside the `INIT` button and visualizer toggles.
-- **Visual Styling**:
-  - `ONE-SHOT` (Default): Dim/amber outline badge. Communicates standard drum-machine one-shot behavior.
-  - `GATED`: Glowing electric teal/green pill badge. Communicates keyboard-responsive bass/synth behavior.
+### 1.1 Front-Panel Header Badge (`VOICE / ARTICULATION`)
+- Located in the global top-right header strip beside `INIT` and the visualizer toggles.
+- **Dynamic Badge States**:
+  - `ONE-SHOT`: Dim amber outline (classic drum mode; Note-Offs ignored; envelopes ring out).
+  - `GATED`: Electric cyan/teal pill (staccato bass mode; notes cut cleanly on key release).
+  - `GLIDE ~`: Displays an animated tilde glyph when Portamento Glide is active (`GLIDE: LEGATO` or `GLIDE: ALWAYS`).
 - **Interactions**:
-  - **Left-Click**: Toggles between `One-Shot` and `Gated` modes.
-  - **Right-Click**: Launches `GatedReleaseCalloutComponent` modal callout.
+  - **Left-Click**: Instant toggle between `One-Shot` and `Gated` modes.
+  - **Right-Click**: Launches the unified `VoiceArticulationCalloutComponent`.
 
-### 1.2 Right-Click Callout Popup (`GatedReleaseCalloutComponent`)
-- Styled identically to existing `SliderCalloutComponent` and `SelectorCalloutComponent` with rounded corners, dark chassis background, and LED accents.
-- **Controls Inside Callout**:
-  1. **Mode Selector**: Segmented two-state button (`[ One-Shot ]` `[ Gated ]`).
-  2. **Release Time Slider**:
-     - Range: `1.0 ms` to `30.0 ms` (default `5.0 ms`).
-     - Display: Formatted cleanly as `"X.X ms"`.
-     - Skew: Logarithmic warp curve (`0.5`) providing high precision in the sweet spot between `1 ms` and `10 ms`.
-     - Quick-Snap points: `1 ms`, `2 ms`, `5 ms`, `10 ms`, `15 ms`, `20 ms`, `30 ms`.
+### 1.2 Unified Modal Callout (`VoiceArticulationCalloutComponent`)
+Styled with the project's signature tactile dark industrial chassis, recessed borders, and responsive LED accents:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 VOICE & ARTICULATION                        │
+├─────────────────────────────────────────────────────────────┤
+│ TRIGGER MODE:        [ ONE-SHOT ]     [ GATED ]             │
+│ NOTE-OFF RELEASE:    [───────●──────────────────]  5.0 ms   │
+├─────────────────────────────────────────────────────────────┤
+│ GLIDE MODE:          [ OFF ]   [ LEGATO ]   [ ALWAYS ]      │
+│ GLIDE TIME / SYNC:   [ SYNC: OFF ] [────●───────]  60.0 ms  │
+│                      (or when Sync: ON: [ 1/16 ] )          │
+│ GLIDE SLOPE:         [───────────●──────────────]  Exp (0.0)│
+│ LEGATO RETRIGGER:    [ OFF (Continuous) ]  [ ON (Punchy) ]  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+#### Controls Inside Callout:
+1. **Trigger Mode**: Segmented two-state button (`[ One-Shot ]` `[ Gated ]`).
+2. **Note-Off Release Slider**:
+   - Range: `1.0 ms` to `30.0 ms` (default `5.0 ms`).
+   - Logarithmic warp curve (`0.5`) providing fine precision in the critical `1 ms` to `10 ms` sweet spot.
+   - Quick-Snap points: `1`, `2`, `5`, `10`, `15`, `20`, `30 ms`.
+3. **Glide Mode**: Segmented three-state button (`[ Off ]` `[ Legato ]` `[ Always ]`).
+   - `Off`: Instant pitch jumps.
+   - `Legato`: Glides pitch only when playing overlapping notes.
+   - `Always`: Glides between every played note, even when playing staccato/detached.
+4. **Glide Time / Sync**:
+   - `Sync` Toggle: Switches between free milliseconds and DAW beat divisions.
+   - `Free Time`: `5.0 ms` to `2000.0 ms` (default `60.0 ms`), with quick-snaps at `10`, `25`, `50`, `100`, `250`, `500 ms`.
+   - `Synced Length`: Musical divisions (`1/64`, `1/32`, `1/16T`, `1/16`, `1/8T`, `1/8`, `1/4`, `1/2 bar`).
+5. **Glide Slope**:
+   - Standard 3-point envelope curve: `Exponential (0.0)` &rarr; `Linear (0.5)` &rarr; `Logarithmic (1.0)`.
+   - `Exp`: Starts fast, decelerates into target pitch (analog synthesizer RC response).
+   - `Lin`: Constant semitone slew rate.
+   - `Log`: Starts slow, accelerates into target pitch.
+6. **Legato Retrigger**:
+   - `Off (Continuous)`: When gliding between overlapping notes, pitch glides smoothly while envelopes continue their natural decay (ideal for acid basslines and fluid synth leads).
+   - `On (Punchy)`: Re-strikes Attack and transient envelopes on every note while pitch glides (ideal for punchy modern 808 slides).
 
 ---
 
@@ -89,6 +118,58 @@ All parameters are declared strictly in `assets/controls/global_settings.json` (
       "skew": 0.5,
       "unit": "s",
       "tooltip": "NOTE-OFF RELEASE: Fast exponential fade-out time (1ms to 30ms) applied when releasing a key in Gated mode to eliminate DC clicks."
+    },
+    {
+      "id": "glide_mode",
+      "name": "Glide Mode",
+      "type": "choice",
+      "choices": ["Off", "Legato", "Always"],
+      "default": 0,
+      "tooltip": "GLIDE MODE: Off (instant pitch jumps), Legato (glides only when playing overlapping notes), Always (glides between all notes)."
+    },
+    {
+      "id": "glide_sync",
+      "name": "Glide Sync",
+      "type": "choice",
+      "choices": ["Time", "Sync"],
+      "default": 0,
+      "tooltip": "GLIDE SYNC: Toggle between free millisecond glide time and DAW tempo-synced musical lengths."
+    },
+    {
+      "id": "glide_time",
+      "name": "Glide Time",
+      "type": "float",
+      "min": 0.005,
+      "max": 2.000,
+      "default": 0.060,
+      "skew": 0.4,
+      "unit": "s",
+      "tooltip": "GLIDE TIME: Duration of the pitch transition in milliseconds."
+    },
+    {
+      "id": "glide_sync_length",
+      "name": "Glide Sync Length",
+      "type": "choice",
+      "choices": ["1/64", "1/32", "1/16T", "1/16", "1/8T", "1/8", "1/4", "1/2"],
+      "default": 3,
+      "tooltip": "GLIDE SYNC LENGTH: Tempo-synced duration of the pitch slide."
+    },
+    {
+      "id": "glide_slope",
+      "name": "Glide Slope",
+      "type": "float",
+      "min": 0.0,
+      "max": 1.0,
+      "default": 0.0,
+      "tooltip": "GLIDE SLOPE: Pitch slide curve. Exp (0.0, classic analog RC slew), Linear (0.5), Log (1.0)."
+    },
+    {
+      "id": "legato_retrigger",
+      "name": "Legato Retrigger",
+      "type": "choice",
+      "choices": ["Off", "On"],
+      "default": 0,
+      "tooltip": "LEGATO RETRIGGER: Off keeps envelopes continuous during legato slides (fluid acid). On re-triggers envelopes on each note (punchy 808s)."
     }
   ]
 }
@@ -98,25 +179,67 @@ All parameters are declared strictly in `assets/controls/global_settings.json` (
 
 ## 3. Real-Time Audio DSP Implementation
 
-### 3.1 Audio Thread Safety Invariants
-- Zero heap allocations (`malloc`, `new`, dynamic vectors) in `noteOff()` or `processStereo()`.
+### 3.1 Audio Thread Invariants
+- Zero heap allocations (`malloc`, `new`, vector resizing) in `processStereo()` or `noteOn()` / `noteOff()`.
 - Zero thread locks or mutexes.
-- Fast transcendental approximations using `TbdAudio::FastMath::fastExp`.
+- Vectorized transcendentals via `TbdAudio::FastMath::fastPow2` and `TbdAudio::FastMath::fastExp`.
 
-### 3.2 Monophonic Active Note Tracking
-In monophonic synthesizers, overlapping note playing (legato) must not cause an older note's release to choke a newly played note:
+### 3.2 Semitone-Space Slew Filtering
+Portamento pitch slewing is performed in **semitone (MIDI note) space** rather than linear Hz. This ensures a 1-octave glide across low bass (C1 &rarr; C2) takes the exact same musical duration and perceptual curve as a 1-octave glide in higher registers (C3 &rarr; C4):
+
 ```cpp
 // In ModularEngine / PlanterEngine
+void updatePitchSlew(int numSamples) {
+    if (currentPitchSemitones == targetPitchSemitones || glideMode == 0) {
+        currentPitchSemitones = targetPitchSemitones;
+        ctx.currentPitchHz = 440.0f * FastMath::fastPow2((currentPitchSemitones - 69.0f) / 12.0f);
+        return;
+    }
+
+    float glideDuration = (glideSync == 1) ? calculateSyncTime(glideSyncLength, ctx.bpm) : glideTime;
+    float step = (numSamples * ctx.invSr) / std::max(glideDuration, 0.001f);
+    
+    // Apply Glide Slope (Exp, Lin, Log) to progress
+    glideProgress = std::clamp(glideProgress + step, 0.0f, 1.0f);
+    float curvedProgress = applyEnvelopeSlope(glideProgress, glideSlope);
+    
+    currentPitchSemitones = startPitchSemitones + (targetPitchSemitones - startPitchSemitones) * curvedProgress;
+    ctx.currentPitchHz = 440.0f * FastMath::fastPow2((currentPitchSemitones - 69.0f) / 12.0f);
+}
+```
+
+### 3.3 Active Note & Overlap Tracking
+```cpp
 void noteOn(int noteNumber, float velocity) {
+    bool isOverlapping = (activeNotesCount > 0);
+    activeNotesCount++;
     activeMidiNote.store(noteNumber, std::memory_order_relaxed);
     inReleaseFade = false;
-    releaseProgress = 0.0f;
-    trigger(velocity);
+
+    bool shouldGlide = (glideMode == 2) || (glideMode == 1 && isOverlapping);
+    if (shouldGlide && hasPreviousNote) {
+        startPitchSemitones = currentPitchSemitones;
+        targetPitchSemitones = static_cast<float>(noteNumber);
+        glideProgress = 0.0f;
+    } else {
+        startPitchSemitones = targetPitchSemitones = static_cast<float>(noteNumber);
+        currentPitchSemitones = targetPitchSemitones;
+        ctx.currentPitchHz = 440.0f * FastMath::fastPow2((currentPitchSemitones - 69.0f) / 12.0f);
+    }
+    hasPreviousNote = true;
+
+    // Retrigger check
+    bool shouldRetrigger = (!isOverlapping) || (legatoRetrigger == 1);
+    if (shouldRetrigger) {
+        trigger(velocity);
+    }
 }
 
 void noteOff(int noteNumber) {
-    if (triggerModeParam->getIndex() == 1) { // Gated Mode
-        if (noteNumber == activeMidiNote.load(std::memory_order_relaxed)) {
+    if (activeNotesCount > 0) activeNotesCount--;
+
+    if (triggerMode == 1) { // Gated Mode
+        if (noteNumber == activeMidiNote.load(std::memory_order_relaxed) && activeNotesCount == 0) {
             inReleaseFade = true;
             releaseStartAmp = currentAmpEnv;
             releaseProgress = 0.0f;
@@ -125,24 +248,17 @@ void noteOff(int noteNumber) {
 }
 ```
 
-### 3.3 Click-Free Exponential Release Ramp
-During the release stage:
-$$\text{gainMultiplier} = \text{FastMath::fastExp}\left(-4.0 \cdot \frac{t}{\text{releaseTime}}\right)$$
-- At $t = 0$: $\text{gainMultiplier} = 1.0$ (seamless transition with zero DC discontinuity).
-- At $t = \text{releaseTime}$: $\text{gainMultiplier} \approx 0.018$ ($-35\,\text{dB}$), dropping to zero at the end of the duration.
-- Guarantees $100\%$ click-free audio cutoffs without dulling the transient attack of subsequent strikes.
-
 ---
 
 ## 4. Verification & Automated Test Plan
 
 ### 4.1 DSP Stability Tests (`test/dsp_tests.cpp`)
-1. **One-Shot Invariant Test**: Verify that in `One-Shot` mode, emitting a `noteOff()` does not reduce the signal amplitude or alter the decay curve.
-2. **Gated Staccato Cutoff Test**: Verify that in `Gated` mode, emitting a `noteOff()` reduces the output amplitude by $> 40\,\text{dB}$ within the specified release time window.
-3. **DC Pop / Discontinuity Verification**: Assert that $\max |\Delta s| < 0.05$ across the note-off boundary (proving zero transient clicks).
-4. **Legato Overlap Test**: Trigger Note 60, then Note 62, then emit Note-Off for 60; verify Note 62 continues playing without interruption.
+1. **One-Shot vs Gated Cutoff**: Verify `Note-Off` is ignored in One-Shot mode and silences voice by $> 40\,\text{dB}$ within `note_off_release` window in Gated mode.
+2. **Portamento Semitone Slew Verification**: Assert that frequency smoothly transitions from 55 Hz (A1) to 110 Hz (A2) over the specified glide time without discontinuities.
+3. **Legato vs Always Glide Test**: Verify that in `Legato` mode, separated notes jump instantly while overlapping notes glide. Verify `Always` mode glides on both.
+4. **Legato Retrigger Verification**: Assert that with `Legato Retrigger: Off`, envelope phase continues uninterrupted during overlapping note transitions.
 
 ### 4.2 GUI Reflection Tests (`test/gui_tests.cpp`)
-1. **APVTS Reflection Sweep**: Sweep `trigger_mode` and `note_off_release` across 100% parameter bounds.
-2. **Synthetic Event Simulation**: Click the header badge and verify `trigger_mode` toggles between 0 and 1.
-3. **Right-Click Callout Verification**: Simulate right-click on the badge, verify `GatedReleaseCalloutComponent` opens, test slider dragging, and verify callout dismisses on outside click.
+1. **APVTS Reflection Sweep**: 100% sweep of all 8 Voice & Articulation parameters.
+2. **Header Badge Click Toggle**: Verify clicking badge cycles `trigger_mode`.
+3. **Right-Click Callout Simulation**: Verify right-click opens `VoiceArticulationCalloutComponent`, tests slider interactions, and dismisses on outside click.

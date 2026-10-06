@@ -125,21 +125,25 @@ Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's ad
 - Add a top/bottom action button `[Default: <Preset/Mode>]` inside `SelectorCalloutComponent` / right-click menu.
 - Clicking the button instantly restores the selector parameter to its JSON-defined default value.
 
-### 7. Gated Trigger Mode & Settable Note-Off Release (Staccato Bass Engine)
+### 7. Voice & Articulation Engine: Gated Staccato Bass, Note-Off Release & Portamento Glide
 *Detailed Plan: [`docs/gated_bass_note_off_plan.md`](gated_bass_note_off_plan.md)*  
-Transform the dual-FM drum synthesizer into a dual-threat bass machine capable of tight, punchy, articulate staccato basslines and sustained drones:
-- **Header Front-Panel Badge (`ONE-SHOT` vs `GATED`)**:
+Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine capable of tight, punchy, articulate staccato basslines, sustained drones, and fluid portamento slides:
+- **Header Front-Panel Badge (`VOICE / ARTICULATION`)**:
   - `ONE-SHOT` (Default): Traditional drum-machine behavior; ignores MIDI Note-Offs so envelopes decay naturally.
   - `GATED`: MIDI Note-Off immediately cuts the voice with a smooth, pop-free release ramp.
-  - Left-click toggles mode; right-click launches `GatedReleaseCalloutComponent`.
-- **Right-Click Callout Popup**:
-  - Mode selector (`[One-Shot]` / `[Gated]`).
-  - Note-Off Release Slider (`1.0 ms` to `30.0 ms`, default `5.0 ms`) with logarithmic skew and quick-snaps.
-- **Click-Free Exponential Release DSP**:
-  - Captures instantaneous amplitude level on note release and applies an exponential fade-out curve via `TbdAudio::FastMath::fastExp`.
-  - Zero DC clicks, zero heap allocations, and zero mutexes.
-- **Monophonic Legato Tracking**:
-  - Tracks `activeMidiNote` to guarantee fast legato bass playing never cuts off subsequent notes prematurely.
+  - `GLIDE ~`: Shows animated glide indicator when portamento is active (`GLIDE: LEGATO` or `GLIDE: ALWAYS`).
+  - Left-click toggles One-Shot vs Gated mode; right-click launches `VoiceArticulationCalloutComponent`.
+- **Unified Modal Callout (`VoiceArticulationCalloutComponent`)**:
+  - **Trigger Mode**: `[One-Shot]` / `[Gated]`.
+  - **Note-Off Release**: `1.0 ms` to `30.0 ms` (default `5.0 ms`, logarithmic skew).
+  - **Glide Mode**: `[Off]` / `[Legato]` (glides on overlapping notes) / `[Always]` (glides between all notes).
+  - **Glide Time / Sync**: Free milliseconds (`5.0 ms` to `2000.0 ms`) vs Tempo Sync (`1/64` to `1/2 bar`).
+  - **Glide Slope**: Slew curve control: `Exponential (0.0)` (analog RC curve) &rarr; `Linear (0.5)` &rarr; `Logarithmic (1.0)`.
+  - **Legato Retrigger**: `Off (Continuous)` for fluid acid slides vs `On (Punchy)` for modern trap 808 re-striking slides.
+- **Click-Free Semitone-Space Pitch Slew & Release DSP**:
+  - Slews pitch in musical semitone space so 1-octave bass slides match 1-octave lead slides identically.
+  - Exponential amplitude release ramp via `TbdAudio::FastMath::fastExp`.
+  - Zero heap allocations, zero mutexes, and zero DC pops on the audio thread.
 
 ---
 
