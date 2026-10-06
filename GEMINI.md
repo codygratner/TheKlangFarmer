@@ -86,3 +86,11 @@
 - **No Legacy Files**: Never rename files to `old_Component.cpp` or move them to a `legacy/` directory. 
 - **Rely on Git**: Git is the only acceptable time machine. If we need to see how an old feature worked, we will look at the Git history.
 - **Scope**: This applies strictly to Source Code. Documentation files (like `BACKLOG_ARCHIVE.md` or PLAN artifacts) are exempt and should be preserved as requested.
+## Strict Build Validation & Deployment
+- **Always Deploy**: Whenever you successfully build the project and fix a bug or add a feature, you MUST ensure you run the uild-validate skill or execute deploy_vst3.bat to copy the generated .exe and .vst3 artifacts into the current_build/ directory and C:\Program Files\Common Files\VST3\. Do not leave the user looking at stale builds.
+
+## Strict Test-Driven Guardrail (Mandatory Test Parity)
+- **Zero Orphaned Features**: Under no circumstances should a new DSP algorithm, audio parameter, UI card, page, modal, or editor tool be merged without corresponding test coverage in `test/dsp_tests.cpp` and `test/gui_tests.cpp`.
+- **Dynamic Reflection Compliance**: `gui_tests` dynamically sweeps 100% of all registered APVTS parameters and JSON assets. If any parameter lacks a UI binding or test case, `gui_tests` will hard-fail the build.
+- **Mandatory Planning Test Phase**: All architectural plans (`/plan`, `/strict-plan`, `/pasteplan`) MUST include an explicit Test Suite Update phase as a prerequisite for task completion.
+- **Pre-Merge Validation**: No feature may be considered done or deployed until both `dsp_tests` and `gui_tests` pass with zero failures.

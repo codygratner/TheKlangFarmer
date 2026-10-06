@@ -284,6 +284,15 @@ Create a standalone multi-effects VST3 plugin styled after vintage studio rackmo
 - **Global Slop**: Injects organic, non-linear analog drift across all 4 pedals for instant vintage character.
 - **Codebase Integration**: Built as a sibling build target (`TheKlangMill_VST3`) inheriting directly from `KlangCoreProcessor` and `KlangCoreEditor`.
 
+### 2. The Klang Boilerplate — Modern C++20 / JUCE 9 FOSS Plugin Starter Template
+*Detailed Plan: [`docs/plugin_starter_template_repo_plan.md`](plugin_starter_template_repo_plan.md)*  
+Extract a clean, standalone GitHub Template Repository incorporating all lessons learned from *The Klang Farmer* to accelerate new audio plugin development:
+- **Zero-Allocation DSP Core**: Strict audio-thread invariants, vectorized `TbdAudio::FastMath`, and lock-free SPSC FIFO queues.
+- **Data-Driven JSON Architecture**: APVTS parameter registration, quick-snap intervals, and declarative card/page layouts authored 100% in JSON (`assets/controls/`, `assets/layouts/`).
+- **Automated Headless Reflection Testing (`gui_tests`)**: Sweeps 100% of APVTS parameters and JSON assets headlessly in CI without audio hardware or display servers.
+- **Boutique UI & Theme System**: JSON theme palettes (*Cyberpunk Neon*, *Cykranosh*, *Dracula*, *Monokai Pro*), vector LookAndFeel, high-DPI scaling, and JUCE 9.0.3 timer hygiene.
+- **Developer Onboarding CLI (`init_plugin.py`)**: One-command wizard to rename targets, bundle IDs, C++ namespaces, and parameter prefixes in seconds.
+
 ---
 
 ## 📁 Completed & Archived Milestones
