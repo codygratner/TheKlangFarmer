@@ -174,6 +174,19 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Integrate a portable, lightweight Tracktion `pluginval` binary into `tools/`.
   - Runs headless VST3 COM interface validation, bus negotiation, and host thread-safety compliance checks at strictness level 5.
 
+### 0.9. The Klang Editor CalloutBox Preview & Live Theming Harness
+*Goal: Bring full parity and visual inspection capability for all modal CalloutBoxes directly into The Klang Editor, backed by automated GUI test coverage.*
+- **Editor Callout Inspection Toolbar**:
+  - Add dedicated preview triggers in The Klang Editor's property inspector for floating callout components:
+    1. `PlanterLimiterCalloutComponent` (Master Limiter mini-card).
+    2. `SliderCalloutComponent` (Snap points, modulation routing, numeric entry).
+    3. `SelectorCalloutComponent` (Discrete selector default reset menu).
+- **Data-Driven Theming Integration**:
+  - Expose callout chassis dimensions, border radii, accent colors, and typography profiles in `assets/controls/global_ui.json` under `"callout_styles"`.
+  - The Editor allows live adjustment of callout padding, knob width, and typography with real-time visual preview.
+- **Automated Test Coverage (`test/gui_tests.cpp`)**:
+  - Expand the Editor functional test suite to programmatically open, render, and dismiss every registered CalloutBox variant with zero leaks and 100% paint assertion success.
+
 ### 0. Automated Version Bump Guardrail (`/cut-release` Skill)
 *Goal: Formalize the "Version Bump = Clean Slate" workflow by building a dedicated AGY slash command to handle version bumps safely.*
 - **Action**: Build `C:\Users\codyg\.gemini\config\skills\cut-release\SKILL.md`.
