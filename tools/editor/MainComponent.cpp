@@ -354,6 +354,7 @@ MainComponent::MainComponent()
         if (xmlL) layoutsTree.restoreOpennessState(*xmlL, false);
         if (xmlC) controlsTree.restoreOpennessState(*xmlC, false);
         
+        
         if (selName.isNotEmpty()) {
             std::function<void(EditorTreeItem*)> findAndSelect = [&](EditorTreeItem* n) {
                 if (n->name == selName && n->pageId == selPage && n->productId == selProd) {
@@ -1271,7 +1272,13 @@ if (isTheme && parsed.isObject()) {
                         auto updateControlsJson = [this, paramId](const juce::String& key, const juce::var& newValue) {
                             auto parsed = juce::JSON::parse(controlsJsonDocument.getAllContent());
                             if (parsed.isObject() && parsed.getDynamicObject()->hasProperty(paramId)) {
-                                parsed.getDynamicObject()->getProperty(paramId).getDynamicObject()->setProperty(key, newValue);
+                                if (key == "min" || key == "max" || key == "step" || key == "skew") {
+                                    auto* paramObj = parsed.getDynamicObject()->getProperty(paramId).getDynamicObject();
+                                    if (!paramObj->hasProperty("range")) paramObj->setProperty("range", juce::var(new juce::DynamicObject()));
+                                    paramObj->getProperty("range").getDynamicObject()->setProperty(key, newValue);
+                                } else {
+                                    parsed.getDynamicObject()->getProperty(paramId).getDynamicObject()->setProperty(key, newValue);
+                                }
                                 controlsJsonDocument.replaceAllContent(juce::JSON::toString(parsed));
                             }
                         };
