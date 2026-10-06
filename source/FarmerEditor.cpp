@@ -2150,6 +2150,7 @@ void TheKlangFarmerAudioProcessorEditor::bindSelector(LedSelectorComponent& sele
     box.addItemList(items, 1);
     box.setVisible(false);
     selector.setItems(items, numColumns);
+    selector.setParamId(paramId);
     selector.setItemTooltips(TooltipHelper::getLedSelectorItemTooltips(paramId));
     if (paramId.contains("carrier") && paramId.contains("tracking")) selector.setTooltip("CARRIER TRACKING: Select pitch tracking mode (MIDI note, Fixed Hz, or Semitone Note).");
     else if (paramId.contains("mod") && paramId.contains("track")) selector.setTooltip("MODULATOR TRACKING: Select tracking mode (Fixed Hz, Follow semitones, or FM Ratio).");

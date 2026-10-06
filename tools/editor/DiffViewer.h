@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
-#include <JuceHeader.h>
+#include <juce_gui_basics/juce_gui_basics.h>
+#include <juce_gui_extra/juce_gui_extra.h>
 
 struct DiffLine {
     juce::String text;

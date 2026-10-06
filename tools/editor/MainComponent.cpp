@@ -1252,8 +1252,11 @@ if (isTheme && parsed.isObject()) {
     if (showParams && parsed.isObject()) {
         juce::StringArray paramIds;
         if (currentProductId == "all_controls") {
-            for (auto& prop : parsed.getDynamicObject()->getProperties()) {
-                paramIds.add(prop.name.toString());
+            auto parsedC = juce::JSON::parse(controlsJsonDocument.getAllContent());
+            if (parsedC.isObject()) {
+                for (auto& prop : parsedC.getDynamicObject()->getProperties()) {
+                    paramIds.add(prop.name.toString());
+                }
             }
         } else {
             auto paramsArray = parsed.getDynamicObject()->getProperty("parameters");

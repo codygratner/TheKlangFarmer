@@ -241,9 +241,11 @@ bool TheKlangPlanterAudioProcessor::hasEditor() const {
 }
 
 // JUCE Plugin Entry Point for The Klang Planter
+#ifndef TKF_GUI_TESTS
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
     return new TheKlangPlanterAudioProcessor();
 }
+#endif
 
 
 

@@ -1207,10 +1207,13 @@ TheKlangFarmerAudioProcessor::ParamModulationInfo TheKlangFarmerAudioProcessor::
     return info;
 }
 
+#ifndef TKF_GUI_TESTS
 // JUCE plugin entry point factory
-juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter() {
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
     return new TheKlangFarmerAudioProcessor();
 }
+#endif
 
 
 

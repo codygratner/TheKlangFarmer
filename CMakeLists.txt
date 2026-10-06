@@ -12,7 +12,7 @@ endif()
 project(TheKlangFarmer VERSION 0.3.0 LANGUAGES C CXX)
 
 # Feature branch build tag (e.g., "-tooltips"). Stripped upon merge back to master.
-set(TKF_FEATURE_TAG "-dev" CACHE STRING "Prerelease feature tag for development builds")
+set(TKF_FEATURE_TAG "" CACHE STRING "Prerelease feature tag for development builds")
 add_compile_definitions(TKF_FEATURE_TAG="${TKF_FEATURE_TAG}")
 
 # Enforce modern C++ standard
@@ -275,10 +275,14 @@ add_custom_command(TARGET TheKlangEditor POST_BUILD
 # 11. Automated GUI Test Harness
 add_executable(gui_tests
     test/gui_tests.cpp
+    source/PlanterProcessor.cpp
+    source/PlanterEditor.cpp
+    tools/editor/MainComponent.cpp
 )
 target_link_libraries(gui_tests PRIVATE
     TheKlangFarmer
     juce::juce_gui_basics
     juce::juce_graphics
 )
-target_include_directories(gui_tests PRIVATE source)
+target_include_directories(gui_tests PRIVATE source tools/editor)
+target_compile_definitions(gui_tests PRIVATE TKF_GUI_TESTS=1 JUCE_MODAL_LOOPS_PERMITTED=1)

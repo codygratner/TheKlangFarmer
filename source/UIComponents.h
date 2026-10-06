@@ -357,6 +357,8 @@ public:
     void setSelectedIndex(int newIndex, juce::NotificationType notification = juce::sendNotificationAsync);
     int getSelectedIndex() const { return selectedIndex; }
     int getNumItems() const { return items.size(); }
+    void setParamId(const juce::String& id) { paramId = id; }
+    const juce::String& getParamId() const { return paramId; }
     void setAccent(juce::Colour col) { accent = col; repaint(); }
 
     void setItemStyle(int index, const ItemStyle& style);
@@ -380,6 +382,7 @@ private:
     int selectedIndex = 0;
     int hoveredIndex = -1;
     int columns = 2;
+    juce::String paramId;
     juce::Colour accent;
 
     int getItemIndexAt(juce::Point<int> pos) const;

@@ -17,8 +17,12 @@ public:
     MainComponent* mainComp;
     juce::String name, itemType, productId, pageId, cardId, paramId;
 };
+class EditorTestSuite;
+
 class MainComponent : public juce::Component, public juce::Timer, public juce::CodeDocument::Listener {
 public:
+    friend class EditorTestSuite;
+
     MainComponent();
     ~MainComponent() override;
 
