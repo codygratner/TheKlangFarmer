@@ -153,16 +153,18 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 - **Header Notification Badge**: Subtle, glowing 'Update Available' tag next to version text. Clicking opens release page.
 - **Settings & About Modal**: Gear icon in header exposing 'Check for updates on launch' toggle, manual 'Check Now' button, and build metadata.
 
-### 6. Automated macOS Notarization & Code Signing Pipeline
-*Goal: Ensure public FOSS binaries install cleanly without OS security warnings.*
-- Integrate Apple Developer ID code-signing and `notarytool` automated ticket stapling in CI so AU/VST3 binaries pass macOS Gatekeeper without warnings.
-- Integrate Windows Authenticode code-signing for SmartScreen trust.
+### 6. Zero-Cost macOS FOSS Distribution Pipeline (.pkg + Quarantine Stripper + Visual Guide)
+*Goal: Completely eliminate macOS Gatekeeper friction without paying Apple $99/year.*
+- **Automated `.pkg` Installer Generator**: GitHub Actions runner uses macOS native `pkgbuild` & `productbuild` to generate a standard installer.
+- **Automated Post-Install Quarantine Stripper**: Installer runs an automated `postinstall` script (`xattr -rd com.apple.quarantine /Library/Audio/Plug-Ins/...`) that strips the internet quarantine flag so DAWs scan the VST3/AU immediately with zero Gatekeeper warnings!
+- **Manual Portable DMG & Helper Script**:
+  - Packages a stylized `.dmg` with drag-and-drop symlinks to `/Library/Audio/Plug-Ins/`.
+  - Includes a double-clickable `Fix_Mac_Permissions.command` helper script.
+  - Includes an illustrated `macOS_Install_Guide.html` showing the 2-step bypass in System Settings -> Privacy & Security.
 
 ### 7. Headless Linux CLAP / VST3 Automated CI/CD Runner
 *Goal: Ensure multi-platform stability and continuous validation for Linux audio.*
 - Add an Ubuntu `aarch64` / `x86_64` container to GitHub Actions building headless Linux CLAP/VST3 binaries on every commit.
-
----
 
 ---
 
