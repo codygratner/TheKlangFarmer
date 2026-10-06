@@ -440,3 +440,4 @@ Port the battle-tested, data-driven architecture from *The Klang Farmer* over to
 All completed tasks, architectural decisions, and release summaries are archived in:
 👉 **[`docs/BACKLOG_ARCHIVE.md`](BACKLOG_ARCHIVE.md)**  
 *(Individual phase execution plans are preserved in `docs/completed_plans/`)*
+

@@ -78,7 +78,17 @@
         "carrier2_depth"
       ]
     },
-    "Modulator 2": null,
+    "Modulator 2": {
+      "color": "0xFF00D2FF",
+      "style": "StandardDark",
+      "tooltip": "MODULATOR 2: Secondary modulation source (Oscillator, Cyclic LFO, or Noise).",
+      "parameters": [
+        "mod2_track",
+        "mod2_type",
+        "mod2_shape",
+        "mod2_speed"
+      ]
+    },
     "Pitch Env 2": {
       "color": "0xFFCFD8DC",
       "style": "StandardDark",
@@ -129,9 +139,9 @@
       "style": "StandardDark",
       "tooltip": "NOISE TRANSIENT: Metallic transient generator with sample-and-hold clock and center frequency filter.",
       "parameters": [
-        "noise_rate",
-        "noise_color",
-        "noise_crossfade",
+        "noise_sh_rate",
+        "noise_filter",
+        "noise_drive",
         "noise_decay"
       ]
     },
@@ -174,30 +184,30 @@
       "color": "0xFFFFB300",
       "style": "StandardDark",
       "parameters": [
-        "mod_env1_target",
-        "mod_env1_slope",
-        "mod_env1_depth",
-        "mod_env1_decay"
+        "modenv1_target",
+        "modenv1_slope",
+        "modenv1_depth",
+        "modenv1_decay"
       ]
     },
     "Mod Env 2": {
       "color": "0xFFFFB300",
       "style": "StandardDark",
       "parameters": [
-        "mod_env2_target",
-        "mod_env2_slope",
-        "mod_env2_depth",
-        "mod_env2_decay"
+        "modenv2_target",
+        "modenv2_slope",
+        "modenv2_depth",
+        "modenv2_decay"
       ]
     },
     "Mod Env 3": {
       "color": "0xFFFFB300",
       "style": "StandardDark",
       "parameters": [
-        "mod_env3_target",
-        "mod_env3_slope",
-        "mod_env3_depth",
-        "mod_env3_decay"
+        "modenv3_target",
+        "modenv3_slope",
+        "modenv3_depth",
+        "modenv3_decay"
       ]
     },
     "Velocity": {
@@ -273,10 +283,10 @@
       "style": "StandardDark",
       "tooltip": "AMP ENVELOPE: Master amplitude decay envelope with integrated multi-burst clap generator.",
       "parameters": [
-        "amp_env_claps",
-        "amp_env_clap_speed",
-        "amp_env_slope",
-        "amp_env_decay"
+        "ampenv_claps",
+        "ampenv_clapspeed",
+        "ampenv_slope",
+        "ampenv_decay"
       ]
     },
     "Amplifier": {
