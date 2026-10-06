@@ -15,6 +15,13 @@ project(TheKlangFarmer VERSION 0.3.0 LANGUAGES C CXX)
 set(TKF_FEATURE_TAG "" CACHE STRING "Prerelease feature tag for development builds")
 add_compile_definitions(TKF_FEATURE_TAG="${TKF_FEATURE_TAG}")
 
+# Global JUCE configuration: disable unnecessary WebBrowser and cURL dependencies across all targets
+add_compile_definitions(
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_VST3_CAN_REPLACE_VST2=0
+)
+
 # Enforce modern C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -259,6 +266,10 @@ target_compile_definitions(TheKlangEditor PRIVATE
     TKF_GIT_HASH="${TKF_GIT_HASH}"
     TKF_GIT_COMMIT_COUNT="${TKF_GIT_COMMIT_COUNT}"
 )
+
+if (UNIX AND NOT APPLE)
+    target_link_options(TheKlangEditor PRIVATE -static-libstdc++ -static-libgcc)
+endif()
 
 
 
