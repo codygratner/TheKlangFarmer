@@ -61,12 +61,12 @@ Add a fully JSON-driven contextual randomization system:
   - **Discrete Selectors**: Probability Flip (Depth percentage defines the literal chance that the selector randomly flips to a new choice).
   - **Continuous Sliders**: Incremental Jitter (Slider randomly shifts up to $\pm$Depth% away from its *current* position).
 
-### 4. New Effects Processors Catalog Expansion (Effects 14–20) & Universal Mix Standard
+### 4. New Effects Processors Catalog Expansion (Effects 14–21) & Universal Mix Standard
 *Detailed Plan: [`docs/new_effects_plan.md`](new_effects_plan.md)*  
-Expand the FX catalog from 13 to 20 algorithms (appended as indices 14–20 for 100% backward preset compatibility) and standardize Knob 4 across all modulation/time-based FX to the Universal Dual-Mode Mix:
+Expand the FX catalog from 13 to 21 algorithms (appended as indices 14–21 for 100% backward preset compatibility) and standardize Knob 4 across all modulation/time-based FX to the Universal Dual-Mode Mix:
 - **Phase 1: Universal Dual-Mode Mix Helper & Core Enums**:
   - Implement shared computeDualModeMix(float normParam, float& dryGain, float& wetGain) in source/DSPBlock.h (-100% wet crossfade -> 0% pure dry -> +100% parallel additive blend).
-  - Update createFXBlock() factory and BlockType enum in source/ModularBlocks.h with TransientShaper (14), CustomWaveshaper (15), ChannelMixer (16), StereoEnhancer (17), HaasDelay (18), GatedReverb (19), and JunoChorus (20).
+  - Update createFXBlock() factory and BlockType enum in source/ModularBlocks.h with TransientShaper (14), CustomWaveshaper (15), ChannelMixer (16), StereoEnhancer (17), HaasDelay (18), GatedReverb (19), JunoChorus (20), and WaveguideResonator (21).
   - Register algorithms in PluginProcessor.cpp and PlanterProcessor.cpp fxChoices list.
 - **Phase 2: DSP Implementations (source/ModularBlocks.h)**:
   - TransientShaperBlock: Bipolar Attack, Pump, Sustain, Speed with stereo-linked envelope detector.
