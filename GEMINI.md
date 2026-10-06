@@ -150,14 +150,18 @@
   - **Live Factory Radar (Git Telemetry)**: New Klang City is explicitly authorized and encouraged to run non-mutating Git inspection commands (`git status --short`, `git diff --stat`) to observe active factory progress, file diffs, and implementation state in real time without waiting on manual reports.
 - **Klang Industries (Builder)**: This chat is strictly Read-Only for overarching architecture. It is strictly forbidden from modifying BACKLOG.md or drafting core PLAN.md features. If the user requests architectural planning while in the Builder chat, the agent MUST explicitly refuse and instruct the user to take the request to New Klang City.
 
-## Strict Inter-Chat Communique Protocol (PLAN.md Lifecycle)
-- **Communique Mailbox (docs/communique/)**:
-  - docs/communique/plan_to_build.md: Authored strictly by New Klang City. Contains the dispatch contract, active milestone, task name, recommended model tier, and architectural directives.
-  - docs/communique/build_to_plan.md: Authored strictly by Klang Industries. Contains live execution status, active branch, unit test results, roadblocks, and completion reports.
+## Strict Inter-Chat Communique Protocol & "Job's Done" Handshake
+- **Communique Mailbox (`docs/communique/`)**:
+  - `docs/communique/plan_to_build.md`: Authored strictly by New Klang City. Contains the dispatch contract, active milestone, task name, recommended model tier, and architectural directives.
+  - `docs/communique/build_to_plan.md`: Authored strictly by Klang Industries. Contains live execution status, active branch, unit test results, roadblocks, and completion reports.
+- **Zero-Polling Discipline**: Under no circumstances should either agent run terminal status loops (`git status`, `git diff`, file checks, or watchdog polling loops) waiting for the other chat to complete work. Inter-chat handoffs are strictly event-driven.
+- **The "Job's Done" Chime**: When Klang Industries finishes compilation, test passes, and artifact deployment, it MUST update `build_to_plan.md` to `Status: COMPLETE ✅` and conclude its turn with this prominent handoff chime:
+  > 🔔 **JOB'S DONE!** `<Task Name>` is fully built, tested, and deployed. Switch to New Klang City to review and advance!
+- **Single-Read Ingest**: When the user returns to New Klang City and prompts ("check report", "status", "continue", etc.), New Klang City performs **exactly ONE read** of `docs/communique/build_to_plan.md` to confirm completion—zero polling, zero loops.
 - **PLAN.md as Ephemeral Execution Board**:
-  - PLAN.md at the repository root is the active check-off board during active engineering.
-  - While Klang Industries executes, it checks off items (- [x]) phase-by-phase.
+  - `PLAN.md` at the repository root is the active check-off board during active engineering.
+  - While Klang Industries executes, it checks off items (`- [x]`) phase-by-phase.
 - **Auto-Archive & Reset on Task Finish**:
-  - As soon as Klang Industries completes all phases in PLAN.md and passes all test suites (gui_tests, dsp_tests), it MUST immediately archive PLAN.md to docs/completed_plans/<YYYY-MM-DD>_<task_slug>.md (via /task-finish or /clean-plan).
-  - Klang Industries must reset PLAN.md to an empty or idle state (# No Active Plan). Under no circumstances should completed or stale plans linger in PLAN.md to be accidentally re-executed.
+  - As soon as Klang Industries completes all phases in `PLAN.md` and passes all test suites (`gui_tests`, `dsp_tests`), it MUST immediately archive `PLAN.md` to `docs/completed_plans/<YYYY-MM-DD>_<task_slug>.md` (via `/task-finish` or `/clean-plan`).
+  - Klang Industries must reset `PLAN.md` to an empty or idle state (`# No Active Plan`). Under no circumstances should completed or stale plans linger in `PLAN.md` to be accidentally re-executed.
 

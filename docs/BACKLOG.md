@@ -152,6 +152,15 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Guardrails**:
   - Strictly on-demand execution (never polled automatically during every model evaluation to prevent latency, token bloat, and rate-limiting).
 
+### 0.7. Tier 1 SIMD Voice Summation & Branchless FM Phase Accumulators
+*Goal: Optimize real-time FM operator phase modulation and polyphonic voice summation using JUCE 9 SIMD wrappers and branchless bitwise math.*
+- **SIMD Voice Summation (`juce::dsp::SIMDRegister<float>`)**:
+  - Migrate polyphonic voice summation from sequential loops to hardware-abstracted 64-byte aligned SIMD registers (4-lane SSE / 8-lane AVX2).
+  - Adopt a Structure-of-Arrays (SoA) layout for active voice synthesis buffers to eliminate cache-line thrashing.
+- **Branchless Power-of-Two FM Phase Wrapping**:
+  - Replace conditional phase wrapping with 32-bit fixed-point integer phase accumulators (`uint32_t`) and power-of-two lookup table indexing with bitwise masking (`& 4095`).
+  - Completely eliminates CPU branch mispredictions and CRT transcendentals in hot FM feedback and cross-modulation loops.
+
 ### 0. Automated Version Bump Guardrail (`/cut-release` Skill)
 *Goal: Formalize the "Version Bump = Clean Slate" workflow by building a dedicated AGY slash command to handle version bumps safely.*
 - **Action**: Build `C:\Users\codyg\.gemini\config\skills\cut-release\SKILL.md`.
