@@ -78,17 +78,22 @@ Print summary:
 ### 🚀 Immediate Focus: Phase 1 — <Title>
 **Target Files:** <Files>
 **Verification:** <Criteria>
+
+> 🧠 **MODEL ADVISORY: Tier <1 | 2 | 3>**
+> - **Recommended Setting:** <Recommended Model & Thinking Budget>
+> - **Quota Impact:** <⚠️ HIGH IMPACT | 🟢 SUSTAINABLE | ⚡ MINIMAL>
+> - **Active Model Check:** Please verify your model dropdown in the IDE footer matches this tier before proceeding!
 ```
 
 - If `DEFER_BACKLOG == true`: Execute **Section 2.5 (Backlog Deferment Flow)**.
-- Otherwise, strictly enforce the Global Planning Guardrail. You MUST invoke the `ask_question` tool to present the user with an interactive clickable decision modal:
-  - **Question:** *"How would you like to proceed with this plan?"*
-  - **Options:**
-    - `(Recommended) Start Phase 1 pipeline: Check branch safety, bump version with feature tag, and begin automated engineering loop`
-    - `Defer to Backlog: Save plan to docs/<slug>_plan.md, add as an active priority in docs/BACKLOG.md, and record without writing code or building`
-    - `Review Only: Keep PLAN.md at project root and wait for manual instructions`
+- Otherwise, strictly enforce the Global Planning Guardrail. You must NEVER automatically start implementation, and you MUST NEVER pop up an `ask_question` modal here (because interactive modals freeze the IDE interface and completely prevent the user from changing their model dropdown in the IDE footer).
+Instead, conclude your response with the Model Advisory banner at the very bottom, and pause in regular chat text:
+> Please verify or adjust your model dropdown in the IDE footer to match the advisory above, then reply **`proceed`** (or type `--backlog` to defer) to begin Phase 1.
 
-Proceed according to user selection.
+### Execution Trigger
+- When the user replies **`proceed`** (or confirms execution): Check branch safety, bump version with feature tag, and begin the Automated Execution Pipeline Loop.
+- If the user replies to defer to backlog (e.g. `--backlog`, `defer`, `backlog`): Execute Section 2.5 (Backlog Deferment Flow).
+- If the user provides other instructions or review notes: Comply without starting code modifications until explicitly instructed.
 
 ### 5. Automated Execution Pipeline Loop (Per Phase)
 *(Only if User Selected Option 1)*

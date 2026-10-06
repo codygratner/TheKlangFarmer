@@ -45,15 +45,12 @@ Print the summary and Model Advisory:
 > - **Active Model Check:** Please verify your model dropdown in the IDE footer matches this tier before proceeding!
 ```
 
-**CRITICAL GUARDRAIL:** You must NEVER automatically start implementation. You MUST invoke the `ask_question` tool to present the user with an interactive clickable modal:
-- **Question:** *"Plan loaded. How would you like to proceed?"*
-- **Options:**
-  - `(Recommended) Start Phase 1 pipeline (Model setting confirmed, proceed)`
-  - `Pause for Model Switch (I will change the model dropdown in the IDE footer, then reply 'proceed')`
-  - `Defer to Backlog: Move plan to docs/<slug>_plan.md and record as a priority in docs/BACKLOG.md`
-  - `Review Only: Keep PLAN.md active at project root and wait for manual instructions`
+**CRITICAL GUARDRAIL (NO MODAL ON PLAN EXECUTION START):** You must NEVER automatically start implementation, and you MUST NEVER pop up an `ask_question` modal here (interactive modals freeze the IDE interface and completely prevent the user from changing their model dropdown in the IDE footer).
+Instead, conclude your response with the Model Advisory banner at the very bottom, and pause in regular chat text:
+> Please verify or adjust your model dropdown in the IDE footer to match the advisory above, then reply **`proceed`** (or type `/pasteplan --backlog` to defer) to begin Phase 1.
 
 ### 4. Handoff
-- If the user selects **1**: Coordinate the Git Branch Safety Gate, the Feature Version Bump, and begin the Automated Execution Pipeline (delegating to the logic in `paste-plan` / `execute-task`).
-- If the user selects **2**: Execute the Backlog Deferment Flow.
-- If the user selects **3**: Halt execution.
+- When the user replies **`proceed`** (or confirms execution): Coordinate the Git Branch Safety Gate, the Feature Version Bump, and begin the Automated Execution Pipeline (delegating to the logic in `paste-plan` / `execute-task`).
+- If the user replies to defer to backlog (e.g. `defer`, `backlog`, `--backlog`): Execute the Backlog Deferment Flow.
+- If the user provides other instructions or requests changes: Comply without starting code execution until explicitly instructed.
+

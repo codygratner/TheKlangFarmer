@@ -82,13 +82,13 @@ Once `PLAN.md` is written to disk, do NOT begin coding. Output an executive summ
 **Target:** <Objective>  
 **Total Phases:** <N> Phases
 
+### Architectural Summary
+<2-3 concise sentences on how the design works>
+
 > 🧠 **MODEL ADVISORY: Tier <1 | 2 | 3>**
 > - **Recommended Setting:** <Recommended Model & Thinking Budget>
 > - **Quota Impact:** <⚠️ HIGH IMPACT | 🟢 SUSTAINABLE | ⚡ MINIMAL>
 > - **Active Model Check:** Please verify your model dropdown in the IDE footer matches this tier before proceeding!
-
-### Architectural Summary
-<2-3 concise sentences on how the design works>
 ```
 
 Then, you MUST immediately invoke the `ask_question` tool to present an interactive clickable decision modal:

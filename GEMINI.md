@@ -7,7 +7,7 @@
 - **SIMD & Fast Math**: Prefer `TbdAudio::FastMath` over standard CRT transcendentals (`std::pow`, `std::sin`, `std::tanh`) in hot audio loops.
 
 ## Strict Model Advisory Protocol (MANDATORY IN EVERY CHAT)
-- **Mandatory In-Chat Model Banner**: Whenever an agent presents a plan, discusses starting a new task, or prepares to execute code, the agent MUST explicitly output this prominent visual markdown block directly in its chat response:
+- **Mandatory In-Chat Model Banner (ALWAYS AT THE VERY END OF CHAT)**: Whenever an agent presents a plan, discusses starting a new task, or prepares to execute code, the agent MUST explicitly output this prominent visual markdown block directly at the **VERY END** of its chat response (so it is directly adjacent to the IDE footer and model selector, never lost in the shuffle above):
   > 🧠 **MODEL ADVISORY: Tier [1 | 2 | 3]**
   > - **Recommended Setting**: [Gemini 3.1 Pro (Thinking: High) | Gemini 3.8 Flash (Thinking: High) | Gemini 3.8 Flash (Low/Medium)]
   > - **Quota Impact**: [⚠️ HIGH IMPACT (Heavy allowance burn — reserve for deep math/DSP/architecture) | 🟢 SUSTAINABLE (Economical — standard UI & test engineering) | ⚡ MINIMAL (Near-zero burn — rapid JSON & documentation)]
@@ -20,7 +20,7 @@
     - *Quota Impact*: `🟢 SUSTAINABLE` — Fast, highly capable, and draws very lightly against quota. The optimal daily driver for building and testing.
   - **Tier 3 (Rapid Iteration, Data & Tooling)**: Editing JSON schemas in `assets/controls/`, documentation/backlog updates, git operations, mechanical find-and-replace, CMake tweaks. -> *Setting: Gemini 3.8 Flash (Thinking: Low or Medium)*.
     - *Quota Impact*: ⚡ `MINIMAL` — Near-zero burn rate. Perfect for rapid planning check-ins, git telemetry, and schema maintenance.
-- **Builder Pause Gate**: Before Klang Industries calls any editing or compilation tool on a new plan, it MUST use `ask_question` or pause so the user can verify/adjust their model dropdown.
+- **Builder Pause Gate (Model Switch Friendly - NEVER use modal on execution start)**: Before Klang Industries calls any editing, code modification, or compilation tool on a new plan, it MUST NOT pop up an `ask_question` modal (because interactive modals freeze the IDE interface and completely prevent the user from changing the model dropdown in the IDE footer). Instead, Klang Industries MUST output the Model Advisory banner at the very end of its briefing in chat and PAUSE in regular text, explicitly waiting for the user to verify/switch their model dropdown in the IDE footer and reply "proceed" (or provide other instructions).
 - **Subagent Policy**: Always use `Model="flash"` for read-only research subagents (`invoke_subagent`), and `Model="pro"` only for heavy multi-file reasoning.
 
 ## Target Toolchain & Standards
@@ -115,7 +115,8 @@
 - **Modification Only**: Always search for and append to the existing `docs/BACKLOG.md` file in the repository.
 
 ## Smart /grill-me Wrap-Up & Mandatory Interactive Decision Modals
-- **Interactive Modal Required (Zero Plain-Text Number Menus)**: Whenever presenting decision options to the userâwhether at the end of `/grill-me`, `/plan`, `/strict-plan`, `/paste-plan`, `/read-plan`, or any workflow forkâyou must NEVER output raw numbered text lists (e.g. `1. Option A, 2. Option B, 3. Both`) in the chat forcing the user to type "3". You MUST ALWAYS invoke the `ask_question` tool so the user gets an interactive clickable modal.
+- **Interactive Modal Required for Design Menus (Zero Plain-Text Number Menus)**: Whenever presenting design decision options to the user - whether at the end of `/grill-me`, `/plan`, or architectural branching forks - you must NEVER output raw numbered text lists (e.g. `1. Option A, 2. Option B, 3. Both`) in the chat forcing the user to type "3". You MUST ALWAYS invoke the `ask_question` tool so the user gets an interactive clickable modal.
+- **CRITICAL EXCEPTION - The Plan Execution Start Gate**: Under NO circumstances should `ask_question` be used when presenting a plan for execution in Klang Industries (Builder), at the start of `/paste-plan`, `/read-plan`, or `/execute-task`. Modals freeze the IDE interface and completely prevent the user from changing their model dropdown in the IDE footer. The execution start gate MUST ALWAYS be a non-modal pause in chat text, presenting the Model Advisory banner and waiting for the user to adjust their model dropdown and reply "proceed".
 - **Proactive Housekeeping**: Whenever you complete a /grill-me interactive interview, you must document the final design conclusion (Backlog, Plan, or Both).
 - **Contextual Bypass**: If the user's answers during the interview *explicitly* stated where the item should go (e.g., "put this in v0.4 of the backlog"), you are authorized to bypass the formal 3-option menu and immediately execute the documentation.
 - **When in Doubt, Ask via `ask_question`**: If the destination is ambiguous, you must call `ask_question` with the options formatted as user actions (e.g., `(Recommended) Both: Add to Backlog and draft Plan`, `Backlog Only`, `Draft Plan Only`).
