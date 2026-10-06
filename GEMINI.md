@@ -71,12 +71,10 @@
 - **No Rogue Files or Artifacts**: You must NEVER create new files named `backlog.md`, `BACKLOG.md`, `TODO.md`, `future_backlog.md`, etc., in the root directory or as an artifact in your brain directory. 
 - **Modification Only**: Always search for and append to the existing `docs/BACKLOG.md` file in the repository.
 
-## Strict /grill-me Wrap-Up
-- **Proactive Housekeeping**: Whenever you complete a /grill-me interactive interview and arrive at a final design conclusion, you must ALWAYS explicitly ask the user how to proceed, offering these options:
-  1. Add this decision to the backlog (`docs/BACKLOG.md`)
-  2. Draft or update an implementation plan artifact for this design
-  3. Both (Add to backlog AND draft the plan)
-- **Never Auto-Execute**: Wait for the user's explicit confirmation before writing the plan or modifying the backlog.
+## Smart /grill-me Wrap-Up
+- **Proactive Housekeeping**: Whenever you complete a /grill-me interactive interview, you must document the final design conclusion (Backlog, Plan, or Both).
+- **Contextual Bypass**: If the user's answers during the interview *explicitly* stated where the item should go (e.g., "put this in v0.4 of the backlog"), you are authorized to bypass the formal 3-option menu and immediately execute the documentation.
+- **When in Doubt, Ask**: If the destination is ambiguous, you must explicitly ask the user whether to add it to the backlog, draft a plan, or both, before modifying any files.
 
 ## Strict Scratch Script Hygiene
 - **Instant Cleanup**: When you create temporary Python scripts (`update_file.py`, `fix_code.py`, `script.py`) to execute refactors, tests, or file modifications, you must **ALWAYS** delete the script immediately upon completion.
