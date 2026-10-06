@@ -216,6 +216,19 @@ target_include_directories(capture_planter_screenshot PRIVATE source)
 
 
 
+execute_process(
+    COMMAND git rev-parse --short HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE TKF_GIT_HASH
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+execute_process(
+    COMMAND git rev-list --count HEAD
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE TKF_GIT_COMMIT_COUNT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 # 10. Standalone JSON Data & Theme Editor
 juce_add_gui_app(TheKlangEditor
     PRODUCT_NAME "The Klang Editor"
@@ -234,6 +247,10 @@ target_link_libraries(TheKlangEditor PRIVATE
     TkfAssets
 )
 target_include_directories(TheKlangEditor PRIVATE source tools/editor)
+target_compile_definitions(TheKlangEditor PRIVATE
+    TKF_GIT_HASH="${TKF_GIT_HASH}"
+    TKF_GIT_COMMIT_COUNT="${TKF_GIT_COMMIT_COUNT}"
+)
 
 
 
@@ -286,3 +303,20 @@ target_link_libraries(gui_tests PRIVATE
 )
 target_include_directories(gui_tests PRIVATE source tools/editor)
 target_compile_definitions(gui_tests PRIVATE TKF_GUI_TESTS=1 JUCE_MODAL_LOOPS_PERMITTED=1)
+
+# ==============================================================================
+# 12. Automated C++ Linting
+# ==============================================================================
+find_program(CLANG_FORMAT_BIN clang-format)
+if(CLANG_FORMAT_BIN)
+    file(GLOB_RECURSE FORMAT_SOURCES 
+        "source/*.cpp" "source/*.h"
+        "tools/editor/*.cpp" "tools/editor/*.h"
+        "test/*.cpp"
+    )
+    add_custom_target(format
+        COMMAND ${CLANG_FORMAT_BIN} -i ${FORMAT_SOURCES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Running clang-format on all source files..."
+    )
+endif()

@@ -339,6 +339,100 @@ MainComponent::MainComponent()
     // Tree collapsed by default
 
         addAndMakeVisible(refreshButton);
+    addAndMakeVisible(exportSnapshotButton);
+    addAndMakeVisible(importSnapshotButton);
+    addAndMakeVisible(restoreFactoryButton);
+
+    exportSnapshotButton.onClick = [this]() {
+        juce::DynamicObject::Ptr snapshot = new juce::DynamicObject();
+        juce::DynamicObject::Ptr controlsObj = new juce::DynamicObject();
+        juce::DynamicObject::Ptr layoutsObj = new juce::DynamicObject();
+        
+        auto controlsDir = getAssetFile("controls", "");
+        juce::DirectoryIterator iterC(controlsDir, false, "*.json");
+        while (iterC.next()) {
+            auto f = iterC.getFile();
+            auto p = juce::JSON::parse(f.loadFileAsString());
+            if (p.isObject()) controlsObj->setProperty(f.getFileName(), p);
+        }
+        
+        auto layoutsDir = getAssetFile("layouts", "");
+        juce::DirectoryIterator iterL(layoutsDir, false, "*.json");
+        while (iterL.next()) {
+            auto f = iterL.getFile();
+            auto p = juce::JSON::parse(f.loadFileAsString());
+            if (p.isObject()) layoutsObj->setProperty(f.getFileName(), p);
+        }
+        
+        snapshot->setProperty("controls", juce::var(controlsObj.get()));
+        snapshot->setProperty("layouts", juce::var(layoutsObj.get()));
+        
+        auto fc = std::make_shared<juce::FileChooser>("Export Snapshot", juce::File::getSpecialLocation(juce::File::userDesktopDirectory).getChildFile("snapshot.json"), "*.json");
+        fc->launchAsync(juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles, 
+            [snapshot, fc](const juce::FileChooser& chooser) {
+                auto result = chooser.getResult();
+                if (result != juce::File{}) {
+                    result.replaceWithText(juce::JSON::toString(juce::var(snapshot.get())));
+                }
+            });
+    };
+
+    importSnapshotButton.onClick = [this]() {
+        auto fc = std::make_shared<juce::FileChooser>("Import Snapshot", juce::File::getSpecialLocation(juce::File::userDesktopDirectory), "*.json");
+        fc->launchAsync(juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+            [this, fc](const juce::FileChooser& chooser) {
+                auto f = chooser.getResult();
+                if (f != juce::File{}) {
+                    auto parsed = juce::JSON::parse(f.loadFileAsString());
+                    if (parsed.isObject()) {
+                        auto* root = parsed.getDynamicObject();
+                        if (root->hasProperty("controls")) {
+                            auto* controlsObj = root->getProperty("controls").getDynamicObject();
+                            if (controlsObj) {
+                                for (auto& prop : controlsObj->getProperties()) {
+                                    getAssetFile("controls", prop.name.toString()).replaceWithText(juce::JSON::toString(prop.value));
+                                }
+                            }
+                        }
+                        if (root->hasProperty("layouts")) {
+                            auto* layoutsObj = root->getProperty("layouts").getDynamicObject();
+                            if (layoutsObj) {
+                                for (auto& prop : layoutsObj->getProperties()) {
+                                    getAssetFile("layouts", prop.name.toString()).replaceWithText(juce::JSON::toString(prop.value));
+                                }
+                            }
+                        }
+                        refreshButton.triggerClick();
+                    }
+                }
+            });
+    };
+
+    restoreFactoryButton.onClick = [this]() {
+        auto f = getAssetFile("factory_defaults_snapshot.json", "");
+        auto parsed = juce::JSON::parse(f.loadFileAsString());
+        if (parsed.isObject()) {
+            auto* root = parsed.getDynamicObject();
+            if (root->hasProperty("controls")) {
+                auto* controlsObj = root->getProperty("controls").getDynamicObject();
+                if (controlsObj) {
+                    for (auto& prop : controlsObj->getProperties()) {
+                        getAssetFile("controls", prop.name.toString()).replaceWithText(juce::JSON::toString(prop.value));
+                    }
+                }
+            }
+            if (root->hasProperty("layouts")) {
+                auto* layoutsObj = root->getProperty("layouts").getDynamicObject();
+                if (layoutsObj) {
+                    for (auto& prop : layoutsObj->getProperties()) {
+                        getAssetFile("layouts", prop.name.toString()).replaceWithText(juce::JSON::toString(prop.value));
+                    }
+                }
+            }
+            refreshButton.triggerClick();
+        }
+    };
+
     refreshButton.onClick = [this]() { 
         RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent());
         auto xmlL = layoutsTree.getOpennessState(false);
@@ -1483,6 +1577,9 @@ void MainComponent::resized() {
     refreshButton.setBounds(row1.removeFromLeft(80).reduced(4, 0));
     saveButton.setBounds(row1.removeFromLeft(80).reduced(4, 0));
     toggleOriginalButton.setBounds(row1.removeFromLeft(120).reduced(4, 0));
+    exportSnapshotButton.setBounds(row1.removeFromRight(120).reduced(4, 0));
+    importSnapshotButton.setBounds(row1.removeFromRight(120).reduced(4, 0));
+    restoreFactoryButton.setBounds(row1.removeFromRight(120).reduced(4, 0));
     
     filePathDisplay.setBounds(topBar.reduced(4, 4));
 

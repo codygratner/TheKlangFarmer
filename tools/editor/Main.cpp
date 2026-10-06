@@ -13,7 +13,12 @@ public:
     void initialise(const juce::String& commandLine) override {
         juce::FileLogger::createDefaultAppLogger("TheKlangFarmer", "Editor.log", "App Started");
         juce::Logger::writeToLog("Initialising...");
-        mainWindow.reset(new MainWindow(getApplicationName() + " v" + getApplicationVersion()));
+        
+        juce::String title = getApplicationName() + " v" + getApplicationVersion();
+#if defined(TKF_GIT_COMMIT_COUNT) && defined(TKF_GIT_HASH)
+        title << " (Build " << TKF_GIT_COMMIT_COUNT << " - " << TKF_GIT_HASH << ")";
+#endif
+        mainWindow.reset(new MainWindow(title));
     }
 
     void shutdown() override {

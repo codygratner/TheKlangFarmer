@@ -55,6 +55,9 @@ private:
     juce::TextButton refreshButton { "Refresh" };
     juce::TextButton saveButton { "Save" };
     juce::TextButton toggleOriginalButton { "Show Original" };
+    juce::TextButton exportSnapshotButton { "Export Snapshot" };
+    juce::TextButton importSnapshotButton { "Import Snapshot" };
+    juce::TextButton restoreFactoryButton { "Factory Restore" };
     
     juce::TextEditor filePathDisplay;
             juce::PropertyPanel formEditor;
