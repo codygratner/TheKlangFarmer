@@ -110,6 +110,18 @@ Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's ad
 - Add a top/bottom action button `[Default: <Preset/Mode>]` inside `SelectorCalloutComponent` / right-click menu.
 - Clicking the button instantly restores the selector parameter to its JSON-defined default value.
 
+
+### 9. Categorized FX Selection Modal (Kilohearts Snapin-Style Browser)
+*Goal: Fast, visual selection across all 26 effects without scrolling linear dropdowns.*
+- **Trigger Interaction**: Left-clicking the effect title on any FX Card opens the modal; `<` and `>` arrow steppers continue to cycle sequentially.
+- **5-Column Categorized Layout (Alphabetical within columns)**:
+  - **Dynamics & Gain (5)**: Channel Mixer, Drive, Stutter Gate, Sub Generator, Transient Shaper
+  - **Filters & Tone (4)**: Bell EQ, Comb Filter, Dynamic Filter, Filter (SVF)
+  - **Modulation & Pitch (6)**: Chorus, Flanger, Frequency Shifter, Juno Chorus, Phaser, Pitch Transposer
+  - **Delay & Space (5)**: Gated Reverb, Haas Delay, Phase Smear, Tempo Delay, Waveguide Resonator
+  - **Lo-Fi & Character (6)**: Custom Waveshaper, Grit FX, RingMod, Stereo Enhancer, Tape Warmth, Wave Folder
+- **Visual Polish**: Keyboard escape to dismiss, mouse hover highlights with algorithm descriptions, and currently loaded effect highlighted with active indicator dot.
+
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Pro Workflow Update"
