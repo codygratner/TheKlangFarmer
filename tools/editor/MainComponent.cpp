@@ -1306,34 +1306,31 @@ if (isTheme && parsed.isObject()) {
                     
                     pProps.add(new ParamRowPropertyComponent(linkedComp, "Slider Value", def->type, def->choices,
                         [linkedComp, def]() -> double {
-                            if (def->type == "float" && linkedComp) return dynamic_cast<RotaryKnobSlider*>(linkedComp)->getValue();
-                            if (def->type == "choice" && linkedComp) return dynamic_cast<LedSelectorComponent*>(linkedComp)->getSelectedIndex();
+                            if (def->type == "float" && linkedComp) return ([&]() { auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp); return s ? s->getValue() : 0.0; })();
+                            if (def->type == "choice" && linkedComp) return ([&]() { auto* l = dynamic_cast<LedSelectorComponent*>(linkedComp); return l ? l->getSelectedIndex() : 0; })();
                             return 0.0;
                         },
                         [linkedComp, def]() -> juce::String {
                             if (def->type == "float" && linkedComp) {
-                                auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp);
-                                return s->getTextFromValue(s->getValue());
+                                auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp); return s ? s->getTextFromValue(s->getValue()) : "";
                             }
                             if (def->type == "choice" && linkedComp) {
-                                auto* l = dynamic_cast<LedSelectorComponent*>(linkedComp);
-                                int idx = l->getSelectedIndex();
+                                auto* l = dynamic_cast<LedSelectorComponent*>(linkedComp); int idx = l ? l->getSelectedIndex() : -1;
                                 return (idx >= 0 && idx < def->choices.size()) ? def->choices[idx] : "";
                             }
                             return "";
                         },
                         [linkedComp, def](double v) {
-                            if (def->type == "float" && linkedComp) dynamic_cast<RotaryKnobSlider*>(linkedComp)->setValue(v, juce::sendNotificationAsync);
-                            if (def->type == "choice" && linkedComp) dynamic_cast<LedSelectorComponent*>(linkedComp)->setSelectedIndex((int)v, juce::sendNotificationAsync);
+                            if (def->type == "float" && linkedComp) if (auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp)) s->setValue(v, juce::sendNotificationAsync);
+                            if (def->type == "choice" && linkedComp) if (auto* l = dynamic_cast<LedSelectorComponent*>(linkedComp)) l->setSelectedIndex((int)v, juce::sendNotificationAsync);
                         },
                         [linkedComp, def](juce::String s) {
                             if (def->type == "float" && linkedComp) {
-                                auto* kn = dynamic_cast<RotaryKnobSlider*>(linkedComp);
-                                kn->setValue(kn->getValueFromText(s), juce::sendNotificationAsync);
+                                if (auto* kn = dynamic_cast<RotaryKnobSlider*>(linkedComp)) kn->setValue(kn->getValueFromText(s), juce::sendNotificationAsync);
                             }
                             if (def->type == "choice" && linkedComp) {
                                 int idx = def->choices.indexOf(s);
-                                if (idx >= 0) dynamic_cast<LedSelectorComponent*>(linkedComp)->setSelectedIndex(idx, juce::sendNotificationAsync);
+                                if (idx >= 0) { if (auto* l = dynamic_cast<LedSelectorComponent*>(linkedComp)) l->setSelectedIndex(idx, juce::sendNotificationAsync); }
                             }
                         }
                     ));
@@ -1341,37 +1338,37 @@ if (isTheme && parsed.isObject()) {
                     if (def->type == "float") {
                         pProps.add(new ParamRowPropertyComponent(linkedComp, "Minimum", def->type, def->choices,
                             [def]() { return def->min; },
-                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->min) : ""; },
+                            [linkedComp, def]() { return linkedComp ? ([&]() { auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp); return s ? s->getTextFromValue(def->min) : ""; })() : ""; },
                             nullptr,
                             [def, updateControlsJson, linkedComp](juce::String s) {
                                 if (linkedComp) {
-                                    double v = dynamic_cast<RotaryKnobSlider*>(linkedComp)->getValueFromText(s);
+                                    double v = 0.0; if (auto* kn = dynamic_cast<RotaryKnobSlider*>(linkedComp)) v = kn->getValueFromText(s);
                                     def->min = v;
                                     updateControlsJson("min", v);
-                                    dynamic_cast<RotaryKnobSlider*>(linkedComp)->setRange(def->min, def->max, def->step);
+                                    if (auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp)) s->setRange(def->min, def->max, def->step);
                                 }
                             }
                         ));
                         pProps.add(new ParamRowPropertyComponent(linkedComp, "Maximum", def->type, def->choices,
                             [def]() { return def->max; },
-                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->max) : ""; },
+                            [linkedComp, def]() { return linkedComp ? ([&]() { auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp); return s ? s->getTextFromValue(def->max) : ""; })() : ""; },
                             nullptr,
                             [def, updateControlsJson, linkedComp](juce::String s) {
                                 if (linkedComp) {
-                                    double v = dynamic_cast<RotaryKnobSlider*>(linkedComp)->getValueFromText(s);
+                                    double v = 0.0; if (auto* kn = dynamic_cast<RotaryKnobSlider*>(linkedComp)) v = kn->getValueFromText(s);
                                     def->max = v;
                                     updateControlsJson("max", v);
-                                    dynamic_cast<RotaryKnobSlider*>(linkedComp)->setRange(def->min, def->max, def->step);
+                                    if (auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp)) s->setRange(def->min, def->max, def->step);
                                 }
                             }
                         ));
                         pProps.add(new ParamRowPropertyComponent(linkedComp, "Default", def->type, def->choices,
                             [def]() { return def->defaultFloat; },
-                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->defaultFloat) : ""; },
+                            [linkedComp, def]() { return linkedComp ? ([&]() { auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp); return s ? s->getTextFromValue(def->defaultFloat) : ""; })() : ""; },
                             [def, updateControlsJson](double v) { def->defaultFloat = v; updateControlsJson("default", v); },
                             [def, updateControlsJson, linkedComp](juce::String s) {
                                 if (linkedComp) {
-                                    double v = dynamic_cast<RotaryKnobSlider*>(linkedComp)->getValueFromText(s);
+                                    double v = 0.0; if (auto* kn = dynamic_cast<RotaryKnobSlider*>(linkedComp)) v = kn->getValueFromText(s);
                                     def->defaultFloat = v;
                                     updateControlsJson("default", v);
                                 }
@@ -1379,11 +1376,11 @@ if (isTheme && parsed.isObject()) {
                         ));
                         pProps.add(new ParamRowPropertyComponent(linkedComp, "Double-Click", def->type, def->choices,
                             [def]() { return def->doubleClickValue; },
-                            [linkedComp, def]() { return linkedComp ? dynamic_cast<RotaryKnobSlider*>(linkedComp)->getTextFromValue(def->doubleClickValue) : ""; },
+                            [linkedComp, def]() { return linkedComp ? ([&]() { auto* s = dynamic_cast<RotaryKnobSlider*>(linkedComp); return s ? s->getTextFromValue(def->doubleClickValue) : ""; })() : ""; },
                             [def, updateControlsJson](double v) { def->doubleClickValue = v; updateControlsJson("double_click", v); },
                             [def, updateControlsJson, linkedComp](juce::String s) {
                                 if (linkedComp) {
-                                    double v = dynamic_cast<RotaryKnobSlider*>(linkedComp)->getValueFromText(s);
+                                    double v = 0.0; if (auto* kn = dynamic_cast<RotaryKnobSlider*>(linkedComp)) v = kn->getValueFromText(s);
                                     def->doubleClickValue = v;
                                     updateControlsJson("double_click", v);
                                 }
@@ -1609,3 +1606,4 @@ void MainComponent::onTabChanged() {
         previewWrapper.deleteAllChildren();
     }
 }
+
