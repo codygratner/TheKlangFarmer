@@ -590,6 +590,17 @@ void MainComponent::buildTree() {
         root->addSubItem(prodNode);
     }
     
+    // Add Layout Files
+    auto* layoutsRootNode = new EditorTreeItem(this, "Layout Files", "product", "all_layouts");
+    juce::DirectoryIterator iterL(getAssetFile("layouts", ""), false, "*.json");
+    while (iterL.next()) {
+        auto f = iterL.getFile();
+        juce::String fileName = f.getFileName();
+        juce::String pageId = f.getFileNameWithoutExtension();
+        layoutsRootNode->addSubItem(new EditorTreeItem(this, fileName, "layout_file", "all_layouts", pageId));
+    }
+    root->addSubItem(layoutsRootNode);
+    
     // Add Control Files
     auto* controlsRootNode = new EditorTreeItem(this, "Control Files", "product", "all_controls");
     juce::DirectoryIterator iter(getAssetFile("controls", ""), false, "*.json");
@@ -615,7 +626,7 @@ void MainComponent::buildTree() {
 }
 
 void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
-    if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme") && item->itemType != "control_file") return;
+    if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme") && item->itemType != "control_file" && item->itemType != "layout_file") return;
     
     currentParamTarget = item->paramId;
     
@@ -629,6 +640,11 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
         currentParamJsonFile = item->pageId + ".json";
         currentPageId = "";
         currentCardId = item->pageId;
+    } else if (item->productId == "all_layouts") {
+        currentProductId = "all_layouts";
+        currentParamJsonFile = item->pageId + ".json";
+        currentPageId = "";
+        currentCardId = "";
     } else {
         currentProductId = item->productId;
         currentParamJsonFile = currentProductId + "_layout.json";
@@ -637,13 +653,17 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
     }
 
     auto file = getAssetFile(currentProductId == "theme" ? "controls" : (currentProductId == "all_controls" ? "controls" : "layouts"), currentParamJsonFile);
-    filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" && currentProductId != "all_controls" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : "") + (currentParamTarget.isNotEmpty() ? " -> [" + currentParamTarget + "]" : ""));
+    filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" && currentProductId != "all_controls" && currentProductId != "all_layouts" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : "") + (currentParamTarget.isNotEmpty() ? " -> [" + currentParamTarget + "]" : ""));
 
     juce::var cardJson;
     if (file.existsAsFile()) {
         auto fullJsonString = file.loadFileAsString();
         
-        if (currentProductId != "theme" && currentProductId != "all_controls") {
+        if (currentProductId == "all_layouts") {
+            cardJson = juce::JSON::parse(fullJsonString);
+            originalLayoutJson = fullJsonString;
+            originalControlsJson = "{}";
+        } else if (currentProductId != "theme" && currentProductId != "all_controls") {
             currentLayout = juce::JSON::parse(fullJsonString);
             if (currentLayout.isObject()) {
                 auto* root = currentLayout.getDynamicObject();
@@ -787,6 +807,81 @@ if (isTheme && parsed.isObject()) {
         auto* card = new ModuleCardComponent("Theme Preview", juce::Colour(0xffff3b30));
         previewWrapper.addAndMakeVisible(card);
         card->setBounds(10, 10, 280, 200);
+    } else if (currentProductId == "all_layouts") {
+        if (parsed.isObject()) {
+            int yOffset = 10;
+            auto* lObj = parsed.getDynamicObject();
+            for (auto& prop : lObj->getProperties()) {
+                if (prop.value.isObject()) {
+                    auto* pObj = prop.value.getDynamicObject();
+                    auto processCard = [&](const juce::String& cardName, juce::DynamicObject* cardObj) {
+                        if (!cardObj->hasProperty("parameters")) return;
+                        auto paramsArr = cardObj->getProperty("parameters");
+                        if (!paramsArr.isArray()) return;
+                        
+                        juce::Colour c = juce::Colour(0xffcfd8dc);
+                        if (cardObj->hasProperty("color")) {
+                            c = juce::Colour::fromString(cardObj->getProperty("color").toString());
+                        }
+                        auto styleStr = cardObj->hasProperty("style") ? cardObj->getProperty("style").toString() : "StandardDark";
+                        auto style = (styleStr == "DoepferSilver") ? ModuleCardComponent::PanelStyle::DoepferSilver : ModuleCardComponent::PanelStyle::StandardDark;
+                        
+                        auto* card = new ModuleCardComponent(cardName, c, style);
+                        
+                        int slot = 0;
+                        int choiceCount = 0;
+                        for (auto& paramIdVar : *paramsArr.getArray()) {
+                            juce::String paramId = paramIdVar.toString();
+                            auto* constDef = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+                            if (constDef) {
+                                if (constDef->type == "float" && slot < 4) {
+                                    auto* slider = new RotaryKnobSlider();
+                                    activeSliders.add(slider);
+                                    compToParamId[slider] = paramId;
+                                    slider->setParamId(paramId);
+                                    slider->setRange(constDef->min, constDef->max, constDef->step);
+                                    slider->setValue(constDef->defaultFloat);
+                                    card->addAndMakeVisible(slider);
+                                    card->setKnob(slot, constDef->name, slider);
+                                    slot++;
+                                } else if (constDef->type == "choice" && choiceCount < 2) {
+                                    auto* box = new LedSelectorComponent(c);
+                                    activeSliders.add(box);
+                                    compToParamId[box] = paramId;
+                                    box->setItems(constDef->choices, constDef->choices.size() > 3 ? 4 : constDef->choices.size());
+                                    box->setSelectedIndex(constDef->defaultChoice, juce::dontSendNotification);
+                                    card->addAndMakeVisible(box);
+                                    if (choiceCount == 0) card->setLedSelector(box);
+                                    else card->setSecondLedSelector(box);
+                                    choiceCount++;
+                                }
+                            }
+                        }
+                        
+                        auto* label = new juce::Label({}, cardName);
+                        label->setColour(juce::Label::textColourId, juce::Colours::white);
+                        label->setFont(16.0f);
+                        previewWrapper.addAndMakeVisible(label);
+                        label->setBounds(10, yOffset, 280, 20);
+                        yOffset += 25;
+                        
+                        previewWrapper.addAndMakeVisible(card);
+                        card->setBounds(10, yOffset, 280, 420);
+                        yOffset += 430;
+                    };
+                    
+                    if (pObj->hasProperty("parameters")) {
+                        processCard(prop.name.toString(), pObj);
+                    } else {
+                        for (auto& cardProp : pObj->getProperties()) {
+                            if (cardProp.value.isObject()) {
+                                processCard(cardProp.name.toString(), cardProp.value.getDynamicObject());
+                            }
+                        }
+                    }
+                }
+            }
+        }
     } else if (currentProductId == "all_controls") {
         if (parsed.isObject()) {
             const char* products[] = { "tkf", "tkm", "tkp", "tks" };
@@ -1088,17 +1183,8 @@ if (isTheme && parsed.isObject()) {
                 pc = new ThemeColorPropertyComponent(pName, valStr, [this, pName](const juce::String& newHex) {
                     auto parsedObj = juce::JSON::parse(layoutJsonDocument.getAllContent());
                     if (parsedObj.isObject()) {
-                        auto* root = parsedObj.getDynamicObject();
-                        if (currentPageId.isNotEmpty() && root->hasProperty(currentPageId)) {
-                            auto* page = root->getProperty(currentPageId).getDynamicObject();
-                            if (page && page->hasProperty(currentCardId)) {
-                                page->getProperty(currentCardId).getDynamicObject()->setProperty(pName, newHex);
-                                layoutJsonDocument.replaceAllContent(juce::JSON::toString(parsedObj));
-                            }
-                        } else if (currentPageId.isEmpty() && root->hasProperty(currentCardId)) {
-                            root->getProperty(currentCardId).getDynamicObject()->setProperty(pName, newHex);
-                            layoutJsonDocument.replaceAllContent(juce::JSON::toString(parsedObj));
-                        }
+                        parsedObj.getDynamicObject()->setProperty(pName, newHex);
+                        layoutJsonDocument.replaceAllContent(juce::JSON::toString(parsedObj));
                     }
                 });
             } else {
