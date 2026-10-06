@@ -33,8 +33,10 @@
 
 
 ## Strict Background Task Etiquette
-- **No Polling or Pinging**: When a long-running command (like a build, test suite, or script) goes to the background, you must NEVER use `manage_task` to poll its status.
-- **Yield and Wait**: Stop calling tools and yield your turn. The system will automatically wake you up with the task's final output when it completes. Do not spam the chat with "checking status" updates.
+- **No Polling or Pinging**: When a long-running command (like a build, test suite, or script) goes to the background, you must NEVER use `manage_task` to poll its status (`Action: "status"`).
+- **No Task Log Peeking**: You must NEVER inspect running task logs via `cat`, `Get-Content`, `type`, `head`, `tail`, or `view_file` on `.system_generated/tasks/task-*.log`. Reading logs while a background task is running is strictly prohibited and bypasses task hygiene.
+- **Mandatory Zero Tool Calls on Background**: The moment a command returns "Tool is running as a background task...", you must make **ZERO** further tool calls in that turn. Do not call tools to "check on it", "gather an update", or "see if it finished".
+- **Yield and Wait**: Simply output a concise one-sentence notification to the user (e.g. "Build is running in the background; yielding turn to await completion.") and end your turn immediately. The system will automatically wake you up with a high-priority message containing the complete logs the exact moment the task finishes.
 
 
 ## Strict C++ Formatting & Style
