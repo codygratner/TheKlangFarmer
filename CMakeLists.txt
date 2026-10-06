@@ -257,35 +257,34 @@ target_compile_definitions(TheKlangEditor PRIVATE
 
 
 # ==============================================================================
-# 11. Artifact Gathering (Copy to /current_build/)
+# 11. Artifact Gathering (Copy to current_build/)
 # ==============================================================================
-set(ARTIFACT_DIR "/current_build")
+set(ARTIFACT_DIR "${CMAKE_SOURCE_DIR}/current_build")
 
 # The Klang Farmer
 add_custom_command(TARGET TheKlangFarmer_Standalone POST_BUILD
-    COMMAND "" -E make_directory "/Standalone"
-    COMMAND "" -E copy "$<TARGET_FILE:TheKlangFarmer_Standalone>" "/Standalone/"
-    COMMAND "" -E copy "/deploy_vst3.bat" "/deploy_vst3.bat"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ARTIFACT_DIR}/Standalone"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:TheKlangFarmer_Standalone>" "${ARTIFACT_DIR}/Standalone/"
 )
 add_custom_command(TARGET TheKlangFarmer_VST3 POST_BUILD
-    COMMAND "" -E make_directory "/VST3/The Klang Farmer.vst3"
-    COMMAND "" -E copy_directory "/TheKlangFarmer_artefacts/$<CONFIG>/VST3/The Klang Farmer.vst3" "/VST3/The Klang Farmer.vst3"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ARTIFACT_DIR}/VST3/The Klang Farmer.vst3"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/TheKlangFarmer_artefacts/$<CONFIG>/VST3/The Klang Farmer.vst3" "${ARTIFACT_DIR}/VST3/The Klang Farmer.vst3"
 )
 
 # The Klang Planter
 add_custom_command(TARGET TheKlangPlanter_Standalone POST_BUILD
-    COMMAND "" -E make_directory "/Standalone"
-    COMMAND "" -E copy "$<TARGET_FILE:TheKlangPlanter_Standalone>" "/Standalone/"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ARTIFACT_DIR}/Standalone"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:TheKlangPlanter_Standalone>" "${ARTIFACT_DIR}/Standalone/"
 )
 add_custom_command(TARGET TheKlangPlanter_VST3 POST_BUILD
-    COMMAND "" -E make_directory "/VST3/The Klang Planter.vst3"
-    COMMAND "" -E copy_directory "/TheKlangPlanter_artefacts/$<CONFIG>/VST3/The Klang Planter.vst3" "/VST3/The Klang Planter.vst3"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ARTIFACT_DIR}/VST3/The Klang Planter.vst3"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_BINARY_DIR}/TheKlangPlanter_artefacts/$<CONFIG>/VST3/The Klang Planter.vst3" "${ARTIFACT_DIR}/VST3/The Klang Planter.vst3"
 )
 
 # The Klang Editor
 add_custom_command(TARGET TheKlangEditor POST_BUILD
-    COMMAND "" -E make_directory "/Editor"
-    COMMAND "" -E copy "$<TARGET_FILE:TheKlangEditor>" "/Editor/"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${ARTIFACT_DIR}/Editor"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:TheKlangEditor>" "${ARTIFACT_DIR}/Editor/"
 )
 
 
