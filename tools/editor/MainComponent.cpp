@@ -841,6 +841,9 @@ if (isTheme && parsed.isObject()) {
                             
                             // Render this card!
                             juce::Colour c = juce::Colour(0xffcfd8dc);
+                            if (cardObj->hasProperty("color")) {
+                                c = juce::Colour::fromString(cardObj->getProperty("color").toString());
+                            }
                             auto styleStr = cardObj->hasProperty("style") ? cardObj->getProperty("style").toString() : "StandardDark";
                             auto style = (styleStr == "DoepferSilver") ? ModuleCardComponent::PanelStyle::DoepferSilver : ModuleCardComponent::PanelStyle::StandardDark;
                             
@@ -916,6 +919,9 @@ if (isTheme && parsed.isObject()) {
             auto moduleConfig = parsed;
             
             juce::Colour c = juce::Colour(0xffcfd8dc);
+            if (moduleConfig.hasProperty("color")) {
+                c = juce::Colour::fromString(moduleConfig.getProperty("color", "").toString());
+            }
             auto styleStr = moduleConfig.getProperty("style", "StandardDark").toString();
             auto style = (styleStr == "DoepferSilver") ? ModuleCardComponent::PanelStyle::DoepferSilver : ModuleCardComponent::PanelStyle::StandardDark;
             
