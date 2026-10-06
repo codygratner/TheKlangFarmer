@@ -435,6 +435,7 @@ public:
 
     void mouseDown(const juce::MouseEvent& e) override;
     std::function<void()> onCardClicked;
+    std::function<void(const juce::MouseEvent&)> onCardMouseDown;
 
 private:
     juce::String moduleTitle;

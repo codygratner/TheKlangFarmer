@@ -2116,7 +2116,8 @@ void ModuleCardComponent::updateEqParams(float freqHz, float widthOct, float gai
     oscilloscope.updateEqParams(freqHz, widthOct, gainDb, djFilter);
 }
 
-void ModuleCardComponent::mouseDown(const juce::MouseEvent& /*e*/) {
+void ModuleCardComponent::mouseDown(const juce::MouseEvent& e) {
+    if (onCardMouseDown) onCardMouseDown(e);
     if (onCardClicked) onCardClicked();
 }
 

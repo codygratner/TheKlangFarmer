@@ -56,7 +56,7 @@ void PlanterHeaderVisualizer::mouseDown(const juce::MouseEvent& e) {
     if (getMeterArea().contains(pos)) {
         triggerFlash();
         if (onPanic) onPanic();
-    } else if (getLimitArea().contains(pos) && (e.mods.isPopupMenu() || e.mods.isRightButtonDown())) {
+    } else if (getLimitArea().expanded(2.0f, 5.0f).contains(pos)) {
         if (onLimiterCalloutRequested) {
             onLimiterCalloutRequested(getLimitArea().toNearestInt());
         }
@@ -281,6 +281,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     initButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xffc5d1e8));
     initButton.setTooltip("INIT — Reset all parameters to a clean default drum patch.");
     initButton.onClick = [this]() {
+        audioProcessor.panic();
         audioProcessor.getEngine().setDefaultParameters();
         for (auto* param : audioProcessor.getParameters()) {
             if (auto* rp = dynamic_cast<juce::RangedAudioParameter*>(param)) {
@@ -570,6 +571,13 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     cardAmp->setKnob(1, "Pan", &ampPanSlider);
     cardAmp->setKnob(2, "Vel Slope", &ampVelSlopeSlider);
     cardAmp->setKnob(3, "Vel Min Level", &ampVelFloorSlider);
+    cardAmp->onCardMouseDown = [this](const juce::MouseEvent& e) {
+        if (e.mods.isPopupMenu() || e.mods.isRightButtonDown()) {
+            auto callout = std::make_unique<PlanterLimiterCalloutComponent>(audioProcessor);
+            auto area = cardAmp->getBounds();
+            juce::CallOutBox::launchAsynchronously(std::move(callout), area, this);
+        }
+    };
     addAndMakeVisible(cardAmp.get());
 
     // Amp Envelope: Magenta accent with Green panel tint
@@ -612,6 +620,13 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     limiterEnableSelector.setAccent(juce::Colour(0xffe53935));
     limiterEnableSelector.setTooltip("ENABLE LIMITER");
     cardLimiter->setLedSelector(&limiterEnableSelector);
+    cardLimiter->onCardMouseDown = [this](const juce::MouseEvent& e) {
+        if (e.mods.isPopupMenu() || e.mods.isRightButtonDown()) {
+            auto callout = std::make_unique<PlanterLimiterCalloutComponent>(audioProcessor);
+            auto area = cardLimiter->getBounds();
+            juce::CallOutBox::launchAsynchronously(std::move(callout), area, this);
+        }
+    };
     addAndMakeVisible(cardLimiter.get());
 
     // Connect slider attachments
@@ -709,8 +724,8 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
     headerViz.onLimiterCalloutRequested = [this](const juce::Rectangle<int>& area) {
         auto callout = std::make_unique<PlanterLimiterCalloutComponent>(audioProcessor);
-        auto limitScreenArea = area + headerViz.getScreenPosition();
-        juce::CallOutBox::launchAsynchronously(std::move(callout), limitScreenArea, nullptr);
+        auto limitEditorArea = area + headerViz.getPosition();
+        juce::CallOutBox::launchAsynchronously(std::move(callout), limitEditorArea, this);
     };
 
     updateCarrierControls();

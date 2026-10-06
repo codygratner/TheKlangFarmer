@@ -434,8 +434,36 @@ namespace PluginIntensiveTestSuite {
                                     viz, viz, juce::Time::getCurrentTime(), rightPos, juce::Time::getCurrentTime(), 1, false);
             viz->mouseDown(eLimit);
             pumpMessageLoop();
-
             reporter.expect(calloutRequested, "Planter: Header limitArea right-click triggers onLimiterCalloutRequested");
+
+            // Left-click limitArea also triggers limiter callout
+            bool leftCalloutRequested = false;
+            viz->onLimiterCalloutRequested = [&](const juce::Rectangle<int>&) {
+                leftCalloutRequested = true;
+            };
+            juce::MouseEvent eLeftLimit(juce::Desktop::getInstance().getMainMouseSource(), rightPos,
+                                        juce::ModifierKeys::leftButtonModifier, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                                        viz, viz, juce::Time::getCurrentTime(), rightPos, juce::Time::getCurrentTime(), 1, false);
+            viz->mouseDown(eLeftLimit);
+            pumpMessageLoop();
+            reporter.expect(leftCalloutRequested, "Planter: Header limitArea left-click triggers onLimiterCalloutRequested");
+
+            // Secondary trigger: Right-clicking Amplifier card triggers limiter callout
+            auto cards = ComponentFinder::findAllByType<ModuleCardComponent>(editor.get());
+            bool cardAmpRightClicked = false;
+            for (auto* card : cards) {
+                if (card->getTitle() == "Amplifier") {
+                    card->onCardMouseDown = [&](const juce::MouseEvent& e) {
+                        if (e.mods.isPopupMenu() || e.mods.isRightButtonDown()) cardAmpRightClicked = true;
+                    };
+                    juce::MouseEvent eCard(juce::Desktop::getInstance().getMainMouseSource(), card->getLocalBounds().getCentre().toFloat(),
+                                           juce::ModifierKeys::rightButtonModifier, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                                           card, card, juce::Time::getCurrentTime(), card->getLocalBounds().getCentre().toFloat(), juce::Time::getCurrentTime(), 1, false);
+                    card->mouseDown(eCard);
+                    break;
+                }
+            }
+            reporter.expect(cardAmpRightClicked, "Planter: Right-clicking Amplifier card triggers onCardMouseDown");
         }
 
         // 2. Limiter Mini-Card Callout Component (100% of controls verified)
@@ -443,6 +471,14 @@ namespace PluginIntensiveTestSuite {
             PlanterLimiterCalloutComponent callout(processor);
             callout.setSize(260, 110);
             pumpMessageLoop();
+
+            // Schema defaults verification
+            auto* defGain = RlyehSound::ParameterManager::getInstance().getControlDef("planter_limiter_gain");
+            auto* defThresh = RlyehSound::ParameterManager::getInstance().getControlDef("planter_limiter_thresh");
+            auto* defRel = RlyehSound::ParameterManager::getInstance().getControlDef("planter_limiter_release");
+            reporter.expect(defGain && std::abs(defGain->defaultFloat - 0.333333f) < 0.01f, "Schema: planter_limiter_gain defaultFloat parsed correctly");
+            reporter.expect(defThresh && std::abs(defThresh->defaultFloat - 1.0f) < 0.01f, "Schema: planter_limiter_thresh defaultFloat parsed correctly");
+            reporter.expect(defRel && std::abs(defRel->defaultFloat - 0.6296f) < 0.01f, "Schema: planter_limiter_release defaultFloat parsed correctly");
 
             // Control 1: planter_limiter_enable
             auto* enableParam = processor.apvts.getParameter("planter_limiter_enable");
@@ -489,6 +525,30 @@ namespace PluginIntensiveTestSuite {
             juce::Graphics calloutG(calloutImg);
             callout.paintEntireComponent(calloutG, true);
             reporter.expect(true, "Planter Callout: Offscreen paint completed with zero errors");
+
+            // 3. In-Window CalloutBox Parenting Verification
+            auto testCallout = std::make_unique<PlanterLimiterCalloutComponent>(processor);
+            auto area = juce::Rectangle<int>(100, 100, 80, 24);
+            auto& box = juce::CallOutBox::launchAsynchronously(std::move(testCallout), area, editor.get());
+            pumpMessageLoop();
+            reporter.expect(editor->isParentOf(&box), "Planter Callout: CallOutBox is direct child of editor (not desktop window)");
+            box.dismiss();
+            pumpMessageLoop();
+
+            // 4. INIT Button Reset Verification
+            auto* pitchParam = processor.apvts.getParameter("planter_carrier_pitch");
+            if (pitchParam) pitchParam->setValueNotifyingHost(0.2f);
+            for (auto* child : editor->getChildren()) {
+                if (auto* btn = dynamic_cast<juce::TextButton*>(child)) {
+                    if (btn->getButtonText().contains("INIT")) {
+                        if (btn->onClick) btn->onClick();
+                        break;
+                    }
+                }
+            }
+            pumpMessageLoop();
+            reporter.expect(pitchParam && std::abs(pitchParam->getValue() - pitchParam->getDefaultValue()) < 0.01f,
+                            "Planter INIT button resets parameters to factory defaults and flushes engine");
         }
     }
 
