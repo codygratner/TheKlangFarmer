@@ -36,7 +36,17 @@ private:
     void buildTree();
     void syncJsonToPreview(const juce::String& forcedJson = "");
 
-    juce::TreeView navigationTree;
+    class NavTabbedComponent : public juce::TabbedComponent {
+    public:
+        NavTabbedComponent(MainComponent* owner) : juce::TabbedComponent(juce::TabbedButtonBar::Orientation::TabsAtTop), mc(owner) {}
+        void currentTabChanged(int newCurrentTabIndex, const juce::String& newCurrentTabName) override;
+        MainComponent* mc;
+    };
+
+    NavTabbedComponent navigationTabs { this };
+    juce::TreeView layoutsTree;
+    juce::TreeView controlsTree;
+    void onTabChanged();
     juce::TextButton refreshButton { "Refresh" };
     juce::TextButton saveButton { "Save" };
     juce::TextButton toggleOriginalButton { "Show Original" };
