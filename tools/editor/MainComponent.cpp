@@ -325,6 +325,41 @@ void EditorTreeItem::itemSelectionChanged(bool isNowSelected) {
     }
 }
 
+void EditorTreeItem::itemClicked(const juce::MouseEvent& e) {
+    if (e.mods.isPopupMenu()) {
+        juce::PopupMenu menu;
+        menu.addItem(1, "Expand All");
+        menu.addItem(2, "Collapse All");
+        menu.addItem(3, "Collapse Others");
+        
+        menu.showMenuAsync(juce::PopupMenu::Options(), [this](int result) {
+            std::function<void(juce::TreeViewItem*, bool)> setOpenRec = [&](juce::TreeViewItem* item, bool open) {
+                if (!item) return;
+                item->setOpen(open);
+                for (int i = 0; i < item->getNumSubItems(); ++i) {
+                    setOpenRec(item->getSubItem(i), open);
+                }
+            };
+            
+            if (result == 1) {
+                setOpenRec(this, true);
+            } else if (result == 2) {
+                setOpenRec(this, false);
+            } else if (result == 3) {
+                if (auto* parent = this->getParentItem()) {
+                    for (int i = 0; i < parent->getNumSubItems(); ++i) {
+                        auto* sibling = parent->getSubItem(i);
+                        if (sibling != this) {
+                            setOpenRec(sibling, false);
+                        }
+                    }
+                }
+                setOpenRec(this, true);
+            }
+        });
+    }
+}
+
 MainComponent::MainComponent()
     : splitterBar1(&verticalLayout, 1, true),
       splitterBar2(&verticalLayout, 3, true),
@@ -337,8 +372,28 @@ MainComponent::MainComponent()
     controlsTree.setMultiSelectEnabled(false);
     navigationTabs.getTabbedButtonBar().setMinimumTabScaleFactor(0.5);
     // Tree collapsed by default
+    addAndMakeVisible(expandAllButton);
+    addAndMakeVisible(collapseAllButton);
+    expandAllButton.onClick = [this]() {
+        auto* tree = navigationTabs.getCurrentTabIndex() == 0 ? &controlsTree : &layoutsTree;
+        std::function<void(juce::TreeViewItem*, bool)> setOpenRec = [&](juce::TreeViewItem* item, bool open) {
+            if (!item) return;
+            item->setOpen(open);
+            for (int i = 0; i < item->getNumSubItems(); ++i) setOpenRec(item->getSubItem(i), open);
+        };
+        setOpenRec(tree->getRootItem(), true);
+    };
+    collapseAllButton.onClick = [this]() {
+        auto* tree = navigationTabs.getCurrentTabIndex() == 0 ? &controlsTree : &layoutsTree;
+        std::function<void(juce::TreeViewItem*, bool)> setOpenRec = [&](juce::TreeViewItem* item, bool open) {
+            if (!item) return;
+            item->setOpen(open);
+            for (int i = 0; i < item->getNumSubItems(); ++i) setOpenRec(item->getSubItem(i), open);
+        };
+        setOpenRec(tree->getRootItem(), false);
+    };
 
-        addAndMakeVisible(refreshButton);
+    addAndMakeVisible(refreshButton);
     addAndMakeVisible(exportSnapshotButton);
     addAndMakeVisible(importSnapshotButton);
     addAndMakeVisible(restoreFactoryButton);
@@ -749,6 +804,7 @@ juce::String MainComponent::getControlFileForParam(const juce::String& paramId) 
 }
 
 void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
+    if (!item) return;
     juce::Logger::writeToLog("onTreeItemSelected: " + item->name);
     if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme") && item->itemType != "control_file" && item->itemType != "layout_file" && item->itemType != "page" && item->itemType != "product") return;
     
@@ -1586,6 +1642,10 @@ void MainComponent::resized() {
         juce::Component* rightComps[] = { &formEditor, &splitterBar1, &previewWrapper, &splitterBar2, &jsonContainer };
     
     auto treeBounds = bounds.removeFromLeft(200);
+    auto treeToolbar = treeBounds.removeFromTop(24);
+    expandAllButton.setBounds(treeToolbar.removeFromLeft(treeToolbar.getWidth() / 2).reduced(2));
+    collapseAllButton.setBounds(treeToolbar.reduced(2));
+    
     treeSplitter.setBounds(bounds.removeFromLeft(8));
     navigationTabs.setBounds(treeBounds);
     

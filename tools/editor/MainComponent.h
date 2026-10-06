@@ -13,6 +13,7 @@ public:
     bool mightContainSubItems() override { return getNumSubItems() > 0; }
     void paintItem(juce::Graphics& g, int width, int height) override;
     void itemSelectionChanged(bool isNowSelected) override;
+    void itemClicked(const juce::MouseEvent& e) override;
 
     MainComponent* mainComp;
     juce::String name, itemType, productId, pageId, cardId, paramId;
@@ -52,6 +53,8 @@ private:
     juce::TreeView layoutsTree;
     juce::TreeView controlsTree;
     void onTabChanged();
+    juce::TextButton expandAllButton { "Expand All" };
+    juce::TextButton collapseAllButton { "Collapse All" };
     juce::TextButton refreshButton { "Refresh" };
     juce::TextButton saveButton { "Save" };
     juce::TextButton toggleOriginalButton { "Show Original" };
