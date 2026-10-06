@@ -8,6 +8,10 @@
 > 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser, WAV Render, & Instant DAW Drag 'n' Drop.
 > 4. **Spin-Offs**: The Klang Mill (TKM) Standalone FX Rack.
 
+
+> [!TIP]
+> **CODE QUALITY STANDARD**: The C++ codebase currently maintains an A+ standard for defensive programming, descriptive `camelCase` variable naming, and explicit algorithmic comments (e.g., documenting DSP math curves directly above the function). All future contributions must rigidly match this level of in-line documentation and readability!
+
 ---
 
 ## 🚀 Milestone: v0.3.0 "The Architecture Update"
