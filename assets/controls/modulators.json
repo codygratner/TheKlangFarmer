@@ -37,7 +37,7 @@
     "name": "Modulator 1: Speed",
     "description": "Modulator 1 frequency / semitone offset / FM ratio",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.5
   },
   "mod2_shape": {
     "type": "float",
@@ -74,7 +74,7 @@
     "name": "Modulator 2: Speed",
     "description": "Modulator 2 frequency / semitone offset / FM ratio",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.5
   },
   "mixer_ringmod": {
     "type": "float",

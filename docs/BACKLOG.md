@@ -4,11 +4,11 @@
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized milestones below:
 > 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit.
-> 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass Engine, & Typography Engine.
-> 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, & Linux Headless CI.
+> 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
+> 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, & Linux Headless CI.
 > 4. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
 > 5. **v1.1.0 (Hardware Universe)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
-> 6. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack).
+> 6. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
 
 > [!TIP]
 > **CODE QUALITY STANDARD**: The C++ codebase currently maintains an A+ standard for defensive programming, descriptive `camelCase` variable naming, and explicit algorithmic comments (e.g., documenting DSP math curves directly above the function). All future contributions must rigidly match this level of in-line documentation and readability!
@@ -18,35 +18,25 @@
 ## 🚀 Milestone: v0.3.0 "The Architecture Update"
 *Focus: Tooling, Data-Driven Architecture, and 1:1 Legacy Parity.*
 
-### 1. Automated GUI Test Harness (Guardrail)
-*Detailed Plan: [`docs/gui_test_harness_plan.md`](gui_test_harness_plan.md)*
-Implement a comprehensive, single-binary C++ functional GUI testing harness (`gui_tests`) to test all three applications across the repository: The Klang Farmer, The Klang Planter, and The Klang Editor. Features synthetic mouse event simulation (drag, click, double-click), two-way APVTS parameter synchronization, page navigation transitions (Pages 0–6), dynamic FX slot reconfiguration, modal guide handling, offscreen smoke paint checks, and automated failure PNG snapshot capture in `test_artifacts/gui/`. Integrated directly into the `/build-validate` skill as an automated development guardrail (bypassed with `--skip-gui`). Now prioritized as **Item #1** to lock down test coverage and protect ongoing Editor work!
+### 1. Automated GUI Test Harness (Guardrail) — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_Universal_Automated_GUI_Test_Harness.md`](completed_plans/2026-10-06_Universal_Automated_GUI_Test_Harness.md)*
+Comprehensive, single-binary C++ functional GUI testing harness (`gui_tests`) testing The Klang Farmer, The Klang Planter, and The Klang Editor with synthetic mouse event simulation, APVTS parameter sync, page navigation, offscreen smoke paint checks, and dynamic reflection audit.
 
-### 2. Standalone JSON Data & Theme Editor (TheKlangEditor) — Phase 2: Controls, Typography & Snapshots
-*Detailed Plan: [`docs/json_editor_tool_plan.md`](json_editor_tool_plan.md)*
-Continue development of the dedicated JUCE GUI editor with card preview and editing:
-- **Unified Tabbed Layout**: `[THEME]` (Color Wheel, hex inputs) vs `[CONTROLS]` (parameter bounds, labels, tooltips).
-- **Text/Localization Extraction**: Extract all remaining hardcoded C++ UI strings into their respective module JSON files and `global_ui.json`.
-- **Automated Build Tracking**: CMake injection of Git Commit Count & Hash in the title bar.
-- **Consolidated JSON Snapshot & Factory Restore**:
-  - `[ Export Snapshot ]`: Bundles all modular control/layout JSONs into a single timestamped `.json` archive.
-  - `[ Import Snapshot ]`: Restores full UI state from an external snapshot file.
-  - `[ Restore Factory Defaults ]`: One-click button reverting all on-disk JSONs to `assets/factory_defaults_snapshot.json` if a setting is borked.
-  - **Bugfix — Card Tree Parameter Population**: Fix issue where drilling down on cards from the plugins in the tree view fails to populate parameters in the property panel.
+### 2. Standalone JSON Data & Theme Editor (TheKlangEditor) — Phase 2: Controls, Typography & Snapshots — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-05_TheKlangEditor.md`](completed_plans/2026-10-05_TheKlangEditor.md)*
+Dedicated JUCE GUI editor with card preview, controls inspector, JSON snapshot export/import/factory restore, and automated commit tracking.
 
-### 3. Automated C++ Linting & Formatting (`clang-format`)
-*Goal: Enforce the project's A+ code quality standards automatically.*
-- Generate a `.clang-format` file matching the existing 4-space indent and camelCase style rules.
-- Integrate into the local build process so code is mechanically standardized before compilation.
+### 3. Automated C++ Linting & Formatting (`clang-format`) — ✅ COMPLETED
+`.clang-format` configured and active, enforcing 4-space indentation and clean C++ formatting.
 
-### 4. Comprehensive Codebase Cruft Purge
-*Goal: Remove all orphaned UI components, unused classes, and hardcoded variables rendered obsolete by the JSON transition.*
-- **Hard Deletion**: Aggressively delete all dead code from the C++ source files (relying entirely on Git for the archive).
-- **Sequencing**: Must be executed *before* the Parity Audit to mathematically prove the purged cruft was not structurally load-bearing.
+### 4. Comprehensive Codebase Cruft Purge — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_Cruft_Purge_Execution_Plan.md`](completed_plans/2026-10-06_Cruft_Purge_Execution_Plan.md)*
+Purged legacy standalone FX blocks, orphaned APVTS parameters, and bypassed routing in commit `4001296`, cleanly migrating all effects to the dynamic 8-slot multi-instance architecture.
 
-### 5. Automated v0.2.0 Parity Audit
+### 5. Automated v0.2.0 Parity Audit — ✅ COMPLETED
 *Detailed Plan: [`docs/v020_parity_audit_plan.md`](v020_parity_audit_plan.md)*
-Run an automated Python script to extract legacy v0.2.0 C++ parameters, string formatters, and hex colors, and cross-reference them against the new JSON architecture to ensure 1:1 user parity. Outputs a highlighted HTML/PDF report with embedded card screenshots.
+*Audit Report:* [`docs/parity_audit/tkf_parity_audit.html`](parity_audit/tkf_parity_audit.html) | [`docs/parity_audit/tkf_parity_audit.pdf`](parity_audit/tkf_parity_audit.pdf)
+Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters against current v0.3.0 JSON controls across The Klang Farmer and The Klang Planter. All calibrated legacy defaults, string formatters, and colors verified with 0 discrepancies (160 exact matches, 44 intentional multi-instance FX slot migrations, and 30 safe additions). Slide-deck printable PDF report generated.
 
 ### 6. GitHub CLI Integration & Repository Tagging
 *Goal: Improve repository discoverability for audio-plugin developers and the vibe coding community.*
@@ -145,6 +135,38 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - Exponential amplitude release ramp via `TbdAudio::FastMath::fastExp`.
   - Zero heap allocations, zero mutexes, and zero DC pops on the audio thread.
 
+### 8. Sound Design Safety: Undo / Redo & A/B State Comparison
+*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
+*Goal: Provide full sound design safety and non-destructive experimentation, essential when rolling the d6 Randomizer.*
+- **Header Controls & Keyboard Shortcuts**:
+  - Subtle `↶` (Undo) and `↷` (Redo) buttons and a tactile `[ A | B ]` toggle button in the header bar.
+  - Global hotkeys: `Ctrl+Z` / `Cmd+Z` (Undo) and `Ctrl+Y` / `Cmd+Shift+Z` (Redo).
+  - Right-click context menu on `[ A | B ]`: `Copy State A to B` / `Copy State B to A`.
+- **APVTS & Randomizer Transactions**:
+  - Integrates `juce::UndoManager` into `KlangCoreProcessor` and APVTS slider gestures.
+  - Every d6 randomizer roll pushes a named transaction (e.g., "Randomize Pitch Card", "Randomize Synth") so accidental overwrites can be instantly undone.
+
+### 9. Velocity Sensitivity Curves & MIDI CC Learn
+*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
+*Goal: Calibrate dynamic response for external drum pads/keys and enable instant hardware MIDI controller mapping.*
+- **Dynamic Velocity Scaling (Voice & Articulation Modal)**:
+  - Selectable response curves: `Linear`, `Exponential` (soft touch / wide dynamics), `Logarithmic` (hard touch), and `Fixed (127)` (essential for uniform electronic/techno drum hits).
+  - Velocity Depth slider (`0%` = velocity immune &rarr; `100%` = full dynamic range).
+- **Right-Click MIDI CC Learn**:
+  - Right-click any parameter knob or slider &rarr; `MIDI Learn` (captures next incoming hardware CC) or `Clear MIDI CC`.
+  - Mappings stored in user config and persistent across sessions.
+
+### 10. Panic / Kill Audio (Emergency Silence & DSP Flush)
+*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
+*Goal: Instant safety shutoff protecting ears and studio monitors from runaway delay/reverb feedback or stuck MIDI notes.*
+- **Header Trigger & MIDI CC Integration**:
+  - Double-clicking the Master Peak Meter / CPU indicator instantly cuts all audio.
+  - Also triggers on standard incoming MIDI CC 120 (All Sound Off) and CC 123 (All Notes Off).
+- **Pop-Free DSP Buffer Flush**:
+  - Applies a sub-millisecond (1ms) exponential fade-out to prevent speaker pops.
+  - Flushes all internal delay lines, reverb tanks, and comb filter feedback buffers to zero.
+  - Resets active MIDI voice tracking and legato gate memory.
+
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Pro Workflow Update"
@@ -192,6 +214,40 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 ### 5. Headless Linux CLAP / VST3 Automated CI/CD Runner
 *Goal: Ensure multi-platform stability and continuous validation for Linux audio.*
 - Add an Ubuntu `aarch64` / `x86_64` container to GitHub Actions building headless Linux CLAP/VST3 binaries on every commit.
+
+### 6. Dual-Tier 2x / 4x Oversampling Engine (Anti-Aliasing)
+*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
+*Goal: Eliminate FM modulation sideband foldback and non-linear saturation aliasing in both realtime and offline render paths.*
+- **Dual-Tier Quality Strategy**:
+  - **Realtime / Live**: Selectable `[Off (1x) | 2x | 4x]`. Minimum-phase IIR filters guarantee zero monitoring latency for live finger-drumming and tracking.
+  - **Render / Export**: Selectable up to `8x` oversampling for maximum offline fidelity during WAV/SF2 bouncing.
+- **DSP Engine Wrapping**:
+  - `juce::dsp::Oversampling<float>` wraps the core voice and non-linear effects path in `processBlock()`.
+  - Zero allocation audio-thread invariant strictly preserved by pre-allocating oversamplers in `prepareToPlay()`.
+
+### 7. 4 Performance Macro Knobs (TBD-16 Hardware Aligned)
+*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
+*Goal: Instant front-panel performance tweaking mapped 1:1 to Page 1 of the dadamachines TBD-16 hardware.*
+- **Global Front-Panel Access**:
+  - 4 persistent macro knobs accessible from the plugin header across all pages.
+  - Aligned 1:1 to the 4 physical endless push-encoders on **Page 1 of the dadamachines TBD-16** hardware groovebox.
+- **Right-Click Modulation Assignment**:
+  - Right-click any parameter knob or slider &rarr; `Assign to Macro 1–4`.
+  - Configurable bipolar modulation depth (`-100%` to `+100%`).
+  - Macro assignments and positions serialized directly into JSON preset files (`PresetManager.h`).
+
+### 8. Zero-Server GitHub Crash Reporting Engine
+*Detailed Plan: [`docs/github_crash_reporting_plan.md`](github_crash_reporting_plan.md)*  
+*Goal: Capture real-world crash logs and stack traces from beta testers directly into GitHub Issues with zero server infrastructure, zero hosting costs, and zero secret token leaks.*
+- **Pre-Filled GitHub Issue URL Generator**:
+  - When an unexpected termination is detected, prompts: *"The Klang Farmer encountered an unexpected shutdown. Submit report to GitHub?"*
+  - Clicking launches the user's default browser to a pre-filled GitHub Issue URL with markdown callstack and environment info.
+- **Hybrid Crash Detection**:
+  - **In-Process Scoped Exception Handling**: Structured exception catching (`__try / __except` / signal traps) around top-level DSP and UI callbacks generates immediate stack traces and mutes audio before host DAW crash.
+  - **Heartbeat Session Lockfile**: `%APPDATA%/TheKlangFarmer/sessions/session_active.lock` detects abnormal host DAW crashes on next launch.
+- **Full Scrubbed Diagnostics**:
+  - Gathers OS, host DAW name/version, buffer size, sample rate, Git commit hash, active preset/FX, and demangled C++ call stack.
+  - Automatically scrubs local usernames from paths (e.g. `C:\Users\<redacted>\...` &rarr; `<UserPath>`) to protect privacy.
 
 ---
 
@@ -312,6 +368,31 @@ Extract a clean, standalone GitHub Template Repository incorporating all lessons
 - **Automated Headless Reflection Testing (`gui_tests`)**: Sweeps 100% of APVTS parameters and JSON assets headlessly in CI without audio hardware or display servers.
 - **Boutique UI & Theme System**: JSON theme palettes (*Cyberpunk Neon*, *Cykranosh*, *Dracula*, *Monokai Pro*), vector LookAndFeel, high-DPI scaling, and JUCE 9.0.3 timer hygiene.
 - **Developer Onboarding CLI (`init_plugin.py`)**: One-command wizard to rename targets, bundle IDs, C++ namespaces, and parameter prefixes in seconds.
+
+### 3. ToadTracker Core Migration & Architectural Port
+*Detailed Plan: [`docs/toadtracker_migration_plan.md`](toadtracker_migration_plan.md)*  
+*Priority: Super Low (Post-1.0)*
+Port the battle-tested, data-driven architecture from *The Klang Farmer* over to the `ToadTracker` codebase to unify DSP and UI workflows:
+- **JSON APVTS & UI Builder**: Drop `ParameterManager` and the JSON control schema into ToadTracker's JUCE HAL to instantly generate UI and parameters without hardcoding.
+- **Audio Thread Guardrails**: Transplant `TbdAudio::FastMath`, `GEMINI.md` audio invariants, and the `audiothread-guard` skill to guarantee zero-allocation/zero-lock safety.
+- **Testing Parity**: Migrate the headless `ReflectionGuardrailSuite.h` and automated GUI smoke testing harness to validate ToadTracker's JUCE layer.
+
+### 4. The Klang R1 (TKR-1) — 7-Voice Rhythm Synthesizer (Electribe ER-1 Tribute)
+*Detailed Plan: [`docs/the_klang_r1_plan.md`](the_klang_r1_plan.md)*  
+*Goal: Provide a stripped-down, tactile, zero-tab 7-voice drum synthesizer inspired by the iconic Korg Electribe ER-1 with white-key octave-invariant triggering and DAW multi-out routing.*
+- **7-Voice Hybrid Architecture**:
+  - **Voices 1–4 (Pure Synth)**: Kicks, sub-bass, snares, toms, and resonant FM zaps.
+  - **Voices 5–7 (Percussion & Metallic)**: Closed Hat, Open Hat (auto-choked by Voice 5), and Cymbal / Crash.
+- **Octave-Invariant White Key Triggering**:
+  - White keys in any octave map to Voices 1–7 (`C` = Voice 1 &rarr; `B` = Voice 7).
+  - Pitches are fixed to front-panel knobs for authentic drum-machine operation (zero pitch tracking).
+  - Black keys (`C#`, `D#`, `F#`, `G#`, `A#`) are unassigned for foolproof live finger drumming anywhere on the keybed.
+- **DAW Multi-Out Bus Architecture**:
+  - 8 Stereo output pairs: Master Mix + 7 Individual Voice stems (`Voice 1` through `Voice 7`).
+  - Auto-mute routing: Routing a voice to an aux track removes it from Master Mix (with parallel toggle).
+- **All-in-One Console UI (Zero Tabs)**:
+  - 7 vertical mixer-style voice strips with `Pitch`, `Decay`, `Mod Type`, `Mod Speed`, `Mod Depth`, `Pan`, `Level`, and `[DELAY SEND]`.
+  - Master section featuring classic ER-1 **Low Boost** sub-punch knob, host-synced **Tempo Delay**, and **Ring Mod** cross-modulation (`Voice 1 × Voice 2`).
 
 ---
 

@@ -6,7 +6,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 1
+    "defaultFloat": 1,
+    "default": 1
   },
   "planter_pitchenv_decay": {
     "name": "PitchEnv: Decay",
@@ -15,7 +16,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.3806
+    "defaultFloat": 0.3806,
+    "default": 0.3806
   },
   "planter_mod_speed": {
     "name": "Modulator: Speed",
@@ -24,7 +26,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5
+    "defaultFloat": 0.5,
+    "default": 0.5
   },
   "planter_noise_filter": {
     "name": "Noise: DJ Filter",
@@ -33,7 +36,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5
+    "defaultFloat": 0.5,
+    "default": 0.5
   },
   "planter_carrier_depth": {
     "name": "Carrier: Mod Depth",
@@ -53,7 +57,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.75
+    "defaultFloat": 0.75,
+    "default": 0.75
   },
   "planter_filterenv_decay": {
     "name": "FilterEnv: Decay",
@@ -62,7 +67,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.3806
+    "defaultFloat": 0.3806,
+    "default": 0.3806
   },
   "planter_pitchenv_target": {
     "choices": [
@@ -80,7 +86,8 @@
       "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
       "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
       "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
-    ]
+    ],
+    "default": 0
   },
   "planter_amp_pan": {
     "name": "Amp: Pan",
@@ -89,7 +96,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5
+    "defaultFloat": 0.5,
+    "default": 0.5
   },
   "planter_carrier_shape": {
     "name": "Carrier: Shape",
@@ -121,7 +129,8 @@
         "label": "PWM"
       }
     ],
-    "format": "waveshape"
+    "format": "waveshape",
+    "default": 0
   },
   "planter_filter_slope": {
     "choices": [
@@ -134,7 +143,8 @@
     "description": "Filter Slope",
     "name": "Filter: Slope",
     "defaultChoice": 1,
-    "type": "choice"
+    "type": "choice",
+    "default": 1
   },
   "planter_noise_sh_rate": {
     "name": "Noise: S&H Rate",
@@ -143,7 +153,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 1
+    "defaultFloat": 1,
+    "default": 1
   },
   "planter_filter_reso": {
     "name": "Filter: Resonance",
@@ -152,7 +163,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0
+    "defaultFloat": 0,
+    "default": 0
   },
   "planter_ampenv_claps": {
     "name": "AmpEnv: Claps",
@@ -161,7 +173,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0
+    "defaultFloat": 0,
+    "default": 0
   },
   "planter_filterenv_slope": {
     "name": "FilterEnv: Slope",
@@ -170,7 +183,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5886
+    "defaultFloat": 0.5886,
+    "default": 0.5886
   },
   "planter_mod_type": {
     "choices": [
@@ -181,7 +195,8 @@
     "description": "Modulator Type",
     "name": "Modulator: Type",
     "defaultChoice": 0,
-    "type": "choice"
+    "type": "choice",
+    "default": 0
   },
   "planter_carrier_pitch": {
     "name": "Carrier: Pitch",
@@ -201,7 +216,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5
+    "defaultFloat": 0.5,
+    "default": 0.5
   },
   "planter_mod_track": {
     "choices": [
@@ -216,7 +232,8 @@
     "choice_tooltips": [
       "FIXED: Modulator runs at a fixed independent frequency in Hz.",
       "RATIO: Modulator frequency is a harmonic ratio scalar of the Carrier frequency (FM synthesis)."
-    ]
+    ],
+    "default": 2
   },
   "planter_mod_shape": {
     "name": "Modulator: Shape",
@@ -248,7 +265,8 @@
         "label": "PWM"
       }
     ],
-    "format": "waveshape"
+    "format": "waveshape",
+    "default": 0
   },
   "planter_ampenv_slope": {
     "name": "AmpEnv: Slope",
@@ -257,7 +275,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5886
+    "defaultFloat": 0.5886,
+    "default": 0.5886
   },
   "planter_filterenv_depth": {
     "name": "FilterEnv: Depth",
@@ -266,7 +285,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5
+    "defaultFloat": 0.5,
+    "default": 0.5
   },
   "planter_pitchenv_slope": {
     "name": "PitchEnv: Slope",
@@ -275,7 +295,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5886
+    "defaultFloat": 0.5886,
+    "default": 0.5886
   },
   "planter_filter_type": {
     "choices": [
@@ -287,7 +308,8 @@
     "description": "Filter Type",
     "name": "Filter: Type",
     "defaultChoice": 0,
-    "type": "choice"
+    "type": "choice",
+    "default": 0
   },
   "planter_amp_drive": {
     "name": "Amp: Drive",
@@ -296,7 +318,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5
+    "defaultFloat": 0.5,
+    "default": 0.5
   },
   "planter_ampenv_clapspeed": {
     "name": "AmpEnv: Clap Speed",
@@ -305,7 +328,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.1428
+    "defaultFloat": 0.1428,
+    "default": 0.1428
   },
   "planter_ampenv_decay": {
     "name": "AmpEnv: Decay",
@@ -314,7 +338,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.3806
+    "defaultFloat": 0.3806,
+    "default": 0.3806
   },
   "planter_noise_crossfade": {
     "name": "Noise: FM / Noise",
@@ -323,7 +348,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 1
+    "defaultFloat": 1,
+    "default": 1
   },
   "planter_amp_vel_floor": {
     "name": "Amp: Velocity",
@@ -332,7 +358,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5
+    "defaultFloat": 0.5,
+    "default": 0.5
   },
   "planter_filterenv_drive": {
     "name": "FilterEnv: Drive",
@@ -341,7 +368,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.5
+    "defaultFloat": 0.5,
+    "default": 0.5
   },
   "planter_carrier_tracking": {
     "choices": [
@@ -357,7 +385,8 @@
       "MIDI: Tracks incoming MIDI note pitch chromatically with transpose offset.",
       "FREQ: Free-running continuous frequency in Hertz (20 Hz - 24 kHz).",
       "NOTE: Quantizes base carrier frequency to discrete musical semitones."
-    ]
+    ],
+    "default": 0
   },
   "planter_noise_decay": {
     "name": "Noise: Decay",
@@ -366,7 +395,8 @@
     "min": 0,
     "type": "float",
     "max": 1,
-    "defaultFloat": 0.3078
+    "defaultFloat": 0.3078,
+    "default": 0.3078
   },
   "ui_strings": {
     "card_planter_carrier_tooltip": "CARRIER: Primary tonal FM oscillator with morphable shape.",

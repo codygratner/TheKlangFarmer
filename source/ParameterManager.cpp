@@ -56,7 +56,12 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
             if (def.type == "float") {
                 def.isBipolar = vObj->hasProperty("is_bipolar") ? static_cast<bool>(vObj->getProperty("is_bipolar")) : false;
                 def.format = vObj->hasProperty("format") ? vObj->getProperty("format").toString() : juce::String();
-                def.defaultFloat = vObj->hasProperty("default") ? static_cast<float>(vObj->getProperty("default")) : 0.0f;
+                if (vObj->hasProperty("default"))
+                    def.defaultFloat = static_cast<float>(vObj->getProperty("default"));
+                else if (vObj->hasProperty("defaultFloat"))
+                    def.defaultFloat = static_cast<float>(vObj->getProperty("defaultFloat"));
+                else
+                    def.defaultFloat = 0.0f;
                 def.defaultLabel = vObj->hasProperty("default_label") ? vObj->getProperty("default_label").toString() : juce::String();
                 def.doubleClickValue = vObj->hasProperty("double_click") ? static_cast<float>(vObj->getProperty("double_click")) : def.defaultFloat;
 
@@ -85,7 +90,12 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
                     }
                 }
             } else if (def.type == "choice") {
-                def.defaultChoice = vObj->hasProperty("default") ? static_cast<int>(vObj->getProperty("default")) : 0;
+                if (vObj->hasProperty("default"))
+                    def.defaultChoice = static_cast<int>(vObj->getProperty("default"));
+                else if (vObj->hasProperty("defaultChoice"))
+                    def.defaultChoice = static_cast<int>(vObj->getProperty("defaultChoice"));
+                else
+                    def.defaultChoice = 0;
                 if (vObj->hasProperty("choices")) {
                     auto& choicesArray = vObj->getProperty("choices");
                     if (choicesArray.isArray()) {

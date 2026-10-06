@@ -14,7 +14,7 @@
     "name": "Filter 1: Cutoff",
     "description": "Filter 1 cutoff corner / center frequency (20 Hz - 24 kHz)",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 1.0
   },
   "filter1_resonance": {
     "type": "float",
@@ -28,7 +28,7 @@
     "name": "Filter 2: Cutoff",
     "description": "Filter 2 cutoff corner / center frequency",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 1.0
   },
   "filter2_resonance": {
     "type": "float",
@@ -42,7 +42,7 @@
     "name": "Filter 3: Cutoff",
     "description": "Filter 3 cutoff corner / center frequency",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 1.0
   },
   "filter3_resonance": {
     "type": "float",
@@ -88,7 +88,7 @@
       "24",
       "36"
     ],
-    "default": 0
+    "default": 1
   },
   "filter2_type": {
     "type": "choice",
@@ -113,7 +113,7 @@
       "24",
       "36"
     ],
-    "default": 0
+    "default": 1
   },
   "filter3_type": {
     "type": "choice",
@@ -138,7 +138,7 @@
       "24",
       "36"
     ],
-    "default": 0
+    "default": 1
   },
   "ui_strings": {
     "card_filter1_tooltip": "FILTER 1: Voice 1 multi-mode resonant filter with selectable 6-36 dB/oct slope.",

@@ -64,14 +64,14 @@
     "name": "Amp: Drive",
     "description": "Pre-limiter analog saturation drive gain",
     "is_bipolar": false,
-    "default": 0.2
+    "default": 0.5
   },
   "vel_slope": {
     "type": "float",
     "name": "Velocity: Slope",
     "description": "MIDI velocity dynamic response curve",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.5886
   },
   "vel_depth": {
     "type": "float",
@@ -101,7 +101,7 @@
     "name": "KeyTrack: Slope",
     "description": "MIDI note keyboard tracking response curve",
     "is_bipolar": false,
-    "default": 0.0
+    "default": 0.5886
   },
   "key_depth": {
     "type": "float",
@@ -199,7 +199,7 @@
       "Off",
       "On"
     ],
-    "default": 0
+    "default": 1
   },
   "pre_limiter_gain": {
     "type": "float",
