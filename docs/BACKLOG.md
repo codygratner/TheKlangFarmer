@@ -43,6 +43,12 @@ Implement a functional state C++ testing harness (`gui_tests`) to simulate click
 - Have the AI install the GitHub CLI (`gh`) via `winget` and authenticate.
 - Automatically apply curated repository tags (Topics) covering Audio Plugin/JUCE (`vst3`, `juce-framework`), FM Drum Synthesis (`drum-machine`, `fm-synthesis`), and the Vibe Coding (`vibe-coding`, `agentic-coding`) communities.
 
+
+### 6. Automated C++ Linting & Formatting (`clang-format`)
+*Goal: Enforce the project's A+ code quality standards automatically.*
+- Generate a `.clang-format` file matching the existing 4-space indent and camelCase style rules.
+- Integrate into the local build process so code is mechanically standardized before compilation.
+
 ---
 
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
@@ -95,6 +101,11 @@ Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's ad
 - **CSS-Style JSON Classes**: Define global text profiles (e.g., `HeaderStyle`, `TooltipStyle`) in the layout JSON, exposing Font Family, Size, Weight, Tracking (letter-spacing), and Justification.
 - **Editor Integration**: The JSON Editor tool provides sliders/fields to instantly visualize tracking and weight changes across the UI.
 
+
+### 7. Continuous Fuzz Testing (DSP Stability)
+*Goal: Guarantee absolute DSP stability during extreme generative parameter changes.*
+- Implement an automated fuzzing harness that blasts the `processBlock` and `apvts` with randomized, out-of-bounds, and extreme NaN garbage data to mathematically ensure the synth will never crash a host DAW.
+
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Pro Workflow Update"
@@ -127,6 +138,11 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
   - Format selection: WAV files folder, SoundFont 2 (.sf2) bank, or both.
 - **Phase 4: Header Integration & Automated Unit Tests**:
   - Add renderButton and dragBadge to plugin headers.
+
+
+### 9. Automated macOS Notarization & Code Signing
+*Goal: Prepare the final binaries for commercial distribution.*
+- Integrate a code-signing and Apple Notarization pipeline so the VST3/AU binaries clear macOS Gatekeeper and Windows SmartScreen without throwing 'unidentified developer' warnings to users.
 
 ---
 
