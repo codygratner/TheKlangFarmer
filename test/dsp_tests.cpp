@@ -1222,11 +1222,16 @@ int main() {
         assert(std::abs(planter.getAmpBlock()->getVelGain() - 0.50f) < 0.01f);
         std::cout << "PASS: Velocity slope and floor scaling verified." << std::endl;
 
-        // 6. Limiter Activity Detection
+        // 6. Limiter Activity Detection (Testing the new LimiterBlock)
         planter.setDefaultParameters();
-        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 0, 1.0f); // +24dB amp drive
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_LIMITER, 0, 1.0f); // Enable Limiter
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_LIMITER, 2, 0.0f); // Set Threshold low (-24dB)
+        planter.setBlockParameter(TbdAudio::PlanterDrumEngine::BLK_AMP, 0, 1.0f); // +24dB amp drive to push into limiter
         planter.trigger(1.0f);
-        planter.processStereo(pL.data(), pR.data(), 256);
+        for (int i=0; i<10; ++i) {
+            planter.processStereo(pL.data(), pR.data(), 256);
+        }
+        std::cout << "Limiter Activity: " << planter.getLimiterActivity() << std::endl;
         assert(planter.getLimiterActivity() > 0.05f);
         std::cout << "PASS: Limiter activity detection registers gain reduction." << std::endl;
 

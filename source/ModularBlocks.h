@@ -2291,6 +2291,7 @@ public:
         invSr = ctx.invSr;
         envelopeL = 0.0f;
         envelopeR = 0.0f;
+        activity.store(0.0f, std::memory_order_relaxed);
     }
 
     void trigger(float) override {
@@ -2321,6 +2322,8 @@ public:
         float attackCoeff = std::exp(-invSr / attackSec);
         float releaseCoeff = std::exp(-invSr / relSec);
 
+        float currentActivity = 0.0f;
+
         for (int i = 0; i < numSamples; ++i) {
             float inL = (left ? left[i] : 0.0f) * inGainLin;
             float inR = (right ? right[i] : inL) * inGainLin;
@@ -2344,6 +2347,8 @@ public:
                 gainReduction = threshLin / maxEnv;
             }
 
+            currentActivity = std::max(currentActivity, 1.0f - gainReduction);
+
             float outL = inL * gainReduction;
             float outR = inR * gainReduction;
 
@@ -2354,12 +2359,20 @@ public:
             if (left) left[i] = outL;
             if (right) right[i] = outR;
         }
+
+        float curAct = activity.load(std::memory_order_relaxed);
+        float newAct = std::max(currentActivity, curAct * 0.90f);
+        activity.store(newAct, std::memory_order_relaxed);
     }
 
 private:
     float invSr = 1.0f / 44100.0f;
     float envelopeL = 0.0f;
     float envelopeR = 0.0f;
+    std::atomic<float> activity {0.0f};
+
+public:
+    float getActivity() const { return activity.load(std::memory_order_relaxed); }
 };
 
 // --- MODULAR DRUM ENGINE ---

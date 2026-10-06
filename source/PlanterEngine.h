@@ -179,6 +179,7 @@ public:
         BLK_FILTERENV,
         BLK_AMP,
         BLK_AMPENV,
+        BLK_LIMITER,
         NUM_BLOCKS
     };
 
@@ -198,6 +199,7 @@ public:
         filterEnv = std::make_unique<FilterEnvelopeBlock>(1);
         amp       = std::make_unique<PlanterAmpBlock>();
         ampEnv    = std::make_unique<AmpEnvelopeBlock>();
+        limiter   = std::make_unique<LimiterBlock>();
 
         carrier->init(ctx);
         modulator->init(ctx);
@@ -277,6 +279,12 @@ public:
         setBlockParameter(BLK_AMPENV, 1, 2.0f / 14.0f);
         setBlockParameter(BLK_AMPENV, 2, 0.5886f);
         setBlockParameter(BLK_AMPENV, 3, 0.3806f);
+
+        // Limiter (Off, 0dB Gain, 0dB Threshold, 50ms Release)
+        setBlockParameter(BLK_LIMITER, 0, 0.0f);
+        setBlockParameter(BLK_LIMITER, 1, 12.0f / 36.0f);
+        setBlockParameter(BLK_LIMITER, 2, 1.0f);
+        setBlockParameter(BLK_LIMITER, 3, 0.6296f);
     }
 
     void setBlockParameter(BlockID block, int paramIndex, float value) {
@@ -384,6 +392,12 @@ public:
         ampEnv->processStereo(nullptr, nullptr, numSamples, ctx);
         amp->processStereo(tempMixL.data(), tempMixR.data(), numSamples, ctx);
 
+        if (limiter && limiter->getParam(0) > 0.5f) {
+            limiter->processStereo(tempMixL.data(), tempMixR.data(), numSamples, ctx);
+        } else {
+            // std::cout << "Limiter NOT active! Param0: " << (limiter ? limiter->getParam(0) : -1.0f) << std::endl;
+        }
+
         // Transfer to output buffers
         if (left)  std::copy(tempMixL.begin(), tempMixL.begin() + numSamples, left);
         if (right) std::copy(tempMixR.begin(), tempMixR.begin() + numSamples, right);
@@ -415,7 +429,7 @@ public:
     float getPeakL() const { return peakL.load(std::memory_order_relaxed); }
     float getPeakR() const { return peakR.load(std::memory_order_relaxed); }
     float getLimiterActivity() const {
-        return amp ? amp->getLimiterActivity() : 0.0f;
+        return limiter ? limiter->getActivity() : 0.0f;
     }
 
     DSPBlock* getBlock(BlockID id) {
@@ -428,6 +442,7 @@ public:
             case BLK_FILTERENV: return filterEnv.get();
             case BLK_AMP:       return amp.get();
             case BLK_AMPENV:    return ampEnv.get();
+            case BLK_LIMITER:   return limiter.get();
             default:            return nullptr;
         }
     }
@@ -442,6 +457,7 @@ public:
             case BLK_FILTERENV: return filterEnv.get();
             case BLK_AMP:       return amp.get();
             case BLK_AMPENV:    return ampEnv.get();
+            case BLK_LIMITER:   return limiter.get();
             default:            return nullptr;
         }
     }
@@ -465,6 +481,9 @@ private:
     }
 
     BlockContext ctx;
+public:
+    const BlockContext& getContext() const { return ctx; }
+private:
     std::unique_ptr<CarrierBlock> carrier;
     std::unique_ptr<ModulatorBlock> modulator;
     std::unique_ptr<PitchEnvelopeBlock> pitchEnv;
@@ -473,6 +492,7 @@ private:
     std::unique_ptr<FilterEnvelopeBlock> filterEnv;
     std::unique_ptr<PlanterAmpBlock> amp;
     std::unique_ptr<AmpEnvelopeBlock> ampEnv;
+    std::unique_ptr<LimiterBlock> limiter;
 
     std::vector<float> tempFML, tempFMR;
     std::vector<float> tempNoiseL, tempNoiseR;
