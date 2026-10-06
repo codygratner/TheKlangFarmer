@@ -172,13 +172,12 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 
 ## 🚀 Spin-Off Products & Explorations
 
-### 8. The Klang Mill (Standalone VST) — Snap Heap-Style 2x6 Multi-FX & Vital-Style Matrix
+### 8. The Klang Mill (Standalone VST) — Industrial 1x6 Multi-FX Pedalboard Rack
 *Detailed Plan: [`docs/the_klang_mill_plan.md`](the_klang_mill_plan.md)*
-Create a standalone multi-effects VST3 plugin with a 2-row modular chassis and comprehensive routing matrix:
-- **Row 1 (Effects Path)**: 4 Multi-FX slots (26 algorithms) + Master Limiter + Input/Output routing.
-- **Row 2 (Modulation Rack)**: Multi-wave LFO, Envelope Follower, Random/S&H, Macro controllers, and Transient Gate.
-- **Drag-and-Drop Modulation**: Drag crosshairs onto effect knobs with animated colored sweep arcs.
-- **Vital-Style `[ MATRIX ]` Tab**: Full-screen tabular routing page exposing Source, Bipolar Depth, Destination, Aux/Scale-By modulator, transfer curve, bypass, and delete.
+Create a standalone multi-effects VST3 plugin styled after vintage studio rackmounts and high-end pedalboards:
+- **1x6 Horizontal Chassis**: Input/Slop $	o$ 4 Serial Multi-FX Pedal Slots (26 algorithms) $	o$ Master Limiter & Output.
+- **Immediate & Tactile**: Zero routing matrices or drag-and-drop clutter; dedicated stomp bypasses per slot.
+- **Global Slop**: Injects organic, non-linear analog drift across all 4 pedals for instant vintage character.
 
 ### 9. 2x5 Eurorack Modular Layout Exploration
 - Investigate moving from the current 2x4 (8-card) chassis to an expanded **2-row by 5-column (2x5, 10-card)** layout.
