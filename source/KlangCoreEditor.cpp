@@ -1,8 +1,13 @@
 #include "KlangCoreEditor.h"
+#include "ParameterManager.h"
 
 KlangCoreEditor::KlangCoreEditor(KlangCoreProcessor& p)
     : AudioProcessorEditor(p), coreProcessor(p)
 {
+    initButton.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("btn_init", "INIT"));
+    triggerButton.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("btn_trigger", "TRIGGER"));
+    tooltipsButton.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("btn_tooltips_off", "TIPS: OFF"));
+    guideButton.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("btn_guide", "QUICKSTART GUIDE"));
     setLookAndFeel(&knobLookAndFeel);
     
     // Default tooltips window
@@ -30,15 +35,19 @@ KlangCoreEditor::KlangCoreEditor(KlangCoreProcessor& p)
 void KlangCoreEditor::setTooltipsEnabled(bool enabled) {
     tooltipsEnabled = enabled;
     if (enabled) {
-        tooltipsButton.setButtonText("TIPS: ON");
+        tooltipsButton.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("btn_tooltips_on", "TIPS: ON"));
         tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff33ccff));
         tooltipWindow->setMillisecondsBeforeTipAppears(400);
     } else {
-        tooltipsButton.setButtonText("TIPS: OFF");
+        tooltipsButton.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("btn_tooltips_off", "TIPS: OFF"));
         tooltipsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff8b99a6));
         tooltipWindow->setMillisecondsBeforeTipAppears(9999999);
         tooltipWindow->hideTip();
     }
 }
+
+
+
+
 
 

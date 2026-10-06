@@ -4,9 +4,24 @@
     "tkf_subtitle": "PAGED MODULAR DUAL FM SYNTHESIS DRUM VOICE",
     "tkp_title": "THE KLANG PLANTER",
     "tkp_subtitle": "COMPACT FM PERCUSSION SYNTHESIZER",
-    "pages": "PAGES",
-    "limit": "LIMIT",
-    "off": "OFF",
-    "active_modulation": "ACTIVE MODULATION"
+    "active_modulation": "ACTIVE MODULATION",
+
+    "btn_init": "INIT",
+    "btn_init_tkf_tooltip": "INITIALIZE \u2014 Reset parameters to factory default or clean FX state.",
+    "btn_init_tkp_tooltip": "INIT \u2014 Reset all parameters to a clean default drum patch.",
+    "btn_trigger": "TRIGGER",
+    "btn_trigger_tooltip": "TRIGGER \u2014 Fire a manual audition drum hit at full velocity.",
+    "btn_tooltips_on": "TIPS: ON",
+    "btn_tooltips_off": "TIPS: OFF",
+    "btn_tooltips_tooltip": "TOOLTIPS \u2014 Toggle hover parameter and control tooltips on or off.",
+    "btn_guide": "QUICKSTART GUIDE",
+    "btn_guide_tooltip": "QUICKSTART GUIDE \u2014 Display synthesized drum architecture overview and recipes.",
+    
+    "tab_pages": "PAGES",
+    "badge_limit": "LIMIT",
+    "badge_off": "OFF",
+    "badge_off_tooltip_on": "DISPLAY ACTIVE: Click to suspend visualizer rendering and conserve CPU.",
+    "badge_off_tooltip_off": "DISPLAY OFF: Visualizer rendering suspended to conserve CPU. Click to resume.",
+    "guide_title": "THE KLANG FARMER \u2014 QUICKSTART GUIDE"
   }
 }

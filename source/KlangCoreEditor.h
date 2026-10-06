@@ -17,10 +17,15 @@ protected:
     bool tooltipsEnabled = false;
 
     // Header buttons (shared)
-    juce::TextButton tooltipsButton { "TIPS: OFF" };
-    juce::TextButton initButton { "INIT" };
-    juce::TextButton triggerButton { "AUDITION HIT" };
+    juce::TextButton tooltipsButton;
+    juce::TextButton initButton;
+    juce::TextButton triggerButton;
+    juce::TextButton guideButton;
 
     void setTooltipsEnabled(bool enabled);
 };
+
+
+
+
 

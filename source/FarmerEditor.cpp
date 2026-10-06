@@ -627,7 +627,7 @@ void VisualizationCardComponent::paint(juce::Graphics& g) {
 
     g.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     g.setColour(offText);
-    g.drawText("OFF", offR, juce::Justification::centred, false);
+    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("badge_off", "OFF"), offR, juce::Justification::centred, false);
 
     // Lock icon on top right: grey (0xff8892a4) when unlocked, bright yellow (0xffffd600) when locked
     auto lockR = getLockBounds().toFloat();
@@ -2804,6 +2804,7 @@ void TheKlangFarmerAudioProcessorEditor::mouseDrag(const juce::MouseEvent& e) {
 void TheKlangFarmerAudioProcessorEditor::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& /*d*/) {
     handleCardInteraction(e.eventComponent);
 }
+
 
 
 

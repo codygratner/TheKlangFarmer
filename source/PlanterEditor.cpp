@@ -73,7 +73,7 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
         g.setColour(juce::Colour(0x558899aa));
     }
     g.setFont(juce::FontOptions(10.0f, juce::Font::bold));
-    g.drawText("LIMIT", limitArea, juce::Justification::centred, false);
+    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("badge_limit", "LIMIT"), limitArea, juce::Justification::centred, false);
 
     // 3. Right area: Stereo Peak Meters (L & R)
     auto meterArea = bounds.reduced(3.0f, 3.0f);
@@ -777,6 +777,7 @@ void TheKlangPlanterAudioProcessorEditor::timerCallback() {
 
     headerViz.updateData(scopeBuffer.data(), static_cast<int>(scopeBuffer.size()), peakL, peakR, limAct);
 }
+
 
 
 
