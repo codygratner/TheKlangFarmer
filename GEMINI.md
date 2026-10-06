@@ -48,6 +48,14 @@
        Output a concise one-sentence notification and yield turn immediately.
     2. **T = 10 Min (Stage 1 Health Check)**: Check status once silently via `manage_task(Action="status", TaskId="<task-id>")`. If actively progressing, schedule the final 10-minute timeout watchdog (`DurationSeconds=600`, Prompt="20-minute hard timeout: task has stalled or hung; terminate and investigate.") and yield silently.
     3. **T = 20 Min (Stage 2 Hard Timeout & Auto-Kill)**: If the 20-minute timer expires, terminate via `manage_task(Action="kill", TaskId="<task-id>")`, inspect logs, and alert user.
+  - **Remote GitHub CI & Cloud Workflows (10 min / 20 min / 30 min / 50 min)**: For remote multi-platform GitHub Actions runs (Linux, macOS, Windows matrix, auval, pluginval, release packaging):
+    1. **T = 0 (Push/Trigger & Yield)**: Schedule a 10-minute watchdog timer:
+       `schedule(DurationSeconds=600, Prompt="10-minute CI watchdog: check GitHub Actions run status across Linux, macOS, and Windows.")`
+       Output a concise one-sentence notification with the run URL and active branch, then yield turn immediately.
+    2. **T = 10 Min (Checkpoint 1)**: Query GitHub API once. Output a concise markdown table showing runner statuses and active steps. If progressing normally, schedule Checkpoint 2 (`DurationSeconds=600`, Prompt="20-minute CI watchdog: check if compilation has finished and validation tests started.") and yield turn. If any job failed, fetch failure logs immediately and alert user.
+    3. **T = 20 Min (Checkpoint 2)**: Query GitHub API once. Output concise table. If validation tests (`auval`, `pluginval`) are in progress, schedule Checkpoint 3 (`DurationSeconds=600`, Prompt="30-minute CI watchdog: check if validation tests and artifact packaging completed.") and yield turn. If all passed, notify user with summary. If failed, fetch failure logs.
+    4. **T = 30 Min (Checkpoint 3)**: Query GitHub API once. Output concise table. If close to finishing, schedule the final 20-minute hard timeout (`DurationSeconds=1200`, Prompt="50-minute hard timeout: remote CI has hung or deadlocked; terminate and investigate.") and yield turn. If all passed, notify user.
+    5. **T = 50 Min (Hard Timeout & Auto-Cancel)**: If the 50-minute timer expires and jobs are still running, auto-cancel the remote run via GitHub API, fetch logs from the stalled runner/step, present root-cause analysis, and alert user.
 
 
 ## Strict C++ Formatting & Style
