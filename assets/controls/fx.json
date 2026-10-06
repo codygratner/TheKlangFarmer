@@ -339,7 +339,7 @@
   "slop_freq": {
     "type": "float",
     "name": "Slop: Frequency",
-    "description": "",
+    "description": "Analog frequency drift / random pitch fluctuation amount",
     "is_bipolar": false,
     "default": 0.0,
     "double_click": 0.0,
