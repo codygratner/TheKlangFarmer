@@ -180,6 +180,26 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Double-clicking any reference item automatically focuses, expands, and selects it in the tree and property form.
 - **Automated Schema Audit**: Updated `ParameterSchemaAuditTest` to hard-fail if any visual styling or color properties leak into `assets/controls/`.
 
+---
+
+## 🚀 Milestone: v0.3.2 "Agent Infrastructure & Guardrails Audit"
+*Focus: Post-release optimization of GEMINI.md guardrails, custom skills, inter-chat handoffs, and agent telemetry.*
+
+### 1. Comprehensive Guardrails & Skills Optimization Audit
+*Goal: Systematically audit GEMINI.md, system rules, custom skills, and inter-chat communiques to eliminate cruft, reduce context bloat, streamline execution pipelines, and expand missing capabilities.*
+- **Guardrails Audit (`GEMINI.md`)**:
+  - Review all guardrails for conciseness, removing obsolete workarounds and redundant instructions.
+  - Assess token overhead in system instructions and streamline high-frequency banners.
+  - Audit the Two-Chat (Ivory Tower vs Factory Floor) division, watchdog timers, and mobile automation pipelines.
+- **Skills Audit & Streamlining (`.gemini/config/skills/` & `.agents/skills/`)**:
+  - Audit custom skills (`audiothread-guard`, `build-validate`, `step-verify`, `execute-task`, `cut-release`, `refresh-context`, etc.) for overlapping responsibilities or deprecated logic.
+  - Streamline skill prompts and help texts to minimize prompt injection and context usage.
+  - Explore new workflow expansions (e.g., enhanced git telemetry, automated release notes generation, automated performance benchmarks).
+- **Inter-Chat Communique Tuning (`docs/communique/`)**:
+  - Evaluate the `plan_to_build.md` and `build_to_plan.md` state machine handoff to identify any friction or repetitive handoffs.
+
+---
+
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
 
