@@ -1,30 +1,23 @@
-# Communiqué: New Klang City (Planner) ➔ Klang Industries (Builder)
-
-**Timestamp:** 2026-10-06 19:00  
-**Active Milestone:** v0.3.1 "Editor Quality & Data Schema"  
-**Task Name:** Restore Two-Line Status Bar Visibility & Universal Hover Feed  
-**Status:** `READY_FOR_EXECUTION`  
-**Recommended Model & Thinking Budget:** Tier 2 — Gemini 3.8 Flash (Thinking: High)  
-**Quota Impact:** 🟢 SUSTAINABLE (Standard UI & test engineering)  
+# Master Blueprint & Dispatch Contract
+**Origin:** New Klang City (Planning Headquarters)  
+**Destination:** Klang Industries (The Factory Floor)  
+**Date:** 2026-10-06  
+**Active Milestone:** v0.4.0 (Fast-Tracked Non-Destructive Test Tooling)  
+**Task Name:** Automated VST3 Parameter Validation Suite & Headless `pluginval` Runner  
+**Recommended Model Tier:** Tier 2 (`Gemini 3.8 Flash (Thinking: High)`)  
 
 ---
 
-## 🎯 Executive Objective
-Diagnose and eliminate the "missing status bar" perception in The Klang Planter and The Klang Farmer:
-1. **Elevate Chassis Styling & Contrast**:
-   - Change background to elevated `0xff121622` with a 1.5px top border `0xff2a3449`.
-   - Add a subtle green status LED (`● READY`) when idle so the status bar is unmistakably recognized as an active display.
-   - Boost Line 2 text luminance (`0xffcbd5e1` active, `0xff94a3b8` idle guide, `0xff64748b` tips-off) so text is never murky or near-black.
-2. **Universal Header & Button Hover Feeds**:
-   - Feed hover events from `INIT`, `TRIGGER`, `TIPS`, `SETTINGS`, and `Header Visualizer` into `statusBar.setHoveredControl()`, making the entire UI responsive.
-3. **Z-Order Assurance**:
-   - Ensure `statusBar.toFront(false)` is called in `resized()` so the bar is always pinned securely above all child components.
-4. **Test & Deploy**:
-   - Validate through `gui_tests` (all 177+ pass).
-   - Rebuild Release binaries and deploy to `current_build/` and Program Files.
-   - Conclude turn with the `🔔 JOB'S DONE!` chime.
+## Strategic Objective
+Implement the 6-pillar in-engine VST3 parameter validation suite in `test/PluginIntensiveTestSuite.h` covering 100% of parameters across both The Klang Farmer and The Klang Planter, and provide a headless `pluginval` runner script in `tools/run_pluginval.ps1`.
 
-## 📋 Active Plan Reference
-The complete implementation checklist is published in [`PLAN.md`](file:///C:/Dev/TheKlangSuite/PLAN.md).
+This task is 100% test suite and tooling code—it modifies zero runtime audio DSP math or UI components, making it completely safe to build while the user is away from desktop.
 
-> ⚠️ **Model Selection Gate**: Do NOT pop up an `ask_question` modal before beginning Phase 1. Present your briefing with the Model Advisory banner at the very end, and pause in regular chat text for the user to adjust their model dropdown in the IDE footer and reply **`proceed`**.
+---
+
+## Directives for Klang Industries
+1. **Model Check**: Please verify your model setting is **Tier 2: Gemini 3.8 Flash (Thinking: High)**.
+2. **Branch**: Maintain execution on `0.3.1-dev` (or branch as needed).
+3. **Execution Plan**: Follow [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) strictly across Phases 1 through 4.
+4. **Validation**: Execute `gui_tests.exe` and confirm 100% assertions pass with 0 failures.
+5. **Communique**: Report results in `docs/communique/build_to_plan.md` upon completion.
