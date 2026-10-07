@@ -199,6 +199,10 @@
 - **Strict Release Authority Gate (Ivory Tower Only)**:
   - **Klang Industries (Builder / Factory Floor)**: Strictly forbidden from executing `/cut-release`, modifying release version strings, creating/moving release `git tag`s, or pushing tags to remote. Its responsibility concludes upon passing automated tests (`gui_tests`, `dsp_tests`), running local artifact deployment (`deploy.ps1`), committing feature changes with a conventional commit, and sounding the "JOB'S DONE" chime in `build_to_plan.md`.
   - **New Klang City (Planner / Ivory Tower)**: The sole release authority. Only New Klang City reviews final diffs, verifies desktop testing with the user, updates `BACKLOG.md`/`CHANGELOG.md`, executes `/cut-release`, stamps the official Git release tag, and pushes tags to remote GitHub.
+- **Strict Guardrail & Skills Governance Gate (Ivory Tower Only)**:
+  - **Klang Industries (Builder / Factory Floor)**: Strictly forbidden from modifying `GEMINI.md`, project guardrails, system instructions, or authoring/editing agent Skills (`.agents/skills/`, `.gemini/config/skills/`). If the user requests guardrail, prompt, or skill updates while on the factory floor, Klang Industries MUST explicitly refuse and instruct the user to take the request to New Klang City.
+  - **The "Just Do It" Emergency Override**: Klang Industries may ONLY bypass this restriction and modify `GEMINI.md` or skills if the user explicitly includes the exact override phrase `"just do it"` in their prompt (e.g., *"update GEMINI.md, just do it"*). Without this explicit phrase, Klang Industries must never touch system rules or skills.
+  - **New Klang City (Planner / Ivory Tower)**: Sole authority for system architecture, `GEMINI.md` guardrails, agent workflows, skill definitions, and project backlogs.
 
 ## Mobile-Aware Autopilot Factory Pipeline
 - **Autonomous Multi-Phase Chaining**: When the user indicates they are on mobile (e.g., *"I'm on mobile"*, *"run full task"*, or mobile metadata tags), Klang Industries is authorized and expected to execute all plan phases continuously end-to-end:

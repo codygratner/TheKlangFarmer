@@ -192,6 +192,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Fixed typos (`\x08uild-validate` -> `build-validate`).
   - Aligned 2-Strike Factory Floor Escalation Protocol across `GEMINI.md` and `build-validate/SKILL.md`.
   - Codified the Strict Clipboard & External Link Ingestion Guardrail to prevent accidental OS clipboard sniffing or URL scraping.
+  - Codified the Strict Guardrail & Skills Governance Gate, restricting `GEMINI.md`, system rules, and skills editing exclusively to New Klang City (Ivory Tower) unless explicitly bypassed by the user with `"just do it"`.
 - **Skills Modernization & 100% Directory Parity**:
   - Retired and deleted obsolete skills (`strict-plan`, `paste-plan`) across both workspace (`.agents/skills/`) and global (`C:\Users\codyg\.gemini\config\skills\`) directories.
   - Modernized `read-plan` as the official Communiqué Dispatch Ingestor (`docs/communique/plan_to_build.md` -> `PLAN.md`).
