@@ -561,6 +561,14 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 - **100% JSON-Driven Copy**:
   - All headings, icons, descriptions, and button labels parsed from `assets/controls/global_ui.json` under `"quick_tour"`.
 
+### 10. Research & Feasibility: Obsidian Knowledge Base & Vault Integration
+*Goal: Investigate creating an Obsidian vault structure or dedicated knowledge repository for all project documentation, architectural blueprints, dev logs, error histories, and data schemas.*
+- **Interactive Research & Exploration Scope**:
+  - Evaluate opening `docs/` directly as a native Obsidian Vault (leveraging Obsidian's local-first Markdown format with zero proprietary database lock-in).
+  - Investigate bidirectional linking (`[[wikilinks]]`) across DSP specifications, UI layout schemas, glossary terms ([`docs/GLOSSARY.md`](GLOSSARY.md)), and institutional memory ([`docs/DEV_HISTORY.md`](DEV_HISTORY.md)).
+  - Explore Obsidian Canvas for visual architecture diagrams (signal flow graphs, module dependencies, and roadmap sequencing).
+  - Evaluate repository architecture options: single repo `docs/` vault vs. dedicated sibling repository / Git submodule, ensuring seamless interoperability with AI agent tools.
+
 ---
 
 ## 🚀 Milestone: v0.7.0 "The Visual Polish & UI Mastery Update"
