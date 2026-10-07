@@ -1,9 +1,9 @@
-# Context Clues: Klang Industries (The Factory Floor)
-
-**Chat Role:** Implementation, Foundry & Heavy Engineering (Klang Industries)  
-**Industrial Stance:** Tasks 4 & 5 (Planter Header Interactions + Two-Line Status Bar) are COMPLETE! 164/164 `gui_tests` and 100% of `dsp_tests` are passing. Release artifacts deployed to `current_build/` and Program Files. Standing by for New Klang City's next dispatch!  
-**Active Milestone:** v0.3.1 "Editor Quality & Data Schema"  
-**Current State:** 
-- Git branch: `0.3.1-dev`.
-- Active Plan: None (`PLAN.md` reset to `# No Active Plan`). Completed plan archived to `docs/completed_plans/2026-10-06_planter_header_and_status_bar.md`.
-- Next action: Awaiting next dispatch from New Klang City.
+# Implementation Chat Context Clues
+- **Chat Role:** Implementation & Build Chat (Klang Industries)
+- **Current Objective:** Fix Release Teardown Crash (0xC0000005) in VersionChecker (`v0.3.1` Pre-Release Hotfix)
+- **Plan Status:** Ready to execute Phase 1 of `PLAN.md`
+- **Current State:**
+  - Branch: `0.3.1-dev`
+  - Previous task (Planter GUI performance tuning) 100% complete, verified (215/215 GUI tests, 100% DSP tests), deployed, and harvested to `docs/DEV_HISTORY.md`.
+  - New blueprint and dispatch received in `docs/communique/plan_to_build.md` and `PLAN.md`.
+  - Uncommitted files: `docs/DEV_HISTORY.md` (harvest entry appended).
