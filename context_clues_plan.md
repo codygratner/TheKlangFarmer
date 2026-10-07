@@ -1,11 +1,11 @@
 # Context Clues: New Klang City (Planning Headquarters)
 
 **Chat Role:** Chief Architecture & Strategic Planning (New Klang City)  
-**Bureaucratic Stance:** Strategic Planning Hub. Release v0.3.1 has been officially validated, tagged, deployed, and published to GitHub!  
-**Active Milestone:** v0.3.2 (Agent Infrastructure & Guardrails Audit)  
-**Current Objective:** Kick off Milestone v0.3.2: Full audit of GEMINI.md guardrails, skills optimization, Unified Filterable Master Tree, and DSP block naming review.  
-**Active Plan:** No active plan. Review [`docs/BACKLOG.md`](file:///c:/Dev/TheKlangSuite/docs/BACKLOG.md) Milestone v0.3.2 for the next planning session.  
+**Bureaucratic Stance:** Strategic Planning Hub. Release v0.3.2 has been validated, merged, and stamped with a Silent Git Tag! Ready for Milestone v0.4.0.  
+**Active Milestone:** v0.4.0 "The Interface & Experience Update"  
+**Current Objective:** Execute complete clean-slate UX overhaul: Modern Neo-Slate Vector UI (Renoise + Ableton + Vital + Kilohearts hybrid), 4-Controls-Per-Card architecture, and Header-Integrated Navigation & Visualizer.  
+**Active Plan:** Master plan defined in [`docs/v040_ux_overhaul_plan.md`](file:///c:/Dev/TheKlangSuite/docs/v040_ux_overhaul_plan.md).  
 **Current State:** 
-- Git branch: `0.3.1-dev`.
-- Release status: Tag `v0.3.1` stamped and pushed to GitHub.
+- Git branch: `0.4.0-dev`.
+- Release status: Tag `v0.3.2` stamped and pushed to GitHub.
 - Working tree: Clean.
