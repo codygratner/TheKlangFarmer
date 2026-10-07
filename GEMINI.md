@@ -164,6 +164,8 @@
 
 ## Strict Context Management (Refresh Strategy)
 - **Proactive Context Refreshing**: When you notice the chat session getting long (multiple implementation iterations, large token usage, or when transitioning to a new plan phase), you MUST proactively suggest the user run the `/refresh-context` skill (or click "Replace with New" in the sidebar themselves).
+- **Proactive Context Compaction Warning**: When a conversation crosses ~40 turns or approaches high token density, the agent proactively outputs a subtle advisory at the end of its response:
+  > 💡 *Session Token Advisory: This chat is getting long. Consider running `/refresh-context` before kicking off the next major milestone to keep the reasoning razor-sharp.*
 - **Two-Chat System Support**: Honor the two-chat system where one chat ("New Klang City") is purely for planning, and other chats are for implementation. During implementation, prioritize reading `PLAN.md` over generating raw instructions in the chat.
 
 ## Strict Chat Role Enforcement (Planner vs. Builder)
@@ -172,10 +174,21 @@
   - **Live Factory Radar (Git Telemetry)**: New Klang City is explicitly authorized and encouraged to run non-mutating Git inspection commands (`git status --short`, `git diff --stat`) to observe active factory progress, file diffs, and implementation state in real time without waiting on manual reports.
 - **Klang Industries (Builder)**: This chat is strictly Read-Only for overarching architecture. It is strictly forbidden from modifying BACKLOG.md or drafting core PLAN.md features. If the user requests architectural planning while in the Builder chat, the agent MUST explicitly refuse and instruct the user to take the request to New Klang City.
 
+## Mobile-Aware Autopilot Factory Pipeline
+- **Autonomous Multi-Phase Chaining**: When the user indicates they are on mobile (e.g., *"I'm on mobile"*, *"run full task"*, or mobile metadata tags), Klang Industries is authorized and expected to execute all plan phases continuously end-to-end:
+  `Code Edits ➔ audiothread-guard ➔ cmake build ➔ gui_tests ➔ deploy.ps1 ➔ archive PLAN.md ➔ update build_to_plan.md`
+  without halting between intermediate phases for redundant chat approvals. This eliminates mobile UI fatigue while maintaining rigorous test verification.
+
 ## Strict Inter-Chat Communique Protocol & "Job's Done" Handshake
 - **Communique Mailbox (`docs/communique/`)**:
   - `docs/communique/plan_to_build.md`: Authored strictly by New Klang City. Contains the dispatch contract, active milestone, task name, recommended model tier, and architectural directives.
   - `docs/communique/build_to_plan.md`: Authored strictly by Klang Industries. Contains live execution status, active branch, unit test results, roadblocks, and completion reports.
+- **Communiqué State Machine Handshake**:
+  All dispatch headers in `docs/communique/plan_to_build.md` must declare their explicit lifecycle state:
+  - `STATUS: DRAFTING`: New Klang City is actively formulating the plan. Klang Industries MUST NOT read or execute.
+  - `STATUS: READY_FOR_EXECUTION`: Signed contract published. Klang Industries is authorized to begin building.
+  - `STATUS: IN_PROGRESS`: Klang Industries has started compiling or editing code.
+  - `STATUS: COMPLETE`: Klang Industries has verified all tests and deployed artifacts.
 - **Zero-Polling Discipline**: Under no circumstances should either agent run terminal status loops (`git status`, `git diff`, file checks, or watchdog polling loops) waiting for the other chat to complete work. Inter-chat handoffs are strictly event-driven.
 - **The "Job's Done" Chime**: When Klang Industries finishes compilation, test passes, and artifact deployment, it MUST update `build_to_plan.md` to `Status: COMPLETE ✅` and conclude its turn with this prominent handoff chime:
   > 🔔 **JOB'S DONE!** `<Task Name>` is fully built, tested, and deployed. Switch to New Klang City to review and advance!
@@ -186,4 +199,14 @@
 - **Auto-Archive & Reset on Task Finish**:
   - As soon as Klang Industries completes all phases in `PLAN.md` and passes all test suites (`gui_tests`, `dsp_tests`), it MUST immediately archive `PLAN.md` to `docs/completed_plans/<YYYY-MM-DD>_<task_slug>.md` (via `/task-finish` or `/clean-plan`).
   - Klang Industries must reset `PLAN.md` to an empty or idle state (`# No Active Plan`). Under no circumstances should completed or stale plans linger in `PLAN.md` to be accidentally re-executed.
+
+## Pre-Release "Clean Slate & Regression Gauntlet" Guardrail
+- **Mandatory Pre-Flight Execution**: Before any version bump, git release tagging, or `/cut-release` skill execution, the repository MUST pass through the automated regression gauntlet:
+  1. **Cruft & Scratch Sweep**: Zero untracked scratch scripts (`update_*.py`, `temp_*.txt`), loose logs, or orphaned artifacts in the repository tree (`git status --porcelain`).
+  2. **Dual-Configuration Parity**: Both `Debug` (validating assertion bounds and memory safety) and `Release` (validating compiler optimizations and vectorization) must compile cleanly with zero errors.
+  3. **Universal 100% Test Pass**:
+     - `dsp_tests.exe`: 100% assertions passing with zero audio-thread allocations, zero mutex locks, zero NaNs, and verified FastMath curves.
+     - `gui_tests.exe`: 100% assertions passing across all component bindings, 6-pillar VST3 parameter validations, modal lifecycles, and offscreen smoke paint checks.
+  4. **Strict Schema Parity**: 100% of APVTS parameters registered in both plugins must have matching `ControlDef` entries in `assets/controls/*.json`.
+  5. **JUCE 9.0.3 Timer Hygiene**: 100% of `juce::Timer` subclasses must call `stopTimer()` as the first line of their destructor.
 
