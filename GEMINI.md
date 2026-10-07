@@ -75,7 +75,10 @@
 ## Strict Data-Driven Architecture (CRITICAL)
 - **JSON First Priority**: The data-driven JSON architecture is the primary design pattern for this project. Always default to data-driven solutions for new features, UI layouts, colors, and DSP parameters.
 - **No Hardcoded Values (Unless Mandatory)**: Under no circumstances should APVTS parameter IDs, default values, min/max ranges, string labels, quick-snap intervals, or tooltips be hardcoded in C++ source files *unless it is absolutely technically mandatory* (e.g., due to strict real-time DSP constraints or third-party API requirements).
-- **JSON Single Source of Truth**: All parameter definitions, layout schemas, and UI metadata must be strictly authored in and parsed from the modular JSON files within `assets/controls/`.
+- **Strict Schema Separation of Concerns**: All JSON files must rigidly adhere to their designated layer to prevent architectural leakage:
+  1. `assets/controls/*.json`: Strictly DSP & APVTS parameter contracts (type, min/max ranges, default, description, format, snap_points, choices). ZERO visual styling, ZERO colors, and ZERO pixel dimensions are permitted in this directory.
+  2. `assets/layouts/*.json`: Structural UI surface hierarchy (Pages -> Cards -> array of bound parameter IDs). Defines spatial organization and card grouping.
+  3. `assets/themes/*.json`: Visual styling, color palettes, typography (`theme.json`), and floating overlay/callout dimensions, background/border colors, and bound parameter arrays (`callouts.json`).
 
 ## Strict Planning Guardrails
 - **No Spontaneous Implementation**: When the user invokes planning commands (/plan, /strict-plan, /pasteplan, /readplan), you must NEVER automatically start writing C++ code, compiling, or modifying source files.

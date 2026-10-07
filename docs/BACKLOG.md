@@ -165,6 +165,21 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Idle Silence Bypass**: Added signal gate checking for zero amplitude before queuing repaints when the synthesizer is silent.
 - **Verification Metric**: 215 / 215 `gui_tests` passed successfully with 100% assertion pass rate.
 
+### 9. Schema Separation of Concerns & Cross-Reference "Where Used" Inspector
+*Detailed Plan: [`PLAN.md`](PLAN.md)*  
+*Goal: Enforce strict separation of concerns across JSON data layers and eliminate parameter discoverability gaps in The Klang Editor by introducing a pre-indexed Cross-Reference ("Where Used") navigation panel.*
+- **Strict Schema Separation**:
+  - `assets/controls/*.json`: Strictly DSP/APVTS parameter definitions. Zero visual styling, zero colors, zero pixel dimensions.
+  - `assets/layouts/*.json`: Structural UI hierarchy (Pages -> Cards -> parameter ID bindings).
+  - `assets/themes/*.json`: Created `assets/themes/` containing `theme.json` (color palettes, module accents) and `callouts.json` (floating overlay geometry, colors, and bound parameter arrays).
+- **Planter Master Limiter Discovery**: Added `[Callout] Master Limiter` under The Klang Planter in `assets/layouts/tkp_layout.json` so all 9 modules (8 surface cards + 1 callout) and 100% of APVTS parameters are discoverable in one place.
+- **Cross-Reference ("Where Used") Panel**:
+  - Added a lower resizable list panel beneath the Tree View in The Klang Editor.
+  - Pre-computes a two-way index map at startup (`< 2ms`) with zero runtime filesystem crawling.
+  - Selecting any parameter, card, or callout displays its bidirectional associations.
+  - Double-clicking any reference item automatically focuses, expands, and selects it in the tree and property form.
+- **Automated Schema Audit**: Updated `ParameterSchemaAuditTest` to hard-fail if any visual styling or color properties leak into `assets/controls/`.
+
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
 
