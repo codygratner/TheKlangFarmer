@@ -141,7 +141,19 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Visual Elevation**: Elevated chassis background (`0xff121622`) with a crisp 1.5px top demarcation border (`0xff2a3449`), green status LED (`● READY`), subtle version badge (`The Klang Suite v0.3.1`), and high-contrast Line 2 text luminance.
 - **Universal Header Hover Feeds**: Connected hover callbacks on `initButton`, `triggerButton`, `tooltipsButton`, `settingsButton`, `guideButton`, and `headerViz` so the entire interface feeds live parameter details into the status bar.
 - **Z-Order Assurance**: Enforced `statusBar.toFront(false)` in `resized()` across all editors.
-- **Verification Metric**: 191 / 191 `gui_tests` passed successfully with 100% assertion pass rate.
+### 7. Automated VST3 Parameter Validation Suite & Headless `pluginval` Runner — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_vst3_parameter_validation_and_pluginval.md`](completed_plans/2026-10-06_vst3_parameter_validation_and_pluginval.md)*
+*Goal: Systematically validate 100% of registered VST3 parameters across The Klang Farmer and The Klang Planter through an in-engine 6-pillar reflection suite, backed by a portable headless pluginval runner.*
+- **In-Engine 6-Pillar Parameter Suite (`test/PluginIntensiveTestSuite.h`)**:
+  1. **Dynamic Reflection & Identity**: Recursively sweeps 100% of `processor.getParameters()` for both plugins without hardcoded lists, verifying non-empty IDs and names.
+  2. **Normalization Roundtrip**: Asserts `convertTo0to1(convertFrom0to1(x)) == x` across `[0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]` with step-aware tolerances.
+  3. **Boundary Clamping & Safety**: Tests out-of-bounds input (-1.0, 2.0) to mathematically verify parameters clamp safely without underflow, overflow, or NaN leaks.
+  4. **JSON Schema Parity**: Verifies all registered parameter IDs exist in `assets/controls/*.json` with matching defaults, min/max ranges, and skew factors.
+  5. **State Serialization Roundtrip**: Saves APVTS state to XML/MemoryBlock &rarr; randomizes all parameters &rarr; restores state &rarr; asserts 100% restoration parity.
+  6. **DSP Audio Smoke Pass**: Sweeps parameters from 0.0 to 1.0 while pumping audio through `processBlock()` to prove zero NaNs, Infs, or divisions by zero under rapid host automation.
+- **Headless `pluginval` Fallback Runner (`tools/run_pluginval.ps1`)**:
+  - Authored portable runner script discovering `pluginval.exe` in `tools\` or system PATH at configurable strictness (default level 5).
+- **Verification Metric**: 207 / 207 `gui_tests` passed successfully with 100% assertion pass rate.
 
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
@@ -168,19 +180,6 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Branchless Power-of-Two FM Phase Wrapping**:
   - Replace conditional phase wrapping with 32-bit fixed-point integer phase accumulators (`uint32_t`) and power-of-two lookup table indexing with bitwise masking (`& 4095`).
   - Completely eliminates CPU branch mispredictions and CRT transcendentals in hot FM feedback and cross-modulation loops.
-
-### 0.8. Automated VST3 Parameter Validation Suite & Headless `pluginval` Runner
-*Goal: Systematically validate 100% of registered VST3 parameters across The Klang Farmer and The Klang Planter through an in-engine 6-pillar reflection suite, backed by a portable headless pluginval runner.*
-- **In-Engine 6-Pillar Parameter Suite (`test/gui_tests.cpp` / `PluginIntensiveTestSuite`)**:
-  1. **Dynamic Reflection**: Recursively sweeps 100% of `processor.getParameters()` for both plugins without hardcoded parameter lists.
-  2. **Normalization Roundtrip**: Asserts `convertTo0to1(convertFrom0to1(x)) == x` across `[0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]` within floating-point epsilon.
-  3. **Boundary Clamping**: Tests out-of-bounds input (-1.0, 2.0) to mathematically verify parameters clamp safely without underflow or overflow.
-  4. **JSON Schema Parity**: Verifies all registered parameter IDs exist in `assets/controls/*.json` with matching defaults, min/max ranges, and skew factors.
-  5. **State Serialization Roundtrip**: Saves APVTS state to XML/MemoryBlock &rarr; randomizes all parameters &rarr; restores state &rarr; asserts 100% restoration parity.
-  6. **DSP Audio Smoke Pass**: Sweeps parameters from 0.0 to 1.0 while pumping audio through `processBlock()` to prove zero NaNs, Infs, or divisions by zero under rapid host automation.
-- **Headless `pluginval` Fallback Runner (`tools/pluginval.exe`)**:
-  - Integrate a portable, lightweight Tracktion `pluginval` binary into `tools/`.
-  - Runs headless VST3 COM interface validation, bus negotiation, and host thread-safety compliance checks at strictness level 5.
 
 ### 0.9. The Klang Editor CalloutBox Preview & Live Theming Harness
 *Goal: Bring full parity and visual inspection capability for all modal CalloutBoxes directly into The Klang Editor, backed by automated GUI test coverage.*
