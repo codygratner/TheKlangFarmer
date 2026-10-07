@@ -194,19 +194,13 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Automated Test Coverage (`test/gui_tests.cpp`)**:
   - Expand the Editor functional test suite to programmatically open, render, and dismiss every registered CalloutBox variant with zero leaks and 100% paint assertion success.
 
-### 0. Automated Version Bump Guardrail (`/cut-release` Skill)
-*Goal: Formalize the "Version Bump = Clean Slate" workflow by building a dedicated AGY slash command to handle version bumps safely.*
-- **Action**: Build `C:\Users\codyg\.gemini\config\skills\cut-release\SKILL.md`.
-- **Requirements**:
-  - Automatically bumps the CMake `project(TheKlangSuite VERSION X.X.X)` string.
-  - Builds and tests the new version.
-  - Upon success, pops an interactive modal: "SUMMON THE HARVESTER?"
-  - If Yes:
-    - Runs a `clear_transcript.py --all` python script to scrape ALL active chats.
-    - Slices all previous `DEV_HISTORY.md` sessions into a new archive (`docs/archives/DEV_HISTORY_vX.X.X.md`).
-    - Globally wipes `transcript.jsonl` for every active chat.
-    - Overwrites both `context_clues_build.md` and `context_clues_plan.md` with a clean slate message.
-  - Commits the version bump.
+### 0. Automated Version Bump Guardrail (`/cut-release` Skill) — ✅ COMPLETED
+*Skill Definition: [`C:\Users\codyg\.gemini\config\skills\cut-release\SKILL.md`](file:///C:/Users/codyg/.gemini/config/skills/cut-release/SKILL.md)*  
+*Goal: Formalize the "Version Bump = Clean Slate" workflow by building a dedicated AGY slash command to execute the 5-stage pre-release regression gauntlet safely.*
+- **Phase 1 (Safe Cruft Sweep)**: Auto-cleans ephemeral scratch scripts (`*.tmp`, `temp_*.txt`, `update_*.py`); halts if uncommitted edits to tracked C++/JSON files exist.
+- **Phase 2 (Dual-Config Regression Gauntlet)**: Compiles and runs `Debug` (asserts & memory checks) and `Release` (100% `dsp_tests` & `gui_tests` passes, plus `pluginval` host validation). If any failure occurs, halts and rolls back to Bug Squashing Mode.
+- **Phase 3 (Version Bump & Tagging)**: Updates `CMakeLists.txt` and `source/VersionChecker.h`, runs `deploy.ps1`, commits `chore(release): bump version to vX.X.X`, and creates annotated Git tag.
+- **Phase 4 (Summon the Harvester)**: Interactive modal prompt to archive institutional memory into `docs/DEV_HISTORY.md`, slice previous releases to `docs/archives/`, wipe chat transcripts, and reset context clues for a clean slate kickoff.
 
 ### 1. Parameter Randomization Engine (d6)
 Add a fully JSON-driven contextual randomization system:
