@@ -38,7 +38,7 @@ Search the inner methods (`process`, `processBlock`, `processStereo`, `applyEnve
 #### Category C: File, Network, or Console I/O
 - Output streams: `std::cout`, `std::cerr`, `printf`, `fprintf`
 - File operations: `std::ifstream`, `std::ofstream`, `FILE*`, `juce::File`
-- JUCE logging: `DBG(...)`, `juce::Logger::writeToLog` inside per-sample processing.
+- Logging & developer diagnostics: `DBG(...)`, `juce::Logger::writeToLog`, `TKS_LOG`, `TKS_LOG_INFO`, `TKS_LOG_WARN`, `TKS_LOG_ERROR` inside per-sample processing.
 
 #### Category D: SIMD Vectorization & Transcendental Bottlenecks
 - Flag heavy CRT transcendental math calls in inner sample loops:

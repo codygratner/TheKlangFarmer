@@ -221,20 +221,22 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Renamed legacy plural files: `modulator.json`, `filter.json`, `envelope.json`. Ruthlessly purged plural files.
 - **Verification Metric**: 275 / 275 `gui_tests` passed successfully with 100% assertion pass rate across all 11 test suites; 100% `dsp_tests` passed. Binaries deployed to `current_build/` and system VST3 directories.
 
-### 3. Developer Logging Subsystem (`TKS_LOG`) & Diagnostics Engine
+### 3. Developer Logging Subsystem (`TKS_LOG`) & Diagnostics Engine — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-07_dev_logger_subsystem.md`](completed_plans/2026-10-07_dev_logger_subsystem.md)*  
 *Goal: Provide structured, leveled developer logging for UI lifecycles, asset loading, and DAW diagnostics in debug builds, strictly guarded against real-time audio thread abuse and stripped completely in release builds.*
 - **Dual-Mode Output**:
-  - Debug builds pipe timestamped entries to system debugger (`OutputDebugString` / `DBG`) and write to a rotating `%LOCALAPPDATA%/TheKlangSuite/Logs/dev.log`.
-  - File retention is capped at 5 MB with a maximum of 2 rolled backup files (`dev.log.1`).
+  - Debug builds pipe timestamped entries to system debugger (`OutputDebugString` / `DBG`) and write to a rotating `%LOCALAPPDATA%/TheKlangSuite/dev.log`.
+  - File retention is capped at 5 MB with a maximum of 2 rolled backup files.
 - **Leveled Diagnostics**:
   - `TKS_LOG_INFO`: Normal lifecycle events (JSON asset loading, window resize, preset init).
   - `TKS_LOG_WARN`: Non-fatal anomalies (missing optional property, fallback styling used).
   - `TKS_LOG_ERROR`: Critical errors (JSON syntax parse failure, missing APVTS binding).
 - **Strict Audio Thread Safety & Static Guardrail**:
-  - `TKS_LOG` asserts in Debug builds if invoked outside the message or background threads.
-  - `audiothread-guard` static analysis rules flag any `TKS_LOG` invocations inside audio loops (`processBlock`, `renderVoice`) at build time.
+  - `TKS_LOG` asserts in Debug builds if invoked on audio threads, with safe early return before memory allocation.
+  - `audiothread-guard` static analysis rules flag any `TKS_LOG*` invocations inside audio loops (`processBlock`, `renderVoice`) at build time.
 - **Zero Release Overhead**:
   - Compiled out completely to empty no-ops (`do {} while (false)`) when `JUCE_DEBUG` is not defined. Zero binary strings, zero allocations, zero CPU overhead.
+- **Verification Metric**: 294 / 294 `gui_tests` passed successfully with 100% assertion pass rate across all 12 test suites in both Debug and Release configurations; 100% `dsp_tests` passed. Binaries deployed to `current_build/` and system VST3 directories.
 
 ---
 
