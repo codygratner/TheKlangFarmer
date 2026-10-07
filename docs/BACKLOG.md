@@ -207,6 +207,9 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Dedicated Text & Tooltip Schema (`assets/text/`)**:
   - Extract all parameter descriptions, format units, mouse shortcut hints, and header strings into dedicated JSON files under `assets/text/` (e.g. `assets/text/farmer_strings.json`, `assets/text/planter_strings.json`).
   - Prepares the suite for future localization / multi-language translation and zero-code copyediting.
+- **DSP Block File Naming & Taxonomy Review (`assets/controls/*.json`)**:
+  - Conduct an interactive architectural review of file naming conventions for modular DSP blocks in `assets/controls/`.
+  - Specifically resolve confusing or inconsistent naming—such as `carrier.json` (singular) vs. `modulators.json` (plural), and operator roles vs. modulation functions—and establish an intuitive, unified naming standard prior to the v0.4.0 effects expansion.
 
 ---
 
