@@ -200,7 +200,8 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Phase 1 (Safe Cruft Sweep)**: Auto-cleans ephemeral scratch scripts (`*.tmp`, `temp_*.txt`, `update_*.py`); halts if uncommitted edits to tracked C++/JSON files exist.
 - **Phase 2 (Dual-Config Regression Gauntlet)**: Compiles and runs `Debug` (asserts & memory checks) and `Release` (100% `dsp_tests` & `gui_tests` passes, plus `pluginval` host validation). If any failure occurs, halts and rolls back to Bug Squashing Mode.
 - **Phase 3 (Version Bump & Tagging)**: Updates `CMakeLists.txt` and `source/VersionChecker.h`, runs `deploy.ps1`, commits `chore(release): bump version to vX.X.X`, and creates annotated Git tag.
-- **Phase 4 (Summon the Harvester)**: Interactive modal prompt to archive institutional memory into `docs/DEV_HISTORY.md`, slice previous releases to `docs/archives/`, wipe chat transcripts, and reset context clues for a clean slate kickoff.
+- **Phase 4 (Desktop Sanity & GitHub Remote Push)**: Prompts user to verify deployed binaries, then prompts to push active branch and release tags to GitHub (`git push origin <branch> --tags`).
+- **Phase 5 (Summon the Harvester)**: Interactive modal prompt to archive institutional memory into `docs/DEV_HISTORY.md`, slice previous releases to `docs/archives/`, wipe chat transcripts, and reset context clues for a clean slate kickoff.
 
 ### 1. Parameter Randomization Engine (d6)
 Add a fully JSON-driven contextual randomization system:
