@@ -126,7 +126,7 @@ Location: `test/ParameterSchemaAuditTest.h`, `test/EditorTestSuite.h`
 
 ---
 
-### Phase 6: Validation, Deployment & Retagging
+### Phase 6: Validation, Local Deployment & Factory Handoff
 1. Compile Debug & Release:
    ```powershell
    cmake --build build --config Debug --target dsp_tests gui_tests
@@ -136,12 +136,12 @@ Location: `test/ParameterSchemaAuditTest.h`, `test/EditorTestSuite.h`
    - `build/Release/dsp_tests.exe` (100% pass).
    - `build/Release/gui_tests.exe` (100% pass, exit code 0).
 3. Execute `deploy.ps1`.
-4. Update local tag:
+4. Stage & commit feature changes:
    ```powershell
    git add -A
    git commit -m "feat(editor): schema separation of concerns, callout parameter bindings, and Where-Used inspector"
-   git tag -f -a "v0.3.1" -m "Release v0.3.1"
    ```
+5. Update `docs/communique/build_to_plan.md` to `STATUS: COMPLETE` and issue the "JOB'S DONE!" chime. *(Note: Release tagging `v0.3.1` and GitHub publication will be executed exclusively by New Klang City under `/cut-release` following factory completion).*
 
 ---
 
@@ -153,4 +153,4 @@ Location: `test/ParameterSchemaAuditTest.h`, `test/EditorTestSuite.h`
 - [ ] The lower left sidebar contains the 'Where Used & Associations' panel.
 - [ ] Double-clicking a reference item navigates directly to that node in the tree.
 - [ ] All automated tests pass with 0 failures and exit code 0.
-- [ ] Local tag `v0.3.1` updated and verified.
+- [ ] Changes committed cleanly to `0.3.1-dev` and handoff communique published for New Klang City.

@@ -13,7 +13,7 @@
 1. Enforce strict schema separation of concerns: migrate all visual styling, palettes (`theme.json`), and callout geometry (`callouts.json`) into `assets/themes/`, stripping all colors and dimensions out of `assets/controls/`.
 2. Bind the Master Limiter parameters to `assets/themes/callouts.json` and add `Master Limiter` to `assets/layouts/tkp_layout.json` so all 9 Planter modules and 100% of APVTS parameters are discoverable in the tree.
 3. Add a pre-indexed (`< 2ms`), bidirectional Cross-Reference ("Where Used & Associations") panel to the lower left sidebar of The Klang Editor, enabling double-click tree navigation between parameters, cards, and callouts.
-4. Update `ParameterSchemaAuditTest` and `EditorTestSuite`, run the full regression gauntlet, deploy fresh artifacts, and retag `v0.3.1` locally.
+4. Update `ParameterSchemaAuditTest` and `EditorTestSuite`, run the full regression gauntlet, deploy fresh artifacts, and hand off to New Klang City for release cutting.
 
 ---
 
@@ -26,6 +26,6 @@
    - Phase 3: Bind Master Limiter to `assets/themes/callouts.json` and dynamically mount under TKP tree as `[Callout] Master Limiter` with popup preview rendering (leaving `tkp_layout.json` strictly to the 8 surface cards).
    - Phase 4: Implement `buildReferencesIndex()` and `whereUsedListBox` in `MainComponent`, along with child parameter nodes under `Callouts & Overlays`.
    - Phase 5: Update `test/ParameterSchemaAuditTest.h` (strict schema leak check) and `test/EditorTestSuite.h` (Where-Used verification).
-   - Phase 6: Compile Release, run tests, run `deploy.ps1`, and retag `v0.3.1` locally (`git tag -f -a "v0.3.1" -m "Release v0.3.1"`).
+   - Phase 6: Compile Release, run tests, run `deploy.ps1`, commit feature changes to git, and issue "JOB'S DONE!" chime (release tagging handled by New Klang City under `/cut-release`).
 4. **Validation**: Confirm `build/Release/gui_tests.exe` and `build/Release/dsp_tests.exe` pass 100% with exit code 0.
 5. **Communique**: Report results in `docs/communique/build_to_plan.md` upon completion.
