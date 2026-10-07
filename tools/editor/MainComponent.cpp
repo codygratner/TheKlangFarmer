@@ -805,7 +805,7 @@ MainComponent::MainComponent()
                 }
                 
                 // Save Controls
-                if (currentProductId != "theme" && currentProductId != "callouts" && newControls) {
+                if (currentProductId != "theme" && newControls) {
                     for (auto& prop : newControls->getProperties()) {
                         juce::String paramId = prop.name.toString();
                         if (paramToFileMap.count(paramId) > 0) {
@@ -1191,7 +1191,29 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
                     }
                 }
             }
-            originalControlsJson = "{}";
+            juce::DynamicObject::Ptr controlsObj = new juce::DynamicObject();
+            paramToFileMap.clear();
+            if (cardJson.isObject()) {
+                auto paramsArray = cardJson.getProperty("parameters", juce::var());
+                if (paramsArray.isArray()) {
+                    for (auto& paramIdVar : *paramsArray.getArray()) {
+                        juce::String paramId = paramIdVar.toString();
+                        juce::DirectoryIterator iter(getAssetFile("controls", ""), false, "*.json");
+                        while (iter.next()) {
+                            auto f = iter.getFile();
+                            auto p = juce::JSON::parse(f.loadFileAsString());
+                            if (p.isObject() && p.getDynamicObject()->hasProperty(paramId)) {
+                                paramToFileMap[paramId] = f.getFileName();
+                                if (item->itemType != "card_param" || currentParamTarget == paramId) {
+                                    controlsObj->setProperty(paramId, p.getDynamicObject()->getProperty(paramId));
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            originalControlsJson = juce::JSON::toString(juce::var(controlsObj.get()));
         } else if (currentProductId == "all_layouts") {
             cardJson = juce::JSON::parse(fullJsonString);
             originalLayoutJson = fullJsonString;
@@ -1851,7 +1873,7 @@ if (isTheme && parsed.isObject()) {
     }
     
     // Add detailed parameter properties
-    if (!isCallout && showParams && parsed.isObject()) {
+    if (showParams && parsed.isObject()) {
         juce::StringArray paramIds;
         if (currentProductId == "all_controls") {
             auto parsedC = juce::JSON::parse(controlsJsonDocument.getAllContent());

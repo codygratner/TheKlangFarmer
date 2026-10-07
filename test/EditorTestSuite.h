@@ -228,5 +228,34 @@ public:
                 reporter.expect(true, "Double-click navigation from callout executed without crashing");
             }
         }
+
+        // --- Stage 11: Top-Level Callout Parameter Controls in Form Editor ---
+        reporter.beginTest("Editor Stage 11: Top-Level Callout Parameter Controls in Form Editor");
+        if (limiterUnderTkp != nullptr) {
+            limiterUnderTkp->setSelected(true, true);
+            editor.onTreeItemSelected(limiterUnderTkp);
+            pumpMessageLoop();
+
+            auto props = ComponentFinder::findAllByType<juce::PropertyComponent>(&editor.formEditor);
+            reporter.expect(props.size() > 10, "formEditor populated with style and parameter controls for top-level callout");
+
+            bool hasGain = false, hasThresh = false, hasRelease = false, hasEnable = false;
+            for (auto* prop : props) {
+                auto name = prop->getName();
+                if (name.containsIgnoreCase("Gain")) hasGain = true;
+                if (name.containsIgnoreCase("Threshold") || name.containsIgnoreCase("Thresh")) hasThresh = true;
+                if (name.containsIgnoreCase("Release")) hasRelease = true;
+                if (name.containsIgnoreCase("Enable")) hasEnable = true;
+            }
+            reporter.expect(hasGain, "formEditor exposes Limiter Gain control");
+            reporter.expect(hasThresh, "formEditor exposes Limiter Threshold control");
+            reporter.expect(hasRelease, "formEditor exposes Limiter Release control");
+            reporter.expect(hasEnable, "formEditor exposes Limit Enable control");
+
+            // Verify controlsJsonDocument and paramToFileMap
+            auto docContent = editor.controlsJsonDocument.getAllContent();
+            reporter.expect(docContent.contains("planter_limiter_gain"), "controlsJsonDocument contains planter_limiter_gain");
+            reporter.expect(editor.paramToFileMap["planter_limiter_gain"] == "planter.json", "paramToFileMap maps planter_limiter_gain to planter.json");
+        }
     }
 };
