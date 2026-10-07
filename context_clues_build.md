@@ -1,10 +1,8 @@
 # Implementation Chat Context Clues
 - **Chat Role:** Implementation & Build Chat (Klang Industries)
-- **Current Objective:** Schema Separation of Concerns & Cross-Reference "Where Used" Inspector (`v0.3.1` Architecture & Tooling Hardening)
-- **Plan Status:** Ready to execute Phase 1 of `PLAN.md`
+- **Current Objective:** Ready for Milestone v0.3.2 (Agent Infrastructure & Guardrails Audit)
+- **Plan Status:** Idle. Waiting for new dispatched blueprint in `docs/communique/plan_to_build.md`.
 - **Current State:**
   - Branch: `0.3.1-dev`
-  - Previous sessions harvested cleanly into `docs/DEV_HISTORY.md`.
-  - Full test suite verified clean (215 / 215 GUI unit tests passed, 100% DSP tests passed, EXIT CODE: 0).
-  - New master blueprint delivered in `docs/communique/plan_to_build.md` and `PLAN.md`.
-  - Next Step upon resume: Begin Phase 1 (Author `assets/themes/theme.json` and `assets/themes/callouts.json`, strip visual styles from `assets/controls/*.json`, delete legacy `assets/controls/global_ui.json`).
+  - Release `v0.3.1` completed, validated (257/257 GUI tests pass, 100% DSP tests pass), and published to GitHub.
+  - Next Step upon resume: Wait for New Klang City to formulate and dispatch the next plan.

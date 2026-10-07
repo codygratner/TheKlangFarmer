@@ -60,4 +60,19 @@ ew, malloc, ree, or resize dynamic containers (std::vector::push_back, juce::Ar
 - **Files Modified/Created:** `source/VersionChecker.h`, `source/VersionChecker.cpp`, `test/gui_tests.cpp`, `test/PluginIntensiveTestSuite.h`, `docs/completed_plans/2026-10-06_fix_release_teardown_crash.md`, `docs/communique/build_to_plan.md`, `docs/BACKLOG.md`
 - **Key Decisions:** Inherited `juce::DeletedAtShutdown` in `VersionChecker` and added static `teardown()` before `guiContext` destruction. Isolated and resolved asynchronous modal double-free in `test/PluginIntensiveTestSuite.h` by instantiating `CallOutBox` directly via `std::make_unique`. Verified 215 / 215 GUI unit tests and 100% DSP tests with exit code 0. Recast backlog item 0.5 into an editor feature with mandatory planning discussion directive for New Klang City.
 
+### Session: 2026-10-07 05:54 (9241988e-1227-466e-a0a5-446d61a69d77)
+- **Chat Role:** Strategic Planning & Architecture (New Klang City) + Klang Industries
+- **Primary Objectives:** Enforce strict schema separation of concerns, resolve missing Master Limiter parameters in The Klang Planter tree, introduce pre-indexed Cross-Reference ("Where Used") inspector, populate top-level callout parameter controls, and cut/publish the official v0.3.1 release.
+- **Files Modified/Created:** `assets/themes/theme.json`, `assets/themes/callouts.json`, `assets/controls/*.json` (stripped `ui_colors`), `tools/editor/MainComponent.cpp`, `test/EditorTestSuite.h`, `test/ParameterSchemaAuditTest.h`, `GEMINI.md`, `docs/BACKLOG.md`
+- **Key Decisions:**
+  - Enforced strict schema separation: visual styling and palettes moved to `assets/themes/theme.json` and `callouts.json`, leaving `assets/controls/` strictly for DSP parameter contracts.
+  - Sourced Master Limiter popover parameters from `assets/themes/callouts.json` and dynamically mounted `[Callout] Master Limiter` under The Klang Planter in the tree with popover preview rendering, keeping `assets/layouts/tkp_layout.json` strictly to the physical 8-card 4x2 grid.
+  - Implemented pre-indexed bidirectional Where-Used & Associations panel in <2ms with double-click tree navigation.
+  - Enabled top-level callout parameter property population in `formEditor` (matching Cards 1–8).
+  - Codified the Strict Release Authority Gate in `GEMINI.md`, restricting `/cut-release` and release tagging strictly to New Klang City (Ivory Tower).
+  - Codified Strict Clipboard & External Link Ingestion Guardrail in `GEMINI.md`.
+  - Passed dual Debug and Release regression gauntlets (257/257 `gui_tests` and 100% `dsp_tests`).
+  - Stamped local and remote Git tag `v0.3.1` and pushed branch `0.3.1-dev` and tag `v0.3.1` to GitHub.
+
+
 
