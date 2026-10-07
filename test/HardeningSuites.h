@@ -2,6 +2,9 @@
 #include "GuiTestHelpers.h"
 #include "FarmerProcessor.h"
 #include "PlanterProcessor.h"
+#include "ParameterManager.h"
+#include <thread>
+#include <atomic>
 
 namespace HardeningSuites {
     using namespace GuiTestHelpers;
@@ -95,6 +98,102 @@ namespace HardeningSuites {
                 reporter.expect(first, "SQAHardening: SnapshotDeduplicator permits initial failure capture");
                 reporter.expect(!second, "SQAHardening: SnapshotDeduplicator suppresses redundant snapshot within 10s");
             }
+        }
+
+        // --- Asynchronous DAW Automation Defense Suite ---
+        {
+            TheKlangFarmerAudioProcessor pF;
+            pF.prepareToPlay(44100.0, 512);
+
+            const auto& params = pF.getParameters();
+            int numParams = static_cast<int>(params.size());
+            reporter.expect(numParams > 0, "AutomationStressTest: APVTS parameters successfully registered");
+
+            std::atomic<bool> automationDone { false };
+            constexpr int TOTAL_AUTOMATION_EVENTS = 50000;
+            int eventsCompleted = 0;
+
+            std::thread automationThread([&]() {
+                juce::Random rng(54321);
+                for (int i = 0; i < TOTAL_AUTOMATION_EVENTS; ++i) {
+                    int pIdx = rng.nextInt(numParams);
+                    float randVal = rng.nextFloat();
+                    params[pIdx]->setValueNotifyingHost(randVal);
+                    if ((i % 10000) == 0) {
+                        Watchdog::pingHeartbeat();
+                    }
+                }
+                eventsCompleted = TOTAL_AUTOMATION_EVENTS;
+                automationDone.store(true);
+            });
+
+            juce::AudioBuffer<float> audioBuffer(2, 512);
+            juce::MidiBuffer midiBuffer;
+            midiBuffer.addEvent(juce::MidiMessage::noteOn(1, 36, 0.9f), 0);
+
+            int blocksRendered = 0;
+            while (!automationDone.load()) {
+                audioBuffer.clear();
+                pF.processBlock(audioBuffer, midiBuffer);
+                midiBuffer.clear();
+                blocksRendered++;
+                if ((blocksRendered % 200) == 0) {
+                    Watchdog::pingHeartbeat();
+                }
+            }
+
+            automationThread.join();
+            pF.releaseResources();
+
+            reporter.expect(eventsCompleted == TOTAL_AUTOMATION_EVENTS,
+                "AutomationStressTest: Pounded APVTS with " + juce::String(TOTAL_AUTOMATION_EVENTS) +
+                " asynchronous parameter automation updates during " + juce::String(blocksRendered) +
+                " audio processBlock frames with zero crashes/deadlocks");
+        }
+
+        // --- Data-Driven Poison Pill Schema Fuzzing Suite ---
+        {
+            auto& pm = RlyehSound::ParameterManager::getInstance();
+            size_t initialControlCount = pm.getAllControls().size();
+            reporter.expect(initialControlCount > 0, "PoisonPillSchemaSuite: ParameterManager has healthy baseline controls loaded");
+
+            const juce::String poisonPills[] = {
+                // 1. Completely empty string
+                "",
+                // 2. Whitespace-only string
+                "   \t\r\n   ",
+                // 3. Broken syntax with trailing comma
+                "{\"broken\": true, }",
+                // 4. Incomplete truncated JSON
+                "{\"unclosed_object\": {\"type\": \"float\"",
+                // 5. Root is a JSON array instead of an object
+                "[ {\"id\": \"foo\"}, {\"id\": \"bar\"} ]",
+                // 6. Root is a primitive string
+                "\"This is just a raw string instead of a JSON object\"",
+                // 7. Root is a primitive number
+                "42.1337",
+                // 8. Corrupted object with non-object properties
+                "{\"fake_control\": 12345, \"another\": null}",
+                // 9. Malformed strings JSON structure
+                "{\"farmer\": \"should_be_an_object_not_a_string\"}"
+            };
+
+            bool allPillsSurvived = true;
+            for (const auto& pill : poisonPills) {
+                try {
+                    pm.reloadFromJson(pill);
+                } catch (...) {
+                    allPillsSurvived = false;
+                }
+            }
+
+            // Verify baseline controls remained intact and was not cleared or corrupted
+            size_t finalControlCount = pm.getAllControls().size();
+            reporter.expect(allPillsSurvived && finalControlCount >= initialControlCount,
+                "PoisonPillSchemaSuite: ParameterManager survived 9 corrupted/malformed poison pill payloads without crashing (control count maintained at " + juce::String(finalControlCount) + ")");
+
+            auto* testDef = pm.getControlDef("carrier1_pitch");
+            reporter.expect(testDef != nullptr, "PoisonPillSchemaSuite: Core control definitions preserved after poison pill attack");
         }
     }
 }

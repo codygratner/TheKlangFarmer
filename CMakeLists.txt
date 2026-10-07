@@ -22,12 +22,33 @@ add_compile_definitions(
     JUCE_VST3_CAN_REPLACE_VST2=0
 )
 
+option(TK_STRICT_WARNINGS "Treat warnings as errors (for CI)" OFF)
+option(TK_USE_ASAN "Enable Address/Thread Sanitizer" OFF)
+
 # Enforce modern C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # 2. Add the cloned JUCE repository
 add_subdirectory(JUCE)
+
+# CI Toolchain Lockdown & Sanitizer Integration (applied to Klang Suite targets)
+if (TK_STRICT_WARNINGS)
+    if (MSVC)
+        add_compile_options(/WX)
+    else()
+        add_compile_options(-Werror)
+    endif()
+endif()
+
+if (TK_USE_ASAN)
+    if (NOT MSVC)
+        add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer)
+        add_link_options(-fsanitize=address,undefined)
+    else()
+        add_compile_options(/fsanitize=address)
+    endif()
+endif()
 
 # Configure plugin formats per platform
 set(TKF_FORMATS VST3 Standalone)

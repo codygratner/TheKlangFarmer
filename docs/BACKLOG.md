@@ -9,9 +9,10 @@
 > 4. **v0.4.0 (Interface & Experience)**: Complete Clean-Slate UX Overhaul, Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.
 > 5. **v0.5.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
 > 6. **v0.6.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
-> 7. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
-> 8. **v1.1.0 (The Klang Box Hardware Universe)**: The Klang Box (TKB) — dadamachines tbd-16, TKB-Daisy (Stereo), TKB-8 (Teensy Multi-Out), & Zynthian V5.
-> 9. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
+> 7. **v0.9.0 (The Spring Cleaning Audit)**: Pencils down. Comprehensive Tech Debt Amnesty, code refactoring, and AI-Slop purge.
+> 8. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
+> 9. **v1.1.0 (The Klang Box Hardware Universe)**: The Klang Box (TKB) — dadamachines tbd-16, TKB-Daisy (Stereo), TKB-8 (Teensy Multi-Out), & Zynthian V5.
+> 10. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
 
 > [!TIP]
 > **CODE QUALITY STANDARD**: The C++ codebase currently maintains an A+ standard for defensive programming, descriptive `camelCase` variable naming, and explicit algorithmic comments (e.g., documenting DSP math curves directly above the function). All future contributions must rigidly match this level of in-line documentation and readability!
@@ -763,4 +764,7 @@ Port the battle-tested, data-driven architecture from *The Klang Farmer* over to
 All completed tasks, architectural decisions, and release summaries are archived in:
 👉 **[`docs/BACKLOG_ARCHIVE.md`](BACKLOG_ARCHIVE.md)**  
 *(Individual phase execution plans are preserved in `docs/completed_plans/`)*
+
+
+
 

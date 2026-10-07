@@ -1,6 +1,7 @@
 #include "FarmerProcessor.h"
 #include "FarmerEditor.h"
 #include "ParameterManager.h"
+#include "FastMath.h"
 #include "DevLogger.h"
 
 TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
@@ -624,6 +625,7 @@ void TheKlangFarmerAudioProcessor::applyModulationTargets(int target1, int targe
 
 void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
     juce::ScopedNoDenormals noDenormals;
+    TbdAudio::FastMath::enableFTZDAZ();
 
     if (auto* playHead = getPlayHead()) {
         if (auto posOpt = playHead->getPosition()) {
@@ -692,6 +694,11 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
 
     if (currentSample < numSamples) {
         renderSlice(currentSample, numSamples - currentSample);
+    }
+
+    // Monitor Saver Protocol: Silences any NaN/Inf corrupted frames
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+        TbdAudio::FastMath::sanitizeBuffer(buffer.getWritePointer(ch), numSamples);
     }
 }
 

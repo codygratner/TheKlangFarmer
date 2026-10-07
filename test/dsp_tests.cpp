@@ -1048,6 +1048,46 @@ int main() {
         // Must wrap around without nan or negative values
         assert(acc.getPhaseNorm() >= 0.0f && acc.getPhaseNorm() < 1.0f);
 
+        // 7. Monitor Saver Protocol: FTZ/DAZ and sanitizeBuffer NaN/Inf Failsafe
+        enableFTZDAZ();
+        disableFTZDAZ();
+        enableFTZDAZ();
+
+        // 7a. Clean buffer: returns false, values untouched
+        std::vector<float> cleanBuf = { 0.1f, -0.2f, 0.5f, -0.9f, 0.0f, 0.33f, -0.44f };
+        bool sanitizedClean = sanitizeBuffer(cleanBuf.data(), static_cast<int>(cleanBuf.size()));
+        assert(!sanitizedClean);
+        assert(cleanBuf[0] == 0.1f && cleanBuf[3] == -0.9f);
+
+        // 7b. NaN in SIMD vector chunk: returns true, buffer zeroed
+        std::vector<float> nanBuf(16, 0.25f);
+        nanBuf[2] = std::numeric_limits<float>::quiet_NaN();
+        bool sanitizedNan = sanitizeBuffer(nanBuf.data(), static_cast<int>(nanBuf.size()));
+        assert(sanitizedNan);
+        for (float s : nanBuf) {
+            assert(s == 0.0f);
+        }
+
+        // 7c. Inf in SIMD vector chunk: returns true, buffer zeroed
+        std::vector<float> infBuf(16, 0.5f);
+        infBuf[7] = std::numeric_limits<float>::infinity();
+        bool sanitizedInf = sanitizeBuffer(infBuf.data(), static_cast<int>(infBuf.size()));
+        assert(sanitizedInf);
+        for (float s : infBuf) {
+            assert(s == 0.0f);
+        }
+
+        // 7d. -Inf in scalar tail: returns true, buffer zeroed
+        std::vector<float> negInfBuf(7, 0.1f);
+        negInfBuf[5] = -std::numeric_limits<float>::infinity();
+        bool sanitizedNegInf = sanitizeBuffer(negInfBuf.data(), static_cast<int>(negInfBuf.size()));
+        assert(sanitizedNegInf);
+        for (float s : negInfBuf) {
+            assert(s == 0.0f);
+        }
+
+        std::cout << "PASS: Monitor Saver Protocol (FTZ/DAZ & SIMD sanitizeBuffer) verified." << std::endl;
+
         std::cout << "PASS: FastMath core accuracy, bounds, and PhaseAccumulator32 verified." << std::endl;
     }
 

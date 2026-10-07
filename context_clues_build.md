@@ -1,11 +1,9 @@
 # Implementation Chat Context Clues
 - **Chat Role:** Implementation & Build Chat (Klang Industries)
-- **Current Objective:** Milestone v0.4.0 - SQA Automation Hardening
-- **Plan Status:** COMPLETED ✅
+- **Current Objective:** Hardening Gauntlet (CI Lockdown, Sanitizers, NaN/Inf Monitor Saver, Poison Pill Fuzzing, DAW Automation Defense)
+- **Plan Status:** Ready for Phase 1 (CI Toolchain Lockdown & Sanitizer Integration)
 - **Current State:**
   - Branch: `0.4.0-dev`
-  - All 300 GUI tests and 100% DSP tests pass across both Debug and Release configurations.
-  - Chaos Monkey suite verified with 1.23M events survived under 3.2s.
-  - VST3 and Standalone binaries built and deployed via `deploy.ps1`.
-  - Both mailboxes (`build_to_plan.md` and `plan_to_build.md`) updated to `COMPLETED ✅`.
-  - Ready for New Klang City to review and advance milestone v0.4.0.
+  - Ingested dispatch: `PLAN.md` (v0.3.3 Hardening Gauntlet)
+  - Previous task: SQA Automation Hardening harvested to `docs/history/DEV_HISTORY.md`
+  - Working tree: clean and ready for execution

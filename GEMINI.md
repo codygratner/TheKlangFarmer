@@ -89,10 +89,13 @@
 - **Memory Safety**: No raw ownership (`new`/`delete`). Dynamic object ownership must use `std::unique_ptr` and `std::make_unique`. Raw pointers (`T*`) and references (`T&`) are for non-owning observation only.
 - **Thread Separation**: Never call UI methods (`repaint()`, `setValue()`) from `processBlock()` or `processStereo()`. Audio-to-UI communication must use lock-free atomics/FIFOs or `juce::AsyncUpdater`.
 
+## Strict Refactoring & "Boy Scout" Code Cleanliness
+- **Zero-Tolerance for "AI Slop"**: Never leave behind messy, undocumented, or spaghetti code. The user relies on this codebase remaining clean, readable, and highly optimized.
+- **The Boy Scout Rule**: Always leave a C++ file cleaner than you found it. If you are modifying a function to add a feature, take an extra 30 seconds to clean up its formatting, improve variable names, and ensure the DSP math is documented.
+- **Ruthless Deletion (Git is the Archive)**: Ruthlessly delete obsolete source code and files. Never comment out dead code blocks or create old_Component.cpp/legacy/ folders.
 ## Strict Git Commit & Branch Safety Gate
 - **Conventional Commits**: Format strictly as `<type>(<optional scope>): <description>` (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`).
 - **NEVER Work Directly on Master/Main**: Check active branch (`git branch --show-current`). If on `master` or `main`, immediately create and switch to a descriptive branch (`git checkout -b feat/<slug>`). Direct commits to `master`/`main` are allowed ONLY by explicit user order.
-- **Ruthless Deletion (Git is the Archive)**: Ruthlessly delete obsolete source code and files. Never comment out dead code blocks or create `old_Component.cpp`/`legacy/` folders.
 - **Silent Git Tags for Architectural Refactors**: When a milestone consists strictly of internal architectural cleanup, developer tooling, or data schema refactoring with zero user-facing sound/UI changes, create and push an annotated Git Tag (`git tag -a vX.Y.Z -m "..."`) and merge to `main`, but do NOT publish a public GitHub Release entry. This preserves clean SemVer and reproducible build history while preventing spurious 'Update Available' prompts in end-user DAWs.
 
 ## Strict Debugging Heuristics
@@ -147,6 +150,10 @@
 - **Mandatory Backlog Reconciliation upon Ingestion**: When New Klang City ingests a `Status: COMPLETE ✅` report from `build_to_plan.md`, its FIRST mandatory action before discussing or drafting new features is to update `docs/BACKLOG.md` (marking the matching task `— ✅ COMPLETED`, updating any `PLAN.md` references to the permanent archive path in `.agents/pipeline/plans/completed/`, and documenting verification metrics).
 - **Auto-Archive & Reset on Task Finish**: Klang Industries must immediately archive `PLAN.md` to `.agents/pipeline/plans/completed/<YYYY-MM-DD>_<task_slug>.md` and reset `PLAN.md` to an idle state (`# No Active Plan`).
 
+## Strict Semantic Versioning & Milestone Progression Protocol
+- **Major/Minor Feature Milestones (X.Y.0)**: Reserved strictly for massive architectural overhauls, breaking UI paradigm shifts, or entirely new product deployments.
+- **Backend & Hardening Patches (X.Y.Z)**: Reserved exclusively for DSP runtime safety, automated testing gauntlets, CI/CD pipeline lockdowns, and bug fixes.
+- **The "Pre-Flight Capstone" Rule**: Before bumping the CMakeLists.txt version to a new X.Y.0-dev milestone to begin destructive feature work, the pipeline MUST execute a final .Z hardening patch milestone to mathematically prove the legacy foundation is secure, warning-free, and locked down. Never build new UI on top of unhardened DSP.
 ## Pre-Release "Clean Slate & Regression Gauntlet" Guardrail
 - Mandatory pre-flight checklist before any version bump, git release tagging, or `/cut-release`:
   1. **Hardened Cruft Sweep (4 Tiers)**: Recursive scratch purge (no sub-tree scripts), pipeline/inbox cleanliness (`PLAN.md` idle, inbox zero, active milestone backlog items 100% reconciled with zero stale `PLAN.md` links), diagnostic disk hygiene (pruned `test_screenshots/`), and static code audit (zero debug console leaks, JUCE 9.0.3 timer hygiene).
@@ -161,3 +168,6 @@
 - **Never Fetch External URLs**: Agents must NEVER automatically fetch or scrape external web URLs via `read_url_content` or `curl` during planning, building, or task ingestion without explicit user confirmation.
 - **Local-Only Plan Priority**: All plans, tasks, and communique documents MUST come exclusively from local workspace files (e.g. `PLAN.md`, `.agents/pipeline/communique/plan_to_build.md`) or direct text provided by user.
 - **Privacy & Context Boundary**: The host system clipboard may contain private, out-of-band user data from other applications (notes, meeting links, passwords, tokens). Respect context boundaries at all times.
+
+
+

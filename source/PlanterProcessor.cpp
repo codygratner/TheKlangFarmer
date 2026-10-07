@@ -1,6 +1,7 @@
 #include "PlanterProcessor.h"
 #include "PlanterEditor.h"
 #include "ParameterManager.h"
+#include "FastMath.h"
 #include "DevLogger.h"
 
 TheKlangPlanterAudioProcessor::TheKlangPlanterAudioProcessor() : KlangCoreProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true), "PARAMETERS", createParameterLayout()) {
@@ -157,6 +158,7 @@ bool TheKlangPlanterAudioProcessor::isBusesLayoutSupported(const BusesLayout& la
 
 void TheKlangPlanterAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
     juce::ScopedNoDenormals noDenormals;
+    TbdAudio::FastMath::enableFTZDAZ();
     const int numSamples = buffer.getNumSamples();
 
     // 1. Sync DSP parameters
@@ -229,6 +231,11 @@ void TheKlangPlanterAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     float* right = buffer.getNumChannels() > 1 ? buffer.getWritePointer(1) : left;
 
     engine.processStereo(left, right, numSamples);
+
+    // Monitor Saver Protocol: Silences any NaN/Inf corrupted frames
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch) {
+        TbdAudio::FastMath::sanitizeBuffer(buffer.getWritePointer(ch), numSamples);
+    }
 }
 
 TheKlangPlanterAudioProcessor::ParamModulationInfo TheKlangPlanterAudioProcessor::getParamModulationInfo(const juce::String& /*paramId*/) const {

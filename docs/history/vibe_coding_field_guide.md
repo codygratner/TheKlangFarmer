@@ -161,3 +161,11 @@ If you are a developer with experience in dynamic languages (Python, JavaScript,
 ---
 
 *“Code is ephemeral; test harnesses, data contracts, and architectural guardrails are permanent.”*
+
+### 4.7 The "Tick-Tock" Versioning Strategy & Foundation Capstones
+*Implemented during the transition from v0.3.x to v0.4.x.*
+We recognized a structural risk: diving straight from one massive feature milestone (0.3.0 Data Schema) into another (0.4.0 UI Overhaul) allows technical debt, compiler warnings, and untested DSP edge-cases to silently accumulate beneath the floorboards. 
+To prevent this, we codified the **Pre-Flight Capstone Rule**. 
+- .0 Minor releases (the "Tick") are strictly for breaking UI/feature changes.
+- .Z Patch releases (the "Tock") are strictly for backend CI lockdowns, sanitizer (ASan/TSan) integrations, and DSP safety nets (NaN/Inf failsafes).
+Before CMakeLists.txt is ever bumped to an X.Y.0-dev branch, the AI pipeline must execute a final Z hardening patch to mathematically prove the foundation is bulletproof. You cannot build a new house on an unhardened foundation.

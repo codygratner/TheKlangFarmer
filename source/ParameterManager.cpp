@@ -40,15 +40,32 @@ juce::Colour ParameterManager::getGlobalColor(const juce::String& colorId, juce:
 }
 
 void ParameterManager::parseJsonBlob(const char* data, int size) {
-    juce::String jsonString = juce::String::fromUTF8(data, size);
-    auto var = juce::JSON::parse(jsonString);
+    if (data == nullptr || size <= 0) {
+        TKS_LOG_WARN("ParameterManager::parseJsonBlob: Received empty or null JSON data");
+        return;
+    }
 
-    if (var.isObject()) {
-        auto* obj = var.getDynamicObject();
-        if (obj->hasProperty("shared") || obj->hasProperty("farmer") || obj->hasProperty("planter")) {
-            parseStringsJson(var);
-            return;
-        }
+    juce::String jsonString = juce::String::fromUTF8(data, size);
+    juce::var var;
+    auto parseResult = juce::JSON::parse(jsonString, var);
+    if (parseResult.failed()) {
+        TKS_LOG_WARN("ParameterManager::parseJsonBlob: JSON parse error: " + parseResult.getErrorMessage());
+        return;
+    }
+
+    if (!var.isObject()) {
+        TKS_LOG_WARN("ParameterManager::parseJsonBlob: JSON root is not an object");
+        return;
+    }
+
+    auto* obj = var.getDynamicObject();
+    if (obj == nullptr)
+        return;
+
+    if (obj->hasProperty("shared") || obj->hasProperty("farmer") || obj->hasProperty("planter")) {
+        parseStringsJson(var);
+        return;
+    }
 
         for (auto& prop : obj->getProperties()) {
             ControlDef def;
@@ -153,7 +170,6 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
 
             controls[def.id] = def;
         }
-    }
 }
 
 void ParameterManager::parseStringsJson(const juce::var& var) {
@@ -221,6 +237,10 @@ void ParameterManager::mergeTextIntoControls() {
 }
 
 void ParameterManager::reloadFromJson(const juce::String& jsonString) {
+    if (jsonString.trim().isEmpty()) {
+        TKS_LOG_WARN("ParameterManager::reloadFromJson: Empty JSON string provided; ignoring reload");
+        return;
+    }
     auto stdString = jsonString.toStdString();
     parseJsonBlob(stdString.c_str(), static_cast<int>(stdString.size()));
     mergeTextIntoControls();

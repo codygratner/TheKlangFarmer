@@ -5,8 +5,93 @@
 #include <algorithm>
 #include <bit>
 
+#if defined(_M_X64) || defined(__x86_64__) || defined(_M_IX86) || defined(__i386__)
+  #include <xmmintrin.h>
+  #include <pmmintrin.h>
+  #define TKF_HAS_SSE 1
+#elif defined(__aarch64__) || defined(_M_ARM64)
+  #include <arm_neon.h>
+  #define TKF_HAS_NEON 1
+#endif
+
 namespace TbdAudio {
 namespace FastMath {
+
+/**
+ * @brief Enable Flush-To-Zero (FTZ) and Denormals-Are-Zero (DAZ) modes
+ *        to prevent denormal numbers from causing CPU performance spikes in audio processing.
+ */
+inline void enableFTZDAZ() noexcept {
+#if defined(TKF_HAS_SSE)
+    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+#elif defined(__aarch64__)
+    uint64_t fpcr;
+    asm volatile("mrs %0, fpcr" : "=r"(fpcr));
+    fpcr |= (1ULL << 24); // FZ (flush-to-zero)
+    asm volatile("msr fpcr, %0" : : "r"(fpcr));
+#endif
+}
+
+/**
+ * @brief Restore default denormal handling.
+ */
+inline void disableFTZDAZ() noexcept {
+#if defined(TKF_HAS_SSE)
+    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_OFF);
+    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_OFF);
+#elif defined(__aarch64__)
+    uint64_t fpcr;
+    asm volatile("mrs %0, fpcr" : "=r"(fpcr));
+    fpcr &= ~(1ULL << 24);
+    asm volatile("msr fpcr, %0" : : "r"(fpcr));
+#endif
+}
+
+/**
+ * @brief Monitor Saver Protocol: Detects NaNs and Infinities in audio buffer
+ *        using branchless SIMD exponent bit testing and silences the buffer if corrupted.
+ * @param buffer Pointer to float sample array.
+ * @param numSamples Number of samples in the buffer.
+ * @return true if corrupted samples were detected and sanitized to zero, false if clean.
+ */
+inline bool sanitizeBuffer(float* buffer, int numSamples) noexcept {
+    if (buffer == nullptr || numSamples <= 0) return false;
+
+    bool hasCorruptSample = false;
+    int i = 0;
+
+#if defined(TKF_HAS_SSE)
+    // IEEE 754 float32: NaN and Inf have exponent bits all 1s (0x7F800000)
+    const __m128 expMask = _mm_castsi128_ps(_mm_set1_epi32(static_cast<int>(0x7F800000u)));
+    for (; i + 4 <= numSamples; i += 4) {
+        __m128 v = _mm_loadu_ps(buffer + i);
+        __m128 masked = _mm_and_ps(v, expMask);
+        __m128 cmp = _mm_cmpeq_ps(masked, expMask);
+        if (_mm_movemask_ps(cmp) != 0) {
+            hasCorruptSample = true;
+            break;
+        }
+    }
+#endif
+
+    if (!hasCorruptSample) {
+        for (; i < numSamples; ++i) {
+            uint32_t bits = std::bit_cast<uint32_t>(buffer[i]);
+            if ((bits & 0x7F800000u) == 0x7F800000u) {
+                hasCorruptSample = true;
+                break;
+            }
+        }
+    }
+
+    if (hasCorruptSample) {
+        std::fill_n(buffer, numSamples, 0.0f);
+        return true;
+    }
+
+    return false;
+}
 
 constexpr float PI = 3.14159265358979323846f;
 constexpr float TWO_PI = 6.28318530717958647692f;
