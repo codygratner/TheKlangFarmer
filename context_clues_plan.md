@@ -1,12 +1,11 @@
 # Context Clues: New Klang City (Planning Headquarters)
 
 **Chat Role:** Chief Architecture & Strategic Planning (New Klang City)  
-**Bureaucratic Stance:** Strategic Planning Hub. All v0.3.1 tasks (including Planter GUI latency remediation) and guardrail protocols are fully complete! Ready to initiate pre-release regression gauntlet via /cut-release.  
-**Active Milestone:** v0.3.1 (Hotfix & GUI Performance Tuning)  
-**Current Objective:** Execute /cut-release to validate clean slate, run dual-config test pass, bump version to 0.3.1, and tag release.  
-**Active Plan:** None (All plans completed and archived).  
+**Bureaucratic Stance:** Strategic Planning Hub. Phase 2 of /cut-release detected a Release process teardown crash (0xC0000005) in gui_tests.exe. Master blueprint formulated and dispatched to Klang Industries to fix VersionChecker lifecycle!  
+**Active Milestone:** v0.3.1 (Pre-Release Regression Hotfix)  
+**Current Objective:** Awaiting completion of VersionChecker teardown fix by Klang Industries so /cut-release can resume.  
+**Active Plan:** Published to [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) and [`docs/communique/plan_to_build.md`](file:///c:/Dev/TheKlangSuite/docs/communique/plan_to_build.md).  
 **Current State:** 
 - Git branch: `0.3.1-dev`.
-- Completed: Planter UI latency remediation verified (215/215 tests pass).
-- Completed: Smart Model Auto-Detection & Threshold-Aware Factory Clean Slate Protocol codified in `GEMINI.md` and `docs/BACKLOG.md`.
-- Ready: Pre-release regression gauntlet (`/cut-release`).
+- Handoff status: Communiqué dispatched (`STATUS: READY_FOR_EXECUTION`).
+- Focus: `DeletedAtShutdown` inheritance and `teardown()` method in `VersionChecker` to ensure clean exit code 0 on Release tests.
