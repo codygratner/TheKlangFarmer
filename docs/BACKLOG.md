@@ -674,10 +674,19 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 *Focus: Standalone Hardware Synthesizer (The Klang Box / TKB), dadamachines tbd-16 Integration, and Zynthian V5 Linux Port.*
 
 ### 1. dadamachines tbd-16 Groovebox Integration (TKB-TBD)
-*Detailed Plan: [`docs/tbd16_klang_seed_effects_plan.md`](tbd16_klang_seed_effects_plan.md)*
+*Detailed Plan: [`docs/specs/tbd16_klang_seed_effects.md`](specs/tbd16_klang_seed_effects.md)*  
+*Official Reference Links:*
+- **TBD-16 Hardware Docs**: `https://docs.dadamachines.com/tbd-16/`
+- **TBD Platform Architecture**: `https://docs.dadamachines.com/tbd-platform/`
+- **CTAG TBD C++ SDK & Synth Framework**: `https://dadamachines.github.io/ctag-tbd/index.html`
+
 Deploy the pure C++ DSP engine onto the open-source **dadamachines tbd-16** platform:
 - **Architecture**: Dual-core **ESP32-P4 RISC-V @ 400 MHz** (Audio DSP) + **RP2350B @ 150 MHz** (UI, Sequencer, 2.4" OLED, 30 RGB buttons) + **ESP32-C6** (Wi-Fi/Ableton Link).
 - **Native 4-Encoder Mapping**: The unit features **4 endless push-encoders**; each 4-knob card and 4-knob FX slot in our engine maps directly to one 4-encoder screen page on its 2.4" OLED!
+- **2.4" OLED Vector Engine**: Render an ultra-crisp 1-bit monochrome vector layout displaying 4 horizontal meter bars stacked vertically, matching the Neo-Slate UI.
+- **30-Button Grid Navigation**: Direct card jump buttons (Buttons 1–8 for Cards 1–8, Buttons 9–12 for FX Slots 1–4, dedicated triggers for `[INIT]`, `[TRIGGER]`, and `[BYPASS]`).
+- **Lock-Free Multi-Core IPC**: Stream encoder updates from RP2350B across the internal bus to ESP32-P4 `ParameterManager` without blocking the audio render callback.
+- **CTAG Audio Callback Adapter**: Zero-overhead wrapper (`Tbd16AudioDriver.cpp`) feeding `TheKlangFarmer` or `TheKlangPlanter` core DSP directly into the CTAG DMA buffer stream.
 
 ### 2. The Klang Box: Daisy Edition (TKB-Daisy) — Stereo Desktop & Eurorack Hardware
 *Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](embedded_dsp_and_hardware_port_plan.md)*
