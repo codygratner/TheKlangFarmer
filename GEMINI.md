@@ -236,3 +236,9 @@
   4. **Strict Schema Parity**: 100% of APVTS parameters registered in both plugins must have matching `ControlDef` entries in `assets/controls/*.json`.
   5. **JUCE 9.0.3 Timer Hygiene**: 100% of `juce::Timer` subclasses must call `stopTimer()` as the first line of their destructor.
 
+## Strict Clipboard & External Link Ingestion Guardrail
+- **Zero Arbitrary Clipboard Sniffing**: Never inspect or read the host system clipboard (`Get-Clipboard`) unless explicitly commanded by the user with a specific command (e.g. `/pasteplan`).
+- **Never Fetch External URLs from Clipboard**: Even when `/paste-plan` is invoked, if the clipboard contains an HTTP/HTTPS URL, an external web link, or non-markdown content, agents must NEVER automatically fetch or scrape it via `read_url_content` or `curl`.
+- **Local-Only Plan Priority**: All plans, tasks, and communique documents MUST come exclusively from local workspace files (e.g. `PLAN.md`, `docs/communique/plan_to_build.md`) or direct text provided by the user in chat.
+- **Privacy & Context Boundary**: The host system clipboard may contain private, out-of-band user data from other applications (notes, meeting links, passwords, tokens). Respect context boundaries at all times.
+

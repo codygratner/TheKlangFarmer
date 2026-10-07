@@ -197,6 +197,10 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Explore new workflow expansions (e.g., enhanced git telemetry, automated release notes generation, automated performance benchmarks).
 - **Inter-Chat Communique Tuning (`docs/communique/`)**:
   - Evaluate the `plan_to_build.md` and `build_to_plan.md` state machine handoff to identify any friction or repetitive handoffs.
+- **Clipboard Isolation & External Link Ingestion Audit**:
+  - Audit clipboard handling in `paste-plan` and task intake routines to strictly isolate agent workflows from the host OS clipboard.
+  - Eliminate accidental sniffing of external URLs, personal notes, or out-of-band meeting links when workspace files (`PLAN.md`, `docs/communique/plan_to_build.md`) are the designated single source of truth.
+  - Hard-code rules preventing scraping/fetching URLs from clipboard under any circumstance without explicit user confirmation.
 
 ### 2. Unified Filterable Master Tree & Dedicated Text/Localization Schema
 *Goal: Redesign The Klang Editor's navigation tree into a unified master tree with multi-state layer filters, and extract text/tooltips into a dedicated data schema.*
