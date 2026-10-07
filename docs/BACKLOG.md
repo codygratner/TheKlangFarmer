@@ -314,6 +314,7 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
 *Goal: After completing v0.4.0, review how well the two-chat workflow held up against prompt drift and task bleeding.*
 - Did the `/clear` command with split `context_clues.md` files sufficiently protect against hidden state?
 - Did the strict "Planner vs Builder" guardrail successfully prevent task bleeding and keep architecture decisions centralized?
+- **Granular Hybrid Decomposition & 2-Strike Escalation**: Codified Flash 3.8 High as the universal default baseline for both planning and building. Pro High is strictly an exception reserved for complex DSP math/concurrency, and when used for planning, must decompose `PLAN.md` into granular drop-in C++ blueprints so execution drops back to Flash High.
 - Document final workflow decisions in `docs/post_v040_workflow_retro.md`.
 
 ---

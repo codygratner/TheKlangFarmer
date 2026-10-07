@@ -21,6 +21,12 @@
   - **Tier 3 (Rapid Iteration, Data & Tooling)**: Editing JSON schemas in `assets/controls/`, documentation/backlog updates, git operations, mechanical find-and-replace, CMake tweaks. -> *Setting: Gemini 3.8 Flash (Thinking: Low or Medium)*.
     - *Quota Impact*: ⚡ `MINIMAL` — Near-zero burn rate. Perfect for rapid planning check-ins, git telemetry, and schema maintenance.
 
+- **Default Baseline & Granular Hybrid Decomposition Protocol**:
+  - **Flash 3.8 High is the Universal Default**: All planning in New Klang City and building in Klang Industries MUST default to **Tier 2: Gemini 3.8 Flash (Thinking: High)**. Tier 1 Pro High is strictly an on-demand escalation, NEVER the default.
+  - **Strict Threshold for Tier 1 Pro High**: New Klang City may ONLY recommend upgrading planning to Tier 1 Pro High if a task involves heavy audio DSP math (differential filter equations, non-linear saturation curves), SIMD vectorization, or lock-free concurrency.
+  - **Granular Blueprinting (Pro Plans, Flash Builds)**: Whenever Tier 1 Pro High is used to architect a feature, it MUST decompose `PLAN.md` into an ultra-granular blueprint with exact drop-in C++ method signatures, JSON keys, and test assertion lines. This guarantees that execution immediately drops back to **Tier 2 (Flash High)** in Klang Industries, preserving precious Pro quota during build/test iterations.
+  - **2-Strike Factory Floor Escalation**: While Klang Industries executes on Tier 2 (Flash High), it is allowed up to 2 iterative attempts to resolve a compilation error or test failure. If unresolved after 2 attempts, Klang Industries MUST hard-pause, issue a Tier Upgrade advisory to Pro High, and wait for user confirmation before proceeding.
+
 - **Dynamic Tier Transition Rules (Strict Quota Protection State Machine)**:
   Once execution is underway, the Model Advisory banner re-appears ONLY when the required complexity tier changes:
   1. **Tier UPGRADE (Moving Higher: Tier 3 ➔ 2, Tier 2 ➔ 1, Tier 3 ➔ 1)**:
