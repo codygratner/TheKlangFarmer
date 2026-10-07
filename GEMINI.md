@@ -53,7 +53,7 @@
       - For 1-level mismatch (Tier 1 on Tier 2): Display the Model Advisory banner recommending downgrade to save quota, start a 5-minute timer, and pause in chat text.
       - For 2-level mismatch (Tier 1 on Tier 3): Display the banner and hard-pause indefinitely without timer to protect critical Pro quota.
 
-- **Builder Pause Gate (Model Switch Friendly - NEVER use modal on execution start)**: Before Klang Industries calls any editing, code modification, or compilation tool on a new plan, it MUST NOT pop up an `ask_question` modal (because interactive modals freeze the IDE interface and completely prevent the user from changing the model dropdown in the IDE footer). If the active model matches the recommended tier, output the subtle verification badge (`✓ Model Verified: ...`) and proceed immediately. If the active model does not match the recommended tier, Klang Industries MUST output the Model Advisory banner at the very end of its briefing in chat and PAUSE in regular text, explicitly waiting for the user to verify/switch their model dropdown in the IDE footer and reply "proceed" (or provide other instructions).
+- **Builder Pause Gate (Model Switch Friendly - NEVER use modal on execution start)**: Before Klang Industries calls any editing, code modification, or compilation tool on a new plan, it MUST NOT pop up an `ask_question` modal (because interactive modals freeze the IDE interface and completely prevent the user from changing the model dropdown in the IDE footer). If the active model matches the recommended tier, output the subtle verification badge (`✓ Model Verified: ...`) and proceed immediately (including the subtle 1-line clean slate notice if the session is mature). If the active model does not match the recommended tier, Klang Industries MUST output the Model Advisory banner at the very end of its briefing in chat and PAUSE in regular text, explicitly waiting for the user to verify/switch their model dropdown in the IDE footer and reply "proceed" (or "harvest & proceed").
 - **Subagent Policy**: Always use `Model="flash"` for read-only research subagents (`invoke_subagent`), and `Model="pro"` only for heavy multi-file reasoning.
 
 ## Target Toolchain & Standards
@@ -178,6 +178,14 @@
 - **Proactive Context Refreshing**: When you notice the chat session getting long (multiple implementation iterations, large token usage, or when transitioning to a new plan phase), you MUST proactively suggest the user run the `/refresh-context` skill (or click "Replace with New" in the sidebar themselves).
 - **Proactive Context Compaction Warning**: When a conversation crosses ~40 turns or approaches high token density, the agent proactively outputs a subtle advisory at the end of its response:
   > 💡 *Session Token Advisory: This chat is getting long. Consider running `/refresh-context` before kicking off the next major milestone to keep the reasoning razor-sharp.*
+- **Threshold-Aware Factory Clean Slate & Soul Harvest Protocol**:
+  - **Young / Fresh Builder Sessions (< 12 turns or 1 task completed)**: Instant engage on `proceed` or `engage`. Zero harvest prompts to protect warmed-up compiler memory, recent file state, and rapid iteration velocity.
+  - **Mature Builder Sessions (> 15 turns or multiple heavy tasks)**: Append a subtle, non-blocking 1-line advisory at the bottom of the plan briefing in regular chat text (never an interactive modal):
+    `💡 Factory Context Notice: ~N turns accumulated. Reply 'proceed' (or 'engage') to build immediately, or 'harvest & proceed' (or run /refresh-context) for a clean slate.`
+  - **Power-User Override Flag (`harvest & proceed` / `proceed --harvest`)**: The user may supply this flag at any time. When passed:
+    1. Klang Industries harvests the session into `docs/DEV_HISTORY.md` and generates/updates `context_clues_build.md`.
+    2. Instructs the user to run `/clear` or click "Replace with New" in the sidebar.
+    3. Upon post-refresh resume (`resume` / `proceed`), Klang Industries immediately restores state from `context_clues_build.md` and begins Phase 1 execution with a pristine, razor-sharp context window.
 - **Two-Chat System Support**: Honor the two-chat system where one chat ("New Klang City") is purely for planning, and other chats are for implementation. During implementation, prioritize reading `PLAN.md` over generating raw instructions in the chat.
 
 ## Strict Chat Role Enforcement (Planner vs. Builder)

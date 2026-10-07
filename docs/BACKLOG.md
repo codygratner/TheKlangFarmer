@@ -155,14 +155,15 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Authored portable runner script discovering `pluginval.exe` in `tools\` or system PATH at configurable strictness (default level 5).
 - **Verification Metric**: 207 / 207 `gui_tests` passed successfully with 100% assertion pass rate.
 
-### 8. Planter Header Visualizer Optimization & Latency Remediation
-*Detailed Plan: [`PLAN.md`](PLAN.md)*  
+### 8. Planter Header Visualizer Optimization & Latency Remediation — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_optimize_planter_gui_rendering.md`](completed_plans/2026-10-06_optimize_planter_gui_rendering.md)*  
 *Goal: Eliminate UI thread input latency and sluggishness in The Klang Planter by optimizing visualizer repaint cascades and message thread overhead.*
 - **Opaque Visualizer (`setOpaque(true)`)**: Prevents JUCE from invalidating and repainting the entire parent window background during real-time oscilloscope animations.
 - **30 Hz Timer Frequency Alignment**: Aligned `PlanterEditor` timer rate with `FarmerEditor` (30 Hz down from 60 Hz), cutting message thread repaint events in half.
 - **Scope Spline & Point Optimization**: Downsampled oscilloscope resolution from 128 points to 64 points with smooth rounded stroke joints, dramatically reducing CPU Bézier calculation time during software rendering.
 - **String & Glyph Layout Caching**: Cached static title, subtitle, and version strings and computed widths at initialization, eliminating per-frame JSON dictionary lookups and glyph arrangement loops in `paint()`.
 - **Idle Silence Bypass**: Added signal gate checking for zero amplitude before queuing repaints when the synthesizer is silent.
+- **Verification Metric**: 215 / 215 `gui_tests` passed successfully with 100% assertion pass rate.
 
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
@@ -221,6 +222,14 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - If lower than required (e.g. Flash on Tier 1 DSP math): Full advisory banner + mandatory hard-pause to switch models.
   - If higher than required (e.g. Pro 3.1 on Tier 2/3 task): Advisory banner + 5-minute downgrade timer (Tier 1 on 2) or hard pause (Tier 1 on 3) to prevent accidental Pro burn.
 - **Modal-Free Builder Gate**: Builder never pops up blocking `ask_question` modals during task initialization, ensuring the IDE model picker in the footer is never locked.
+
+### 0.10. Threshold-Aware Factory Clean Slate & Soul Harvest Protocol — ✅ COMPLETED
+*Rule Reference: [`GEMINI.md`](../GEMINI.md)*  
+*Goal: Balance pristine context hygiene with working memory retention in Klang Industries, preventing model hallucinations while avoiding unnecessary agent amnesia on rapid iterations.*
+- **Zero-Friction Young Sessions (< 12 turns)**: Automatically proceeds without prompting to harvest, preserving warmed-up compiler insights, recent file state, and rapid iteration speed.
+- **Context-Aware Mature Sessions (> 15 turns)**: In mature sessions with heavy build/test logs, appends a subtle non-blocking 1-line note offering a clean slate (`💡 Factory Context Notice: ~N turns accumulated. Reply 'proceed' to build, or 'harvest & proceed' for a clean slate`).
+- **Power-User Override Flag**: Supports explicit `harvest & proceed` / `proceed --harvest` at any time, instantly triggering the `/refresh-context` workflow into `docs/DEV_HISTORY.md` and `context_clues_build.md` before compiling.
+- **Modal-Free Safety**: Never uses interactive modals on plan kickoff, keeping the IDE model picker in the footer accessible.
 
 ### 1. Parameter Randomization Engine (d6)
 Add a fully JSON-driven contextual randomization system:
