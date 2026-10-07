@@ -26,3 +26,7 @@ current_build/
 test.cpp
 test_assets.cpp
 runner.cs
+
+# Obsidian Vault & Sync Cache
+.obsidian/
+_sync_*.tmp

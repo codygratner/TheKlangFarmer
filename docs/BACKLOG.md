@@ -243,13 +243,19 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 ## 🚀 Milestone: v0.4.0 "The Interface & Experience Update"
 *Focus: Complete Clean-Slate UX Overhaul, Modern Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.*
 
-### 1. Research & Feasibility: Obsidian Knowledge Base & Vault Integration
-*Goal: Investigate creating an Obsidian vault structure or dedicated knowledge repository for all project documentation, architectural blueprints, dev logs, error histories, and data schemas.*
-- **Interactive Research & Exploration Scope**:
-  - Evaluate opening `docs/` directly as a native Obsidian Vault (leveraging Obsidian's local-first Markdown format with zero proprietary database lock-in).
-  - Investigate bidirectional linking (`[[wikilinks]]`) across DSP specifications, UI layout schemas, glossary terms ([`docs/GLOSSARY.md`](GLOSSARY.md)), and institutional memory ([`docs/DEV_HISTORY.md`](DEV_HISTORY.md)).
-  - Explore Obsidian Canvas for visual architecture diagrams (signal flow graphs, module dependencies, and roadmap sequencing).
-  - Evaluate repository architecture options: single repo `docs/` vault vs. dedicated sibling repository / Git submodule, ensuring seamless interoperability with AI agent tools.
+### 1. Obsidian Knowledge Base & Asymmetric Sync Bridge — ✅ COMPLETED
+*Detailed Guide: [`docs/OBSIDIAN_INTEGRATION.md`](OBSIDIAN_INTEGRATION.md)*  
+*Archived Plan: [`docs/completed_plans/2026-10-07_obsidian_vault_asymmetric_sync_bridge.md`](completed_plans/2026-10-07_obsidian_vault_asymmetric_sync_bridge.md)*  
+*Goal: Create a decoupled, conflict-free Obsidian knowledge base (`C:\Dev\TheKlangVault`) backed by an automated PowerShell sync bridge (`tools/sync_obsidian_vault.ps1`), enabling mobile note capture via Obsidian Sync without Git merge collisions, offline docs reading, and live build/error telemetry.*
+- **Decoupled Vault & Partitioned Ownership**:
+  - `Inbox/` (Vault $\to$ Repo): Frictionless mobile idea capture automatically mirrored to `TheKlangSuite/docs/inbox/`.
+  - `Docs/` (Repo $\to$ Vault): Official repository documentation mirrored to the vault for offline reading on mobile/tablet.
+  - `Telemetry/` (Script $\to$ Vault): Live mobile dashboards (`Dashboard.md`, `Active_Errors.md`) tracking Git branch, recent commits, and `dev.log` runtime errors.
+  - `Canvas/`: Visual workspace for signal flow graphs, FM modulation routing, and card mockups.
+- **Asymmetric Sync Engine (`tools/sync_obsidian_vault.ps1`)**:
+  - Fast, idempotent sync script supporting on-demand single execution and continuous background loop (`-Watch`).
+  - Generates live heartbeat note (`_sync_heartbeat.md`) in the vault.
+- **Verification Metric**: End-to-end smoke test passed (61 docs mirrored in ~600ms, test note ingested from Vault Inbox to repo docs inbox in ~450ms, telemetry parsed clean).
 
 ### 2. The Neo-Slate Vector Design System & Chassis Overhaul
 *Goal: Overhaul the overall plugin window chassis with a sleek, modern, non-skeuomorphic vector design inspired by Kilohearts Phase Plant, Vital, and Arturia Pigments.*

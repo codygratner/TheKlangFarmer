@@ -2,33 +2,31 @@
 **Origin:** New Klang City (Planning Headquarters)  
 **Destination:** Klang Industries (The Factory Floor)  
 **Date:** 2026-10-07  
-**Active Milestone:** v0.3.2 "Agent Infrastructure & Editor Upgrades"  
-**Task Name:** Developer Logging Subsystem (`TKS_LOG`) & Diagnostics Engine  
+**Active Milestone:** v0.4.0 "The Interface & Experience Update"  
+**Task Name:** Obsidian Knowledge Base & Asymmetric Sync Bridge  
 **Recommended Model Tier:** Tier 2 (`Gemini 3.8 Flash (Thinking: High)`)  
 **Status:** COMPLETED ✅  
-**Source Plan:** [`docs/completed_plans/2026-10-07_dev_logger_subsystem.md`](file:///c:/Dev/TheKlangSuite/docs/completed_plans/2026-10-07_dev_logger_subsystem.md)  
+**Source Plan:** [`docs/completed_plans/2026-10-07_obsidian_vault_asymmetric_sync_bridge.md`](file:///c:/Dev/TheKlangSuite/docs/completed_plans/2026-10-07_obsidian_vault_asymmetric_sync_bridge.md)  
 
 ---
 
 ## Strategic Objective
-Implement a structured, leveled developer logging subsystem (`TKS_LOG_INFO`, `TKS_LOG_WARN`, `TKS_LOG_ERROR`) in `source/DevLogger.h` that routes simultaneously to the system debugger (`OutputDebugString` / `DBG`) and a 5 MB rotating log file (`%LOCALAPPDATA%/TheKlangSuite/dev.log`), strictly protects real-time audio threads via runtime assertions and static guardrails, compiles to zero-cost no-ops in Release builds, and replaces raw logger calls across the suite.
+Initialize a dedicated, conflict-free Obsidian Vault at `C:\Dev\TheKlangVault\` (with `Inbox/`, `Docs/`, `Telemetry/`, and `Canvas/` partitions) and implement a robust PowerShell sync bridge (`tools/sync_obsidian_vault.ps1`). This decouples mobile Obsidian Sync from Git, enables frictionless idea capture on mobile, mirrors project documentation for offline reading, and streams build and error telemetry directly into mobile-accessible Obsidian notes.
 
 ---
 
 ## Acceptance Criteria & Execution Guardrails
-1. **Core Logger Implementation (`source/DevLogger.h`)**:
-   - `RlyehSound::DevLogger` singleton wrapping `juce::FileLogger::createDefaultAppLogger("TheKlangSuite", "dev.log", ...)`.
-   - Macros `TKS_LOG_INFO`, `TKS_LOG_WARN`, `TKS_LOG_ERROR`, and `TKS_LOG`.
-   - In Release (`!JUCE_DEBUG`), macros expand to `do {} while (false)` for absolute zero runtime/binary cost.
-2. **Audio Thread Safety Invariant**:
-   - Audio thread ID tracking via `registerAudioThread()` in `prepareToPlay()`.
-   - `jassert(!isAudioThread())` and safe abort (`if (isAudioThread()) return;`) inside `DevLogger::log()`.
-   - Static guardrail: `audiothread-guard` updated to flag `TKS_LOG*` in Category C.
-3. **Integration Points**:
-   - `FarmerProcessor.cpp` / `PlanterProcessor.cpp`: `prepareToPlay` and `releaseResources`.
-   - `ParameterManager.cpp`: Asset loading counts and warnings.
-   - Clean up raw `juce::Logger::writeToLog` calls in `tools/editor/Main.cpp`, `MainComponent.cpp`, and `source/UIComponents.cpp`.
-4. **Test Suite Expansion**:
-   - Add `test/DevLoggerTest.h` to `gui_tests.cpp`.
-   - 100% test pass across `dsp_tests.exe` and `gui_tests.exe`.
-   - Run `deploy.ps1` to sync artifacts.
+1. **Partitioned Folder Isolation**:
+   - `C:\Dev\TheKlangVault\Inbox\` syncs to `TheKlangSuite\docs\inbox\`. Mobile notes are never overwritten or deleted by Git.
+   - `TheKlangSuite\docs\` mirrors to `C:\Dev\TheKlangVault\Docs\`. Repository documentation remains the immutable master.
+   - `C:\Dev\TheKlangVault\Telemetry\` receives live build dashboards, test summaries, and parsed `dev.log` error reports.
+2. **Git Cleanliness**:
+   - `.gitignore` in `TheKlangSuite` ignores any `.obsidian/` directories and temporary sync cache files (`_sync_*.tmp`).
+   - Create `docs/inbox/.gitkeep` in the repo.
+3. **Robust PowerShell Sync Engine (`tools/sync_obsidian_vault.ps1`)**:
+   - Idempotent execution (safe to run repeatedly, on-demand, or via scheduler).
+   - Generates a live heartbeat file `_sync_heartbeat.md` with timestamps and health status.
+   - Generates a mobile-friendly dashboard `Telemetry/Dashboard.md` summarizing active Git branch, recent commits, and `dev.log` diagnostics.
+4. **End-to-End Verification**:
+   - Smoke test confirms bidirectional flow (test note from Inbox -> repo; docs from repo -> vault; telemetry generated).
+   - Test artifacts cleanly scrubbed post-validation.
