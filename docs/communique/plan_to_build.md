@@ -2,30 +2,25 @@
 **Origin:** New Klang City (Planning Headquarters)  
 **Destination:** Klang Industries (The Factory Floor)  
 **Date:** 2026-10-07  
-**Active Milestone:** v0.3.1 (Architecture & Tooling Hardening)  
-**Task Name:** Schema Separation of Concerns & Cross-Reference "Where Used" Inspector  
+**Active Milestone:** v0.3.1 (Tooling & Data Schema Hardening)  
+**Task Name:** Top-Level Callout Parameter Controls in The Klang Editor  
 **Recommended Model Tier:** Tier 2 (`Gemini 3.8 Flash (Thinking: High)`)  
 **Status:** READY_FOR_EXECUTION  
 
 ---
 
 ## Strategic Objective
-1. Enforce strict schema separation of concerns: migrate all visual styling, palettes (`theme.json`), and callout geometry (`callouts.json`) into `assets/themes/`, stripping all colors and dimensions out of `assets/controls/`.
-2. Bind the Master Limiter parameters to `assets/themes/callouts.json` and add `Master Limiter` to `assets/layouts/tkp_layout.json` so all 9 Planter modules and 100% of APVTS parameters are discoverable in the tree.
-3. Add a pre-indexed (`< 2ms`), bidirectional Cross-Reference ("Where Used & Associations") panel to the lower left sidebar of The Klang Editor, enabling double-click tree navigation between parameters, cards, and callouts.
-4. Update `ParameterSchemaAuditTest` and `EditorTestSuite`, run the full regression gauntlet, deploy fresh artifacts, and hand off to New Klang City for release cutting.
+Ensure that clicking `[Callout] Master Limiter` (or any callout) at the top level in The Klang Editor's tree immediately displays all of its bound parameter controls in the right-hand property panel, exactly like Cards 1–8, without requiring the user to drill down into child parameter nodes.
 
 ---
 
 ## Directives for Klang Industries
 1. **Model Check**: Please verify your model setting is **Tier 2: Gemini 3.8 Flash (Thinking: High)**.
 2. **Branch**: Maintain execution on `0.3.1-dev`.
-3. **Execution Plan**: Follow [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) strictly across Phases 1 through 6:
-   - Phase 1: Create `assets/themes/`, author `theme.json` and `callouts.json`, strip `ui_colors` from `assets/controls/`, delete `assets/controls/global_ui.json`.
-   - Phase 2: Update `CMakeLists.txt` (`TkfAssets`) and `ParameterManager.cpp` to parse `assets/themes/*.json`.
-   - Phase 3: Bind Master Limiter to `assets/themes/callouts.json` and dynamically mount under TKP tree as `[Callout] Master Limiter` with popup preview rendering (leaving `tkp_layout.json` strictly to the 8 surface cards).
-   - Phase 4: Implement `buildReferencesIndex()` and `whereUsedListBox` in `MainComponent`, along with child parameter nodes under `Callouts & Overlays`.
-   - Phase 5: Update `test/ParameterSchemaAuditTest.h` (strict schema leak check) and `test/EditorTestSuite.h` (Where-Used verification).
-   - Phase 6: Compile Release, run tests, run `deploy.ps1`, commit feature changes to git, and issue "JOB'S DONE!" chime (release tagging handled by New Klang City under `/cut-release`).
+3. **Execution Plan**: Follow [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) strictly:
+   - Step 1: In `MainComponent.cpp` (`onTreeItemSelected`), populate `controlsObj` and `paramToFileMap` from `cardJson`'s `"parameters"` array when `currentProductId == "callouts"`.
+   - Step 2: In `MainComponent.cpp` (`updateUIFromState`), change `if (!isCallout && showParams && parsed.isObject())` to `if (showParams && parsed.isObject())` so callout parameter properties populate the form editor.
+   - Step 3: Add Stage 11 in `test/EditorTestSuite.h` verifying that top-level callout selection populates parameter controls in `formEditor`.
+   - Step 4: Build Release targets (`TheKlangEditor`, `gui_tests`, `dsp_tests`), run tests (asserting 0 failures, exit code 0), run `deploy.ps1`, commit changes with `feat(editor): ...`, update `build_to_plan.md` to `COMPLETE`, and chime "JOB'S DONE!".
 4. **Validation**: Confirm `build/Release/gui_tests.exe` and `build/Release/dsp_tests.exe` pass 100% with exit code 0.
 5. **Communique**: Report results in `docs/communique/build_to_plan.md` upon completion.
