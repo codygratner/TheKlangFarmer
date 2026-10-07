@@ -22,6 +22,9 @@ int main(int argc, char* argv[]) {
     bool smokeOnly = args.contains("--smoke-only");
     bool reflectionOnly = args.contains("--reflection-only");
     bool stressOnly = args.contains("--stress-only");
+    bool versionOnly = args.contains("--version-only");
+    bool auditOnly = args.contains("--audit-only");
+    bool intensiveOnly = args.contains("--intensive-only");
 
     GuiTestHelpers::TestReporter reporter;
     GuiTestHelpers::ScopedGuiContext guiContext;
@@ -36,6 +39,12 @@ int main(int argc, char* argv[]) {
         ReflectionGuardrailSuite::runSuite(reporter);
     } else if (smokeOnly) {
         SmokePaintSuite::runSuite(reporter);
+    } else if (versionOnly) {
+        VersionCheckerTestSuite::runSuite(reporter);
+    } else if (auditOnly) {
+        ParameterSchemaAuditTest::runSuite(reporter);
+    } else if (intensiveOnly) {
+        PluginIntensiveTestSuite::runSuite(reporter);
     } else {
         if (runFarmer)  FarmerTestSuite::runSuite(reporter);
         if (runPlanter) PlanterTestSuite::runSuite(reporter);
@@ -54,7 +63,7 @@ int main(int argc, char* argv[]) {
 
     reporter.printSummary();
 
-    VersionChecker::getInstance().stopThread(2000);
+    VersionChecker::teardown();
     GuiTestHelpers::pumpMessageLoop(20, 10);
 
     return (reporter.failed == 0) ? 0 : 1;

@@ -1,9 +1,10 @@
 # Implementation Chat Context Clues
 - **Chat Role:** Implementation & Build Chat (Klang Industries)
-- **Current Objective:** Fix Release Teardown Crash (0xC0000005) in VersionChecker (`v0.3.1` Pre-Release Hotfix)
-- **Plan Status:** Ready to execute Phase 1 of `PLAN.md`
+- **Current Objective:** Standby for next dispatch / cut-release
+- **Plan Status:** `PLAN.md` archived and reset to standby.
 - **Current State:**
   - Branch: `0.3.1-dev`
-  - Previous task (Planter GUI performance tuning) 100% complete, verified (215/215 GUI tests, 100% DSP tests), deployed, and harvested to `docs/DEV_HISTORY.md`.
-  - New blueprint and dispatch received in `docs/communique/plan_to_build.md` and `PLAN.md`.
-  - Uncommitted files: `docs/DEV_HISTORY.md` (harvest entry appended).
+  - VersionChecker release teardown crash (`0xC0000005`) fully resolved and verified.
+  - `gui_tests.exe`: 215 / 215 passed, EXIT CODE: 0.
+  - `dsp_tests.exe`: 100% passed, EXIT CODE: 0.
+  - Deploy script executed cleanly.

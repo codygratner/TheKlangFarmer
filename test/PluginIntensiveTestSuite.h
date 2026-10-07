@@ -539,12 +539,12 @@ namespace PluginIntensiveTestSuite {
             reporter.expect(true, "Planter Callout: Offscreen paint completed with zero errors");
 
             // 3. In-Window CalloutBox Parenting Verification
-            auto testCallout = std::make_unique<PlanterLimiterCalloutComponent>(processor);
+            PlanterLimiterCalloutComponent testCallout(processor);
             auto area = juce::Rectangle<int>(100, 100, 80, 24);
-            auto& box = juce::CallOutBox::launchAsynchronously(std::move(testCallout), area, editor.get());
+            auto box = std::make_unique<juce::CallOutBox>(testCallout, area, editor.get());
             pumpMessageLoop();
-            reporter.expect(editor->isParentOf(&box), "Planter Callout: CallOutBox is direct child of editor (not desktop window)");
-            box.dismiss();
+            reporter.expect(editor->isParentOf(box.get()), "Planter Callout: CallOutBox is direct child of editor (not desktop window)");
+            box.reset();
             pumpMessageLoop();
 
             // 4. INIT Button Reset Verification

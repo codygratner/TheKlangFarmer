@@ -35,40 +35,40 @@ We treat the application as a high-performance desktop application consisting of
 3. A **graphical user interface** (frontend controls, pages, animations, tooltips).
 4. A **multi-platform host environment** (Windows, macOS, Linux).
 
-Here is how our test harness is structured:
+```text
+=============================================================================
+                  OUR 5-TIER AUTOMATED TESTING PYRAMID
+=============================================================================
 
-```mermaid
-flowchart TD
-    subgraph L5["Platform & Host Compliance (CI/CD)"]
-        CI["Multi-Platform CI Matrix (Win / Mac / Linux)"]
-        Fuzz["Host Fuzzing & Crash Stress (Pluginval / Auval)"]
-    end
-
-    subgraph L4["Hardening & Memory Safety"]
-        Life["Lifecycle Stress: 10x Rapid Instantiation/Destruction"]
-        DPI["Dynamic DPI Scaling: 100%, 125%, 150%, 200%"]
-        Thread["Real-Time Execution Guardrails (Zero Alloc/Lock/IO)"]
-    end
-
-    subgraph L3["Headless GUI & Component Integrity"]
-        Binding["100% Component-to-Backend State Binding Sweep"]
-        Tooltip["100% Interactive Tooltip & UX Audit"]
-        Sim["Event Simulation: Clicks, Drags, Presets"]
-    end
-
-    subgraph L2["Data Contracts & Schema Compliance"]
-        Schema["JSON Single-Source-of-Truth Validation"]
-        Bounds["Boundary Audits: Min < Max, Defaults in Range, Skew > 0"]
-        Orphan["Orphan Reflection Check (Detect Unmapped Controls)"]
-    end
-
-    subgraph L1["Backend Engine & Numerical Stability"]
-        NaN["Zero NaN / Inf Math Verification"]
-        Sweep["Exhaustive Parameter Sweeps (0.0 to 1.0)"]
-        State["State Reset & Buffer Clear Testing"]
-    end
-
-    L1 --> L2 --> L3 --> L4 --> L5
+ [ TIER 5: PLATFORM & HOST COMPLIANCE (CI/CD) ]
+   • Automated Multi-OS Matrix (Windows x64, macOS, Ubuntu Linux)
+   • 60-Second Host Crash & Stress Fuzzing (Pluginval Strictness 5)
+   • Automated Headless Snapshot Image Generation
+             ▲
+             │
+ [ TIER 4: HARDENING, MEMORY SAFETY & STRESS ]
+   • Rapid Lifecycle Stress (10x Loop: Create -> Initialize -> Destroy)
+   • Dynamic DPI Scaling Tests (100%, 125%, 150%, 200%)
+   • Real-Time Audio Thread Safety (Zero Allocations, Zero Locks, Zero I/O)
+             ▲
+             │
+ [ TIER 3: HEADLESS UI & COMPONENT INTEGRITY ]
+   • 100% Component-to-Backend State Binding Sweep (Knobs, Sliders, LEDs)
+   • 100% Accessibility & UX Audit (Non-empty tooltips on all controls)
+   • Automated Event Simulation (Clicks, Drags, Snaps, Modal Transitions)
+             ▲
+             │
+ [ TIER 2: DATA CONTRACTS & SCHEMA COMPLIANCE ]
+   • JSON Single-Source-of-Truth Validation vs Live Application State
+   • Strict Bounds Verification (min < max, default in range, skew > 0)
+   • "Orphan Feature" Reflection Audit (Zero unmapped backend parameters)
+             ▲
+             │
+ [ TIER 1: BACKEND ENGINE & NUMERICAL STABILITY ]
+   • Numerical Integrity: Zero NaN (Not-a-Number) / Inf Math Checks
+   • Exhaustive Parameter Sweeps across Boundary Values (0.0 to 1.0)
+   • Buffer Clearing & State Reset Verification
+=============================================================================
 ```
 
 ---
@@ -139,13 +139,25 @@ Given your deep experience with complex enterprise software—managing huge matr
 
 Here are areas an enterprise SQA professional might look for next that we haven't fully tackled yet:
 
-| SQA Domain | What We Have Today | Potential Gap / Next Level |
-| :--- | :--- | :--- |
-| **Visual Regression Testing** | Headless screenshot capture generation. | Automated pixel-diffing (comparing new screenshots against golden master reference images to automatically flag visual shifts). |
-| **State Persistence / Migrations** | Schema validation for active parameters. | Backward-compatibility regression tests: Can a save file/preset created in v0.1.0 still load seamlessly in v0.3.0 without corrupting state? |
-| **Localization & OS Locales** | Standard ASCII/English number formatting. | Decimal separator differences (e.g., European `,` vs US `.` in text input parsing) and font rendering across different OS versions. |
-| **Exploratory Testing Charters** | Ad-hoc manual clicking by the developer. | Structured, timeboxed 30-minute exploratory charters with specific bug-hunting missions (e.g., "The Chaos Monkey Session: Try to crash modal dialogs"). |
-| **Defect Reproducibility Logs** | Console output and CI test failure traces. | Automated in-app diagnostics log or state-export button for rapid bug reproduction when a user encounters an issue. |
+### 1. Visual Regression Testing
+* **What We Have Today:** Automated headless screenshot captures generated on every build.
+* **The Potential Gap / Next Level:** Automated pixel-diffing (comparing new screenshots against "golden master" reference images to automatically flag unexpected pixel shifts or layout drift).
+
+### 2. State Persistence & Data Migrations
+* **What We Have Today:** Schema validation for all active parameters and defaults.
+* **The Potential Gap / Next Level:** Backward-compatibility regression tests: Can a user save file or preset created in v0.1.0 still load seamlessly into v0.3.0 without corrupting state or dropping settings?
+
+### 3. Localization & Regional OS Formats
+* **What We Have Today:** Standard ASCII/English number and string formatting.
+* **The Potential Gap / Next Level:** Decimal separator quirks (e.g., European `,` vs US `.` in text input parsing) and font rendering across different OS versions and system languages.
+
+### 4. Exploratory Testing Charters
+* **What We Have Today:** Ad-hoc manual clicking by the developer.
+* **The Potential Gap / Next Level:** Structured, timeboxed 30-minute exploratory test charters with specific bug-hunting missions (e.g., "The Chaos Monkey Session: Try to break modal dialogues and rapid window resizing").
+
+### 5. Defect Reproducibility & Diagnostics
+* **What We Have Today:** Console build outputs and CI test failure traces.
+* **The Potential Gap / Next Level:** Automated in-app diagnostics log or a "Copy Debug State" button to capture full runtime state when an issue occurs in the wild.
 
 ---
 
