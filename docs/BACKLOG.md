@@ -185,22 +185,21 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 ## 🚀 Milestone: v0.3.2 "Agent Infrastructure & Guardrails Audit"
 *Focus: Post-release optimization of GEMINI.md guardrails, custom skills, inter-chat handoffs, and agent telemetry.*
 
-### 1. Comprehensive Guardrails & Skills Optimization Audit
+### 1. Comprehensive Guardrails & Skills Optimization Audit — ✅ COMPLETED
 *Goal: Systematically audit GEMINI.md, system rules, custom skills, and inter-chat communiques to eliminate cruft, reduce context bloat, streamline execution pipelines, and expand missing capabilities.*
 - **Guardrails Audit (`GEMINI.md`)**:
-  - Review all guardrails for conciseness, removing obsolete workarounds and redundant instructions.
-  - Assess token overhead in system instructions and streamline high-frequency banners.
-  - Audit the Two-Chat (Ivory Tower vs Factory Floor) division, watchdog timers, and mobile automation pipelines.
-- **Skills Audit & Streamlining (`.gemini/config/skills/` & `.agents/skills/`)**:
-  - Audit custom skills (`audiothread-guard`, `build-validate`, `step-verify`, `execute-task`, `cut-release`, `refresh-context`, etc.) for overlapping responsibilities or deprecated logic.
-  - Streamline skill prompts and help texts to minimize prompt injection and context usage.
-  - Explore new workflow expansions (e.g., enhanced git telemetry, automated release notes generation, automated performance benchmarks).
+  - Removed all references to retired `/pasteplan`, `/paste-plan`, and `/strict-plan`.
+  - Fixed typos (`\x08uild-validate` -> `build-validate`).
+  - Aligned 2-Strike Factory Floor Escalation Protocol across `GEMINI.md` and `build-validate/SKILL.md`.
+  - Codified the Strict Clipboard & External Link Ingestion Guardrail to prevent accidental OS clipboard sniffing or URL scraping.
+- **Skills Modernization & 100% Directory Parity**:
+  - Retired and deleted obsolete skills (`strict-plan`, `paste-plan`) across both workspace (`.agents/skills/`) and global (`C:\Users\codyg\.gemini\config\skills\`) directories.
+  - Modernized `read-plan` as the official Communiqué Dispatch Ingestor (`docs/communique/plan_to_build.md` -> `PLAN.md`).
+  - Modernized `execute-task` and `task-finish` to purge all Linear.app references and dead backlog paths, sourcing strictly from `docs/BACKLOG.md`.
+  - Synchronized workspace (`.agents/skills/`) and global (`~/.gemini/config/skills/`) in 100% exact parity across all 12 active skills.
 - **Inter-Chat Communique Tuning (`docs/communique/`)**:
-  - Evaluate the `plan_to_build.md` and `build_to_plan.md` state machine handoff to identify any friction or repetitive handoffs.
-- **Clipboard Isolation & External Link Ingestion Audit**:
-  - Audit clipboard handling in `paste-plan` and task intake routines to strictly isolate agent workflows from the host OS clipboard.
-  - Eliminate accidental sniffing of external URLs, personal notes, or out-of-band meeting links when workspace files (`PLAN.md`, `docs/communique/plan_to_build.md`) are the designated single source of truth.
-  - Hard-code rules preventing scraping/fetching URLs from clipboard under any circumstance without explicit user confirmation.
+  - Added `STATUS: COMPLETED` as a formal terminal state in `plan_to_build.md` to prevent stale dispatch pickups.
+  - Mandated dual-mailbox closure in `task-finish` (updating both `build_to_plan.md` and `plan_to_build.md`).
 
 ### 2. Unified Filterable Master Tree & Dedicated Text/Localization Schema
 *Goal: Redesign The Klang Editor's navigation tree into a unified master tree with multi-state layer filters, and extract text/tooltips into a dedicated data schema.*

@@ -14,7 +14,7 @@
   > - **Active Model Check**: Please verify your model dropdown in the IDE footer matches this tier before proceeding!
 
 - **The Three Complexity Tiers**:
-  - **Tier 1 (High Reasoning / Critical DSP)**: Complex audio DSP math, polyphonic voice allocation, SIMD FastMath, lock-free concurrency, memory safety forensics, deep architectural planning (`/strict-plan`). -> *Setting: Gemini 3.1 Pro (Thinking: High)*.
+  - **Tier 1 (High Reasoning / Critical DSP)**: Complex audio DSP math, polyphonic voice allocation, SIMD FastMath, lock-free concurrency, memory safety forensics, deep architectural planning (`/plan`). -> *Setting: Gemini 3.1 Pro (Thinking: High)*.
     - *Quota Impact*: `⚠️ HIGH IMPACT` — Burns significant 5-hour rolling pool and weekly Pro quota. Use only when deep reasoning is strictly necessary, and switch back to Flash High as soon as planning finishes.
   - **Tier 2 (Balanced Engineering & UI Testing)**: Standard JUCE UI components, modal dialogues, APVTS parameter attachments, building/expanding `gui_tests` or `dsp_tests`, standard phase execution. -> *Setting: Gemini 3.8 Flash (Thinking: High)*.
     - *Quota Impact*: `🟢 SUSTAINABLE` — Fast, highly capable, and draws very lightly against quota. The optimal daily driver for building and testing.
@@ -81,7 +81,7 @@
   3. `assets/themes/*.json`: Visual styling, color palettes, typography (`theme.json`), and floating overlay/callout dimensions, background/border colors, and bound parameter arrays (`callouts.json`).
 
 ## Strict Planning Guardrails
-- **No Spontaneous Implementation**: When the user invokes planning commands (/plan, /strict-plan, /pasteplan, /readplan), you must NEVER automatically start writing C++ code, compiling, or modifying source files.
+- **No Spontaneous Implementation**: When the user invokes planning commands (/plan, /read-plan, /execute-task), you must NEVER automatically start writing C++ code, compiling, or modifying source files.
 - **Mandatory Confirmation**: Always stop, summarize the loaded plan, and explicitly ask the user for permission to begin implementation, or if they prefer to defer it to the backlog.
 
 
@@ -152,7 +152,7 @@
 
 ## Smart /grill-me Wrap-Up & Mandatory Interactive Decision Modals
 - **Interactive Modal Required for Design Menus (Zero Plain-Text Number Menus)**: Whenever presenting design decision options to the user - whether at the end of `/grill-me`, `/plan`, or architectural branching forks - you must NEVER output raw numbered text lists (e.g. `1. Option A, 2. Option B, 3. Both`) in the chat forcing the user to type "3". You MUST ALWAYS invoke the `ask_question` tool so the user gets an interactive clickable modal.
-- **CRITICAL EXCEPTION - The Plan Execution Start Gate**: Under NO circumstances should `ask_question` be used when presenting a plan for execution in Klang Industries (Builder), at the start of `/paste-plan`, `/read-plan`, or `/execute-task`. Modals freeze the IDE interface and completely prevent the user from changing their model dropdown in the IDE footer. The execution start gate MUST ALWAYS be a non-modal pause in chat text, presenting the Model Advisory banner and waiting for the user to adjust their model dropdown and reply "proceed".
+- **CRITICAL EXCEPTION - The Plan Execution Start Gate**: Under NO circumstances should `ask_question` be used when presenting a plan for execution in Klang Industries (Builder), at the start of `/read-plan` or `/execute-task`. Modals freeze the IDE interface and completely prevent the user from changing their model dropdown in the IDE footer. The execution start gate MUST ALWAYS be a non-modal pause in chat text, presenting the Model Advisory banner and waiting for the user to adjust their model dropdown and reply "proceed".
 - **Proactive Housekeeping**: Whenever you complete a /grill-me interactive interview, you must document the final design conclusion (Backlog, Plan, or Both).
 - **Contextual Bypass**: If the user's answers during the interview *explicitly* stated where the item should go (e.g., "put this in v0.4 of the backlog"), you are authorized to bypass the formal 3-option menu and immediately execute the documentation.
 - **When in Doubt, Ask via `ask_question`**: If the destination is ambiguous, you must call `ask_question` with the options formatted as user actions (e.g., `(Recommended) Both: Add to Backlog and draft Plan`, `Backlog Only`, `Draft Plan Only`).
@@ -168,8 +168,8 @@
 - **Rely on Git**: Git is the only acceptable time machine. If we need to see how an old feature worked, we will look at the Git history.
 - **Scope**: This applies strictly to Source Code. Documentation files (like `BACKLOG_ARCHIVE.md` or PLAN artifacts) are exempt and should be preserved as requested.
 ## Strict Build Validation & Deployment
-- **Always Deploy**: Whenever you successfully build the project and fix a bug or add a feature, you MUST ensure you run the uild-validate skill or execute deploy_vst3.bat to copy the generated .exe and .vst3 artifacts into the current_build/ directory and C:\Program Files\Common Files\VST3\. Do not leave the user looking at stale builds.
-- **Dual Pipeline (Fast Iterate -> Validate)**: You may use raw cmake --build for your own rapid iteration and syntax checking. However, before presenting a finished feature or bugfix to the user, you MUST use the uild-validate skill to run the full test suite and trigger automated deployment.
+- **Always Deploy**: Whenever you successfully build the project and fix a bug or add a feature, you MUST ensure you run the build-validate skill or execute deploy_vst3.bat to copy the generated .exe and .vst3 artifacts into the current_build/ directory and C:\Program Files\Common Files\VST3\. Do not leave the user looking at stale builds.
+- **Dual Pipeline (Fast Iterate -> Validate)**: You may use raw cmake --build for your own rapid iteration and syntax checking. However, before presenting a finished feature or bugfix to the user, you MUST use the build-validate skill to run the full test suite and trigger automated deployment.
 
 ## Strict Test-Driven Guardrail (Mandatory Test Parity)
 - **Zero Orphaned Features**: Under no circumstances should a new DSP algorithm, audio parameter, UI card, page, modal, or editor tool be merged without corresponding test coverage in `test/dsp_tests.cpp` and `test/gui_tests.cpp`.
@@ -213,10 +213,10 @@
   All dispatch headers in `docs/communique/plan_to_build.md` must declare their explicit lifecycle state:
   - `STATUS: DRAFTING`: New Klang City is actively formulating the plan. Klang Industries MUST NOT read or execute.
   - `STATUS: READY_FOR_EXECUTION`: Signed contract published. Klang Industries is authorized to begin building.
-  - `STATUS: IN_PROGRESS`: Klang Industries has started compiling or editing code.
-  - `STATUS: COMPLETE`: Klang Industries has verified all tests and deployed artifacts.
+  - `STATUS: IN_PROGRESS`: Klang Industries has ingested the dispatch contract and started compiling or editing code.
+  - `STATUS: COMPLETED`: Klang Industries has verified all tests, deployed artifacts, archived `PLAN.md`, and closed the dispatch loop.
 - **Zero-Polling Discipline**: Under no circumstances should either agent run terminal status loops (`git status`, `git diff`, file checks, or watchdog polling loops) waiting for the other chat to complete work. Inter-chat handoffs are strictly event-driven.
-- **The "Job's Done" Chime**: When Klang Industries finishes compilation, test passes, and artifact deployment, it MUST update `build_to_plan.md` to `Status: COMPLETE ✅` and conclude its turn with this prominent handoff chime:
+- **The "Job's Done" Chime & Dual Mailbox Closure**: When Klang Industries finishes compilation, test passes, and artifact deployment, it MUST update BOTH `build_to_plan.md` (to `Status: COMPLETE ✅`) and `plan_to_build.md` (to `Status: COMPLETED ✅`), archive `PLAN.md` to `docs/completed_plans/`, and conclude its turn with this prominent handoff chime:
   > 🔔 **JOB'S DONE!** `<Task Name>` is fully built, tested, and deployed. Switch to New Klang City to review and advance!
 - **Single-Read Ingest**: When the user returns to New Klang City and prompts ("check report", "status", "continue", etc.), New Klang City performs **exactly ONE read** of `docs/communique/build_to_plan.md` to confirm completion—zero polling, zero loops.
 - **PLAN.md as Ephemeral Execution Board**:
@@ -237,8 +237,8 @@
   5. **JUCE 9.0.3 Timer Hygiene**: 100% of `juce::Timer` subclasses must call `stopTimer()` as the first line of their destructor.
 
 ## Strict Clipboard & External Link Ingestion Guardrail
-- **Zero Arbitrary Clipboard Sniffing**: Never inspect or read the host system clipboard (`Get-Clipboard`) unless explicitly commanded by the user with a specific command (e.g. `/pasteplan`).
-- **Never Fetch External URLs from Clipboard**: Even when `/paste-plan` is invoked, if the clipboard contains an HTTP/HTTPS URL, an external web link, or non-markdown content, agents must NEVER automatically fetch or scrape it via `read_url_content` or `curl`.
+- **Zero Arbitrary Clipboard Sniffing**: Agents must NEVER inspect or read the host system clipboard (`Get-Clipboard`). Blueprints, tasks, and code must originate exclusively from local workspace files or direct user input in chat.
+- **Never Fetch External URLs**: Agents must NEVER automatically fetch or scrape external web URLs via `read_url_content` or `curl` during planning, building, or task ingestion without explicit user confirmation.
 - **Local-Only Plan Priority**: All plans, tasks, and communique documents MUST come exclusively from local workspace files (e.g. `PLAN.md`, `docs/communique/plan_to_build.md`) or direct text provided by the user in chat.
 - **Privacy & Context Boundary**: The host system clipboard may contain private, out-of-band user data from other applications (notes, meeting links, passwords, tokens). Respect context boundaries at all times.
 

@@ -1,0 +1,63 @@
+---
+name: clean-plan
+description: Cleans up temporary planning artifacts (context_snapshot*.md, PLAN_BACKUP*.md) and archives completed PLAN.md files to docs/completed_plans/ to keep the workspace clean. Triggers on `/cleanplan`, `/clean-plan`, `/snapshot-clean`, `/cleansnapshot`, or "clean plan".
+---
+
+# Planning Hygiene & Snapshot Cleaner
+
+## Goal
+Purge temporary planning snapshots (`context_snapshot*.md`) and scratchpad backups, and archive completed `PLAN.md` files into `docs/completed_plans/` to maintain a pristine, clutter-free repository root.
+
+## Operational Constraints
+- **Preserve Unfinished Work:** Do not delete an uncompleted `PLAN.md` without explicit user confirmation.
+- **Permanent Archival:** Always archive completed plans to `docs/completed_plans/` rather than hard-deleting them so historical engineering context is preserved.
+
+## Workflow
+
+### 1. Detect Planning Artifacts
+Inspect the project root for planning files:
+- `context_snapshot*.md`
+- `PLAN_BACKUP*.md`
+- `PLAN.md`
+
+### 2. Purge Temporary Snapshots & Backups
+If temporary snapshots or backup files exist, delete them:
+```powershell
+Remove-Item -Path "context_snapshot*.md", "PLAN_BACKUP*.md" -Force -ErrorAction SilentlyContinue
+```
+
+### 3. Archive or Clean `PLAN.md`
+If `PLAN.md` exists at the project root:
+
+1. **Check Completion Status:**
+   - Scan for unchecked checklist items (`- [ ]`).
+   - If unchecked items exist:
+     - If invoked manually with an explicit intent to reset, prompt the user:
+       > *"PLAN.md still contains unchecked items. Would you like to archive it anyway or keep it in place?"*
+     - If invoked as part of a post-task cleanup after all phases passed: proceed to archive.
+
+2. **Archive Completed Plan:**
+   - Extract the plan title and ticket identifier (e.g., `THE-6`, `THE-7`, or the primary heading).
+   - Get the current date in `YYYY-MM-DD` format.
+   - Target directory: `docs/completed_plans/` (create if it does not exist).
+   - Copy or move `PLAN.md` to:
+     `docs/completed_plans/<YYYY-MM-DD>_<IDENTIFIER_OR_TITLE>.md`
+   - Reset `PLAN.md` at project root:
+     ```powershell
+     Set-Content -Path "PLAN.md" -Value "# No Active Plan`n"
+     ```
+   <!-- [Strategy Experiment: Multi-Chat Communiqué Awareness] -->
+   - **Communiqué Sync (If Present):** If `docs/communique/` exists:
+     - Update `docs/communique/build_to_plan.md` setting `Status: COMPLETE ✅` with link to archived plan and timestamp.
+     - Update `docs/communique/plan_to_build.md` setting `Status: COMPLETED ✅`.
+
+### 4. Output Cleanliness Report
+Display a concise summary:
+
+```markdown
+### 🧹 Workspace Cleaned
+
+- **Temporary Snapshots Removed:** `context_snapshot.md` deleted.
+- **Plan Archival:** `PLAN.md` archived to [`docs/completed_plans/<archive_name>.md`](file:///docs/completed_plans/<archive_name>.md).
+- **Repository Root:** Clean (zero untracked scratchpads).
+```
