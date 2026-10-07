@@ -12,7 +12,12 @@
 Up through v0.3.2, The Klang Suite maintained strict 1:1 parity with the legacy v0.2.0 monolithic prototype. While this preserved functional continuity while establishing tests and data-driven modularity, it forced the user interface to carry forward prototype design debt: sprawling 204-parameter lists, an awkward 8-card grid where navigation and visualizers consumed 25% of the playing surface, and visual clutter.
 
 With **Milestone v0.4.0**, we execute a **Total Clean-Slate Parity Break**:
-1. **Modern Vector Neo-Slate Aesthetic**: Inspired by modern audio software masterpieces (**Kilohearts Phase Plant**, **Vital**, and **Arturia Pigments**). Clean dark-slate surfaces (`0xff121622`), crisp 1px borders, high-contrast typography, and luminous neon accents. **Zero faux-vintage screws, zero fake drop shadows, zero 3D skeuomorphism.**
+1. **The "Anti-Tacky" Modern Hybrid Aesthetic**:
+   - Rejects faux-vintage skeuomorphism (zero fake 3D knobs, zero faux-aluminum glare, zero fake drop shadows, zero fake rack screws).
+   - **Renoise**: High-density data precision, mathematical clarity, and zero wasted margin space.
+   - **Ableton Live**: Distraction-free flat geometry, unified clean rectangular containers, and Tabular Figures (fixed-width digits preventing numeric text jitter during automation).
+   - **Vital**: Luminous animated vector curves, real-time envelope playhead tracking dots, and clean futuristic contrast.
+   - **Kilohearts**: Modular card containers, horizontal Meter Sliders with embedded labels and values, and immediate tactile drag resolution.
 2. **The 4-Controls-Per-Card Mandate**: Every Card front panel is strictly limited to **exactly 4 high-impact performance controls**, organized as a vertical 1x4 stack of horizontal Meter Sliders.
 3. **Hardware-Informed Synergy (dadamachines TBD-16)**: While software-first, the 4-control limit creates immediate 1:1 synergy with 1x4 encoder controllers, matching the physical layout of the TBD-16.
 4. **Header-Integrated Navigation & Scope**: Page navigation tabs (`[VOICE 1]`, `[VOICE 2]`, `[TRANSIENTS]`, `[FX 1-4]`, `[FX 5-8]`, `[MOD]`) and the master stereo oscilloscope/meters move to the top Chassis Header, freeing up 100% of the rack canvas for synth modules.
