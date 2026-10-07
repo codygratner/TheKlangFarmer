@@ -242,6 +242,18 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 
 ---
 
+## 🛡️ Milestone: v0.3.3 "The Hardening Gauntlet"
+*Focus: Runtime audio safety, concurrency memory safety, and schema fuzzing.*
+
+### 1. Hardening Gauntlet Execution — ✅ COMPLETED
+*Archived Plan: [`.agents/pipeline/plans/completed/2026-10-07_hardening_gauntlet.md`](../.agents/pipeline/plans/completed/2026-10-07_hardening_gauntlet.md)*
+- CI Toolchain Lockdown & Sanitizer Integration (-Werror)
+- The "Monitor Saver" Protocol (DSP NaN/Inf Failsafe)
+- Asynchronous DAW Automation Defense
+- Data-Driven "Poison Pill" Fuzzing
+
+---
+
 ## 🚀 Milestone: v0.4.0 "The Interface & Experience Update"
 *Focus: Complete Clean-Slate UX Overhaul, Modern Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.*
 
@@ -764,6 +776,7 @@ Port the battle-tested, data-driven architecture from *The Klang Farmer* over to
 All completed tasks, architectural decisions, and release summaries are archived in:
 👉 **[`docs/BACKLOG_ARCHIVE.md`](BACKLOG_ARCHIVE.md)**  
 *(Individual phase execution plans are preserved in `docs/completed_plans/`)*
+
 
 
 

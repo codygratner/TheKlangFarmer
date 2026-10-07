@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+
+## [0.3.3] - 2026-10-07 "The Hardening Gauntlet"
+
+### Added
+- **Sanitizer Integration & CI Lockdown**:
+  - Implemented TK_STRICT_WARNINGS to treat warnings as errors (-Werror / /WX) during CI.
+  - Implemented TK_USE_ASAN option for AddressSanitizer and ThreadSanitizer compilation profiles.
+- **The Monitor Saver Protocol (NaN/Inf Failsafe)**:
+  - Added SIMD-accelerated NaN/Inf detection in FastMath::sanitizeBuffer to instantly mute output channels if DSP algorithms fault.
+  - Enforced enableFTZDAZ() (Flush-to-Zero / Denormals-Are-Zero) at the DSP entry points of both processors to prevent CPU spiking from subnormals.
+- **Data-Driven Fuzzing**:
+  - Added PoisonPillSchemaSuite to dynamically bombard the JSON layout parsing engine with invalid payloads (missing keys, syntax errors) to mathematically prove the GUI safely falls back to defaults without crashing the DAW.
+- **Automation Defense Test**:
+  - Added AutomationStressTest pushing 50,000 randomized parameter updates concurrently against the DSP audio thread block callbacks, verifying 100% thread safety and atomicity.
+
+---
 ## [0.3.2] - 2026-10-07 "Agent Infrastructure & Editor Upgrades"
 
 ### Added
@@ -315,3 +331,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Unit test executable (`dsp_tests.exe`) validating audio generation, parameter stability sweeps, filter topologies, and energy conservation.
 - **CMake & JUCE 8 Architecture**:
   - C++20 build pipeline compiling both VST3 plugin and Standalone executables.
+
