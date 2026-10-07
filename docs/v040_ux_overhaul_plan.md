@@ -67,7 +67,7 @@ With **Milestone v0.4.0**, we execute a **Total Clean-Slate Parity Break**:
 ### Phase 3: Vertical 1x4 Meter Slider Stacks & Real-Time Diagrams
 - Refactor `ModuleCardComponent` to render 4 horizontal Meter Sliders in a clean vertical stack.
 - Integrate real-time vector curve drawing (`DiagramType::Waveform`, `DiagramType::EnvelopeSlope`, `DiagramType::FilterSlope`) inside slider troughs.
-- Style with neo-slate dark themes (`0xff121622` chassis, `0xff181c26` card trough, vibrant cyan/coral/amber accent fills).
+- Tabular figures (fixed-width digits) to prevent numeric text jitter during automation.
 
 ### Phase 4: Right-Click Callout Deep-Dive Engine
 - Standardize right-click listeners across all module cards and sliders.
@@ -76,11 +76,20 @@ With **Milestone v0.4.0**, we execute a **Total Clean-Slate Parity Break**:
   - S&H clock jitter and frequency tracking modes.
   - Velocity mapping curves and bipolar modulation offsets.
 
-### Phase 5: The Klang Editor Interactive Curve & Snap Calibration Workspace
+### Phase 5: Switchable Studio Theme Engine (`Cykranosh`, `Nord`, `Dracula`, `Cyberpunk`)
+- Structure `assets/themes/theme.json` to define multiple curated studio palettes:
+  - **`cykranosh` (Default / Creator's Signature)**: Deep slate navy (`#161B22` / `#1A202C`), muted deep blue cards, eerie ghostly teal (`#4EBEB1`), arctic ice blue, and starlight silver indicators (engineered for zero eye fatigue during marathon sessions).
+  - **`nord`**: Arctic frost blue-grey (`#2E3440`) with icy cyan and pastel aurora highlights.
+  - **`dracula`**: Iconic vampire purple (`#282A36`) with electric cyan, hot pink, and lime green accents.
+  - **`cyberpunk`**: Deep obsidian black (`#090C12`) with glowing electric cyan and hot magenta.
+- Wire live theme switcher dropdown into both the Settings & About modal and The Klang Editor.
+- Instant, non-destructive theme swapping persisted in user properties without restarting DAW.
+
+### Phase 6: The Klang Editor Interactive Curve & Snap Calibration Workspace
 - Update The Klang Editor's property panel and preview canvas for the new 4-control card architecture.
 - Integrate live interactive slider skew tuning and snap point testing.
 
-### Phase 6: Automated Test Suite Overhaul & Validation
-- Update `test/PluginIntensiveTestSuite.h`, `test/ParameterSchemaAuditTest.h`, and `test/EditorTestSuite.h` to validate the new curated parameter reflection, 4-control slot limits, and header navigation.
+### Phase 7: Automated Test Suite Overhaul & Validation
+- Update `test/PluginIntensiveTestSuite.h`, `test/ParameterSchemaAuditTest.h`, and `test/EditorTestSuite.h` to validate the new curated parameter reflection, 4-control slot limits, header navigation, and theme palette switching.
 - 100% assertion pass across `dsp_tests.exe` and `gui_tests.exe`.
 - Compile Release binaries and deploy via `deploy.ps1`.

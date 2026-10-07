@@ -279,23 +279,22 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - Live interactive slider evaluation, tactile response tuning, and real-time visualization of parameter skew factor curves.
 - Test and calibrate discrete musical snap points live within the editor before persisting to `assets/controls/*.json`.
 
+### 5. Switchable Studio Theme Engine (`Cykranosh`, `Nord`, `Dracula`, `Cyberpunk`)
+*Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
+*Goal: Provide distinctive, switchable visual flavors for different studio environments, featuring the creator's signature Cykranosh theme as the flagship look.*
+- **Curated Multi-Palette Schema (`assets/themes/theme.json`)**:
+  - `cykranosh` (Default / Creator's Signature): Deep slate navy (`#161B22` / `#1A202C`), muted deep blue cards, eerie ghostly teal (`#4EBEB1`), arctic ice blue, and starlight silver indicators (engineered for zero eye fatigue during marathon sessions).
+  - `nord`: Arctic frost blue-grey (`#2E3440`) with icy cyan and pastel aurora highlights.
+  - `dracula`: Iconic vampire purple (`#282A36`) with electric cyan, hot pink, and lime green accents.
+  - `cyberpunk`: Deep obsidian black (`#090C12`) with glowing electric cyan and hot magenta.
+- **Live Non-Destructive Theme Switching**:
+  - Live theme switcher dropdown in both the Settings & About modal and The Klang Editor.
+  - Instantly re-skins the UI without restarting the DAW and persists in user properties.
+
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
-
-### 0.5. The Klang Editor Interactive Parameter & Curve Audit Tool (Breaking Parity)
-*Goal: Build an interactive parameter audit and curve calibration workspace directly inside The Klang Editor (TKE) to systematically audit and redesign the tactile feel, custom snap points, logarithmic slider slopes, and ergonomic double-click defaults of all controls.*
-> ⚠️ **MANDATORY PLANNING DIRECTIVE (New Klang City):** When this item is reached on the backlog, the planning agent MUST NOT jump straight to blueprinting or implementation. New Klang City MUST initiate an interactive architectural discussion / interview (`/grill-me` or interactive decision modal) with the user to collaboratively explore and align on the editor workflow, curve tooling requirements, and visual UI before drafting `PLAN.md`.
-- **Integrated Editor Audit Workspace**:
-  - Integrate an interactive audit / calibration view directly into The Klang Editor navigation tree (`The Klang Editor`).
-  - Provide live interactive slider evaluation, tactile response tuning, and real-time visualization of parameter skew factor curves.
-- **Double-Click Reset & Tactile Ergonomics**:
-  - Audit all card controls across Farmer and Planter for musically optimal double-click reset values.
-  - Tune slider skew factors (logarithmic/exponential/linear curves) for frequency, time, and resonance parameters.
-- **Discrete Musical Snap Points & Magnetism**:
-  - Add discrete snap points, detents, and magnetism to key musical intervals (e.g. semitones, octaves, harmonic ratios, tempo sync fractions) and zero-crossings.
-  - Test and calibrate snap points live within the editor before persisting to `assets/controls/*.json`.
 
 ### 0.6. Transparent Quota Telemetry & Language Server Probe (`/quota` Skill)
 *Goal: Provide instant, transparent visibility into Antigravity model quotas (5-hour rolling bucket, weekly tier allowances) without diving deep into IDE settings menus.*
