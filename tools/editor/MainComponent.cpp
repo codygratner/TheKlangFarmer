@@ -310,6 +310,188 @@ private:
     bool editedByHand = false;
 };
 
+class CalloutTextPropertyComponent : public juce::PropertyComponent {
+public:
+    CalloutTextPropertyComponent(const juce::String& name, const juce::String& initialVal, std::function<void(const juce::String&)> onValChanged)
+        : juce::PropertyComponent(name), onChange(std::move(onValChanged)) {
+        setPreferredHeight(30);
+        addAndMakeVisible(textEditor);
+        textEditor.setText(initialVal, juce::dontSendNotification);
+        textEditor.onTextChange = [this]() {
+            if (onChange) onChange(textEditor.getText());
+        };
+    }
+    void refresh() override {}
+    void resized() override {
+        auto b = getLocalBounds();
+        b.removeFromLeft(b.getWidth() / 3);
+        textEditor.setBounds(b.reduced(4));
+    }
+private:
+    juce::TextEditor textEditor;
+    std::function<void(const juce::String&)> onChange;
+};
+
+class CalloutPreviewCard : public juce::Component {
+public:
+    CalloutPreviewCard(const juce::String& calloutType,
+                       const juce::String& title,
+                       juce::Colour bgCol,
+                       juce::Colour borderCol,
+                       float radius)
+        : type(calloutType), cardTitle(title), bg(bgCol), border(borderCol), cornerRadius(radius),
+          limitSelector(borderCol)
+    {
+        if (type == "planter_limiter") {
+            limitSelector.setAccent(borderCol);
+            limitSelector.setItems({ "OFF", "ON" }, 2);
+            limitSelector.setSelectedIndex(1, juce::dontSendNotification);
+            addAndMakeVisible(limitSelector);
+
+            auto setupMockKnob = [&](RotaryKnobSlider& s, double val) {
+                s.setAccentColour(borderCol);
+                s.setLabel("");
+                s.setRange(0.0, 1.0, 0.01);
+                s.setValue(val);
+                addAndMakeVisible(s);
+            };
+
+            setupMockKnob(knob1, 0.33);
+            setupMockKnob(knob2, 1.0);
+            setupMockKnob(knob3, 0.63);
+        } else {
+            textEditor.setText("1.00 kHz", false);
+            textEditor.setReadOnly(true);
+            textEditor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff12141a));
+            textEditor.setColour(juce::TextEditor::textColourId, juce::Colours::white);
+            addAndMakeVisible(textEditor);
+
+            const char* snaps[] = { "0.5x", "1.0x", "2.0x", "Default" };
+            for (int i = 0; i < 4; ++i) {
+                auto* btn = new juce::TextButton(snaps[i]);
+                btn->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff181d26));
+                btn->setColour(juce::TextButton::textColourOffId, juce::Colour(0xff94a3b8));
+                snapButtons.add(btn);
+                addAndMakeVisible(btn);
+            }
+        }
+    }
+
+    void paint(juce::Graphics& g) override {
+        auto bounds = getLocalBounds().toFloat();
+        if (bounds.getWidth() <= 1.0f || bounds.getHeight() <= 1.0f) return;
+
+        // Chassis background & rounded border
+        g.setColour(bg);
+        g.fillRoundedRectangle(bounds, cornerRadius);
+        g.setColour(border.withAlpha(0.7f));
+        g.drawRoundedRectangle(bounds.reduced(0.75f), cornerRadius, 1.5f);
+
+        // Header bar
+        auto headerArea = bounds.removeFromTop(24.0f);
+        g.setColour(bg.brighter(0.08f));
+        g.fillRoundedRectangle(headerArea.getX(), headerArea.getY(), headerArea.getWidth(), headerArea.getHeight(), cornerRadius);
+        g.fillRect(headerArea.removeFromBottom(cornerRadius));
+
+        g.setColour(border);
+        g.drawHorizontalLine(24, 0.0f, bounds.getWidth());
+
+        // Header indicator dot
+        g.setColour(border);
+        g.fillEllipse(10.0f, 8.0f, 8.0f, 8.0f);
+
+        // Title text
+        g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+        g.setColour(juce::Colour(0xfff1f5f9));
+        g.drawText(cardTitle, 24, 0, getWidth() - 30, 24, juce::Justification::centredLeft, true);
+
+        if (type == "planter_limiter") {
+            // Column labels
+            g.setFont(juce::FontOptions(10.5f, juce::Font::bold));
+            g.setColour(juce::Colour(0xffcfd8dc));
+            if (limitSelector.getWidth() > 0)
+                g.drawText("LIMIT", limitSelector.getX(), 27, limitSelector.getWidth(), 16, juce::Justification::centred, true);
+            if (knob1.getWidth() > 0)
+                g.drawText("GAIN", knob1.getX(), 27, knob1.getWidth(), 16, juce::Justification::centred, true);
+            if (knob2.getWidth() > 0)
+                g.drawText("CEIL", knob2.getX(), 27, knob2.getWidth(), 16, juce::Justification::centred, true);
+            if (knob3.getWidth() > 0)
+                g.drawText("REL", knob3.getX(), 27, knob3.getWidth(), 16, juce::Justification::centred, true);
+        } else {
+            // Subtitle
+            g.setFont(juce::FontOptions(10.0f, juce::Font::bold));
+            g.setColour(border.brighter(0.2f));
+            g.drawText("QUICK SNAP VALUES", 10, 64, getWidth() - 20, 16, juce::Justification::centredLeft, true);
+        }
+    }
+
+    void resized() override {
+        if (type == "planter_limiter") {
+            int topY = 46;
+            int h = std::max(10, getHeight() - topY - 10);
+            limitSelector.setBounds(10, topY, 46, h);
+            int knobW = std::max(10, (getWidth() - 72) / 3);
+            int curX = 62;
+            knob1.setBounds(curX, topY, knobW, h); curX += knobW + 4;
+            knob2.setBounds(curX, topY, knobW, h); curX += knobW + 4;
+            knob3.setBounds(curX, topY, knobW, h);
+        } else {
+            textEditor.setBounds(10, 32, std::max(10, getWidth() - 20), 26);
+            int btnW = std::max(10, (getWidth() - 32) / 4);
+            int curX = 10;
+            for (auto* btn : snapButtons) {
+                btn->setBounds(curX, 86, btnW, 26);
+                curX += btnW + 4;
+            }
+        }
+    }
+
+    void setTitle(const juce::String& newTitle)
+    {
+        cardTitle = newTitle;
+        repaint();
+    }
+
+    void setBackgroundColour(juce::Colour c)
+    {
+        bg = c;
+        repaint();
+    }
+
+    void setBorderColour(juce::Colour c)
+    {
+        border = c;
+        if (type == "planter_limiter") {
+            limitSelector.setAccent(c);
+            knob1.setAccentColour(c);
+            knob2.setAccentColour(c);
+            knob3.setAccentColour(c);
+        }
+        repaint();
+    }
+
+    void setCornerRadius(float r)
+    {
+        cornerRadius = r;
+        repaint();
+    }
+
+private:
+    juce::String type;
+    juce::String cardTitle;
+    juce::Colour bg;
+    juce::Colour border;
+    float cornerRadius = 5.0f;
+
+    LedSelectorComponent limitSelector;
+    RotaryKnobSlider knob1;
+    RotaryKnobSlider knob2;
+    RotaryKnobSlider knob3;
+
+    juce::TextEditor textEditor;
+    juce::OwnedArray<juce::TextButton> snapButtons;
+};
+
 void EditorTreeItem::paintItem(juce::Graphics& g, int width, int height) {
     if (isSelected()) g.fillAll(juce::Colours::lightblue.withAlpha(0.2f));
     g.setColour(juce::Colours::white);
@@ -555,9 +737,21 @@ MainComponent::MainComponent()
         auto* saveComp = new SaveConfirmComponent(oldLayoutStr, newLayoutStr, oldControlsStr, newControlsStr,
             [this, parsedLayoutEdit, parsedControlsEdit, newControls](SaveConfirmComponent* comp) {
                 // Commit
-                auto file = getAssetFile(currentProductId == "theme" ? "controls" : "layouts", currentParamJsonFile);
+                auto file = getAssetFile(currentProductId == "theme" || currentProductId == "callouts" ? "controls" : "layouts", currentParamJsonFile);
                 if (file.existsAsFile()) {
-                    if (currentProductId != "theme" && currentLayout.isObject()) {
+                    if (currentProductId == "callouts") {
+                        auto parsedGlobal = juce::JSON::parse(file.loadFileAsString());
+                        if (parsedGlobal.isObject()) {
+                            auto* root = parsedGlobal.getDynamicObject();
+                            if (root->hasProperty("callout_styles")) {
+                                auto* calloutsObj = root->getProperty("callout_styles").getDynamicObject();
+                                if (calloutsObj) {
+                                    calloutsObj->setProperty(currentCardId, parsedLayoutEdit);
+                                    file.replaceWithText(juce::JSON::toString(parsedGlobal));
+                                }
+                            }
+                        }
+                    } else if (currentProductId != "theme" && currentLayout.isObject()) {
                         if (currentPageId.isNotEmpty() && currentLayout.getDynamicObject()->hasProperty(currentPageId)) {
                             auto pageObj = currentLayout.getDynamicObject()->getProperty(currentPageId);
                             if (pageObj.isObject()) pageObj.getDynamicObject()->setProperty(currentCardId, parsedLayoutEdit);
@@ -571,7 +765,7 @@ MainComponent::MainComponent()
                 }
                 
                 // Save Controls
-                if (currentProductId != "theme" && newControls) {
+                if (currentProductId != "theme" && currentProductId != "callouts" && newControls) {
                     for (auto& prop : newControls->getProperties()) {
                         juce::String paramId = prop.name.toString();
                         if (paramToFileMap.count(paramId) > 0) {
@@ -783,6 +977,15 @@ void MainComponent::buildTree() {
         controlsRootNode->addSubItem(fileNode);
     }
     cRoot->addSubItem(controlsRootNode);
+
+    auto makeCalloutsNode = [this]() {
+        auto* calloutsNode = new EditorTreeItem(this, "Callouts & Overlays", "product", "callouts");
+        calloutsNode->addSubItem(new EditorTreeItem(this, "Planter Master Limiter", "callout_preview", "tkp", "", "planter_limiter"));
+        calloutsNode->addSubItem(new EditorTreeItem(this, "Slider Modulation & Snaps", "callout_preview", "tkf", "", "slider_modulation"));
+        return calloutsNode;
+    };
+    lRoot->addSubItem(makeCalloutsNode());
+    cRoot->addSubItem(makeCalloutsNode());
     
     layoutsTree.setRootItem(lRoot);
     layoutsTree.setRootItemVisible(false);
@@ -806,11 +1009,19 @@ juce::String MainComponent::getControlFileForParam(const juce::String& paramId) 
 void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
     if (!item) return;
     juce::Logger::writeToLog("onTreeItemSelected: " + item->name);
-    if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme") && item->itemType != "control_file" && item->itemType != "layout_file" && item->itemType != "page" && item->itemType != "product") return;
+    if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme") && item->itemType != "control_file" && item->itemType != "layout_file" && item->itemType != "page" && item->itemType != "product" && item->itemType != "callout_preview") return;
     
+    if (item->itemType == "product" && item->productId == "callouts") return;
+
     currentParamTarget = item->paramId;
     
-    if (item->itemType == "product" && item->productId == "theme") {
+    if (item->itemType == "callout_preview") {
+        currentProductId = "callouts";
+        currentParamJsonFile = "global_ui.json";
+        currentPageId = "";
+        currentCardId = item->cardId;
+        activePreviewProduct = item->productId;
+    } else if (item->itemType == "product" && item->productId == "theme") {
         currentProductId = "theme";
         currentParamJsonFile = "theme.json";
         currentPageId = "";
@@ -841,14 +1052,31 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
         currentCardId = item->cardId;
     }
 
-    auto file = getAssetFile(currentProductId == "theme" ? "controls" : (currentProductId == "all_controls" ? "controls" : "layouts"), currentParamJsonFile);
-    filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" && currentProductId != "all_controls" && currentProductId != "all_layouts" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : "") + (currentParamTarget.isNotEmpty() ? " -> [" + currentParamTarget + "]" : ""));
+    auto file = getAssetFile(currentProductId == "theme" || currentProductId == "callouts" ? "controls" : (currentProductId == "all_controls" ? "controls" : "layouts"), currentParamJsonFile);
+    if (currentProductId == "callouts") {
+        filePathDisplay.setText(file.getFullPathName() + " -> [callout_styles] -> [" + currentCardId + "]");
+    } else {
+        filePathDisplay.setText(file.getFullPathName() + (currentProductId != "theme" && currentProductId != "all_controls" && currentProductId != "all_layouts" ? " -> [" + currentPageId + "] -> [" + currentCardId + "]" : "") + (currentParamTarget.isNotEmpty() ? " -> [" + currentParamTarget + "]" : ""));
+    }
 
     juce::var cardJson;
     if (file.existsAsFile()) {
         auto fullJsonString = file.loadFileAsString();
         
-        if (currentProductId == "all_layouts") {
+        if (currentProductId == "callouts") {
+            auto parsedGlobal = juce::JSON::parse(fullJsonString);
+            if (parsedGlobal.isObject()) {
+                auto* obj = parsedGlobal.getDynamicObject();
+                if (obj->hasProperty("callout_styles")) {
+                    auto* calloutsObj = obj->getProperty("callout_styles").getDynamicObject();
+                    if (calloutsObj && calloutsObj->hasProperty(currentCardId)) {
+                        cardJson = calloutsObj->getProperty(currentCardId);
+                        originalLayoutJson = juce::JSON::toString(cardJson);
+                    }
+                }
+            }
+            originalControlsJson = "{}";
+        } else if (currentProductId == "all_layouts") {
             cardJson = juce::JSON::parse(fullJsonString);
             originalLayoutJson = fullJsonString;
             originalControlsJson = "{}";
@@ -915,7 +1143,11 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
         layoutJsonDocument.replaceAllContent(originalLayoutJson);
         controlsJsonDocument.replaceAllContent(originalControlsJson);
         
-        if (navigationTabs.getCurrentTabIndex() == 1) { // LAYOUTS
+        if (currentProductId == "callouts") {
+            jsonSplitterLayout.setItemLayout(0, -1.0, -1.0, -1.0);
+            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);
+            jsonSplitterLayout.setItemLayout(2, 0, 0, 0);
+        } else if (navigationTabs.getCurrentTabIndex() == 1) { // LAYOUTS
             jsonSplitterLayout.setItemLayout(0, -1.0, -1.0, -1.0);
             jsonSplitterLayout.setItemLayout(1, 0, 0, 0);          
             jsonSplitterLayout.setItemLayout(2, 0, 0, 0);          
@@ -925,7 +1157,7 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
             jsonSplitterLayout.setItemLayout(2, -1.0, -1.0, -1.0); 
         }
         resized();
-        
+        formEditor.clear();
         syncJsonToPreview(originalLayoutJson);
     }
 }
@@ -942,6 +1174,7 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     juce::Logger::writeToLog("syncJsonToPreview");
     auto jsonString = forcedJson.isNotEmpty() ? forcedJson : layoutJsonDocument.getAllContent();
     bool isTheme = (currentProductId == "theme");
+    bool isCallout = (currentProductId == "callouts");
     
     auto parsed = juce::JSON::parse(jsonString);
     if (parsed.isVoid() || jsonString.isEmpty()) {
@@ -957,11 +1190,15 @@ void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
     activeSliders.clear();
     previewWrapper.deleteAllChildren();
     compToParamId.clear();
-    formEditor.clear();
+
+    bool shouldKeepForm = isCallout && !formEditor.isEmpty() && (layoutJsonEditor == nullptr || !layoutJsonEditor->hasKeyboardFocus(true));
+    if (!shouldKeepForm && !formEditor.hasKeyboardFocus(true)) {
+        formEditor.clear();
+    }
 
     if (isTheme) {
         RlyehSound::ParameterManager::getInstance().reloadFromJson(jsonString);
-    } else {
+    } else if (!isCallout) {
         RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent());
     }
 
@@ -1196,6 +1433,27 @@ if (isTheme && parsed.isObject()) {
                 emptyLbl->setBounds(10, yOffset + 20, 280, 40);
             }
         }
+    } else if (isCallout) {
+        if (parsed.isObject()) {
+            juce::String title = parsed.getProperty("title", "CALLOUT").toString();
+            int w = parsed.getProperty("width", 300);
+            int h = parsed.getProperty("height", 130);
+            juce::Colour bg = juce::Colour::fromString(parsed.getProperty("background_colour", "0xff1e222b").toString());
+            juce::Colour border = juce::Colour::fromString(parsed.getProperty("border_colour", "0xffe53935").toString());
+            float radius = (float) parsed.getProperty("corner_radius", 5.0);
+
+            auto* card = new CalloutPreviewCard(currentCardId, title, bg, border, radius);
+            previewWrapper.addAndMakeVisible(card);
+
+            int pwW = previewWrapper.getWidth();
+            int pwH = previewWrapper.getHeight();
+            if (pwW <= 0) pwW = 600;
+            if (pwH <= 0) pwH = 400;
+
+            int cardX = std::max(10, (pwW - w) / 2);
+            int cardY = std::max(10, (pwH - h) / 2);
+            card->setBounds(cardX, cardY, w, h);
+        }
     } else {
         if (parsed.isObject()) {
             auto moduleConfig = parsed;
@@ -1351,7 +1609,7 @@ if (isTheme && parsed.isObject()) {
     bool showParams = (navigationTabs.getCurrentTabIndex() == 0); // Only in CONTROLS tab
 
     juce::Array<juce::PropertyComponent*> props;
-    if (showLayout && parsed.isObject()) {
+    if (!isCallout && showLayout && parsed.isObject()) {
         auto* obj = parsed.getDynamicObject();
         for (auto& prop : obj->getProperties()) {
             juce::String valStr;
@@ -1397,9 +1655,87 @@ if (isTheme && parsed.isObject()) {
     if (!props.isEmpty()) {
         formEditor.addSection("Card Layout", props);
     }
+
+    if (isCallout && parsed.isObject()) {
+        if (formEditor.isEmpty()) {
+            juce::Array<juce::PropertyComponent*> calloutProps;
+            auto* obj = parsed.getDynamicObject();
+
+            auto updateCalloutJson = [this](const juce::String& key, const juce::var& newVal) {
+                auto parsedObj = juce::JSON::parse(layoutJsonDocument.getAllContent());
+                if (parsedObj.isObject()) {
+                    parsedObj.getDynamicObject()->setProperty(key, newVal);
+                    layoutJsonDocument.replaceAllContent(juce::JSON::toString(parsedObj));
+                }
+            };
+
+            auto getPreviewCard = [this]() -> CalloutPreviewCard* {
+                if (previewWrapper.getNumChildComponents() > 0)
+                    return dynamic_cast<CalloutPreviewCard*>(previewWrapper.getChildComponent(0));
+                return nullptr;
+            };
+
+            // Title
+            juce::String titleVal = obj->getProperty("title").toString();
+            calloutProps.add(new CalloutTextPropertyComponent("Title", titleVal, [updateCalloutJson, getPreviewCard](const juce::String& val) {
+                if (auto* c = getPreviewCard()) c->setTitle(val);
+                updateCalloutJson("title", val);
+            }));
+
+            // Width
+            juce::String widthVal = obj->getProperty("width").toString();
+            calloutProps.add(new CalloutTextPropertyComponent("Width", widthVal, [this, updateCalloutJson, getPreviewCard](const juce::String& val) {
+                int w = val.getIntValue();
+                if (auto* c = getPreviewCard()) {
+                    c->setSize(w, c->getHeight());
+                    int cx = std::max(10, (previewWrapper.getWidth() - w) / 2);
+                    int cy = std::max(10, (previewWrapper.getHeight() - c->getHeight()) / 2);
+                    c->setTopLeftPosition(cx, cy);
+                }
+                updateCalloutJson("width", w);
+            }));
+
+            // Height
+            juce::String heightVal = obj->getProperty("height").toString();
+            calloutProps.add(new CalloutTextPropertyComponent("Height", heightVal, [this, updateCalloutJson, getPreviewCard](const juce::String& val) {
+                int h = val.getIntValue();
+                if (auto* c = getPreviewCard()) {
+                    c->setSize(c->getWidth(), h);
+                    int cx = std::max(10, (previewWrapper.getWidth() - c->getWidth()) / 2);
+                    int cy = std::max(10, (previewWrapper.getHeight() - h) / 2);
+                    c->setTopLeftPosition(cx, cy);
+                }
+                updateCalloutJson("height", h);
+            }));
+
+            // Background Colour
+            juce::String bgVal = obj->getProperty("background_colour").toString();
+            calloutProps.add(new ThemeColorPropertyComponent("Background Colour", bgVal, [updateCalloutJson, getPreviewCard](const juce::String& val) {
+                if (auto* c = getPreviewCard()) c->setBackgroundColour(juce::Colour::fromString(val));
+                updateCalloutJson("background_colour", val);
+            }));
+
+            // Border Colour
+            juce::String borderVal = obj->getProperty("border_colour").toString();
+            calloutProps.add(new ThemeColorPropertyComponent("Border Colour", borderVal, [updateCalloutJson, getPreviewCard](const juce::String& val) {
+                if (auto* c = getPreviewCard()) c->setBorderColour(juce::Colour::fromString(val));
+                updateCalloutJson("border_colour", val);
+            }));
+
+            // Corner Radius
+            juce::String radiusVal = obj->getProperty("corner_radius").toString();
+            calloutProps.add(new CalloutTextPropertyComponent("Corner Radius", radiusVal, [updateCalloutJson, getPreviewCard](const juce::String& val) {
+                float r = val.getFloatValue();
+                if (auto* c = getPreviewCard()) c->setCornerRadius(r);
+                updateCalloutJson("corner_radius", r);
+            }));
+
+            formEditor.addSection("Callout Style: " + currentCardId, calloutProps);
+        }
+    }
     
     // Add detailed parameter properties
-    if (showParams && parsed.isObject()) {
+    if (!isCallout && showParams && parsed.isObject()) {
         juce::StringArray paramIds;
         if (currentProductId == "all_controls") {
             auto parsedC = juce::JSON::parse(controlsJsonDocument.getAllContent());
@@ -1655,6 +1991,14 @@ void MainComponent::resized() {
     jsonSplitterLayout.layOutComponents(jsonComps, 3, 0, 0, jsonContainer.getWidth(), jsonContainer.getHeight(), true, true);
     
     emptyPlaceholder.setBounds(previewWrapper.getBounds());
+
+    if (currentProductId == "callouts" && previewWrapper.getNumChildComponents() > 0) {
+        if (auto* c = previewWrapper.getChildComponent(0)) {
+            int cx = std::max(10, (previewWrapper.getWidth() - c->getWidth()) / 2);
+            int cy = std::max(10, (previewWrapper.getHeight() - c->getHeight()) / 2);
+            c->setTopLeftPosition(cx, cy);
+        }
+    }
 }
 
 

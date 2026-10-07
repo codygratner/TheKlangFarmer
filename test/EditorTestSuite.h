@@ -96,5 +96,42 @@ public:
         pumpMessageLoop();
         reporter.expect(true, "Refresh button executed cleanly");
 
+        // --- Stage 7: Callouts & Overlays Inspection Test ---
+        reporter.beginTest("Callouts & Overlays Inspection & Live Preview");
+
+        EditorTreeItem* calloutsNode = nullptr;
+        for (int i = 0; i < cRoot->getNumSubItems(); ++i) {
+            auto* item = dynamic_cast<EditorTreeItem*>(cRoot->getSubItem(i));
+            if (item && item->name == "Callouts & Overlays") {
+                calloutsNode = item;
+                break;
+            }
+        }
+        reporter.expect(calloutsNode != nullptr, "Callouts & Overlays node present in tree");
+        if (calloutsNode != nullptr) {
+            reporter.expect(calloutsNode->getNumSubItems() >= 2, "Callouts & Overlays contains child preview items");
+
+            for (int i = 0; i < calloutsNode->getNumSubItems(); ++i) {
+                auto* calloutItem = dynamic_cast<EditorTreeItem*>(calloutsNode->getSubItem(i));
+                if (!calloutItem) continue;
+
+                calloutItem->setSelected(true, true);
+                editor.onTreeItemSelected(calloutItem);
+                pumpMessageLoop();
+
+                reporter.expect(editor.previewWrapper.getNumChildComponents() > 0,
+                                "previewWrapper populated with child components for " + calloutItem->name);
+
+                auto props = ComponentFinder::findAllByType<juce::PropertyComponent>(&editor.formEditor);
+                reporter.expect(props.size() >= 5,
+                                "formEditor exposes callout styling properties for " + calloutItem->name);
+
+                // Offscreen smoke paint check
+                juce::Image smokeImage(juce::Image::ARGB, 800, 600, true);
+                juce::Graphics g(smokeImage);
+                editor.previewWrapper.paintEntireComponent(g, true);
+                reporter.expect(true, "Offscreen smoke paint check succeeded for " + calloutItem->name);
+            }
+        }
     }
 };

@@ -74,5 +74,23 @@
         "card_filter_title": "Filter",
         "card_filterenv_title": "Filter Envelope",
         "card_limiter_title": "Limiter"
+    },
+    "callout_styles": {
+        "planter_limiter": {
+            "title": "MASTER LIMITER",
+            "width": 300,
+            "height": 130,
+            "background_colour": "0xff1e222b",
+            "border_colour": "0xffe53935",
+            "corner_radius": 6.0
+        },
+        "slider_modulation": {
+            "title": "PARAM MODULATION",
+            "width": 260,
+            "height": 140,
+            "background_colour": "0xff1a1e24",
+            "border_colour": "0xff00d2ff",
+            "corner_radius": 5.0
+        }
     }
 }

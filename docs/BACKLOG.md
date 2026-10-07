@@ -181,7 +181,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Replace conditional phase wrapping with 32-bit fixed-point integer phase accumulators (`uint32_t`) and power-of-two lookup table indexing with bitwise masking (`& 4095`).
   - Completely eliminates CPU branch mispredictions and CRT transcendentals in hot FM feedback and cross-modulation loops.
 
-### 0.9. The Klang Editor CalloutBox Preview & Live Theming Harness
+### 0.9. The Klang Editor CalloutBox Preview & Live Theming Harness — ✅ COMPLETED
 *Goal: Bring full parity and visual inspection capability for all modal CalloutBoxes directly into The Klang Editor, backed by automated GUI test coverage.*
 - **Editor Callout Inspection Toolbar**:
   - Add dedicated preview triggers in The Klang Editor's property inspector for floating callout components:

@@ -54,5 +54,8 @@ int main(int argc, char* argv[]) {
 
     reporter.printSummary();
 
+    VersionChecker::getInstance().stopThread(2000);
+    GuiTestHelpers::pumpMessageLoop(20, 10);
+
     return (reporter.failed == 0) ? 0 : 1;
 }

@@ -107,5 +107,8 @@ namespace VersionCheckerTestSuite {
                 reporter.expect(!modal->isVisible(), "Escape key closes Planter SettingsModal");
             }
         }
+
+        VersionChecker::getInstance().stopThread(2000);
+        pumpMessageLoop();
     }
 }
