@@ -51,9 +51,11 @@
 - **JSON First Priority**: Always default to data-driven solutions for new features, UI layouts, colors, and DSP parameters.
 - **No Hardcoded Values (Unless Mandatory)**: Under no circumstances should APVTS parameter IDs, default values, min/max ranges, string labels, snap points, or tooltips be hardcoded in C++ source files unless technically mandatory.
 - **Strict Schema Separation of Concerns**: All JSON files must rigidly adhere to their designated layer:
-  1. `assets/controls/*.json`: Strictly DSP & APVTS parameter contracts (type, min/max ranges, default, description, format, snap_points, choices). ZERO visual styling, ZERO colors, and ZERO pixel dimensions.
+  1. `assets/controls/*.json`: Strictly DSP & APVTS parameter contracts (type, min/max ranges, default, format, snap_points, choices). ZERO visual styling, ZERO colors, and ZERO text descriptions.
   2. `assets/layouts/*.json`: Structural UI surface hierarchy (Pages -> Cards -> array of bound parameter IDs).
   3. `assets/themes/*.json`: Visual styling, color palettes, typography (`theme.json`), and floating overlay/callout geometry, background/border colors, and bound parameter arrays (`callouts.json`).
+  4. `assets/text/*.json`: Parameter descriptions, choice tooltips, and localized UI copy (`strings.json`).
+- **Architectural Taxonomy**: Adhere strictly to `docs/GLOSSARY.md` (*Cards* = UI containers, *Modules* = DSP units, *Sliders* = meter bars, *Knobs* = rotary controls). Consult the glossary on-demand whenever planning new features or resolving naming ambiguities.
 
 ## Strict Planning Guardrails
 - **No Spontaneous Implementation**: When planning commands (`/plan`, `/read-plan`, `/execute-task`) are invoked, NEVER automatically start writing C++ code, compiling, or modifying source files.
