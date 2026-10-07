@@ -1,7 +1,4 @@
 {
-  "ui_colors": {
-    "modulator_accent": "0xff00d2ff"
-  },
   "mod1_shape": {
     "type": "float",
     "name": "Modulator 1: Shape",

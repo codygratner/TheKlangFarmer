@@ -1,7 +1,4 @@
 {
-  "ui_colors": {
-    "filter_accent": "0xff2979ff"
-  },
   "drive_filter": {
     "type": "float",
     "name": "Drive: Filter",

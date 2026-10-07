@@ -133,5 +133,100 @@ public:
                 reporter.expect(true, "Offscreen smoke paint check succeeded for " + calloutItem->name);
             }
         }
+
+        // --- Stage 8: Verify Master Limiter exists under The Klang Planter in the tree ---
+        reporter.beginTest("Editor Stage 8: Master Limiter in The Klang Planter Tree");
+        EditorTreeItem* tkpNode = nullptr;
+        for (int i = 0; i < cRoot->getNumSubItems(); ++i) {
+            auto* item = dynamic_cast<EditorTreeItem*>(cRoot->getSubItem(i));
+            if (item && item->productId == "tkp") {
+                tkpNode = item;
+                break;
+            }
+        }
+        reporter.expect(tkpNode != nullptr, "The Klang Planter node present in controls tree");
+        EditorTreeItem* limiterUnderTkp = nullptr;
+        if (tkpNode != nullptr) {
+            for (int i = 0; i < tkpNode->getNumSubItems(); ++i) {
+                auto* item = dynamic_cast<EditorTreeItem*>(tkpNode->getSubItem(i));
+                if (item && item->name.contains("Master Limiter")) {
+                    limiterUnderTkp = item;
+                    break;
+                }
+            }
+            reporter.expect(limiterUnderTkp != nullptr, "Master Limiter node found under The Klang Planter");
+            if (limiterUnderTkp != nullptr) {
+                reporter.expect(limiterUnderTkp->getNumSubItems() == 4, "Master Limiter under TKP has 4 child parameters");
+            }
+        }
+
+        // --- Stage 9: Verify Planter Master Limiter callout has 4 child parameter tree items ---
+        reporter.beginTest("Editor Stage 9: Planter Master Limiter Callout Child Parameters");
+        EditorTreeItem* calloutsRoot = nullptr;
+        for (int i = 0; i < cRoot->getNumSubItems(); ++i) {
+            auto* item = dynamic_cast<EditorTreeItem*>(cRoot->getSubItem(i));
+            if (item && item->name == "Callouts & Overlays") {
+                calloutsRoot = item;
+                break;
+            }
+        }
+        reporter.expect(calloutsRoot != nullptr, "Callouts & Overlays root node present");
+        if (calloutsRoot != nullptr) {
+            EditorTreeItem* planterLimiterCallout = nullptr;
+            for (int i = 0; i < calloutsRoot->getNumSubItems(); ++i) {
+                auto* item = dynamic_cast<EditorTreeItem*>(calloutsRoot->getSubItem(i));
+                if (item && item->name.contains("Master Limiter")) {
+                    planterLimiterCallout = item;
+                    break;
+                }
+            }
+            reporter.expect(planterLimiterCallout != nullptr, "Planter Master Limiter callout node present");
+            if (planterLimiterCallout != nullptr) {
+                reporter.expect(planterLimiterCallout->getNumSubItems() == 4,
+                                "Planter Master Limiter callout has exactly 4 child parameters");
+            }
+        }
+
+        // --- Stage 10: Where Used Panel & Double-Click Navigation ---
+        reporter.beginTest("Editor Stage 10: Where-Used Panel & Double-Click Navigation");
+        reporter.expect(editor.whereUsedListBox.getBounds().getWidth() > 0, "whereUsedListBox has bounds");
+        reporter.expect(editor.whereUsedLabel.getBounds().getWidth() > 0, "whereUsedLabel has bounds");
+
+        // Test selection of a parameter node: e.g. first child of limiterUnderTkp
+        if (limiterUnderTkp != nullptr && limiterUnderTkp->getNumSubItems() > 0) {
+            auto* paramItem = dynamic_cast<EditorTreeItem*>(limiterUnderTkp->getSubItem(0));
+            reporter.expect(paramItem != nullptr, "Got parameter child of Master Limiter");
+            if (paramItem != nullptr) {
+                paramItem->setSelected(true, true);
+                editor.onTreeItemSelected(paramItem);
+                pumpMessageLoop();
+
+                reporter.expect(editor.whereUsedModel.getNumRows() > 0,
+                                "whereUsedListBox populated with references for " + paramItem->paramId);
+
+                // Double click first reference in list to test navigation
+                editor.whereUsedModel.triggerDoubleClick(0);
+                pumpMessageLoop();
+                reporter.expect(true, "Double-click navigation executed without crashing");
+            }
+        }
+
+        // Test selection of callout node
+        if (calloutsRoot != nullptr && calloutsRoot->getNumSubItems() > 0) {
+            auto* calloutItem = dynamic_cast<EditorTreeItem*>(calloutsRoot->getSubItem(0));
+            if (calloutItem != nullptr) {
+                calloutItem->setSelected(true, true);
+                editor.onTreeItemSelected(calloutItem);
+                pumpMessageLoop();
+
+                reporter.expect(editor.whereUsedModel.getNumRows() > 0,
+                                "whereUsedListBox populated with parameters for " + calloutItem->name);
+
+                // Double click first parameter reference to test navigation
+                editor.whereUsedModel.triggerDoubleClick(0);
+                pumpMessageLoop();
+                reporter.expect(true, "Double-click navigation from callout executed without crashing");
+            }
+        }
     }
 };

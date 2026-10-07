@@ -18,6 +18,31 @@ public:
     MainComponent* mainComp;
     juce::String name, itemType, productId, pageId, cardId, paramId;
 };
+
+struct ReferenceItem {
+    juce::String label;
+    juce::String targetType;
+    juce::String targetId;
+    juce::String extra;
+    juce::String productId;
+    juce::String pageId;
+    juce::String cardId;
+    juce::String paramId;
+};
+
+class WhereUsedListModel : public juce::ListBoxModel {
+public:
+    WhereUsedListModel(MainComponent* owner) : mc(owner) {}
+
+    int getNumRows() override;
+    void paintListBoxItem(int rowNumber, juce::Graphics& g, int width, int height, bool rowIsSelected) override;
+    void listBoxItemDoubleClicked(int row, const juce::MouseEvent&) override;
+    void triggerDoubleClick(int row);
+
+    MainComponent* mc;
+    juce::Array<ReferenceItem> items;
+};
+
 class EditorTestSuite;
 
 class MainComponent : public juce::Component, public juce::Timer, public juce::CodeDocument::Listener {
@@ -36,6 +61,9 @@ public:
     void codeDocumentTextDeleted(int, int) override;
 
     void onTreeItemSelected(EditorTreeItem* item);
+    void buildReferencesIndex();
+    void updateWhereUsed(EditorTreeItem* item);
+    bool navigateToTreeItem(const ReferenceItem& ref);
 
 private:
     void buildTree();
@@ -53,6 +81,10 @@ private:
     juce::TreeView layoutsTree;
     juce::TreeView controlsTree;
     void onTabChanged();
+    WhereUsedListModel whereUsedModel { this };
+    juce::Label whereUsedLabel { {}, "WHERE USED & ASSOCIATIONS" };
+    juce::ListBox whereUsedListBox { "WhereUsedList", &whereUsedModel };
+    std::map<juce::String, juce::Array<ReferenceItem>> referencesMap;
     juce::TextButton expandAllButton { "Expand All" };
     juce::TextButton collapseAllButton { "Collapse All" };
     juce::TextButton refreshButton { "Refresh" };

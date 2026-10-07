@@ -24,6 +24,18 @@ juce::Colour ParameterManager::getModuleColor(const juce::String& colorId, juce:
     return defaultFallback;
 }
 
+juce::Colour ParameterManager::getGlobalColor(const juce::String& colorId, juce::Colour defaultFallback) const {
+    auto it = globalColors.find(colorId);
+    if (it != globalColors.end()) {
+        return it->second;
+    }
+    auto itMod = moduleColors.find(colorId);
+    if (itMod != moduleColors.end()) {
+        return itMod->second;
+    }
+    return defaultFallback;
+}
+
 void ParameterManager::parseJsonBlob(const char* data, int size) {
     juce::String jsonString = juce::String::fromUTF8(data, size);
     auto var = juce::JSON::parse(jsonString);
@@ -39,7 +51,7 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
             if (vObj == nullptr)
                 continue;
             
-            if (def.id == "ui_colors") {
+            if (def.id == "ui_colors" || def.id == "module_colors") {
                 for (auto& colorProp : vObj->getProperties()) {
                     juce::String hex = colorProp.value.toString();
                     if (hex.startsWithIgnoreCase("0x")) hex = hex.substring(2);
@@ -49,7 +61,17 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
                 continue;
             }
 
-            if (def.id == "ui_strings") {
+            if (def.id == "global_colors") {
+                for (auto& colorProp : vObj->getProperties()) {
+                    juce::String hex = colorProp.value.toString();
+                    if (hex.startsWithIgnoreCase("0x")) hex = hex.substring(2);
+                    if (hex.startsWithIgnoreCase("#")) hex = hex.substring(1);
+                    globalColors[colorProp.name.toString()] = juce::Colour::fromString(hex.length() == 6 ? "ff" + hex : hex);
+                }
+                continue;
+            }
+
+            if (def.id == "ui_strings" || def.id == "global_strings") {
                 for (auto& strProp : vObj->getProperties()) {
                     globalStrings[strProp.name.toString()] = strProp.value.toString();
                 }

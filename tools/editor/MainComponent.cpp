@@ -148,6 +148,33 @@ private:
     std::function<void()> rebuildPanel;
 };
 
+int WhereUsedListModel::getNumRows() {
+    return items.size();
+}
+
+void WhereUsedListModel::paintListBoxItem(int rowNumber, juce::Graphics& g, int width, int height, bool rowIsSelected) {
+    if (!juce::isPositiveAndBelow(rowNumber, items.size())) return;
+
+    if (rowIsSelected) {
+        g.fillAll(juce::Colour(0xff2a344d));
+    } else if (rowNumber % 2 == 1) {
+        g.fillAll(juce::Colour(0xff161a22));
+    }
+
+    g.setColour(rowIsSelected ? juce::Colours::white : juce::Colour(0xffcfd8dc));
+    g.setFont(12.0f);
+    g.drawText(items[rowNumber].label, 6, 0, width - 12, height, juce::Justification::centredLeft, true);
+}
+
+void WhereUsedListModel::listBoxItemDoubleClicked(int row, const juce::MouseEvent&) {
+    triggerDoubleClick(row);
+}
+
+void WhereUsedListModel::triggerDoubleClick(int row) {
+    if (juce::isPositiveAndBelow(row, items.size()) && mc != nullptr) {
+        mc->navigateToTreeItem(items[row]);
+    }
+}
 
 class ThemeColorPropertyComponent : public juce::PropertyComponent {
 public:
@@ -553,6 +580,18 @@ MainComponent::MainComponent()
     layoutsTree.setMultiSelectEnabled(false);
     controlsTree.setMultiSelectEnabled(false);
     navigationTabs.getTabbedButtonBar().setMinimumTabScaleFactor(0.5);
+
+    whereUsedLabel.setFont(juce::Font(juce::FontOptions(11.0f, juce::Font::bold)));
+    whereUsedLabel.setColour(juce::Label::textColourId, juce::Colour(0xff90a4ae));
+    whereUsedLabel.setColour(juce::Label::backgroundColourId, juce::Colour(0xff12141a));
+    whereUsedLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(whereUsedLabel);
+
+    whereUsedListBox.setRowHeight(20);
+    whereUsedListBox.setColour(juce::ListBox::backgroundColourId, juce::Colour(0xff101218));
+    whereUsedListBox.setColour(juce::ListBox::outlineColourId, juce::Colour(0xff252b3b));
+    addAndMakeVisible(whereUsedListBox);
+
     // Tree collapsed by default
     addAndMakeVisible(expandAllButton);
     addAndMakeVisible(collapseAllButton);
@@ -681,6 +720,7 @@ MainComponent::MainComponent()
         juce::String selProd = selected ? static_cast<EditorTreeItem*>(selected)->productId : "";
         
         buildTree();
+        buildReferencesIndex();
         
         if (xmlL) layoutsTree.restoreOpennessState(*xmlL, false);
         if (xmlC) controlsTree.restoreOpennessState(*xmlC, false);
@@ -737,7 +777,7 @@ MainComponent::MainComponent()
         auto* saveComp = new SaveConfirmComponent(oldLayoutStr, newLayoutStr, oldControlsStr, newControlsStr,
             [this, parsedLayoutEdit, parsedControlsEdit, newControls](SaveConfirmComponent* comp) {
                 // Commit
-                auto file = getAssetFile(currentProductId == "theme" || currentProductId == "callouts" ? "controls" : "layouts", currentParamJsonFile);
+                auto file = getAssetFile(currentProductId == "theme" || currentProductId == "callouts" ? "themes" : "layouts", currentParamJsonFile);
                 if (file.existsAsFile()) {
                     if (currentProductId == "callouts") {
                         auto parsedGlobal = juce::JSON::parse(file.loadFileAsString());
@@ -864,6 +904,7 @@ MainComponent::MainComponent()
     setSize(1100, 750);
 
     buildTree();
+    buildReferencesIndex();
 }
 
 MainComponent::~MainComponent() {
@@ -944,6 +985,40 @@ void MainComponent::buildTree() {
                 }
             }
         }
+        
+        // Mount Product-Specific Callouts (e.g. Master Limiter for TKP)
+        auto calloutsFile = getAssetFile("themes", "callouts.json");
+        if (calloutsFile.existsAsFile()) {
+            auto parsedCallouts = juce::JSON::parse(calloutsFile.loadFileAsString());
+            if (parsedCallouts.isObject() && parsedCallouts.getDynamicObject()->hasProperty("callout_styles")) {
+                auto* cStyles = parsedCallouts.getDynamicObject()->getProperty("callout_styles").getDynamicObject();
+                if (cStyles) {
+                    for (auto& cProp : cStyles->getProperties()) {
+                        if (cProp.value.isObject()) {
+                            auto* cDef = cProp.value.getDynamicObject();
+                            if (cDef->getProperty("product").toString() == productIds[p]) {
+                                juce::String calloutKey = cProp.name.toString();
+                                juce::String title = (calloutKey == "planter_limiter") ? "Master Limiter" : cDef->getProperty("title").toString();
+                                juce::String displayTitle = "[Callout] " + title;
+
+                                lProdNode->addSubItem(new EditorTreeItem(this, displayTitle, "callout_preview", productIds[p], "", calloutKey));
+
+                                auto* cCalloutNode = new EditorTreeItem(this, displayTitle, "callout_preview", productIds[p], "", calloutKey);
+                                auto params = cDef->getProperty("parameters");
+                                if (params.isArray()) {
+                                    int i = 1;
+                                    for (auto& param : *params.getArray()) {
+                                        cCalloutNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", productIds[p], "", calloutKey, param.toString()));
+                                    }
+                                }
+                                cProdNode->addSubItem(cCalloutNode);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         lRoot->addSubItem(lProdNode);
         cRoot->addSubItem(cProdNode);
     }
@@ -980,8 +1055,45 @@ void MainComponent::buildTree() {
 
     auto makeCalloutsNode = [this]() {
         auto* calloutsNode = new EditorTreeItem(this, "Callouts & Overlays", "product", "callouts");
-        calloutsNode->addSubItem(new EditorTreeItem(this, "Planter Master Limiter", "callout_preview", "tkp", "", "planter_limiter"));
-        calloutsNode->addSubItem(new EditorTreeItem(this, "Slider Modulation & Snaps", "callout_preview", "tkf", "", "slider_modulation"));
+        auto* limiterNode = new EditorTreeItem(this, "Planter Master Limiter", "callout_preview", "tkp", "", "planter_limiter");
+        auto* modNode = new EditorTreeItem(this, "Slider Modulation & Snaps", "callout_preview", "tkf", "", "slider_modulation");
+
+        auto cFile = getAssetFile("themes", "callouts.json");
+        if (cFile.existsAsFile()) {
+            auto parsedGlobal = juce::JSON::parse(cFile.loadFileAsString());
+            if (parsedGlobal.isObject() && parsedGlobal.getDynamicObject()->hasProperty("callout_styles")) {
+                auto* cStyles = parsedGlobal.getDynamicObject()->getProperty("callout_styles").getDynamicObject();
+                if (cStyles) {
+                    if (cStyles->hasProperty("planter_limiter")) {
+                        auto* pDef = cStyles->getProperty("planter_limiter").getDynamicObject();
+                        if (pDef && pDef->hasProperty("parameters")) {
+                            auto params = pDef->getProperty("parameters");
+                            if (params.isArray()) {
+                                int i = 1;
+                                for (auto& param : *params.getArray()) {
+                                    limiterNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", "tkp", "", "planter_limiter", param.toString()));
+                                }
+                            }
+                        }
+                    }
+                    if (cStyles->hasProperty("slider_modulation")) {
+                        auto* mDef = cStyles->getProperty("slider_modulation").getDynamicObject();
+                        if (mDef && mDef->hasProperty("parameters")) {
+                            auto params = mDef->getProperty("parameters");
+                            if (params.isArray()) {
+                                int i = 1;
+                                for (auto& param : *params.getArray()) {
+                                    modNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", "tkf", "", "slider_modulation", param.toString()));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        calloutsNode->addSubItem(limiterNode);
+        calloutsNode->addSubItem(modNode);
         return calloutsNode;
     };
     lRoot->addSubItem(makeCalloutsNode());
@@ -1007,17 +1119,21 @@ juce::String MainComponent::getControlFileForParam(const juce::String& paramId) 
 }
 
 void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
-    if (!item) return;
+    if (!item) {
+        updateWhereUsed(nullptr);
+        return;
+    }
     juce::Logger::writeToLog("onTreeItemSelected: " + item->name);
     if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme") && item->itemType != "control_file" && item->itemType != "layout_file" && item->itemType != "page" && item->itemType != "product" && item->itemType != "callout_preview") return;
     
     if (item->itemType == "product" && item->productId == "callouts") return;
 
     currentParamTarget = item->paramId;
+    updateWhereUsed(item);
     
     if (item->itemType == "callout_preview") {
         currentProductId = "callouts";
-        currentParamJsonFile = "global_ui.json";
+        currentParamJsonFile = "callouts.json";
         currentPageId = "";
         currentCardId = item->cardId;
         activePreviewProduct = item->productId;
@@ -1052,7 +1168,7 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
         currentCardId = item->cardId;
     }
 
-    auto file = getAssetFile(currentProductId == "theme" || currentProductId == "callouts" ? "controls" : (currentProductId == "all_controls" ? "controls" : "layouts"), currentParamJsonFile);
+    auto file = getAssetFile(currentProductId == "theme" || currentProductId == "callouts" ? "themes" : (currentProductId == "all_controls" ? "controls" : "layouts"), currentParamJsonFile);
     if (currentProductId == "callouts") {
         filePathDisplay.setText(file.getFullPathName() + " -> [callout_styles] -> [" + currentCardId + "]");
     } else {
@@ -1982,6 +2098,11 @@ void MainComponent::resized() {
     expandAllButton.setBounds(treeToolbar.removeFromLeft(treeToolbar.getWidth() / 2).reduced(2));
     collapseAllButton.setBounds(treeToolbar.reduced(2));
     
+    auto whereUsedArea = treeBounds.removeFromBottom(180);
+    auto whereUsedHeader = whereUsedArea.removeFromTop(20);
+    whereUsedLabel.setBounds(whereUsedHeader);
+    whereUsedListBox.setBounds(whereUsedArea);
+
     treeSplitter.setBounds(bounds.removeFromLeft(8));
     navigationTabs.setBounds(treeBounds);
     
@@ -2109,6 +2230,249 @@ void MainComponent::onTabChanged() {
     } else {
         formEditor.clear();
         previewWrapper.deleteAllChildren();
+    }
+}
+
+void MainComponent::updateWhereUsed(EditorTreeItem* item) {
+    whereUsedModel.items.clear();
+    if (item == nullptr) {
+        whereUsedListBox.updateContent();
+        whereUsedListBox.repaint();
+        return;
+    }
+
+    juce::String key;
+    if (item->itemType == "card_param" && item->paramId.isNotEmpty()) {
+        key = item->paramId;
+    } else if (item->itemType == "callout_preview") {
+        key = item->cardId;
+    } else if (item->itemType == "card" || item->itemType == "card_theme") {
+        key = item->cardId;
+    } else if (item->itemType == "control_file") {
+        key = item->pageId;
+    } else if (item->itemType == "layout_file") {
+        key = item->pageId;
+    }
+
+    if (key.isNotEmpty() && referencesMap.count(key) > 0) {
+        whereUsedModel.items = referencesMap[key];
+    }
+
+    whereUsedListBox.updateContent();
+    whereUsedListBox.repaint();
+}
+
+bool MainComponent::navigateToTreeItem(const ReferenceItem& ref) {
+    auto searchInTree = [&](juce::TreeView& tree) -> EditorTreeItem* {
+        std::function<EditorTreeItem*(juce::TreeViewItem*)> searchRec = [&](juce::TreeViewItem* cur) -> EditorTreeItem* {
+            if (!cur) return nullptr;
+            auto* eti = dynamic_cast<EditorTreeItem*>(cur);
+            if (eti) {
+                if (ref.targetType == "card_param") {
+                    if (eti->itemType == "card_param" && eti->paramId == ref.paramId) {
+                        if (ref.cardId.isEmpty() || eti->cardId == ref.cardId) {
+                            if (ref.productId.isEmpty() || eti->productId == ref.productId) {
+                                return eti;
+                            }
+                        }
+                    }
+                } else if (ref.targetType == "callout_preview") {
+                    if (eti->itemType == "callout_preview" && eti->cardId == ref.cardId) {
+                        return eti;
+                    }
+                } else if (ref.targetType == "card" || ref.targetType == "card_theme") {
+                    if ((eti->itemType == "card" || eti->itemType == "card_theme") && eti->cardId == ref.cardId) {
+                        if (ref.productId.isEmpty() || eti->productId == ref.productId) {
+                            return eti;
+                        }
+                    }
+                } else if (ref.targetType == "control_file") {
+                    if (eti->itemType == "control_file" && (eti->pageId == ref.pageId || eti->name == ref.pageId || eti->name == ref.pageId + ".json")) {
+                        return eti;
+                    }
+                } else if (ref.targetType == "product") {
+                    if (eti->itemType == "product" && eti->productId == ref.productId) {
+                        return eti;
+                    }
+                }
+            }
+            for (int i = 0; i < cur->getNumSubItems(); ++i) {
+                if (auto* found = searchRec(cur->getSubItem(i))) return found;
+            }
+            return nullptr;
+        };
+        return searchRec(tree.getRootItem());
+    };
+
+    juce::TreeView* primaryTree = (navigationTabs.getCurrentTabIndex() == 0) ? &controlsTree : &layoutsTree;
+    juce::TreeView* secondaryTree = (navigationTabs.getCurrentTabIndex() == 0) ? &layoutsTree : &controlsTree;
+    int secondaryTab = (navigationTabs.getCurrentTabIndex() == 0) ? 1 : 0;
+
+    EditorTreeItem* target = searchInTree(*primaryTree);
+    if (!target) {
+        target = searchInTree(*secondaryTree);
+        if (target) {
+            navigationTabs.setCurrentTabIndex(secondaryTab);
+        }
+    }
+
+    if (target) {
+        auto* p = target->getParentItem();
+        while (p != nullptr) {
+            p->setOpen(true);
+            p = p->getParentItem();
+        }
+        target->setSelected(true, true);
+        if (navigationTabs.getCurrentTabIndex() == 0) {
+            controlsTree.scrollToKeepItemVisible(target);
+        } else {
+            layoutsTree.scrollToKeepItemVisible(target);
+        }
+        onTreeItemSelected(target);
+        return true;
+    }
+    return false;
+}
+
+void MainComponent::buildReferencesIndex() {
+    referencesMap.clear();
+
+    const char* products[] = { "The Klang Farmer", "The Klang Mill", "The Klang Planter", "The Klang Seed" };
+    const char* productIds[] = { "tkf", "tkm", "tkp", "tks" };
+
+    for (int p = 0; p < 4; ++p) {
+        juce::String layoutFile = juce::String(productIds[p]) + "_layout.json";
+        auto file = getAssetFile("layouts", layoutFile);
+        if (file.existsAsFile()) {
+            auto layout = juce::JSON::parse(file.loadFileAsString());
+            if (layout.isObject()) {
+                auto* lObj = layout.getDynamicObject();
+                for (auto& prop : lObj->getProperties()) {
+                    if (prop.value.isObject()) {
+                        auto* pObj = prop.value.getDynamicObject();
+                        if (pObj->hasProperty("parameters")) {
+                            juce::String cardName = prop.name.toString();
+                            auto params = pObj->getProperty("parameters");
+                            if (params.isArray()) {
+                                for (auto& param : *params.getArray()) {
+                                    juce::String pId = param.toString();
+                                    ReferenceItem refCard;
+                                    refCard.label = "Card: " + cardName + " (" + juce::String(productIds[p]).toUpperCase() + ")";
+                                    refCard.targetType = "card";
+                                    refCard.productId = productIds[p];
+                                    refCard.cardId = cardName;
+                                    referencesMap[pId].add(refCard);
+
+                                    ReferenceItem refParam;
+                                    refParam.label = "Param: " + pId;
+                                    refParam.targetType = "card_param";
+                                    refParam.productId = productIds[p];
+                                    refParam.cardId = cardName;
+                                    refParam.paramId = pId;
+                                    referencesMap[cardName].add(refParam);
+                                }
+                            }
+                        } else {
+                            juce::String pageName = prop.name.toString();
+                            for (auto& cardProp : pObj->getProperties()) {
+                                juce::String cardName = cardProp.name.toString();
+                                if (cardProp.value.isObject()) {
+                                    auto params = cardProp.value.getDynamicObject()->getProperty("parameters");
+                                    if (params.isArray()) {
+                                        for (auto& param : *params.getArray()) {
+                                            juce::String pId = param.toString();
+                                            ReferenceItem refCard;
+                                            refCard.label = "Card: " + cardName + " (" + juce::String(productIds[p]).toUpperCase() + " -> " + pageName + ")";
+                                            refCard.targetType = "card";
+                                            refCard.productId = productIds[p];
+                                            refCard.pageId = pageName;
+                                            refCard.cardId = cardName;
+                                            referencesMap[pId].add(refCard);
+
+                                            ReferenceItem refParam;
+                                            refParam.label = "Param: " + pId;
+                                            refParam.targetType = "card_param";
+                                            refParam.productId = productIds[p];
+                                            refParam.pageId = pageName;
+                                            refParam.cardId = cardName;
+                                            refParam.paramId = pId;
+                                            referencesMap[cardName].add(refParam);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    auto calloutsFile = getAssetFile("themes", "callouts.json");
+    if (calloutsFile.existsAsFile()) {
+        auto parsedGlobal = juce::JSON::parse(calloutsFile.loadFileAsString());
+        if (parsedGlobal.isObject() && parsedGlobal.getDynamicObject()->hasProperty("callout_styles")) {
+            auto* cStyles = parsedGlobal.getDynamicObject()->getProperty("callout_styles").getDynamicObject();
+            if (cStyles) {
+                for (auto& prop : cStyles->getProperties()) {
+                    if (prop.value.isObject()) {
+                        juce::String calloutKey = prop.name.toString();
+                        auto* cDef = prop.value.getDynamicObject();
+                        juce::String title = cDef->getProperty("title").toString();
+                        if (title.isEmpty()) title = calloutKey;
+                        juce::String prodId = cDef->getProperty("product").toString();
+
+                        ReferenceItem refProd;
+                        refProd.label = "Product: " + prodId.toUpperCase();
+                        refProd.targetType = "product";
+                        refProd.productId = prodId;
+                        referencesMap[calloutKey].add(refProd);
+
+                        auto params = cDef->getProperty("parameters");
+                        if (params.isArray()) {
+                            for (auto& paramVar : *params.getArray()) {
+                                juce::String pId = paramVar.toString();
+
+                                ReferenceItem refCallout;
+                                refCallout.label = "Callout: " + title + " (" + prodId.toUpperCase() + ")";
+                                refCallout.targetType = "callout_preview";
+                                refCallout.productId = prodId;
+                                refCallout.cardId = calloutKey;
+                                referencesMap[pId].add(refCallout);
+
+                                ReferenceItem refParam;
+                                refParam.label = "Param: " + pId;
+                                refParam.targetType = "card_param";
+                                refParam.productId = prodId;
+                                refParam.cardId = calloutKey;
+                                refParam.paramId = pId;
+                                referencesMap[calloutKey].add(refParam);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    juce::DirectoryIterator iterC(getAssetFile("controls", ""), false, "*.json");
+    while (iterC.next()) {
+        auto f = iterC.getFile();
+        auto parsedC = juce::JSON::parse(f.loadFileAsString());
+        if (parsedC.isObject()) {
+            for (auto& prop : parsedC.getDynamicObject()->getProperties()) {
+                if (prop.value.isObject()) {
+                    juce::String pId = prop.name.toString();
+                    ReferenceItem refFile;
+                    refFile.label = "File: " + f.getFileName();
+                    refFile.targetType = "control_file";
+                    refFile.productId = "all_controls";
+                    refFile.pageId = f.getFileNameWithoutExtension();
+                    refFile.paramId = pId;
+                    referencesMap[pId].add(refFile);
+                }
+            }
+        }
     }
 }
 

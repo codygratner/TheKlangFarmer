@@ -1,7 +1,4 @@
 {
-  "ui_colors": {
-    "carrier_accent": "0xffff3b30"
-  },
   "carrier1_shape": {
     "type": "float",
     "name": "Carrier 1: Shape",

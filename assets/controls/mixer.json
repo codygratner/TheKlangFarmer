@@ -1,7 +1,4 @@
 {
-  "ui_colors": {
-    "transients_accent": "0xff263238"
-  },
   "noise_sh_rate": {
     "type": "float",
     "name": "Noise: S&H Rate",

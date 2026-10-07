@@ -35,14 +35,16 @@ if (APPLE)
     list(APPEND TKF_FORMATS AU)
 endif()
 
-# Glob all JSON files in the controls directory
+# Glob all JSON files in the controls and themes directories
 file(GLOB CONTROL_JSON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/controls/*.json")
+file(GLOB THEME_JSON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/themes/*.json")
 
 juce_add_binary_data(TkfAssets
     HEADER_NAME "TkfAssets.h"
     NAMESPACE TkfAssets
     SOURCES
     ${CONTROL_JSON_FILES}
+    ${THEME_JSON_FILES}
 )
 
 # 3. Configure the plugin target

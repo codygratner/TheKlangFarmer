@@ -86,6 +86,7 @@ public:
 
 
     juce::Colour getModuleColor(const juce::String& colorId, juce::Colour defaultFallback = juce::Colours::transparentBlack) const;
+    juce::Colour getGlobalColor(const juce::String& colorId, juce::Colour defaultFallback = juce::Colours::transparentBlack) const;
     void reloadFromJson(const juce::String& jsonString);
 private:
     ParameterManager();
@@ -95,6 +96,7 @@ private:
     ParameterManager& operator=(const ParameterManager&) = delete;
 
     std::unordered_map<juce::String, juce::Colour> moduleColors;
+    std::unordered_map<juce::String, juce::Colour> globalColors;
     std::unordered_map<juce::String, ControlDef> controls;
     std::unordered_map<int, FxAlgorithmDef> fxAlgorithms;
     std::unordered_map<juce::String, juce::String> globalStrings;

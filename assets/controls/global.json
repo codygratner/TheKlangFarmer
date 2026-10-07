@@ -1,7 +1,4 @@
 {
-  "ui_colors": {
-    "amplifier_accent": "0xff00e676"
-  },
   "pre_limiter_thresh": {
     "type": "float",
     "name": "Pre-Limiter: Threshold",
