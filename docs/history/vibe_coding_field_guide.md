@@ -49,6 +49,7 @@ Every robust pattern in our repository exists because a simpler, lazier approach
   [Tombstone 3] Interactive Start Modals (The Locked Dropdown Deadlock)
   [Tombstone 4] Manual "Click-and-Listen" Testing
   [Tombstone 5] Blind URL Scraping & Clipboard Sniffing
+  [Tombstone 6] Mandatory "@" Mentions (The Micro-Optimization Trap)
 =============================================================================
 ```
 
@@ -79,6 +80,11 @@ Every robust pattern in our repository exists because a simpler, lazier approach
 * **What We Tried:** Letting the agent automatically peek at the host OS clipboard (`Get-Clipboard`) or fetch external web links during task ingestion.
 * **Why It Failed:** The system clipboard frequently contains out-of-band private text, passwords, or unrelated snippets from other open programs. Furthermore, web pages can introduce noisy, unverified third-party code.
 * **The Solution:** Strict clipboard and external link guardrails in `GEMINI.md`. Blueprints must originate strictly from version-controlled workspace files (`PLAN.md`, `BACKLOG.md`) or direct, intentional chat prompts.
+
+### Tombstone 6: Mandatory "@" Mentions (The Micro-Optimization Trap)
+* **What We Considered:** Forcing the developer to type client-side `@filename` mentions (e.g. `resume @context_clues_build.md` or `/read-plan @plan_to_build.md`) during context refreshes and inter-chat handoffs to eliminate a single tool-call roundtrip (saving ~3–5 seconds of machine time).
+* **Why We Rejected It:** It commits the cardinal sin of AI tooling: shifting cognitive load from the machine back onto the human. Instead of quickly tapping "take plan" or "resume" from a phone or mid-thought on desktop, the developer was forced to remember file names, wait for autocomplete popups, and struggle with mobile keyboards. Trading human friction for a tiny sliver of compute is a classic developer micro-optimization trap.
+* **The Solution:** The AI handles the plumbing so the human stays in flow. Autonomous skills (`read-plan`, `refresh-context`, `task-finish`) perform targeted background reads (`view_file`) deterministically. If the developer happens to type an `@` mention on desktop, the agent accepts it—but the system never demands or depends on manual syntax chores.
 
 ---
 
