@@ -58,6 +58,13 @@
 ## Strict Planning Guardrails
 - **No Spontaneous Implementation**: When planning commands (`/plan`, `/read-plan`, `/execute-task`) are invoked, NEVER automatically start writing C++ code, compiling, or modifying source files.
 - **Mandatory Confirmation**: Always stop, summarize the loaded plan, and explicitly ask the user for permission to begin implementation.
+- **The "Pro Sanity & Standards Gate" (Flash Drafts, Pro Audits, Flash Builds)**:
+  - **Scope**: For major architectural features, new schema layers, multi-module UI overhauls, or milestone kickoffs, New Klang City may recommend a targeted 1-turn Pro High sanity audit before dispatching to the factory floor.
+  - **Workflow**:
+    1. *Drafting (Tier 2 Flash High)*: Conducts `/grill-me`, codebase research, and drafts the initial `PLAN.md` at near-zero quota cost.
+    2. *Sanity Gate (Tier 1 Pro High)*: User temporarily swaps to Pro High to stress-test the draft for DAW automation compatibility, edge cases, industry standards, and daily developer ergonomics (the "insanity check").
+    3. *Dispatch & Build (Tier 2 Flash High)*: User swaps back to Flash High so Klang Industries executes the refined plan on sustainable quota.
+  - **Routine Exemption**: Skip the Pro Sanity Gate for routine bug fixes, test suite expansions, CMake tweaks, and mechanical chores.
 
 ## Strict Background Task Etiquette & Watchdog Timer Policy
 - **No Polling or Pinging**: When a command goes to the background, NEVER use `manage_task` to poll its status in a loop or spam the chat.
