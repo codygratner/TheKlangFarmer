@@ -755,6 +755,10 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
         juce::CallOutBox::launchAsynchronously(std::move(callout), limitEditorArea, this);
     };
 
+    wireHeaderHover(headerViz, "HEADER DISPLAY", "Scope & Meters",
+                    "Click meters to panic flush. Right-click LIMIT badge to summon master limiter.",
+                    "L-Click: Panic", "R-Click: Limiter");
+
     updateCarrierControls();
     updateModControls();
     startTimerHz(60);
@@ -762,6 +766,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
 TheKlangPlanterAudioProcessorEditor::~TheKlangPlanterAudioProcessorEditor() {
     stopTimer();
+    unwireHeaderHover(headerViz);
     if (tooltipWindow) {
         tooltipWindow->setLookAndFeel(nullptr);
         tooltipWindow.reset();
@@ -1030,6 +1035,7 @@ void TheKlangPlanterAudioProcessorEditor::resized() {
     if (cardAmpEnv)    cardAmpEnv->setBounds(getSlotBounds(3, 1));
 
     statusBar.setBounds(0, getHeight() - 36, getWidth(), 36);
+    statusBar.toFront(false);
 }
 
 void TheKlangPlanterAudioProcessorEditor::timerCallback() {

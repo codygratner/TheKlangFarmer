@@ -574,7 +574,9 @@ namespace PluginIntensiveTestSuite {
         {
             StatusBarComponent sb;
             sb.setSize(1000, 36);
+            reporter.expect(sb.isOpaque() == true, "StatusBar: isOpaque() is true for high-contrast rendering");
             reporter.expect(sb.isTooltipsEnabled(), "StatusBar: Default tooltipsEnabled is true");
+            reporter.expect(sb.getIdleStatusText().contains("SYSTEM READY"), "StatusBar: Default idle status text contains 'SYSTEM READY'");
 
             sb.setHoveredControl("Filter Cutoff", "1.20 kHz", "Adjusts master lowpass filter cutoff frequency",
                                  "Right-Click: Snap Points", "2x-Click: Default (1.00)");
@@ -615,6 +617,7 @@ namespace PluginIntensiveTestSuite {
             if (coreEditor) {
                 auto& sb = coreEditor->getStatusBar();
                 reporter.expect(sb.isVisible(), "Farmer: StatusBarComponent is visible");
+                reporter.expect(sb.isOpaque() == true, "Farmer: StatusBarComponent is opaque");
                 reporter.expect(sb.getHeight() == 36, "Farmer: StatusBarComponent height is exactly 36px");
                 reporter.expect(sb.getY() == editor->getHeight() - 36, "Farmer: StatusBarComponent pinned to bottom edge");
 
@@ -627,6 +630,18 @@ namespace PluginIntensiveTestSuite {
                     if (slider->onMouseExit) slider->onMouseExit(slider);
                     reporter.expect(sb.getActiveName().isEmpty(), "Farmer: Mouse exit clears status bar name");
                 }
+
+                // Test header button hover feeds
+                coreEditor->simulateHeaderHover(&coreEditor->getInitButton());
+                reporter.expect(sb.getActiveName() == "INIT", "Farmer: Hovering INIT button populates status bar name");
+                reporter.expect(sb.getActiveDesc().contains("panic"), "Farmer: Hovering INIT button populates panic description");
+                coreEditor->simulateHeaderExit(&coreEditor->getInitButton());
+                reporter.expect(sb.getActiveName().isEmpty(), "Farmer: Header exit clears status bar name");
+
+                coreEditor->simulateHeaderHover(&coreEditor->getTriggerButton());
+                reporter.expect(sb.getActiveName() == "TRIGGER", "Farmer: Hovering TRIGGER button populates status bar name");
+                coreEditor->simulateHeaderExit(&coreEditor->getTriggerButton());
+                reporter.expect(sb.getActiveName().isEmpty(), "Farmer: Header exit clears TRIGGER status bar name");
 
                 // Test tooltips button sync
                 auto& tipBtn = coreEditor->getTooltipsButton();
@@ -651,6 +666,7 @@ namespace PluginIntensiveTestSuite {
             if (coreEditor) {
                 auto& sb = coreEditor->getStatusBar();
                 reporter.expect(sb.isVisible(), "Planter: StatusBarComponent is visible");
+                reporter.expect(sb.isOpaque() == true, "Planter: StatusBarComponent is opaque");
                 reporter.expect(sb.getHeight() == 36, "Planter: StatusBarComponent height is exactly 36px");
                 reporter.expect(sb.getY() == editor->getHeight() - 36, "Planter: StatusBarComponent pinned to bottom edge");
 
@@ -664,6 +680,18 @@ namespace PluginIntensiveTestSuite {
                     reporter.expect(sb.getActiveName().isEmpty(), "Planter: Mouse exit clears status bar name");
                 }
 
+                // Test header button hover feeds
+                coreEditor->simulateHeaderHover(&coreEditor->getInitButton());
+                reporter.expect(sb.getActiveName() == "INIT", "Planter: Hovering INIT button populates status bar name");
+                reporter.expect(sb.getActiveDesc().contains("panic"), "Planter: Hovering INIT button populates panic description");
+                coreEditor->simulateHeaderExit(&coreEditor->getInitButton());
+                reporter.expect(sb.getActiveName().isEmpty(), "Planter: Header exit clears status bar name");
+
+                coreEditor->simulateHeaderHover(&coreEditor->getTriggerButton());
+                reporter.expect(sb.getActiveName() == "TRIGGER", "Planter: Hovering TRIGGER button populates status bar name");
+                coreEditor->simulateHeaderExit(&coreEditor->getTriggerButton());
+                reporter.expect(sb.getActiveName().isEmpty(), "Planter: Header exit clears TRIGGER status bar name");
+
                 // Test tooltips button sync
                 auto& tipBtn = coreEditor->getTooltipsButton();
                 bool initialEnabled = sb.isTooltipsEnabled();
@@ -674,6 +702,7 @@ namespace PluginIntensiveTestSuite {
             }
         }
     }
+
 
     // ==============================================================================
     // Master Runner

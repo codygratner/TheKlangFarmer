@@ -170,7 +170,6 @@ public:
 
 private:
     TheKlangFarmerAudioProcessor& audioProcessor;
-    juce::TextButton guideButton { "GUIDE" };
 
     // Quickstart Guide overlay
     QuickstartGuideModalComponent quickstartGuide;

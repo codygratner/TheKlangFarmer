@@ -2763,24 +2763,24 @@ void StatusBarComponent::resized() {}
 void StatusBarComponent::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds();
 
-    // Background: High-tech dark panel with top border
-    g.setColour(juce::Colour(0xff0d1117));
+    // Background: Elevated chassis with top border
+    g.setColour(juce::Colour(0xff121622));
     g.fillRect(bounds);
 
-    g.setColour(juce::Colour(0xff1f293d));
-    g.drawHorizontalLine(0, 0.0f, static_cast<float>(bounds.getWidth()));
+    g.setColour(juce::Colour(0xff2a3449));
+    g.drawLine(0.0f, 0.75f, static_cast<float>(bounds.getWidth()), 0.75f, 1.5f);
 
     int leftMargin = 12;
     int rightMargin = bounds.getWidth() - 12;
 
     // --- Line 1: Top Bar (Permanent: Name + Value + Shortcuts) ---
-    int line1Y = 3;
+    int line1Y = 4;
     int line1H = 16;
 
     // Badges on the right
     int curBadgeRight = rightMargin;
 
-    auto drawBadge = [&](const juce::String& text, juce::Colour bgCol, juce::Colour textCol) {
+    auto drawBadge = [&](const juce::String& text, juce::Colour bgCol, juce::Colour textCol, juce::Colour borderCol = {}) {
         if (text.isEmpty()) return;
         juce::Font font(juce::FontOptions(9.5f, juce::Font::bold));
         int textW = juce::GlyphArrangement::getStringWidthInt(font, text);
@@ -2790,7 +2790,7 @@ void StatusBarComponent::paint(juce::Graphics& g) {
 
         g.setColour(bgCol);
         g.fillRoundedRectangle(badgeRect.toFloat(), 3.0f);
-        g.setColour(bgCol.brighter(0.2f));
+        g.setColour(borderCol.isOpaque() ? borderCol : bgCol.brighter(0.2f));
         g.drawRoundedRectangle(badgeRect.toFloat(), 3.0f, 1.0f);
 
         g.setColour(textCol);
@@ -2800,23 +2800,22 @@ void StatusBarComponent::paint(juce::Graphics& g) {
         curBadgeRight = badgeX - 6;
     };
 
-    if (currentDoubleClickHint.isNotEmpty()) {
-        drawBadge(currentDoubleClickHint, juce::Colour(0xff161f30), juce::Colour(0xff94a3b8));
-    }
-    if (currentRightClickHint.isNotEmpty()) {
-        drawBadge(currentRightClickHint, juce::Colour(0xff161f30), juce::Colour(0xff38bdf8));
-    }
+    if (currentName.isNotEmpty()) {
+        if (currentDoubleClickHint.isNotEmpty()) {
+            drawBadge(currentDoubleClickHint, juce::Colour(0xff1a2333), juce::Colour(0xff94a3b8), juce::Colour(0xff29354d));
+        }
+        if (currentRightClickHint.isNotEmpty()) {
+            drawBadge(currentRightClickHint, juce::Colour(0xff1a2333), juce::Colour(0xff38bdf8), juce::Colour(0xff29354d));
+        }
 
-    // Name + Live Value on the left
-    int leftAvailW = curBadgeRight - leftMargin - 10;
-    if (leftAvailW > 50) {
-        juce::Rectangle<int> nameRect(leftMargin, line1Y, leftAvailW, line1H);
-        if (currentName.isNotEmpty()) {
+        // Name + Live Value on the left
+        int leftAvailW = curBadgeRight - leftMargin - 10;
+        if (leftAvailW > 50) {
             juce::Font boldFont(juce::FontOptions(11.5f, juce::Font::bold));
             juce::Font plainFont(juce::FontOptions(11.5f, juce::Font::plain));
 
             int nameW = juce::GlyphArrangement::getStringWidthInt(boldFont, currentName);
-            g.setColour(juce::Colour(0xfff1f5f9));
+            g.setColour(juce::Colour(0xfff8fafc));
             g.setFont(boldFont);
             g.drawText(currentName, leftMargin, line1Y, nameW, line1H, juce::Justification::centredLeft, true);
 
@@ -2825,29 +2824,45 @@ void StatusBarComponent::paint(juce::Graphics& g) {
                 g.setFont(plainFont);
                 g.drawText("  " + currentValue, leftMargin + nameW, line1Y, leftAvailW - nameW, line1H, juce::Justification::centredLeft, true);
             }
-        } else {
-            g.setColour(juce::Colour(0xff475569));
-            g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
-            g.drawText("SYSTEM READY", nameRect, juce::Justification::centredLeft, true);
         }
+    } else {
+        // Idle status on Line 1
+        // Green status LED dot
+        float ledR = 3.5f;
+        float ledCx = static_cast<float>(leftMargin) + ledR;
+        float ledCy = static_cast<float>(line1Y) + static_cast<float>(line1H) * 0.5f;
+
+        g.setColour(juce::Colour(0xff22c55e).withAlpha(0.35f));
+        g.fillEllipse(ledCx - ledR - 1.5f, ledCy - ledR - 1.5f, (ledR + 1.5f) * 2.0f, (ledR + 1.5f) * 2.0f);
+        g.setColour(juce::Colour(0xff22c55e));
+        g.fillEllipse(ledCx - ledR, ledCy - ledR, ledR * 2.0f, ledR * 2.0f);
+
+        // "SYSTEM READY" text
+        int textX = static_cast<int>(ledCx + ledR + 6.0f);
+        g.setColour(juce::Colour(0xff94a3b8));
+        g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+        g.drawText("SYSTEM READY", textX, line1Y, 120, line1H, juce::Justification::centredLeft, true);
+
+        // Subtle version badge on the right
+        drawBadge("The Klang Suite v0.3.1", juce::Colour(0xff161b26), juce::Colour(0xff64748b), juce::Colour(0xff232b3b));
     }
 
-    // --- Line 2: Bottom Bar (Tooltip Feed) ---
-    int line2Y = 19;
+    // --- Line 2: Bottom Bar (Dynamic Tooltip & Guide Feed) ---
+    int line2Y = 20;
     int line2H = 14;
     juce::Rectangle<int> line2Rect(leftMargin, line2Y, bounds.getWidth() - leftMargin * 2, line2H);
 
     g.setFont(juce::FontOptions(10.5f, juce::Font::plain));
     if (tooltipsEnabled) {
         if (currentDesc.isNotEmpty()) {
-            g.setColour(juce::Colour(0xff94a3b8));
+            g.setColour(juce::Colour(0xffcbd5e1));
             g.drawText(currentDesc, line2Rect, juce::Justification::centredLeft, true);
         } else {
-            g.setColour(juce::Colour(0xff334155));
-            g.drawText("Hover over any control for contextual parameter explanation and shortcuts.", line2Rect, juce::Justification::centredLeft, true);
+            g.setColour(juce::Colour(0xff94a3b8));
+            g.drawText(juce::CharPointer_UTF8("\xe2\x9c\xa6 Hover any knob, button, or header meter for parameter details and shortcuts."), line2Rect, juce::Justification::centredLeft, true);
         }
     } else {
-        g.setColour(juce::Colour(0xff334155));
-        g.drawText("Tooltips feed disabled (toggle TIPS in header to enable live parameter guide).", line2Rect, juce::Justification::centredLeft, true);
+        g.setColour(juce::Colour(0xff64748b));
+        g.drawText(juce::CharPointer_UTF8("TIPS DISABLED \xe2\x80\x94 Click 'TIPS: OFF' in header to activate full parameter guides."), line2Rect, juce::Justification::centredLeft, true);
     }
 }

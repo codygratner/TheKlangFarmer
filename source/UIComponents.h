@@ -479,6 +479,7 @@ public:
     const juce::String& getActiveDesc() const { return currentDesc; }
     const juce::String& getActiveRightClickHint() const { return currentRightClickHint; }
     const juce::String& getActiveDoubleClickHint() const { return currentDoubleClickHint; }
+    juce::String getIdleStatusText() const { return "SYSTEM READY"; }
 
 private:
     juce::String currentName;

@@ -2645,6 +2645,7 @@ void TheKlangFarmerAudioProcessorEditor::resized() {
     quickstartGuide.setBounds(getLocalBounds());
 
     statusBar.setBounds(0, getHeight() - 36, getWidth(), 36);
+    statusBar.toFront(false);
 
     updatePageLayout();
 }
