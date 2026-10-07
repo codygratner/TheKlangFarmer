@@ -82,6 +82,21 @@ function Sync-Once {
                 Write-Host "[INBOX -> REPO] $($file.Name)" -ForegroundColor Cyan
             }
         }
+
+        # Clean up stale files in RepoInbox that were moved or deleted in VaultInbox (protecting README.md and .gitkeep)
+        if (Test-Path $RepoInbox) {
+            $repoInboxFiles = Get-ChildItem -Path $RepoInbox -File -Recurse | Where-Object {
+                $_.Name -ne "README.md" -and $_.Name -ne ".gitkeep"
+            }
+            foreach ($repoFile in $repoInboxFiles) {
+                $relPath = $repoFile.FullName.Substring($RepoInbox.Length).TrimStart('\', '/')
+                $vaultCounterpart = Join-Path $VaultInbox $relPath
+                if (-not (Test-Path $vaultCounterpart)) {
+                    Remove-Item -Path $repoFile.FullName -Force
+                    Write-Host "[INBOX CLEANUP] Removed stale $relPath from docs/inbox/" -ForegroundColor DarkYellow
+                }
+            }
+        }
     }
 
     # 2. SYNC DOCS: Repo -> Vault (Excluding inbox and temp/hidden files)
