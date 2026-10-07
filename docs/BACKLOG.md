@@ -3,12 +3,15 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized milestones below:
-> 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit.
-> 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
-> 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
-> 4. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
-> 5. **v1.1.0 (Hardware Universe)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
-> 6. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
+> 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit. — ✅ COMPLETED
+> 2. **v0.3.1 (Editor Quality & Data Schema)**: Standalone Tree UX, Limiter Callout, Two-Line Status Bar, pluginval Runner. — ✅ COMPLETED
+> 3. **v0.3.2 (Agent Infrastructure & Logging)**: Guardrails Audit, Unified Filterable Master Tree, Dedicated Text Schema, Developer Logging (TKS_LOG).
+> 4. **v0.4.0 (Interface & Experience)**: Complete Clean-Slate UX Overhaul, Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.
+> 5. **v0.5.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
+> 6. **v0.6.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
+> 7. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
+> 8. **v1.1.0 (Hardware Universe)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
+> 9. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
 
 > [!TIP]
 > **CODE QUALITY STANDARD**: The C++ codebase currently maintains an A+ standard for defensive programming, descriptive `camelCase` variable naming, and explicit algorithmic comments (e.g., documenting DSP math curves directly above the function). All future contributions must rigidly match this level of in-line documentation and readability!
@@ -235,7 +238,48 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 
 ---
 
-## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
+## 🚀 Milestone: v0.4.0 "The Interface & Experience Update"
+*Focus: Complete Clean-Slate UX Overhaul, Modern Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.*
+
+### 1. The Neo-Slate Vector Design System & Chassis Overhaul
+*Goal: Overhaul the overall plugin window chassis with a sleek, modern, non-skeuomorphic vector design inspired by Kilohearts Phase Plant, Vital, and Arturia Pigments.*
+- **Header-Integrated Navigation & Visualizer**:
+  - Evict the legacy navigation card and visualizer card from the module rack grid.
+  - Implement sleek horizontal Page Navigation tabs directly in the top Chassis Header (`[VOICE 1]`, `[VOICE 2]`, `[TRANSIENTS]`, `[FX 1-4]`, `[FX 5-8]`, `[MOD]`).
+  - Integrate a unified real-time stereo oscilloscope, peak VU meters, and Limiter badge into the header (modeled after The Klang Planter's high-performance header visualizer).
+  - Frees up 100% of the main rack canvas exclusively for sound-sculpting module cards!
+- **Neo-Slate Visual Aesthetic**:
+  - Dark matte slate surfaces (`0xff121622`), crisp 1px borders (`0xff2a3449`), high-contrast typography, and vibrant neon accent highlights.
+  - Zero faux-vintage screws, zero fake drop shadows, zero 3D skeuomorphism. Clean, futuristic, responsive, and distraction-free.
+
+### 2. The 4-Controls-Per-Card Clean Slate Architecture
+*Goal: Radically simplify the synthesizer surface into focused, punchy modules with exactly 4 primary performance controls per Card, establishing 1:1 hardware synergy with 4-encoder controllers (dadamachines TBD-16).*
+- **Clean-Slate Parity Break**:
+  - Cut the anchor to the legacy v0.2.0 prototype parameter sprawl.
+  - Curate each module down to its 4 most musically expressive controls.
+- **Vertical 1x4 Meter Slider Stacks**:
+  - Each Card contains 4 horizontal Meter Sliders stacked top-to-bottom.
+  - Full card width allows generous parameter labels on the left and live formatted values on the right with zero abbreviations.
+  - Integrated real-time diagram rendering (waveform morphs, exponential decay slopes, filter curves) inside slider troughs.
+- **TBD-16 Hardware Synergy**:
+  - The 4 sliders map directly to Encoders 1, 2, 3, 4 of a 1x4 encoder hardware controller.
+
+### 3. The Right-Click Callout Deep-Dive Layer
+*Goal: Keep the primary playing surface uncluttered while providing instant, elegant access to secondary parameters, tuning modes, and curve configurations.*
+- **Popover Callout Architecture**:
+  - Right-clicking any module card or parameter launches a sleek floating `juce::CallOutBox` mini-card.
+  - Houses secondary parameters: MIDI tracking modes, snap point selections, velocity sensitivity curves, and fine-tune detents.
+  - Translates cleanly to `[SHIFT]` / `[PAGE 2]` encoder views on physical hardware.
+
+### 4. Interactive Parameter & Curve Audit Tool in The Klang Editor
+*Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
+*Goal: Integrate an interactive curve calibration workspace in The Klang Editor to systematically tune the tactile response, snap points, logarithmic slider slopes, and ergonomic double-click defaults of the new curated 4-control parameter set.*
+- Live interactive slider evaluation, tactile response tuning, and real-time visualization of parameter skew factor curves.
+- Test and calibrate discrete musical snap points live within the editor before persisting to `assets/controls/*.json`.
+
+---
+
+## 🚀 Milestone: v0.5.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
 
 ### 0.5. The Klang Editor Interactive Parameter & Curve Audit Tool (Breaking Parity)
@@ -419,7 +463,7 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
 
 ---
 
-## 🚀 Milestone: v0.5.0 "The Pro Workflow Update"
+## 🚀 Milestone: v0.6.0 "The Pro Workflow Update"
 *Focus: Professional DAW Integration, File Management, Preset Library, and Export.*
 
 ### 1. JSON Preset Browser, Tagging & State Migration
@@ -518,7 +562,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 
 ---
 
-## 🚀 Milestone: v0.6.0 "The Visual Polish & UI Mastery Update"
+## 🚀 Milestone: v0.7.0 "The Visual Polish & UI Mastery Update"
 *Focus: Professional Boutique Aesthetics, High-DPI Scaling, 60 FPS Visualizers, and Tactile Industrial Hardware Styling.*
 
 ### 1. Dynamic UI Scaling (100% to 200%) & High-DPI Vector Crispness
