@@ -60,6 +60,7 @@ Comprehensive design blueprints for upcoming milestones and sound design capabil
 
 Institutional memory and milestone summaries:
 
+- **[The Vibe-Coder's Field Guide & Strategy Graveyard](history/vibe_coding_field_guide.md)**: Hard-won lessons, abandoned strategies, and the production playbook for pair-programming C++ audio plugins with AI.
 - **[Development Journal (DEV_HISTORY.md)](history/DEV_HISTORY.md)**: Living chronological record of architecture decisions and milestones.
 - **[Historical Backlog Archive](history/BACKLOG_ARCHIVE.md)**: Pre-v0.3.0 tasks and legacy prototype notes.
 - **[v0.3.0 Release History](history/archives/DEV_HISTORY_v0.3.0.md)**: Complete record of the v0.3.0 Architecture Update.
