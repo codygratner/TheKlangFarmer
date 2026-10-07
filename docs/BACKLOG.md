@@ -264,8 +264,13 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Dual Timeout Architecture**:
   - Global Timeout Threshold: 5-minute watchdog limit across entire test suites (`gui_tests`, `dsp_tests`), preventing hung runner processes from burning CPU or CI budgets.
   - Local Timeout Threshold: 30-second individual test step timeouts. Fail fast, log failure state, and cleanly advance to next independent test without cascade aborts.
-- **Automated Failure Screenshots (`test_screenshots/`)**:
-  - Implement offscreen component snapshotting upon test failure or timeout in `gui_tests`: capture active window state via `juce::Component::createComponentSnapshot()` to a timestamped PNG in a dedicated `test_screenshots/` folder (keeping main screenshots clean).
+- **The "Wait-Fail" Component Locator Pattern**:
+  - In asynchronous UI environments (modal popups, page transitions, callout animations), replace instant brittle assertions with a timeout-bounded try/wait locator (`waitForComponent<T>(parent, id, timeoutMs)`).
+  - Pumps the JUCE message queue up to the local threshold (default 30s max, 500ms for fast UI transitions). If the target component does not resolve within the window, it immediately traps the timeout, triggers an automated failure snapshot, and bubbles a descriptive error.
+- **Automated & Deduplicated Failure Snapshots (`test_screenshots/`)**:
+  - Offscreen Component Rendering: When an assertion fails or a wait-timeout triggers, capture the active window/card hierarchy via `juce::Component::createComponentSnapshot(getLocalBounds())` and write to a timestamped PNG (`test_screenshots/<TestTag>_<Timestamp>.png`).
+  - Snapshot Deduplication & Rate Limiting: Inspect recent captures to prevent looping assertions from flooding disk space with redundant PNGs within the same 60-second window.
+  - Instant Diagnostic Linkage: Print the exact screenshot filesystem path to the test console failure report and stream it to the Obsidian mobile telemetry feed (`Telemetry/Dashboard.md`), allowing instant visual verification of layout bugs without opening the desktop IDE.
 - **Failure-First Reporting & Profiling Metrics**:
   - Elevate failed assertions and timeouts to the very top of test console output and telemetry reports.
   - Track and report granular execution timings (step duration, suite average, slowest tests) to catch UI performance regressions early.
