@@ -10,7 +10,7 @@
 > 5. **v0.5.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
 > 6. **v0.6.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
 > 7. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
-> 8. **v1.1.0 (Hardware Universe)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
+> 8. **v1.1.0 (The Klang Box Hardware Universe)**: The Klang Box (TKB) — dadamachines tbd-16, TKB-Daisy (Stereo), TKB-8 (Teensy Multi-Out), & Zynthian V5.
 > 9. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
 
 > [!TIP]
@@ -670,23 +670,23 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 
 ---
 
-## 🚀 Milestone: v1.1.0 "The Hardware Universe (Post-1.0)"
-*Focus: Standalone Hardware Synthesizer (The Klang Seed), dadamachines tbd-16 Integration, and Zynthian V5 Linux Port.*
+## 🚀 Milestone: v1.1.0 "The Klang Box Hardware Universe (Post-1.0)"
+*Focus: Standalone Hardware Synthesizer (The Klang Box / TKB), dadamachines tbd-16 Integration, and Zynthian V5 Linux Port.*
 
-### 1. dadamachines tbd-16 Groovebox Integration
+### 1. dadamachines tbd-16 Groovebox Integration (TKB-TBD)
 *Detailed Plan: [`docs/tbd16_klang_seed_effects_plan.md`](tbd16_klang_seed_effects_plan.md)*
 Deploy the pure C++ DSP engine onto the open-source **dadamachines tbd-16** platform:
 - **Architecture**: Dual-core **ESP32-P4 RISC-V @ 400 MHz** (Audio DSP) + **RP2350B @ 150 MHz** (UI, Sequencer, 2.4" OLED, 30 RGB buttons) + **ESP32-C6** (Wi-Fi/Ableton Link).
 - **Native 4-Encoder Mapping**: The unit features **4 endless push-encoders**; each 4-knob card and 4-knob FX slot in our engine maps directly to one 4-encoder screen page on its 2.4" OLED!
 
-### 2. The Klang Seed: Daisy Edition (TKS-D) — Stereo Desktop & Eurorack Hardware
+### 2. The Klang Box: Daisy Edition (TKB-Daisy) — Stereo Desktop & Eurorack Hardware
 *Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](embedded_dsp_and_hardware_port_plan.md)*
 A self-contained, portable stereo FM drum synthesizer and Eurorack module built on the **Electro-Smith Daisy Seed**:
 - **Processor & Memory**: STM32H750 ARM Cortex-M7 @ 480 MHz with **64 MB high-speed SDRAM** for immense reverb/delay buffers.
 - **Onboard Codec**: Integrated AK4556 24-bit 96 kHz stereo audio DAC/ADC.
 - **Hardware Build Complexity**: Low/Moderate. Simple breakout PCB housing Daisy Seed, 4 rotary encoders, 128x64 OLED screen, MIDI TRS/DIN, and 1/4" stereo outputs. Perfect for rapid hardware prototyping!
 
-### 3. The Klang Seed: Studio Edition (TKS-8) — Teensy 4.1 8-Voice Multi-Output Drum Machine
+### 3. The Klang Box: Studio Edition (TKB-8) — Teensy 4.1 8-Voice Multi-Output Drum Machine
 *Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](embedded_dsp_and_hardware_port_plan.md)*
 A flagship studio drum machine built on **PJRC Teensy 4.1** featuring discrete individual analog voice routing:
 - **Processor**: NXP i.MX RT1062 ARM Cortex-M7 @ 600 MHz running 8 mono drum voices (~14.7% CPU load).

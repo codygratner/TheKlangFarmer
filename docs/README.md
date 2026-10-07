@@ -19,6 +19,7 @@ This directory serves as the **Master Map of Content (MOC)**. It is mirrored dir
 
 Deep technical design standards and system contracts:
 
+- **[Product Lineup & Core Intent Matrix](architecture/product_lineup.md)**: Master ecosystem taxonomy, instrument identities (TKF, TKP, TKE, TKM, TKR-1, TKB), and hardware synergies.
 - **[Real-Time Audio Thread Invariants](architecture/audio_thread_invariants.md)**: Zero-allocation, zero-lock, and zero-blocking I/O rules for real-time DSP stability.
 - **[4-Layer Declarative Data Schema](architecture/data_schema_layers.md)**: Strict separation of concerns across Controls, Layouts, Themes, and Text/Localization.
 - **[Headless GUI Testing & Synthetic Validation](architecture/headless_gui_testing.md)**: Headless component inspection, 6-pillar VST3 parameter normalization, and offscreen rendering.
