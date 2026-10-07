@@ -1,6 +1,7 @@
 #include "PlanterProcessor.h"
 #include "PlanterEditor.h"
 #include "ParameterManager.h"
+#include "DevLogger.h"
 
 TheKlangPlanterAudioProcessor::TheKlangPlanterAudioProcessor() : KlangCoreProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true), "PARAMETERS", createParameterLayout()) {
     // Cache direct parameter pointers
@@ -137,11 +138,15 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangPlanterAudioProcesso
     return layout;
 }
 
-void TheKlangPlanterAudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
+void TheKlangPlanterAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
+    ::RlyehSound::DevLogger::getInstance().registerAudioThread(std::this_thread::get_id());
+    TKS_LOG_INFO("TheKlangPlanterAudioProcessor::prepareToPlay: sampleRate=" + juce::String(sampleRate) + ", samplesPerBlock=" + juce::String(samplesPerBlock));
     engine.init(static_cast<float>(sampleRate));
 }
 
-void TheKlangPlanterAudioProcessor::releaseResources() {}
+void TheKlangPlanterAudioProcessor::releaseResources() {
+    TKS_LOG_INFO("TheKlangPlanterAudioProcessor::releaseResources");
+}
 
 bool TheKlangPlanterAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const {
     if (layouts.getMainOutputChannelSet() != juce::AudioChannelSet::mono()

@@ -8,6 +8,7 @@
 #include "VersionCheckerTestSuite.h"
 #include "ParameterSchemaAuditTest.h"
 #include "PluginIntensiveTestSuite.h"
+#include "DevLoggerTest.h"
 
 int main(int argc, char* argv[]) {
     juce::StringArray args;
@@ -25,6 +26,7 @@ int main(int argc, char* argv[]) {
     bool versionOnly = args.contains("--version-only");
     bool auditOnly = args.contains("--audit-only");
     bool intensiveOnly = args.contains("--intensive-only");
+    bool loggerOnly = args.contains("--logger-only");
 
     GuiTestHelpers::TestReporter reporter;
     GuiTestHelpers::ScopedGuiContext guiContext;
@@ -45,6 +47,8 @@ int main(int argc, char* argv[]) {
         ParameterSchemaAuditTest::runSuite(reporter);
     } else if (intensiveOnly) {
         PluginIntensiveTestSuite::runSuite(reporter);
+    } else if (loggerOnly) {
+        DevLoggerTest::runSuite(reporter);
     } else {
         if (runFarmer)  FarmerTestSuite::runSuite(reporter);
         if (runPlanter) PlanterTestSuite::runSuite(reporter);
@@ -52,6 +56,7 @@ int main(int argc, char* argv[]) {
         
         // Always run smoke, reflection, version checker and hardening if running all
         if (runAll) {
+            DevLoggerTest::runSuite(reporter);
             VersionCheckerTestSuite::runSuite(reporter);
             SmokePaintSuite::runSuite(reporter);
             ReflectionGuardrailSuite::runSuite(reporter);

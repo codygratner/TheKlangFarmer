@@ -1,6 +1,7 @@
 #include "MainComponent.h"
 #include "ParameterManager.h"
 #include "UIComponents.h"
+#include "DevLogger.h"
 
 class ParamHeaderPropertyComponent : public juce::PropertyComponent {
 public:
@@ -1234,7 +1235,7 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
         updateWhereUsed(nullptr);
         return;
     }
-    juce::Logger::writeToLog("onTreeItemSelected: " + item->name);
+    TKS_LOG_INFO("onTreeItemSelected: " + item->name);
     if (item->itemType != "card" && item->itemType != "card_theme" && item->itemType != "card_param" && !(item->itemType == "product" && item->productId == "theme") && item->itemType != "control_file" && item->itemType != "layout_file" && item->itemType != "page" && item->itemType != "product" && item->itemType != "callout_preview") return;
     
     if (item->itemType == "product" && item->productId == "callouts") return;
@@ -1423,7 +1424,7 @@ void MainComponent::timerCallback() {
 }
 
 void MainComponent::syncJsonToPreview(const juce::String& forcedJson) {
-    juce::Logger::writeToLog("syncJsonToPreview");
+    TKS_LOG_INFO("syncJsonToPreview");
     auto jsonString = forcedJson.isNotEmpty() ? forcedJson : layoutJsonDocument.getAllContent();
     bool isTheme = (currentProductId == "theme");
     bool isCallout = (currentProductId == "callouts");

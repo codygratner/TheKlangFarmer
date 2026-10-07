@@ -3,37 +3,32 @@
 **Destination:** Klang Industries (The Factory Floor)  
 **Date:** 2026-10-07  
 **Active Milestone:** v0.3.2 "Agent Infrastructure & Editor Upgrades"  
-**Task Name:** Unified Filterable Master Tree, Dedicated Text Schema, & DSP Block File Renaming  
+**Task Name:** Developer Logging Subsystem (`TKS_LOG`) & Diagnostics Engine  
 **Recommended Model Tier:** Tier 2 (`Gemini 3.8 Flash (Thinking: High)`)  
 **Status:** COMPLETED ✅  
-**Source Plan:** [`docs/completed_plans/2026-10-07_unified_tree_text_schema.md`](file:///c:/Dev/TheKlangSuite/docs/completed_plans/2026-10-07_unified_tree_text_schema.md)  
+**Source Plan:** [`docs/completed_plans/2026-10-07_dev_logger_subsystem.md`](file:///c:/Dev/TheKlangSuite/docs/completed_plans/2026-10-07_dev_logger_subsystem.md)  
 
 ---
 
 ## Strategic Objective
-Execute the full refactor of The Klang Editor's navigation tree into a unified Master Tree with a 3-button multi-state filter bar (`[Controls]`, `[Layout]`, `[Theme]`), establish a dedicated centralized text schema in `assets/text/strings.json` grouped cleanly by module namespace, achieve pure separation of concerns by extracting text from `assets/controls/*.json`, rename DSP block JSON files to consistent singular forms (`modulator.json`, `filter.json`, `envelope.json`), and unify the property panel UX so text and DSP limits are edited seamlessly in one place.
+Implement a structured, leveled developer logging subsystem (`TKS_LOG_INFO`, `TKS_LOG_WARN`, `TKS_LOG_ERROR`) in `source/DevLogger.h` that routes simultaneously to the system debugger (`OutputDebugString` / `DBG`) and a 5 MB rotating log file (`%LOCALAPPDATA%/TheKlangSuite/dev.log`), strictly protects real-time audio threads via runtime assertions and static guardrails, compiles to zero-cost no-ops in Release builds, and replaces raw logger calls across the suite.
 
 ---
 
 ## Acceptance Criteria & Execution Guardrails
-1. **DSP Block Renaming (`assets/controls/`)**:
-   - `modulators.json` &rarr; `modulator.json`
-   - `filters.json` &rarr; `filter.json`
-   - `envelopes.json` &rarr; `envelope.json`
-   - Zero legacy plural files remaining.
-2. **Dedicated Text Schema (`assets/text/strings.json`)**:
-   - `assets/text/strings.json` created with `"shared"`, `"farmer"`, and `"planter"` namespaces.
-   - Inside `"farmer"`, parameters MUST be grouped by their module (e.g., `"carrier"`, `"filter"`) to avoid massive flat lists.
-   - 100% of parameter `"description"` and `"choice_tooltips"` extracted out of `assets/controls/*.json`.
-   - `"name"` remains in `assets/controls/` as the immutable DAW contract.
-3. **Seamless Startup Text Merge (`source/ParameterManager.cpp`)**:
-   - `ParameterManager` merges text definitions into `ControlDef` at startup so existing `def->description` callers experience zero regressions.
-4. **The Klang Editor Unified Master Tree & Editor UX (`tools/editor/`)**:
-   - Dual tabs replaced by single `masterTree` and a 3-button filter bar (`[Controls]`, `[Layout]`, `[Theme]`).
-   - Smart Minimum enforced (cannot toggle off all 3 buttons).
-   - Unified Editing: Selecting a parameter node under `[Controls]` allows editing DSP and Text fields simultaneously in the property panel.
-   - Save routes text properties safely to `strings.json`.
-5. **Test Suite & Verification**:
-   - `ParameterSchemaAuditTest` and `EditorTestSuite` updated and passing 100%.
-   - Full build validation passes (`dsp_tests.exe` and `gui_tests.exe` - 275/275 pass).
-   - `deploy.ps1` executed to sync `.vst3` and standalone binaries.
+1. **Core Logger Implementation (`source/DevLogger.h`)**:
+   - `RlyehSound::DevLogger` singleton wrapping `juce::FileLogger::createDefaultAppLogger("TheKlangSuite", "dev.log", ...)`.
+   - Macros `TKS_LOG_INFO`, `TKS_LOG_WARN`, `TKS_LOG_ERROR`, and `TKS_LOG`.
+   - In Release (`!JUCE_DEBUG`), macros expand to `do {} while (false)` for absolute zero runtime/binary cost.
+2. **Audio Thread Safety Invariant**:
+   - Audio thread ID tracking via `registerAudioThread()` in `prepareToPlay()`.
+   - `jassert(!isAudioThread())` and safe abort (`if (isAudioThread()) return;`) inside `DevLogger::log()`.
+   - Static guardrail: `audiothread-guard` updated to flag `TKS_LOG*` in Category C.
+3. **Integration Points**:
+   - `FarmerProcessor.cpp` / `PlanterProcessor.cpp`: `prepareToPlay` and `releaseResources`.
+   - `ParameterManager.cpp`: Asset loading counts and warnings.
+   - Clean up raw `juce::Logger::writeToLog` calls in `tools/editor/Main.cpp`, `MainComponent.cpp`, and `source/UIComponents.cpp`.
+4. **Test Suite Expansion**:
+   - Add `test/DevLoggerTest.h` to `gui_tests.cpp`.
+   - 100% test pass across `dsp_tests.exe` and `gui_tests.exe`.
+   - Run `deploy.ps1` to sync artifacts.

@@ -1,5 +1,6 @@
 #include "UIComponents.h"
 #include "ParameterManager.h"
+#include "DevLogger.h"
 
 // --- SAFE PARSING & FORMATTING HELPERS ---
 
@@ -1335,7 +1336,7 @@ SliderCalloutComponent::SliderCalloutComponent(RotaryKnobSlider& ownerSlider,
     int h = 62;
 
     if (auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId)) {
-        juce::Logger::writeToLog("SliderCalloutComponent paramId: " + paramId + " snapPoints: " + juce::String(def->snapPoints.size()));
+        TKS_LOG_INFO("SliderCalloutComponent paramId: " + paramId + " snapPoints: " + juce::String(def->snapPoints.size()));
         for (const auto& poi : def->snapPoints) {
             auto* btn = new juce::TextButton(poi.label);
             btn->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2a3242));

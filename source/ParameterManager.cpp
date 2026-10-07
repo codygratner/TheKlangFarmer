@@ -1,5 +1,6 @@
 #include "ParameterManager.h"
 #include "TkfAssets.h"
+#include "DevLogger.h"
 
 namespace RlyehSound {
 
@@ -15,6 +16,7 @@ ParameterManager::ParameterManager() {
         }
     }
     mergeTextIntoControls();
+    TKS_LOG_INFO("ParameterManager: initialized with " + juce::String(controls.size()) + " controls, " + juce::String(textDescriptions.size()) + " descriptions, and " + juce::String(textChoiceTooltips.size()) + " choice tooltips");
 }
 
 juce::Colour ParameterManager::getModuleColor(const juce::String& colorId, juce::Colour defaultFallback) const {
@@ -222,6 +224,7 @@ void ParameterManager::reloadFromJson(const juce::String& jsonString) {
     auto stdString = jsonString.toStdString();
     parseJsonBlob(stdString.c_str(), static_cast<int>(stdString.size()));
     mergeTextIntoControls();
+    TKS_LOG_INFO("ParameterManager: reloaded from JSON, total controls: " + juce::String(controls.size()));
 }
 
 } // namespace RlyehSound

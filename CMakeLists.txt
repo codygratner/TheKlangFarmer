@@ -88,6 +88,7 @@ target_sources(TheKlangFarmer PRIVATE
     source/VersionChecker.cpp
     source/SettingsModal.h
     source/SettingsModal.cpp
+    source/DevLogger.h
 )
 
 target_include_directories(TheKlangFarmer PRIVATE
@@ -166,6 +167,7 @@ target_sources(TheKlangPlanter PRIVATE
     source/VersionChecker.cpp
     source/SettingsModal.h
     source/SettingsModal.cpp
+    source/DevLogger.h
 )
 
 target_include_directories(TheKlangPlanter PRIVATE source)
@@ -260,6 +262,7 @@ target_sources(TheKlangEditor PRIVATE
     # Shared sources
     source/UIComponents.cpp
     source/ParameterManager.cpp
+    source/DevLogger.h
 )
 target_link_libraries(TheKlangEditor PRIVATE
     ${TKF_JUCE_MODULES}
