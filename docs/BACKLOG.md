@@ -257,25 +257,27 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Generates live heartbeat note (`_sync_heartbeat.md`) in the vault.
 - **Verification Metric**: End-to-end smoke test passed (61 docs mirrored in ~600ms, test note ingested from Vault Inbox to repo docs inbox in ~450ms, telemetry parsed clean).
 
-### 2. SQA Automation Hardening: Timeout Guardrails, Failure Snapshots & Metric Profiling
+### 2. SQA Automation Hardening: Timeout Guardrails, Failure Snapshots & Metric Profiling — ✅ COMPLETED
 *Origin: SQA Advisory Consultation (Tom) — Local Vault Inbox*  
-*Context Briefing: [`docs/SQA_MEETING_BRIEFING.md`](SQA_MEETING_BRIEFING.md)*  
+*Context Briefing: [`docs/briefings/sqa_meeting_briefing.md`](briefings/sqa_meeting_briefing.md)*  
+*Archived Plan: [`.agents/pipeline/plans/completed/2026-10-07_sqa_automation_hardening.md`](../.agents/pipeline/plans/completed/2026-10-07_sqa_automation_hardening.md)*  
 *Goal: Harden the automated testing infrastructure across `gui_tests` and `dsp_tests` based on senior SQA recommendations: enforce global (5m) and local (30s) timeout guardrails, capture automated offscreen UI failure screenshots to `test_screenshots/`, pull failure summaries to the top of test reports, and log granular step duration metrics.*
 - **Dual Timeout Architecture**:
-  - Global Timeout Threshold: 5-minute watchdog limit across entire test suites (`gui_tests`, `dsp_tests`), preventing hung runner processes from burning CPU or CI budgets.
+  - Global Timeout Threshold: 5-minute watchdog limit across entire test suites (`gui_tests`, `dsp_tests`) backed by `std::jthread`, preventing hung runner processes from burning CPU or CI budgets.
   - Local Timeout Threshold: 30-second individual test step timeouts. Fail fast, log failure state, and cleanly advance to next independent test without cascade aborts.
 - **The "Wait-Fail" Component Locator Pattern**:
   - In asynchronous UI environments (modal popups, page transitions, callout animations), replace instant brittle assertions with a timeout-bounded try/wait locator (`waitForComponent<T>(parent, id, timeoutMs)`).
-  - Pumps the JUCE message queue up to the local threshold (default 30s max, 500ms for fast UI transitions). If the target component does not resolve within the window, it immediately traps the timeout, triggers an automated failure snapshot, and bubbles a descriptive error.
+  - Pumps the JUCE dispatch loop in 20ms slices during async transitions while keeping the Watchdog heartbeat alive.
 - **Automated & Deduplicated Failure Snapshots (`test_screenshots/`)**:
-  - Offscreen Component Rendering: When an assertion fails or a wait-timeout triggers, capture the active window/card hierarchy via `juce::Component::createComponentSnapshot(getLocalBounds())` and write to a timestamped PNG (`test_screenshots/<TestTag>_<Timestamp>.png`).
-  - Snapshot Deduplication & Rate Limiting: Inspect recent captures to prevent looping assertions from flooding disk space with redundant PNGs within the same 60-second window.
-  - Instant Diagnostic Linkage: Print the exact screenshot filesystem path to the test console failure report and stream it to the Obsidian mobile telemetry feed (`Telemetry/Dashboard.md`), allowing instant visual verification of layout bugs without opening the desktop IDE.
+  - Offscreen Component Rendering: When an assertion fails or a wait-timeout triggers, captures the active window/card hierarchy via `juce::Component::createComponentSnapshot(getLocalBounds())` and writes to a timestamped PNG (`test_screenshots/<TestTag>_<Timestamp>.png`).
+  - Snapshot Deduplication & Rate Limiting: Inspects recent captures to prevent looping assertions from flooding disk space with redundant PNGs within the same 10-second window.
+  - Instant Diagnostic Linkage: Outputs clickable `file:///` URIs directly to the console for instant inspection.
 - **Failure-First Reporting & Profiling Metrics**:
-  - Elevate failed assertions and timeouts to the very top of test console output and telemetry reports.
-  - Track and report granular execution timings (step duration, suite average, slowest tests) to catch UI performance regressions early.
-- **Decoupled Test Independence**:
-  - Audit test suites to guarantee zero cross-file or cross-test state dependencies, ensuring tests can execute in any order and enabling future multi-threaded or chaos test execution.
+  - High-visibility `🚨 CRITICAL FAILURE SUMMARY` printed at the end of runs listing failure messages and clickable screenshot paths.
+  - `⏱️ EXECUTION PROFILING LEADERBOARD` sorts test suites by duration and reports total execution time.
+- **Seeded & Replayable Chaos Monkey (`--chaos`)**:
+  - Implemented `ChaosMonkeySuite` delivering randomized click, drag, and resize bursts across Farmer and Planter editors with deterministic seed logging (`gui_tests --chaos --seed=<SEED>`).
+- **Verification Metric**: 300 / 300 `gui_tests` passed (0 failures, exit code 0) in both Debug and Release configurations. 100% `dsp_tests` passed. Chaos suite survived 1,230,640 randomized events in 3000ms with zero crashes. Deploy synced cleanly via `deploy.ps1`.
 
 ### 3. The Neo-Slate Vector Design System & Chassis Overhaul
 *Goal: Overhaul the overall plugin window chassis with a sleek, modern, non-skeuomorphic vector design inspired by Kilohearts Phase Plant, Vital, and Arturia Pigments.*
