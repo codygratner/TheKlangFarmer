@@ -2,247 +2,145 @@
 
 ## Audio Thread Invariants (CRITICAL)
 - **Zero Allocations**: Never call `new`, `malloc`, `free`, or resize dynamic containers (`std::vector::push_back`, `juce::Array::add`, `std::string` concatenation) inside `processBlock()`, `processStereo()`, or per-sample render loops. Pre-allocate in `prepareToPlay()`.
-- **Zero Locks**: Never acquire a `std::mutex`, `std::lock_guard`, `juce::CriticalSection`, or wait on thread synchronization primitives in the audio processing path. Use lock-free atomics (`std::atomic`) or bounded FIFO queues for audio-to-UI messaging.
+- **Zero Locks**: Never acquire a `std::mutex`, `std::lock_guard`, `juce::CriticalSection`, or wait on thread synchronization primitives in the audio path. Use lock-free atomics (`std::atomic`) or bounded FIFO queues for audio-to-UI messaging.
 - **Zero Blocking I/O**: Never call filesystem operations, network APIs, or logging/console output (`std::cout`, `printf`, `DBG()`, `juce::Logger`) on the audio thread.
 - **SIMD & Fast Math**: Prefer `TbdAudio::FastMath` over standard CRT transcendentals (`std::pow`, `std::sin`, `std::tanh`) in hot audio loops.
 
 ## Strict Model Advisory Protocol & Anti-Spam Gate
-- **Display Only on Kickoff / First Presentation**: The prominent visual Model Advisory block MUST ONLY be shown when an agent initially presents a new architectural plan or prepares to execute Phase 1 of a task before the user says "proceed". Do NOT repeat or spam the advisory banner on routine conversational turns, git status reports, or phase check-offs within the same tier.
+- **Display Only on Kickoff / First Presentation**: The Model Advisory block MUST ONLY be shown when an agent initially presents a new architectural plan or prepares to execute Phase 1 of a task before the user says "proceed". Do NOT repeat or spam the banner on routine conversational turns or within the same tier.
   > 🧠 **MODEL ADVISORY: Tier [1 | 2 | 3]**
   > - **Recommended Setting**: [Gemini 3.1 Pro (Thinking: High) | Gemini 3.8 Flash (Thinking: High) | Gemini 3.8 Flash (Low/Medium)]
-  > - **Quota Impact**: [⚠️ HIGH IMPACT (Heavy allowance burn — reserve for deep math/DSP/architecture) | 🟢 SUSTAINABLE (Economical — standard UI & test engineering) | ⚡ MINIMAL (Near-zero burn — rapid JSON & documentation)]
+  > - **Quota Impact**: [⚠️ HIGH IMPACT | 🟢 SUSTAINABLE | ⚡ MINIMAL]
   > - **Active Model Check**: Please verify your model dropdown in the IDE footer matches this tier before proceeding!
 
-- **The Three Complexity Tiers**:
-  - **Tier 1 (High Reasoning / Critical DSP)**: Complex audio DSP math, polyphonic voice allocation, SIMD FastMath, lock-free concurrency, memory safety forensics, deep architectural planning (`/plan`). -> *Setting: Gemini 3.1 Pro (Thinking: High)*.
-    - *Quota Impact*: `⚠️ HIGH IMPACT` — Burns significant 5-hour rolling pool and weekly Pro quota. Use only when deep reasoning is strictly necessary, and switch back to Flash High as soon as planning finishes.
-  - **Tier 2 (Balanced Engineering & UI Testing)**: Standard JUCE UI components, modal dialogues, APVTS parameter attachments, building/expanding `gui_tests` or `dsp_tests`, standard phase execution. -> *Setting: Gemini 3.8 Flash (Thinking: High)*.
-    - *Quota Impact*: `🟢 SUSTAINABLE` — Fast, highly capable, and draws very lightly against quota. The optimal daily driver for building and testing.
-  - **Tier 3 (Rapid Iteration, Data & Tooling)**: Editing JSON schemas in `assets/controls/`, documentation/backlog updates, git operations, mechanical find-and-replace, CMake tweaks. -> *Setting: Gemini 3.8 Flash (Thinking: Low or Medium)*.
-    - *Quota Impact*: ⚡ `MINIMAL` — Near-zero burn rate. Perfect for rapid planning check-ins, git telemetry, and schema maintenance.
+- **Complexity Tiers**:
+  | Tier | Scope | Recommended Model | Quota Impact |
+  | :--- | :--- | :--- | :--- |
+  | **Tier 1 (High Reasoning / Critical DSP)** | Differential equations, non-linear saturation, polyphonic voice allocation, SIMD FastMath, lock-free concurrency, deep architecture. | Gemini 3.1 Pro (Thinking: High) | ⚠️ HIGH IMPACT (Reserve strictly for deep math/DSP/architecture) |
+  | **Tier 2 (Balanced Engineering & UI)** *(Universal Default)* | Standard JUCE UI components, modal dialogs, APVTS bindings, expanding `gui_tests` or `dsp_tests`, standard phase execution. | Gemini 3.8 Flash (Thinking: High) | 🟢 SUSTAINABLE (Fast, highly capable daily driver) |
+  | **Tier 3 (Rapid Iteration & Data)** | JSON schemas in `assets/`, documentation/backlog updates, git operations, mechanical find-and-replace, CMake tweaks. | Gemini 3.8 Flash (Thinking: Low/Medium) | ⚡ MINIMAL (Near-zero burn rate) |
 
-- **Default Baseline & Granular Hybrid Decomposition Protocol**:
-  - **Flash 3.8 High is the Universal Default**: All planning in New Klang City and building in Klang Industries MUST default to **Tier 2: Gemini 3.8 Flash (Thinking: High)**. Tier 1 Pro High is strictly an on-demand escalation, NEVER the default.
-  - **Strict Threshold for Tier 1 Pro High**: New Klang City may ONLY recommend upgrading planning to Tier 1 Pro High if a task involves heavy audio DSP math (differential filter equations, non-linear saturation curves), SIMD vectorization, or lock-free concurrency.
-  - **Granular Blueprinting (Pro Plans, Flash Builds)**: Whenever Tier 1 Pro High is used to architect a feature, it MUST decompose `PLAN.md` into an ultra-granular blueprint with exact drop-in C++ method signatures, JSON keys, and test assertion lines. This guarantees that execution immediately drops back to **Tier 2 (Flash High)** in Klang Industries, preserving precious Pro quota during build/test iterations.
-  - **2-Strike Factory Floor Escalation**: While Klang Industries executes on Tier 2 (Flash High), it is allowed up to 2 iterative attempts to resolve a compilation error or test failure. If unresolved after 2 attempts, Klang Industries MUST hard-pause, issue a Tier Upgrade advisory to Pro High, and wait for user confirmation before proceeding.
-
-- **Dynamic Tier Transition Rules (Strict Quota Protection State Machine)**:
-  Once execution is underway, the Model Advisory banner re-appears ONLY when the required complexity tier changes:
-  1. **Tier UPGRADE (Moving Higher: Tier 3 ➔ 2, Tier 2 ➔ 1, Tier 3 ➔ 1)**:
-     - The agent MUST display the Model Advisory banner.
-     - **Hard Pause**: The agent MUST stop and wait for the user to explicitly reply "proceed" before executing. Never auto-proceed into a higher tier.
-  2. **Tier DOWNGRADE by 1 Level (Tier 1 ➔ 2, or Tier 2 ➔ 3)**:
-     - The agent displays the Model Advisory banner recommending the lower tier to save quota.
-     - **5-Minute Grace Timer**: The agent schedules a 5-minute timer (`schedule(DurationSeconds=300, Prompt="5-minute downgrade timer expired: proceeding on existing higher tier.")`) and pauses in chat text.
-       - If the user responds with "proceed" (or switches the model and confirms), proceed on the lower tier.
-       - If the 5-minute timer expires without user response, proceed automatically using the existing (one-level higher) tier so progress is not blocked.
-  3. **Tier DOWNGRADE by 2 Levels (Tier 1 ➔ Tier 3)**:
-     - The agent displays the Model Advisory banner.
-     - **Hard Pause Without Timer**: The agent MUST stop and wait indefinitely for the user to reply "proceed". Auto-proceeding is strictly forbidden because running Tier 3 tasks on Tier 1 Pro drains irreplaceable Pro quota ("burn time rather than allowance").
-
-- **Smart Model Auto-Detection & Verification Badging (Frictionless Execution)**:
-  - **Self-Inspection**: Agents can inspect their own active model and thinking configuration directly from session context (e.g., system instructions and environment metadata).
-  - **Matched Tier Auto-Proceed**: If the agent's active model and thinking level match or exceed the recommended tier for the task (e.g., active is `Gemini 3.8 Flash (Thinking: High)` on a Tier 2 task, or `Gemini 3.1 Pro (Thinking: High)` on a Tier 1 task):
-    - Output a subtle, non-blocking verification badge at kickoff:
-      `✓ Model Verified: <Model> (<Thinking Level>) matches Tier <N>`
-    - **No Blocking Pause**: The agent may proceed immediately with plan presentation or execution without forcing an unnecessary verification pause.
-  - **Mismatched Tier Handling**:
-    - **Tier Lower Than Recommended (e.g. Flash on Tier 1 DSP task)**: MUST display the full Model Advisory banner, **hard-pause**, and wait for the user to switch models in the IDE footer and reply "proceed".
-    - **Tier Higher Than Recommended (e.g. Pro 3.1 on Tier 2 or 3 task)**:
-      - For 1-level mismatch (Tier 1 on Tier 2): Display the Model Advisory banner recommending downgrade to save quota, start a 5-minute timer, and pause in chat text.
-      - For 2-level mismatch (Tier 1 on Tier 3): Display the banner and hard-pause indefinitely without timer to protect critical Pro quota.
-
-- **Builder Pause Gate (Model Switch Friendly - NEVER use modal on execution start)**: Before Klang Industries calls any editing, code modification, or compilation tool on a new plan, it MUST NOT pop up an `ask_question` modal (because interactive modals freeze the IDE interface and completely prevent the user from changing the model dropdown in the IDE footer). If the active model matches the recommended tier, output the subtle verification badge (`✓ Model Verified: ...`) and proceed immediately (including the subtle 1-line clean slate notice if the session is mature). If the active model does not match the recommended tier, Klang Industries MUST output the Model Advisory banner at the very end of its briefing in chat and PAUSE in regular text, explicitly waiting for the user to verify/switch their model dropdown in the IDE footer and reply "proceed" (or "harvest & proceed").
-- **Subagent Policy**: Always use `Model="flash"` for read-only research subagents (`invoke_subagent`), and `Model="pro"` only for heavy multi-file reasoning.
+- **Tier Transition & Verification Rules**:
+  - **Flash 3.8 High is the Universal Default**: All planning in New Klang City and building in Klang Industries defaults to Tier 2. Tier 1 Pro High is strictly an on-demand escalation for heavy DSP math or concurrency.
+  - **Granular Blueprinting (Pro Plans, Flash Builds)**: When Tier 1 Pro High architects a plan, it MUST decompose `PLAN.md` into exact drop-in method signatures, JSON keys, and test assertion lines so Klang Industries executes immediately on Tier 2 (Flash High).
+  - **2-Strike Factory Escalation**: Klang Industries has up to 2 attempts to resolve a compilation or test failure on Tier 2. If still failing, it hard-pauses, recommends a Tier 1 upgrade, and waits for user confirmation.
+  - **Tier Upgrade**: Display banner and **hard-pause** for explicit user "proceed". Never auto-proceed into a higher tier.
+  - **1-Level Downgrade (Tier 1 ➔ 2, Tier 2 ➔ 3)**: Display banner, schedule a 5-minute grace timer (`schedule(DurationSeconds=300)`), and pause in chat. If timer expires without reply, auto-proceed on existing tier.
+  - **2-Level Downgrade (Tier 1 ➔ 3)**: Display banner and **hard-pause indefinitely** without timer to protect critical Pro quota.
+  - **Matched Tier Auto-Proceed**: If active model matches or exceeds the recommended tier, output subtle badge `✓ Model Verified: <Model> (<Thinking>) matches Tier <N>` and proceed immediately.
+  - **Builder Pause Gate**: Klang Industries MUST NEVER use `ask_question` modals at execution start (modals freeze IDE model dropdowns). Output the Model Advisory banner in chat text and pause.
+  - **Subagent Policy**: Always use `Model="flash"` for read-only research subagents (`invoke_subagent`), and `Model="pro"` only for heavy multi-file reasoning.
 
 ## Target Toolchain & Standards
 - **C++ Standard**: C++20 (`CMAKE_CXX_STANDARD 20`).
 - **Framework**: JUCE 9.0.3.
-- **JUCE 9.0.3 Timer Hygiene**: Always call `stopTimer()` as the first line of destructors in all `juce::Timer` subclasses to prevent `#1696` unload crashes.
+- **Timer Hygiene**: Always call `stopTimer()` as the first line of destructors in all `juce::Timer` subclasses to prevent `#1696` unload crashes.
 - **macOS Deployment Target**: Set `CMAKE_OSX_DEPLOYMENT_TARGET="11.0"` and `CMAKE_OSX_ARCHITECTURES="arm64;x86_64"` before `project()` in `CMakeLists.txt`.
 - **Linux Portability**: Use `-static-libstdc++ -static-libgcc` and set `VST3_AUTO_MANIFEST FALSE`.
 
 ## Strict TODO & Backlog Handling
-- **Record Only, Do Not Implement**: Whenever the user mentions items "for the todo", "on the todo list", "add to the todo", "for later", or lists future backlog features/fixes, you must **ONLY** document and record them into the project backlog / TODO list artifact.
-- **No Premature Implementation**: Under no circumstances should you edit source code, run compilers, trigger builds, execute test suites, or generate releases for items marked for the TODO list or future work.
-- **Wait for Explicit Execution Authorization**: Always stop after notating the items and confirm what was logged. Do not begin implementation until the user explicitly directs you to start working on them (e.g., "go ahead and implement X now" or "start working on X").
+- **Record Only, Do Not Implement**: When the user mentions items "for the todo", "on the backlog", "for later", or lists future features/fixes, you must **ONLY** document them into `docs/BACKLOG.md`.
+- **No Premature Implementation**: Under no circumstances should you edit source code, run compilers, trigger builds, or execute tests for backlog items until the user explicitly directs implementation.
+- **Single Source of Truth**: The *only* valid backlog file is `docs/BACKLOG.md`. Never create rogue backlog files (`TODO.md`, `future_backlog.md`, etc.).
 
 ## Strict VST3 Deployment Directory
-- **Program Files Only**: When deploying or copying the built VST3 plugin on Windows, you must **ONLY** install to `C:\Program Files\Common Files\VST3\The Klang Farmer.vst3`.
-- **Never Use AppData**: Under no circumstances should you copy, deploy, or fallback to `%LOCALAPPDATA%\Programs\Common\VST3` or any other local user directories.
+- **Program Files Only**: When deploying or copying built VST3 plugins on Windows, you must **ONLY** install to `C:\Program Files\Common Files\VST3\The Klang Farmer.vst3` and `C:\Program Files\Common Files\VST3\The Klang Planter.vst3`.
+- **Never Use AppData**: Under no circumstances should you copy, deploy, or fallback to `%LOCALAPPDATA%\Programs\Common\VST3` or any local user directories.
 
 ## Strict Data-Driven Architecture (CRITICAL)
-- **JSON First Priority**: The data-driven JSON architecture is the primary design pattern for this project. Always default to data-driven solutions for new features, UI layouts, colors, and DSP parameters.
-- **No Hardcoded Values (Unless Mandatory)**: Under no circumstances should APVTS parameter IDs, default values, min/max ranges, string labels, quick-snap intervals, or tooltips be hardcoded in C++ source files *unless it is absolutely technically mandatory* (e.g., due to strict real-time DSP constraints or third-party API requirements).
-- **Strict Schema Separation of Concerns**: All JSON files must rigidly adhere to their designated layer to prevent architectural leakage:
-  1. `assets/controls/*.json`: Strictly DSP & APVTS parameter contracts (type, min/max ranges, default, description, format, snap_points, choices). ZERO visual styling, ZERO colors, and ZERO pixel dimensions are permitted in this directory.
-  2. `assets/layouts/*.json`: Structural UI surface hierarchy (Pages -> Cards -> array of bound parameter IDs). Defines spatial organization and card grouping.
-  3. `assets/themes/*.json`: Visual styling, color palettes, typography (`theme.json`), and floating overlay/callout dimensions, background/border colors, and bound parameter arrays (`callouts.json`).
+- **JSON First Priority**: Always default to data-driven solutions for new features, UI layouts, colors, and DSP parameters.
+- **No Hardcoded Values (Unless Mandatory)**: Under no circumstances should APVTS parameter IDs, default values, min/max ranges, string labels, snap points, or tooltips be hardcoded in C++ source files unless technically mandatory.
+- **Strict Schema Separation of Concerns**: All JSON files must rigidly adhere to their designated layer:
+  1. `assets/controls/*.json`: Strictly DSP & APVTS parameter contracts (type, min/max ranges, default, description, format, snap_points, choices). ZERO visual styling, ZERO colors, and ZERO pixel dimensions.
+  2. `assets/layouts/*.json`: Structural UI surface hierarchy (Pages -> Cards -> array of bound parameter IDs).
+  3. `assets/themes/*.json`: Visual styling, color palettes, typography (`theme.json`), and floating overlay/callout geometry, background/border colors, and bound parameter arrays (`callouts.json`).
 
 ## Strict Planning Guardrails
-- **No Spontaneous Implementation**: When the user invokes planning commands (/plan, /read-plan, /execute-task), you must NEVER automatically start writing C++ code, compiling, or modifying source files.
-- **Mandatory Confirmation**: Always stop, summarize the loaded plan, and explicitly ask the user for permission to begin implementation, or if they prefer to defer it to the backlog.
-
+- **No Spontaneous Implementation**: When planning commands (`/plan`, `/read-plan`, `/execute-task`) are invoked, NEVER automatically start writing C++ code, compiling, or modifying source files.
+- **Mandatory Confirmation**: Always stop, summarize the loaded plan, and explicitly ask the user for permission to begin implementation.
 
 ## Strict Background Task Etiquette & Watchdog Timer Policy
-- **No Polling or Pinging**: When a long-running command (like a build, test suite, or script) goes to the background, you must NEVER use `manage_task` to poll its status in a loop or spam the chat with progress checks.
-- **No Task Log Peeking**: You must NEVER inspect running task logs via `cat`, `Get-Content`, `type`, `head`, `tail`, or `view_file` on `.system_generated/tasks/task-*.log`. Reading logs while a background task is actively running is strictly prohibited.
-- **Two-Stage Watchdog Timer Protocol (Target-Aware Adaptive Timing)**:
-  - **Quick Tasks & Single Targets (5 min / 15 min)**: For incremental builds, running single test executables (`dsp_tests`, `capture_screenshot`), git operations, or quick CLI scripts:
-    1. **T = 0 (Launch & Yield)**: Schedule a 5-minute watchdog timer:
-       `schedule(DurationSeconds=300, TimerCondition="<task-id>", Prompt="5-minute build watchdog: check if task is actively making progress or stuck.")`
-       Output a concise one-sentence notification and yield turn immediately.
-    2. **T = 5 Min (Stage 1 Health Check)**: Check status once silently via `manage_task(Action="status", TaskId="<task-id>")`. If actively progressing, schedule the final 10-minute timeout watchdog (`DurationSeconds=600`, Prompt="15-minute hard timeout: task has stalled or hung; terminate and investigate.") and yield silently.
-    3. **T = 15 Min (Stage 2 Hard Timeout & Auto-Kill)**: If the 15-minute timer expires, terminate via `manage_task(Action="kill", TaskId="<task-id>")`, inspect logs, and alert user.
-  - **Full Rebuilds & Multi-Target Test Suites (10 min / 20 min)**: For full multi-target builds (`TheKlangFarmer_VST3` + `TheKlangPlanter_VST3` + `TheKlangEditor` + test suites, full `/build-validate` pipeline, or `--clean-first`):
-    1. **T = 0 (Launch & Yield)**: Schedule a 10-minute watchdog timer:
-       `schedule(DurationSeconds=600, TimerCondition="<task-id>", Prompt="10-minute full build watchdog: check if compilation/tests are progressing or stuck.")`
-       Output a concise one-sentence notification and yield turn immediately.
-    2. **T = 10 Min (Stage 1 Health Check)**: Check status once silently via `manage_task(Action="status", TaskId="<task-id>")`. If actively progressing, schedule the final 10-minute timeout watchdog (`DurationSeconds=600`, Prompt="20-minute hard timeout: task has stalled or hung; terminate and investigate.") and yield silently.
-    3. **T = 20 Min (Stage 2 Hard Timeout & Auto-Kill)**: If the 20-minute timer expires, terminate via `manage_task(Action="kill", TaskId="<task-id>")`, inspect logs, and alert user.
-  - **Remote GitHub CI & Cloud Workflows (10 min / 20 min / 30 min / 50 min)**: For remote multi-platform GitHub Actions runs (Linux, macOS, Windows matrix, auval, pluginval, release packaging):
-    1. **T = 0 (Push/Trigger & Yield)**: Schedule a 10-minute watchdog timer:
-       `schedule(DurationSeconds=600, Prompt="10-minute CI watchdog: check GitHub Actions run status across Linux, macOS, and Windows.")`
-       Output a concise one-sentence notification with the run URL and active branch, then yield turn immediately.
-    2. **T = 10 Min (Checkpoint 1)**: Query GitHub API once. Output a concise markdown table showing runner statuses and active steps. If progressing normally, schedule Checkpoint 2 (`DurationSeconds=600`, Prompt="20-minute CI watchdog: check if compilation has finished and validation tests started.") and yield turn. If any job failed, fetch failure logs immediately and alert user.
-    3. **T = 20 Min (Checkpoint 2)**: Query GitHub API once. Output concise table. If validation tests (`auval`, `pluginval`) are in progress, schedule Checkpoint 3 (`DurationSeconds=600`, Prompt="30-minute CI watchdog: check if validation tests and artifact packaging completed.") and yield turn. If all passed, notify user with summary. If failed, fetch failure logs.
-    4. **T = 30 Min (Checkpoint 3)**: Query GitHub API once. Output concise table. If close to finishing, schedule the final 20-minute hard timeout (`DurationSeconds=1200`, Prompt="50-minute hard timeout: remote CI has hung or deadlocked; terminate and investigate.") and yield turn. If all passed, notify user.
-    5. **T = 50 Min (Hard Timeout & Auto-Cancel)**: If the 50-minute timer expires and jobs are still running, auto-cancel the remote run via GitHub API, fetch logs from the stalled runner/step, present root-cause analysis, and alert user.
+- **No Polling or Pinging**: When a command goes to the background, NEVER use `manage_task` to poll its status in a loop or spam the chat.
+- **No Task Log Peeking**: NEVER inspect running task logs via `cat`, `Get-Content`, `type`, `head`, `tail`, or `view_file` on `.system_generated/tasks/task-*.log` while actively running.
+- **Two-Stage Watchdog Timer Protocol**:
+  | Task Type | T = 0 (Launch & Yield) | T = Checkpoint 1 | T = Hard Timeout |
+  | :--- | :--- | :--- | :--- |
+  | **Quick Tasks / Single Targets** (`dsp_tests`, incremental builds, git) | Schedule 5m watchdog (`TimerCondition="<task-id>"`) | T=5m: check status once silently via `manage_task`; schedule 10m timeout | T=15m: terminate task, inspect logs, alert user |
+  | **Full Rebuilds / Multi-Target Suites** (full `/build-validate`, `--clean-first`) | Schedule 10m watchdog (`TimerCondition="<task-id>"`) | T=10m: check status once silently; schedule 10m timeout | T=20m: terminate task, inspect logs, alert user |
+  | **Remote GitHub CI Workflows** (Linux, macOS, Windows matrix, auval) | Schedule 10m watchdog | T=10m, 20m, 30m: query GitHub API once, output markdown status table | T=50m: auto-cancel remote run via API, fetch failure logs, alert user |
 
+## Strict C++ Formatting, Style & Memory Safety
+- **Indentation & Naming**: Exactly 4 spaces. No tabs. `camelCase` for variables and methods. `PascalCase` for classes and structs.
+- **Braces**: Allman style (opening brace on new line) for functions and classes; K&R style (opening brace on same line) for control flow (`if`, `for`, `while`). Omit braces for single-line `if`.
+- **Pointers & References**: Attach asterisk/ampersand to type (`float* myPtr`, `const juce::String& text`). Modern C++: generous `const`, obvious `auto`.
+- **Memory Safety**: No raw ownership (`new`/`delete`). Dynamic object ownership must use `std::unique_ptr` and `std::make_unique`. Raw pointers (`T*`) and references (`T&`) are for non-owning observation only.
+- **Thread Separation**: Never call UI methods (`repaint()`, `setValue()`) from `processBlock()` or `processStereo()`. Audio-to-UI communication must use lock-free atomics/FIFOs or `juce::AsyncUpdater`.
 
-## Strict C++ Formatting & Style
-- **Indentation**: Exactly 4 spaces. No tabs. No 2-space indents.
-- **Naming**: `camelCase` for variables and methods. `PascalCase` for classes and structs.
-- **Braces**: 
-  - Functions and Classes must use Allman style (opening brace on a new line).
-  - Control flow (`if`, `for`, `while`) must use K&R style (opening brace on the same line).
-  - Omit braces for single-line `if` statements.
-- **Pointers/References**: Attach the asterisk/ampersand to the type, not the variable (e.g., `float* myPtr`, not `float *myPtr`).
-- **Modern C++**: Use `auto` where types are obvious from the right-hand side, and use `const` generously.
-
-## Strict Memory Management
-- **No Raw Ownership**: Never use raw `new` or `delete`. 
-- **Smart Pointers**: Always use `std::unique_ptr` and `std::make_unique` for dynamic object ownership.
-- **Observation Only**: Raw pointers (`T*`) and references (`T&`) may ONLY be used for non-owning observation and passing objects to functions.
-
-## UI & Audio Thread Separation
-- **No UI in DSP**: Never call UI methods (e.g., `repaint()`, `setValue()`, component constructors) from `processBlock()` or `processStereo()`.
-- **Async Communication**: If the audio thread needs to update the UI (like a visualizer or meter), it must use lock-free FIFOs or `juce::AsyncUpdater`.
-
-## Strict Git Commit Etiquette
-- **Conventional Commits**: All git commits must strictly follow the conventional commit format: `<type>(<optional scope>): <description>`.
-- **Allowed Types**: `feat:` (new features), `fix:` (bug fixes), `refactor:` (code restructuring), `chore:` (tooling, dependencies), `docs:` (documentation/plans).
-- **Example**: `feat(presets): add JSON preset browser modal`
-
-## Strict Git Branch Safety Gate (NEVER Work Directly on Master/Main)
-- **Branch Required for All Work**: Under no circumstances should new features, refactors, audits, or bug fixes be developed or committed directly on the `master` or `main` branch.
-- **Mandatory Branch Creation**: Before modifying any source files, assets, or beginning execution of a plan/task, you MUST check the active branch (`git branch --show-current`). If on `master` or `main`, you MUST immediately create and switch to a descriptive branch (`git checkout -b feat/<slug>` or `feature/<slug>`).
-- **Explicit Override Only**: You may ONLY work or commit directly on `master`/`main` if the user explicitly orders you to do so in the chat (e.g., "commit to master" or "do this on master"). Never assume permission.
+## Strict Git Commit & Branch Safety Gate
+- **Conventional Commits**: Format strictly as `<type>(<optional scope>): <description>` (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`).
+- **NEVER Work Directly on Master/Main**: Check active branch (`git branch --show-current`). If on `master` or `main`, immediately create and switch to a descriptive branch (`git checkout -b feat/<slug>`). Direct commits to `master`/`main` are allowed ONLY by explicit user order.
+- **Ruthless Deletion (Git is the Archive)**: Ruthlessly delete obsolete source code and files. Never comment out dead code blocks or create `old_Component.cpp`/`legacy/` folders.
 
 ## Strict Debugging Heuristics
-- **Initialization Order First**: When encountering garbage data, parse failures, or unexplained crashes during asset loading, you must ALWAYS verify the C++ object lifecycle and static initialization order *before* investigating file encoding or unicode issues. Memory corruption masquerades as unicode errors.
-- **JSON Merge Priority (The Overwrite Trap)**: When loading multiple JSON files into a central manager, strictly verify the logical sequence. Base/Master JSON files MUST be loaded *first*, followed by specific modules/effects. If loaded out of order, the master file will silently overwrite the specific module's data. Always verify the file iteration sequence before debugging "missing" parameters.
+- **Initialization Order First**: When encountering garbage data, parse failures, or unexplained crashes during asset loading, ALWAYS verify C++ object lifecycles and static initialization order *before* investigating encoding or unicode issues.
+- **JSON Merge Priority (Overwrite Trap)**: Base/Master JSON files MUST be loaded *first*, followed by specific modules/effects. Loading out of order will silently overwrite module data.
 
-## Strict Backlog Location (Single Source of Truth)
-- **Use the Existing File**: The *only* valid backlog file for this project is `docs/BACKLOG.md` (which serves as the public roadmap on GitHub). 
-- **Alias Mapping**: Whenever the user mentions adding something to the "backlog", "back log", "back burner", "todolist", "todo list", "the todo", or similar phrases, you must strictly map that request to `docs/BACKLOG.md`.
-- **No Rogue Files or Artifacts**: You must NEVER create new files named `backlog.md`, `BACKLOG.md`, `TODO.md`, `future_backlog.md`, etc., in the root directory or as an artifact in your brain directory. 
-- **Modification Only**: Always search for and append to the existing `docs/BACKLOG.md` file in the repository.
-
-## Smart /grill-me Wrap-Up & Mandatory Interactive Decision Modals
-- **Interactive Modal Required for Design Menus (Zero Plain-Text Number Menus)**: Whenever presenting design decision options to the user - whether at the end of `/grill-me`, `/plan`, or architectural branching forks - you must NEVER output raw numbered text lists (e.g. `1. Option A, 2. Option B, 3. Both`) in the chat forcing the user to type "3". You MUST ALWAYS invoke the `ask_question` tool so the user gets an interactive clickable modal.
-- **CRITICAL EXCEPTION - The Plan Execution Start Gate**: Under NO circumstances should `ask_question` be used when presenting a plan for execution in Klang Industries (Builder), at the start of `/read-plan` or `/execute-task`. Modals freeze the IDE interface and completely prevent the user from changing their model dropdown in the IDE footer. The execution start gate MUST ALWAYS be a non-modal pause in chat text, presenting the Model Advisory banner and waiting for the user to adjust their model dropdown and reply "proceed".
-- **Proactive Housekeeping**: Whenever you complete a /grill-me interactive interview, you must document the final design conclusion (Backlog, Plan, or Both).
-- **Contextual Bypass**: If the user's answers during the interview *explicitly* stated where the item should go (e.g., "put this in v0.4 of the backlog"), you are authorized to bypass the formal 3-option menu and immediately execute the documentation.
-- **When in Doubt, Ask via `ask_question`**: If the destination is ambiguous, you must call `ask_question` with the options formatted as user actions (e.g., `(Recommended) Both: Add to Backlog and draft Plan`, `Backlog Only`, `Draft Plan Only`).
+## Interactive Decision Modals & Wrap-Up
+- **Interactive Modal Required for Design Menus**: When presenting design options (at the end of `/grill-me`, `/plan`, or architectural branching forks), NEVER output raw numbered text lists forcing the user to type "3". ALWAYS invoke `ask_question`.
+- **CRITICAL EXCEPTION**: Under NO circumstances use `ask_question` at the builder execution start gate (`/read-plan`, `/execute-task`). Modals freeze the IDE model dropdown. Pause in chat text.
+- **Wrap-Up Housekeeping**: Document interview conclusions in Backlog or Plan.
 
 ## Strict Scratch Script Hygiene
-- **Instant Cleanup**: When you create temporary Python scripts (`update_file.py`, `fix_code.py`, `script.py`) to execute refactors, tests, or file modifications, you must **ALWAYS** delete the script immediately upon completion.
-- **Execution Chain**: Always chain the removal directly in your terminal command. For example: `python script.py ; rm script.py`.
-- **No Clutter**: Under no circumstances should you leave temporary scripts tracked or untracked in the root project directory.
+- **Instant Cleanup**: When temporary scripts (`update_*.py`, `temp_*.py`) are created for refactors or tests, ALWAYS delete them immediately in the terminal command chain (e.g., `python script.py ; rm script.py`). Never leave temporary scripts in the tree.
 
-## Git is the Archive (Ruthless Deletion)
-- **No Comment Graveyards**: When refactoring or removing obsolete C++ or JSON source code, you must ruthlessly and completely delete the dead code. Never comment out large blocks of obsolete code "just to be safe."
-- **No Legacy Files**: Never rename files to `old_Component.cpp` or move them to a `legacy/` directory. 
-- **Rely on Git**: Git is the only acceptable time machine. If we need to see how an old feature worked, we will look at the Git history.
-- **Scope**: This applies strictly to Source Code. Documentation files (like `BACKLOG_ARCHIVE.md` or PLAN artifacts) are exempt and should be preserved as requested.
-## Strict Build Validation & Deployment
-- **Always Deploy**: Whenever you successfully build the project and fix a bug or add a feature, you MUST ensure you run the build-validate skill or execute deploy_vst3.bat to copy the generated .exe and .vst3 artifacts into the current_build/ directory and C:\Program Files\Common Files\VST3\. Do not leave the user looking at stale builds.
-- **Dual Pipeline (Fast Iterate -> Validate)**: You may use raw cmake --build for your own rapid iteration and syntax checking. However, before presenting a finished feature or bugfix to the user, you MUST use the build-validate skill to run the full test suite and trigger automated deployment.
+## Strict Test-Driven Guardrail & Build Validation
+- **Zero Orphaned Features**: No new DSP algorithm, parameter, UI card, page, modal, or editor tool may be merged without test coverage in `test/dsp_tests.cpp` and `test/gui_tests.cpp`.
+- **Dynamic Reflection Compliance**: `gui_tests` dynamically sweeps 100% of registered APVTS parameters and JSON assets. Missing UI bindings or definitions will hard-fail the build.
+- **Mandatory Planning Test Phase**: All plans (`/plan`) MUST include an explicit Test Suite Update phase.
+- **Always Deploy**: After building successfully, run `deploy.ps1` to sync `.exe` and `.vst3` artifacts into `current_build/` and system directories.
 
-## Strict Test-Driven Guardrail (Mandatory Test Parity)
-- **Zero Orphaned Features**: Under no circumstances should a new DSP algorithm, audio parameter, UI card, page, modal, or editor tool be merged without corresponding test coverage in `test/dsp_tests.cpp` and `test/gui_tests.cpp`.
-- **Dynamic Reflection Compliance**: `gui_tests` dynamically sweeps 100% of all registered APVTS parameters and JSON assets. If any parameter lacks a UI binding or test case, `gui_tests` will hard-fail the build.
-- **Mandatory Planning Test Phase**: All architectural plans (`/plan`, `/strict-plan`, `/pasteplan`) MUST include an explicit Test Suite Update phase as a prerequisite for task completion.
-- **Pre-Merge Validation**: No feature may be considered done or deployed until both `dsp_tests` and `gui_tests` pass with zero failures.
-
-## Strict Context Management (Refresh Strategy)
-- **Proactive Context Refreshing**: When you notice the chat session getting long (multiple implementation iterations, large token usage, or when transitioning to a new plan phase), you MUST proactively suggest the user run the `/refresh-context` skill (or click "Replace with New" in the sidebar themselves).
-- **Proactive Context Compaction Warning**: When a conversation crosses ~40 turns or approaches high token density, the agent proactively outputs a subtle advisory at the end of its response:
-  > 💡 *Session Token Advisory: This chat is getting long. Consider running `/refresh-context` before kicking off the next major milestone to keep the reasoning razor-sharp.*
-- **Threshold-Aware Factory Clean Slate & Soul Harvest Protocol**:
-  - **Young / Fresh Builder Sessions (< 12 turns or 1 task completed)**: Instant engage on `proceed` or `engage`. Zero harvest prompts to protect warmed-up compiler memory, recent file state, and rapid iteration velocity.
-  - **Mature Builder Sessions (> 15 turns or multiple heavy tasks)**: Append a subtle, non-blocking 1-line advisory at the bottom of the plan briefing in regular chat text (never an interactive modal):
-    `💡 Factory Context Notice: ~N turns accumulated. Reply 'proceed' (or 'engage') to build immediately, or 'harvest & proceed' (or run /refresh-context) for a clean slate.`
-  - **Power-User Override Flag (`harvest & proceed` / `proceed --harvest`)**: The user may supply this flag at any time. When passed:
-    1. Klang Industries harvests the session into `docs/DEV_HISTORY.md` and generates/updates `context_clues_build.md`.
-    2. Instructs the user to run `/clear` or click "Replace with New" in the sidebar.
-    3. Upon post-refresh resume (`resume` / `proceed`), Klang Industries immediately restores state from `context_clues_build.md` and begins Phase 1 execution with a pristine, razor-sharp context window.
-- **Two-Chat System Support**: Honor the two-chat system where one chat ("New Klang City") is purely for planning, and other chats are for implementation. During implementation, prioritize reading `PLAN.md` over generating raw instructions in the chat.
+## Strict Context Management & Soul Harvest Protocol
+- **Proactive Context Refreshing**: When a conversation crosses ~40 turns or approaches high token density, suggest running `/refresh-context` (or clicking "Replace with New" in the sidebar).
+- **Threshold-Aware Factory Clean Slate**:
+  - Fresh builder sessions (< 12 turns): Instant engage on `proceed`.
+  - Mature builder sessions (> 15 turns): Output subtle 1-line notice: `💡 Factory Context Notice: ~N turns accumulated. Reply 'proceed' to build, or 'harvest & proceed' for a clean slate.`
+  - Power-User Flag (`harvest & proceed`): Harvests session into `docs/DEV_HISTORY.md`, updates `context_clues_build.md`, and prompts refresh.
 
 ## Strict Chat Role Enforcement (Planner vs. Builder)
-- **Role Identification**: The agent must determine its role by checking the user's initial prompt or reading its dedicated context clues file (context_clues_plan.md or context_clues_build.md).
-- **New Klang City (Planner)**: This chat is strictly Read-Only for the C++ codebase. It is strictly forbidden from building features, modifying DSP/UI code, or running compiler tests. It may ONLY draft PLAN.md, update BACKLOG.md, write documentation, and build/modify agent Skills.
-  - **Live Factory Radar (Git Telemetry)**: New Klang City is explicitly authorized and encouraged to run non-mutating Git inspection commands (`git status --short`, `git diff --stat`) to observe active factory progress, file diffs, and implementation state in real time without waiting on manual reports.
-- **Klang Industries (Builder)**: This chat is strictly Read-Only for overarching architecture. It is strictly forbidden from modifying BACKLOG.md or drafting core PLAN.md features. If the user requests architectural planning while in the Builder chat, the agent MUST explicitly refuse and instruct the user to take the request to New Klang City.
+- **Role Identification**: Determine role by checking the user's initial prompt or reading `context_clues_plan.md` vs `context_clues_build.md`.
+- **New Klang City (Planner / Ivory Tower)**: Strictly Read-Only for C++ source files. May ONLY draft `PLAN.md`, update `docs/BACKLOG.md`, write documentation, and manage agent skills. Live factory radar (`git status --short`, `git diff --stat`) encouraged.
+- **Klang Industries (Builder / Factory Floor)**: Strictly Read-Only for overarching architecture. Strictly forbidden from modifying `docs/BACKLOG.md` or drafting core `PLAN.md` features. Refuses architectural planning requests.
 - **Strict Release Authority Gate (Ivory Tower Only)**:
-  - **Klang Industries (Builder / Factory Floor)**: Strictly forbidden from executing `/cut-release`, modifying release version strings, creating/moving release `git tag`s, or pushing tags to remote. Its responsibility concludes upon passing automated tests (`gui_tests`, `dsp_tests`), running local artifact deployment (`deploy.ps1`), committing feature changes with a conventional commit, and sounding the "JOB'S DONE" chime in `build_to_plan.md`.
-  - **New Klang City (Planner / Ivory Tower)**: The sole release authority. Only New Klang City reviews final diffs, verifies desktop testing with the user, updates `BACKLOG.md`/`CHANGELOG.md`, executes `/cut-release`, stamps the official Git release tag, and pushes tags to remote GitHub.
+  - Klang Industries is strictly forbidden from executing `/cut-release`, modifying release version strings, creating/moving `git tag`s, or pushing tags. Its job ends after tests pass, `deploy.ps1` runs, changes are committed, and the "JOB'S DONE" chime sounds in `build_to_plan.md`.
+  - New Klang City is the sole release authority (reviews diffs, verifies desktop testing, updates changelogs, tags Git releases, and pushes to GitHub).
 - **Strict Guardrail & Skills Governance Gate (Ivory Tower Only)**:
-  - **Klang Industries (Builder / Factory Floor)**: Strictly forbidden from modifying `GEMINI.md`, project guardrails, system instructions, or authoring/editing agent Skills (`.agents/skills/`, `.gemini/config/skills/`). If the user requests guardrail, prompt, or skill updates while on the factory floor, Klang Industries MUST explicitly refuse and instruct the user to take the request to New Klang City.
-  - **The "Just Do It" Emergency Override**: Klang Industries may ONLY bypass this restriction and modify `GEMINI.md` or skills if the user explicitly includes the exact override phrase `"just do it"` in their prompt (e.g., *"update GEMINI.md, just do it"*). Without this explicit phrase, Klang Industries must never touch system rules or skills.
-  - **New Klang City (Planner / Ivory Tower)**: Sole authority for system architecture, `GEMINI.md` guardrails, agent workflows, skill definitions, and project backlogs.
+  - Klang Industries is strictly forbidden from modifying `GEMINI.md`, system rules, or authoring/editing agent Skills (`.agents/skills/`, `.gemini/config/skills/`). It must refuse rule changes and direct the user to New Klang City.
+  - **The "Just Do It" Emergency Override**: Klang Industries may ONLY bypass this restriction if the user explicitly includes the exact phrase `"just do it"` in their prompt.
+  - New Klang City is the sole authority for system architecture, `GEMINI.md` guardrails, agent workflows, skill definitions, and project backlogs.
 
 ## Mobile-Aware Autopilot Factory Pipeline
-- **Autonomous Multi-Phase Chaining**: When the user indicates they are on mobile (e.g., *"I'm on mobile"*, *"run full task"*, or mobile metadata tags), Klang Industries is authorized and expected to execute all plan phases continuously end-to-end:
-  `Code Edits ➔ audiothread-guard ➔ cmake build ➔ gui_tests ➔ deploy.ps1 ➔ archive PLAN.md ➔ update build_to_plan.md`
-  without halting between intermediate phases for redundant chat approvals. This eliminates mobile UI fatigue while maintaining rigorous test verification.
+- When the user indicates mobile (*"I'm on mobile"*, *"run full task"*), Klang Industries executes all plan phases continuously end-to-end (`Code Edits ➔ audiothread-guard ➔ cmake build ➔ gui_tests ➔ deploy.ps1 ➔ archive PLAN.md ➔ update build_to_plan.md`) without halting for intermediate chat approvals.
 
 ## Strict Inter-Chat Communique Protocol & "Job's Done" Handshake
-- **Communique Mailbox (`docs/communique/`)**:
-  - `docs/communique/plan_to_build.md`: Authored strictly by New Klang City. Contains the dispatch contract, active milestone, task name, recommended model tier, and architectural directives.
-  - `docs/communique/build_to_plan.md`: Authored strictly by Klang Industries. Contains live execution status, active branch, unit test results, roadblocks, and completion reports.
-- **Communiqué State Machine Handshake**:
-  All dispatch headers in `docs/communique/plan_to_build.md` must declare their explicit lifecycle state:
-  - `STATUS: DRAFTING`: New Klang City is actively formulating the plan. Klang Industries MUST NOT read or execute.
-  - `STATUS: READY_FOR_EXECUTION`: Signed contract published. Klang Industries is authorized to begin building.
-  - `STATUS: IN_PROGRESS`: Klang Industries has ingested the dispatch contract and started compiling or editing code.
-  - `STATUS: COMPLETED`: Klang Industries has verified all tests, deployed artifacts, archived `PLAN.md`, and closed the dispatch loop.
-- **Zero-Polling Discipline**: Under no circumstances should either agent run terminal status loops (`git status`, `git diff`, file checks, or watchdog polling loops) waiting for the other chat to complete work. Inter-chat handoffs are strictly event-driven.
+- **Mailbox Protocol (`docs/communique/`)**:
+  - `plan_to_build.md`: Authored strictly by New Klang City. Declares state machine: `STATUS: DRAFTING` ➔ `STATUS: READY_FOR_EXECUTION` ➔ `STATUS: IN_PROGRESS` ➔ `STATUS: COMPLETED`.
+  - `build_to_plan.md`: Authored strictly by Klang Industries. Contains live execution status, test results, and completion reports.
+- **Zero-Polling Discipline**: No terminal status loops waiting for the other chat. Handoffs are event-driven.
 - **The "Job's Done" Chime & Dual Mailbox Closure**: When Klang Industries finishes compilation, test passes, and artifact deployment, it MUST update BOTH `build_to_plan.md` (to `Status: COMPLETE ✅`) and `plan_to_build.md` (to `Status: COMPLETED ✅`), archive `PLAN.md` to `docs/completed_plans/`, and conclude its turn with this prominent handoff chime:
   > 🔔 **JOB'S DONE!** `<Task Name>` is fully built, tested, and deployed. Switch to New Klang City to review and advance!
-- **Single-Read Ingest**: When the user returns to New Klang City and prompts ("check report", "status", "continue", etc.), New Klang City performs **exactly ONE read** of `docs/communique/build_to_plan.md` to confirm completion—zero polling, zero loops.
-- **PLAN.md as Ephemeral Execution Board**:
-  - `PLAN.md` at the repository root is the active check-off board during active engineering.
-  - While Klang Industries executes, it checks off items (`- [x]`) phase-by-phase.
-- **Auto-Archive & Reset on Task Finish**:
-  - As soon as Klang Industries completes all phases in `PLAN.md` and passes all test suites (`gui_tests`, `dsp_tests`), it MUST immediately archive `PLAN.md` to `docs/completed_plans/<YYYY-MM-DD>_<task_slug>.md` (via `/task-finish` or `/clean-plan`).
-  - Klang Industries must reset `PLAN.md` to an empty or idle state (`# No Active Plan`). Under no circumstances should completed or stale plans linger in `PLAN.md` to be accidentally re-executed.
+- **Single-Read Ingest**: Returning to New Klang City triggers **exactly ONE read** of `build_to_plan.md` to confirm completion.
+- **Auto-Archive & Reset on Task Finish**: Klang Industries must immediately archive `PLAN.md` to `docs/completed_plans/<YYYY-MM-DD>_<task_slug>.md` and reset `PLAN.md` to an idle state (`# No Active Plan`).
 
 ## Pre-Release "Clean Slate & Regression Gauntlet" Guardrail
-- **Mandatory Pre-Flight Execution**: Before any version bump, git release tagging, or `/cut-release` skill execution, the repository MUST pass through the automated regression gauntlet:
-  1. **Cruft & Scratch Sweep**: Zero untracked scratch scripts (`update_*.py`, `temp_*.txt`), loose logs, or orphaned artifacts in the repository tree (`git status --porcelain`).
-  2. **Dual-Configuration Parity**: Both `Debug` (validating assertion bounds and memory safety) and `Release` (validating compiler optimizations and vectorization) must compile cleanly with zero errors.
-  3. **Universal 100% Test Pass**:
-     - `dsp_tests.exe`: 100% assertions passing with zero audio-thread allocations, zero mutex locks, zero NaNs, and verified FastMath curves.
-     - `gui_tests.exe`: 100% assertions passing across all component bindings, 6-pillar VST3 parameter validations, modal lifecycles, and offscreen smoke paint checks.
-  4. **Strict Schema Parity**: 100% of APVTS parameters registered in both plugins must have matching `ControlDef` entries in `assets/controls/*.json`.
-  5. **JUCE 9.0.3 Timer Hygiene**: 100% of `juce::Timer` subclasses must call `stopTimer()` as the first line of their destructor.
+- Mandatory pre-flight checklist before any version bump, git release tagging, or `/cut-release`:
+  1. **Cruft & Scratch Sweep**: Zero untracked scratch scripts (`*.tmp`, `temp_*.txt`, `update_*.py`) or loose artifacts (`git status --porcelain`).
+  2. **Dual-Configuration Parity**: Both `Debug` and `Release` compile cleanly with zero errors.
+  3. **Universal 100% Test Pass**: `dsp_tests.exe` (100% audio invariants, SIMD, FastMath) and `gui_tests.exe` (100% parameter reflection, component bindings, modal lifecycles, offscreen paint smoke passes).
+  4. **Strict Schema Parity**: 100% of APVTS parameters registered in both plugins have matching `ControlDef` entries in `assets/controls/*.json`.
+  5. **JUCE 9.0.3 Timer Hygiene**: 100% of `juce::Timer` subclasses call `stopTimer()` as first line of destructor.
 
 ## Strict Clipboard & External Link Ingestion Guardrail
-- **Zero Arbitrary Clipboard Sniffing**: Agents must NEVER inspect or read the host system clipboard (`Get-Clipboard`). Blueprints, tasks, and code must originate exclusively from local workspace files or direct user input in chat.
+- **Zero Arbitrary Clipboard Sniffing**: Agents must NEVER inspect or read the host system clipboard (`Get-Clipboard`). Blueprints, tasks, and code must originate exclusively from local workspace files or direct chat input.
 - **Never Fetch External URLs**: Agents must NEVER automatically fetch or scrape external web URLs via `read_url_content` or `curl` during planning, building, or task ingestion without explicit user confirmation.
-- **Local-Only Plan Priority**: All plans, tasks, and communique documents MUST come exclusively from local workspace files (e.g. `PLAN.md`, `docs/communique/plan_to_build.md`) or direct text provided by the user in chat.
+- **Local-Only Plan Priority**: All plans, tasks, and communique documents MUST come exclusively from local workspace files (e.g. `PLAN.md`, `docs/communique/plan_to_build.md`) or direct text provided by user.
 - **Privacy & Context Boundary**: The host system clipboard may contain private, out-of-band user data from other applications (notes, meeting links, passwords, tokens). Respect context boundaries at all times.
-
