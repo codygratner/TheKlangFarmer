@@ -67,6 +67,10 @@
     2. *Sanity Gate (Tier 1 Pro High)*: User temporarily swaps to Pro High to stress-test the draft for DAW automation compatibility, edge cases, industry standards, and daily developer ergonomics (the "insanity check").
     3. *Dispatch & Build (Tier 2 Flash High)*: User swaps back to Flash High so Klang Industries executes the refined plan on sustainable quota.
   - **Routine Exemption**: Skip the Pro Sanity Gate for routine bug fixes, test suite expansions, CMake tweaks, and mechanical chores.
+- **The Staged Planning Buffer (`docs/draft_plans/`)**:
+  - While Klang Industries is executing an active task, New Klang City MUST author all new plans, brainstorming, and `/grill-me` blueprints into `docs/draft_plans/<task_slug>.md`.
+  - Under no circumstances should New Klang City overwrite the active `PLAN.md` or set `READY_FOR_EXECUTION` while Klang Industries is in progress (`STATUS: IN_PROGRESS`).
+  - **The Factory-Idle Promotion Gate**: Only after Klang Industries concludes its task, sounds the "JOB'S DONE" chime, and archives the previous plan, may New Klang City promote the approved draft to `PLAN.md`, remove it from `docs/draft_plans/` (acting as a clean inbox queue), and dispatch via `plan_to_build.md`.
 
 ## Strict Background Task Etiquette & Watchdog Timer Policy
 - **No Polling or Pinging**: When a command goes to the background, NEVER use `manage_task` to poll its status in a loop or spam the chat.
