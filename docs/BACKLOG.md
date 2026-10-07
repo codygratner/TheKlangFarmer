@@ -243,7 +243,15 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 ## 🚀 Milestone: v0.4.0 "The Interface & Experience Update"
 *Focus: Complete Clean-Slate UX Overhaul, Modern Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.*
 
-### 1. The Neo-Slate Vector Design System & Chassis Overhaul
+### 1. Research & Feasibility: Obsidian Knowledge Base & Vault Integration
+*Goal: Investigate creating an Obsidian vault structure or dedicated knowledge repository for all project documentation, architectural blueprints, dev logs, error histories, and data schemas.*
+- **Interactive Research & Exploration Scope**:
+  - Evaluate opening `docs/` directly as a native Obsidian Vault (leveraging Obsidian's local-first Markdown format with zero proprietary database lock-in).
+  - Investigate bidirectional linking (`[[wikilinks]]`) across DSP specifications, UI layout schemas, glossary terms ([`docs/GLOSSARY.md`](GLOSSARY.md)), and institutional memory ([`docs/DEV_HISTORY.md`](DEV_HISTORY.md)).
+  - Explore Obsidian Canvas for visual architecture diagrams (signal flow graphs, module dependencies, and roadmap sequencing).
+  - Evaluate repository architecture options: single repo `docs/` vault vs. dedicated sibling repository / Git submodule, ensuring seamless interoperability with AI agent tools.
+
+### 2. The Neo-Slate Vector Design System & Chassis Overhaul
 *Goal: Overhaul the overall plugin window chassis with a sleek, modern, non-skeuomorphic vector design inspired by Kilohearts Phase Plant, Vital, and Arturia Pigments.*
 - **Header-Integrated Navigation & Visualizer**:
   - Evict the legacy navigation card and visualizer card from the module rack grid.
@@ -254,7 +262,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Dark matte slate surfaces (`0xff121622`), crisp 1px borders (`0xff2a3449`), high-contrast typography, and vibrant neon accent highlights.
   - Zero faux-vintage screws, zero fake drop shadows, zero 3D skeuomorphism. Clean, futuristic, responsive, and distraction-free.
 
-### 2. The 4-Controls-Per-Card Clean Slate Architecture
+### 3. The 4-Controls-Per-Card Clean Slate Architecture
 *Goal: Radically simplify the synthesizer surface into focused, punchy modules with exactly 4 primary performance controls per Card, establishing 1:1 hardware synergy with 4-encoder controllers (dadamachines TBD-16).*
 - **Clean-Slate Parity Break**:
   - Cut the anchor to the legacy v0.2.0 prototype parameter sprawl.
@@ -266,20 +274,20 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **TBD-16 Hardware Synergy**:
   - The 4 sliders map directly to Encoders 1, 2, 3, 4 of a 1x4 encoder hardware controller.
 
-### 3. The Right-Click Callout Deep-Dive Layer
+### 4. The Right-Click Callout Deep-Dive Layer
 *Goal: Keep the primary playing surface uncluttered while providing instant, elegant access to secondary parameters, tuning modes, and curve configurations.*
 - **Popover Callout Architecture**:
   - Right-clicking any module card or parameter launches a sleek floating `juce::CallOutBox` mini-card.
   - Houses secondary parameters: MIDI tracking modes, snap point selections, velocity sensitivity curves, and fine-tune detents.
   - Translates cleanly to `[SHIFT]` / `[PAGE 2]` encoder views on physical hardware.
 
-### 4. Interactive Parameter & Curve Audit Tool in The Klang Editor
+### 5. Interactive Parameter & Curve Audit Tool in The Klang Editor
 *Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
 *Goal: Integrate an interactive curve calibration workspace in The Klang Editor to systematically tune the tactile response, snap points, logarithmic slider slopes, and ergonomic double-click defaults of the new curated 4-control parameter set.*
 - Live interactive slider evaluation, tactile response tuning, and real-time visualization of parameter skew factor curves.
 - Test and calibrate discrete musical snap points live within the editor before persisting to `assets/controls/*.json`.
 
-### 5. Switchable Studio Theme Engine (`Cykranosh`, `Nord`, `Dracula`, `Cyberpunk`)
+### 6. Switchable Studio Theme Engine (`Cykranosh`, `Nord`, `Dracula`, `Cyberpunk`)
 *Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
 *Goal: Provide distinctive, switchable visual flavors for different studio environments, featuring the creator's signature Cykranosh theme as the flagship look.*
 - **Curated Multi-Palette Schema (`assets/themes/theme.json`)**:
@@ -290,14 +298,6 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Live Non-Destructive Theme Switching**:
   - Live theme switcher dropdown in both the Settings & About modal and The Klang Editor.
   - Instantly re-skins the UI without restarting the DAW and persists in user properties.
-
-### 6. Research & Feasibility: Obsidian Knowledge Base & Vault Integration
-*Goal: Investigate creating an Obsidian vault structure or dedicated knowledge repository for all project documentation, architectural blueprints, dev logs, error histories, and data schemas.*
-- **Interactive Research & Exploration Scope**:
-  - Evaluate opening `docs/` directly as a native Obsidian Vault (leveraging Obsidian's local-first Markdown format with zero proprietary database lock-in).
-  - Investigate bidirectional linking (`[[wikilinks]]`) across DSP specifications, UI layout schemas, glossary terms ([`docs/GLOSSARY.md`](GLOSSARY.md)), and institutional memory ([`docs/DEV_HISTORY.md`](DEV_HISTORY.md)).
-  - Explore Obsidian Canvas for visual architecture diagrams (signal flow graphs, module dependencies, and roadmap sequencing).
-  - Evaluate repository architecture options: single repo `docs/` vault vs. dedicated sibling repository / Git submodule, ensuring seamless interoperability with AI agent tools.
 
 ---
 
