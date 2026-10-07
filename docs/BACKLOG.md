@@ -198,6 +198,16 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Inter-Chat Communique Tuning (`docs/communique/`)**:
   - Evaluate the `plan_to_build.md` and `build_to_plan.md` state machine handoff to identify any friction or repetitive handoffs.
 
+### 2. Unified Filterable Master Tree & Dedicated Text/Localization Schema
+*Goal: Redesign The Klang Editor's navigation tree into a unified master tree with multi-state layer filters, and extract text/tooltips into a dedicated data schema.*
+- **Unified Master Tree with Layer Filters**:
+  - Replace the dual tabs (`CONTROLS` and `LAYOUTS`) with a single unified Master Tree.
+  - Add 4 toggle filter buttons above the tree: `[Controls]`, `[Layout]`, `[Theme]`, and `[Text]`.
+  - Toggling buttons dynamically filters what nodes and properties are displayed (e.g., enable `Controls + Layout` simultaneously to view structural cards and parameter slots together).
+- **Dedicated Text & Tooltip Schema (`assets/text/`)**:
+  - Extract all parameter descriptions, format units, mouse shortcut hints, and header strings into dedicated JSON files under `assets/text/` (e.g. `assets/text/farmer_strings.json`, `assets/text/planter_strings.json`).
+  - Prepares the suite for future localization / multi-language translation and zero-code copyediting.
+
 ---
 
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
