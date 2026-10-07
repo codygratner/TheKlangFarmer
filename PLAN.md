@@ -65,23 +65,35 @@ Location: `CMakeLists.txt`, `source/ParameterManager.h`, `source/ParameterManage
 
 ---
 
-### Phase 3: TKP Layout Card Binding
-Location: `assets/layouts/tkp_layout.json`
-- Add `Master Limiter` card:
-  ```json
-  "Master Limiter": {
-    "color": "0xFFE53935",
-    "style": "StandardDark",
-    "is_callout": true,
-    "tooltip": "LIMITER: Master brickwall peak limiter with auto soft-knee release and gain boosting.",
-    "parameters": [
-      "planter_limiter_enable",
-      "planter_limiter_gain",
-      "planter_limiter_thresh",
-      "planter_limiter_release"
-    ]
-  }
-  ```
+### Phase 3: Callout Binding & Product Tree Integration
+Location: `assets/themes/callouts.json`, `tools/editor/MainComponent.cpp`
+1. In `assets/themes/callouts.json`:
+   - Associate `"planter_limiter"` with `"product": "tkp"`, its geometry, styling, and bound `"parameters"`:
+     ```json
+     {
+       "planter_limiter": {
+         "title": "MASTER LIMITER",
+         "product": "tkp",
+         "width": 300,
+         "height": 130,
+         "background_colour": "0xff141720",
+         "border_colour": "0xffe53935",
+         "corner_radius": 5.0,
+         "parameters": [
+           "planter_limiter_enable",
+           "planter_limiter_gain",
+           "planter_limiter_thresh",
+           "planter_limiter_release"
+         ]
+       }
+     }
+     ```
+2. Keep `assets/layouts/tkp_layout.json` strictly to the 8 physical surface modules (preserving the 4x2 grid).
+3. In `tools/editor/MainComponent.cpp` (`rebuildTree()`):
+   - When populating a product node (e.g. `tkp`), after adding the layout cards, query `callouts.json` for any matching `"product": "tkp"`.
+   - Append an item labeled `"[Callout] Master Limiter"` with `itemType = "callout_preview"`.
+   - Populate its 4 child parameters under this node (`1: planter_limiter_enable`, etc.).
+   - When clicked, TKE automatically renders `CalloutPreviewCard` (floating popover preview) instead of `ModuleCardComponent`!
 
 ---
 

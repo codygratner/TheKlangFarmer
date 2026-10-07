@@ -23,7 +23,7 @@
 3. **Execution Plan**: Follow [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) strictly across Phases 1 through 6:
    - Phase 1: Create `assets/themes/`, author `theme.json` and `callouts.json`, strip `ui_colors` from `assets/controls/`, delete `assets/controls/global_ui.json`.
    - Phase 2: Update `CMakeLists.txt` (`TkfAssets`) and `ParameterManager.cpp` to parse `assets/themes/*.json`.
-   - Phase 3: Add `Master Limiter` card with 4 parameters to `assets/layouts/tkp_layout.json`.
+   - Phase 3: Bind Master Limiter to `assets/themes/callouts.json` and dynamically mount under TKP tree as `[Callout] Master Limiter` with popup preview rendering (leaving `tkp_layout.json` strictly to the 8 surface cards).
    - Phase 4: Implement `buildReferencesIndex()` and `whereUsedListBox` in `MainComponent`, along with child parameter nodes under `Callouts & Overlays`.
    - Phase 5: Update `test/ParameterSchemaAuditTest.h` (strict schema leak check) and `test/EditorTestSuite.h` (Where-Used verification).
    - Phase 6: Compile Release, run tests, run `deploy.ps1`, and retag `v0.3.1` locally (`git tag -f -a "v0.3.1" -m "Release v0.3.1"`).
