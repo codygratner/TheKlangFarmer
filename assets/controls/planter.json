@@ -1,7 +1,6 @@
 {
   "planter_filter_cutoff": {
     "name": "Filter: Cutoff",
-    "description": "Filter Cutoff",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -20,7 +19,6 @@
   },
   "planter_pitchenv_decay": {
     "name": "PitchEnv: Decay",
-    "description": "Pitch Envelope Decay",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -39,7 +37,6 @@
   },
   "planter_mod_speed": {
     "name": "Modulator: Speed",
-    "description": "Modulator Speed",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -58,7 +55,6 @@
   },
   "planter_noise_filter": {
     "name": "Noise: DJ Filter",
-    "description": "Noise DJ Filter",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -77,7 +73,6 @@
   },
   "planter_carrier_depth": {
     "name": "Carrier: Mod Depth",
-    "description": "Carrier Mod Depth",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -96,7 +91,6 @@
   },
   "planter_amp_vel_slope": {
     "name": "Amp: Vel Slope",
-    "description": "Amp Velocity Slope",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -115,7 +109,6 @@
   },
   "planter_filterenv_decay": {
     "name": "FilterEnv: Decay",
-    "description": "Filter Env Decay",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -139,21 +132,13 @@
       "Both",
       "Opp"
     ],
-    "description": "Pitch Envelope Target",
     "name": "PitchEnv: Target",
     "defaultChoice": 0,
     "type": "choice",
-    "choice_tooltips": [
-      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
-      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
-      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
-      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
-    ],
     "default": 0
   },
   "planter_amp_pan": {
     "name": "Amp: Pan",
-    "description": "Amp Pan",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -172,7 +157,6 @@
   },
   "planter_carrier_shape": {
     "name": "Carrier: Shape",
-    "description": "Carrier Shape",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -218,7 +202,6 @@
       "24",
       "36"
     ],
-    "description": "Filter Slope",
     "name": "Filter: Slope",
     "defaultChoice": 1,
     "type": "choice",
@@ -226,7 +209,6 @@
   },
   "planter_noise_sh_rate": {
     "name": "Noise: S&H Rate",
-    "description": "Noise S&H Rate",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -245,7 +227,6 @@
   },
   "planter_filter_reso": {
     "name": "Filter: Resonance",
-    "description": "Filter Resonance",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -264,7 +245,6 @@
   },
   "planter_ampenv_claps": {
     "name": "AmpEnv: Claps",
-    "description": "Amp Env Claps",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -283,7 +263,6 @@
   },
   "planter_filterenv_slope": {
     "name": "FilterEnv: Slope",
-    "description": "Filter Env Slope",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -306,7 +285,6 @@
       "Cyclic",
       "Noise"
     ],
-    "description": "Modulator Type",
     "name": "Modulator: Type",
     "defaultChoice": 0,
     "type": "choice",
@@ -314,7 +292,6 @@
   },
   "planter_carrier_pitch": {
     "name": "Carrier: Pitch",
-    "description": "Carrier Pitch",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -333,7 +310,6 @@
   },
   "planter_pitchenv_depth": {
     "name": "PitchEnv: Depth",
-    "description": "Pitch Envelope Depth",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -356,19 +332,13 @@
       "Follow",
       "FM"
     ],
-    "description": "Modulator Tracking",
     "name": "Modulator: Tracking",
     "defaultChoice": 2,
     "type": "choice",
-    "choice_tooltips": [
-      "FIXED: Modulator runs at a fixed independent frequency in Hz.",
-      "RATIO: Modulator frequency is a harmonic ratio scalar of the Carrier frequency (FM synthesis)."
-    ],
     "default": 2
   },
   "planter_mod_shape": {
     "name": "Modulator: Shape",
-    "description": "Modulator Shape",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -408,7 +378,6 @@
   },
   "planter_ampenv_slope": {
     "name": "AmpEnv: Slope",
-    "description": "Amp Env Slope",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -427,7 +396,6 @@
   },
   "planter_filterenv_depth": {
     "name": "FilterEnv: Depth",
-    "description": "Filter Env Depth",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -446,7 +414,6 @@
   },
   "planter_pitchenv_slope": {
     "name": "PitchEnv: Slope",
-    "description": "Pitch Envelope Slope",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -470,7 +437,6 @@
       "HPF",
       "BRF"
     ],
-    "description": "Filter Type",
     "name": "Filter: Type",
     "defaultChoice": 0,
     "type": "choice",
@@ -478,7 +444,6 @@
   },
   "planter_amp_drive": {
     "name": "Amp: Drive",
-    "description": "Amp Drive",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -497,7 +462,6 @@
   },
   "planter_ampenv_clapspeed": {
     "name": "AmpEnv: Clap Speed",
-    "description": "Amp Env Clap Speed",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -516,7 +480,6 @@
   },
   "planter_ampenv_decay": {
     "name": "AmpEnv: Decay",
-    "description": "Amp Env Decay",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -535,7 +498,6 @@
   },
   "planter_noise_crossfade": {
     "name": "Noise: FM / Noise",
-    "description": "Noise FM / Noise Crossfade",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -554,7 +516,6 @@
   },
   "planter_amp_vel_floor": {
     "name": "Amp: Velocity",
-    "description": "Amp Velocity Floor",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -573,7 +534,6 @@
   },
   "planter_filterenv_drive": {
     "name": "FilterEnv: Drive",
-    "description": "Filter Env Drive",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -596,20 +556,13 @@
       "Freq",
       "Note"
     ],
-    "description": "Carrier Tracking",
     "name": "Carrier: Tracking",
     "defaultChoice": 0,
     "type": "choice",
-    "choice_tooltips": [
-      "MIDI: Tracks incoming MIDI note pitch chromatically with transpose offset.",
-      "FREQ: Free-running continuous frequency in Hertz (20 Hz - 24 kHz).",
-      "NOTE: Quantizes base carrier frequency to discrete musical semitones."
-    ],
     "default": 0
   },
   "planter_noise_decay": {
     "name": "Noise: Decay",
-    "description": "Noise Decay",
     "step": 0.001,
     "min": 0,
     "type": "float",
@@ -626,17 +579,6 @@
     "snap_points": [],
     "format": "seconds"
   },
-  "ui_strings": {
-    "card_planter_carrier_tooltip": "CARRIER: Primary tonal FM oscillator with morphable shape.",
-    "card_planter_modulator_tooltip": "MODULATOR: Frequency modulation oscillator in Fixed Hz, Pitch Follow, or Ratio modes.",
-    "card_planter_pitchenv_tooltip": "PITCH ENV: Dedicated pitch modulation envelope with routing destinations.",
-    "card_planter_noise_tooltip": "TRANSIENTS: Tuned sample-and-hold noise generator with transient envelope.",
-    "card_planter_filter_tooltip": "FILTER: State-variable resonant filter with multiple types and slopes.",
-    "card_planter_filterenv_tooltip": "FILTER ENV: Cutoff sweep envelope and pre-filter overdrive.",
-    "card_planter_amp_tooltip": "AMPLIFIER: Master saturation drive, stereo panning, and velocity scaling.",
-    "card_planter_ampenv_tooltip": "AMP ENV: Master percussive amplitude decay envelope and clap burst generator.",
-    "card_planter_limiter_tooltip": "LIMITER: Brickwall peak limiter with auto soft-knee release and gain boosting."
-  },
   "planter_limiter_enable": {
     "type": "choice",
     "name": "Limiter: Enable",
@@ -645,8 +587,7 @@
       "On"
     ],
     "default": 1,
-    "defaultChoice": 1,
-    "description": "Enable or bypass the master output limiter"
+    "defaultChoice": 1
   },
   "planter_limiter_gain": {
     "type": "float",
@@ -655,7 +596,6 @@
     "max": 1.0,
     "default": 0.3333333333333333,
     "defaultFloat": 0.3333333333333333,
-    "description": "Input boost gain into the limiter",
     "range": {
       "min": 0.0,
       "max": 1.0,
@@ -673,7 +613,6 @@
     "max": 1.0,
     "default": 1.0,
     "defaultFloat": 1.0,
-    "description": "Ceiling threshold for peak reduction",
     "range": {
       "min": 0.0,
       "max": 1.0,
@@ -691,7 +630,6 @@
     "max": 1.0,
     "default": 0.6296,
     "defaultFloat": 0.6296,
-    "description": "Release recovery time for the limiter",
     "range": {
       "min": 0.0,
       "max": 1.0,

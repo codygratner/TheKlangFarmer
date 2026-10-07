@@ -74,6 +74,13 @@ public:
 
         if (assetsFolder.isDirectory()) {
             auto controlsDir = assetsFolder.getChildFile("controls");
+            reporter.expect(controlsDir.getChildFile("modulator.json").existsAsFile(), "modulator.json (singular) exists");
+            reporter.expect(controlsDir.getChildFile("filter.json").existsAsFile(), "filter.json (singular) exists");
+            reporter.expect(controlsDir.getChildFile("envelope.json").existsAsFile(), "envelope.json (singular) exists");
+            reporter.expect(!controlsDir.getChildFile("modulators.json").existsAsFile(), "modulators.json (plural) does not exist");
+            reporter.expect(!controlsDir.getChildFile("filters.json").existsAsFile(), "filters.json (plural) does not exist");
+            reporter.expect(!controlsDir.getChildFile("envelopes.json").existsAsFile(), "envelopes.json (plural) does not exist");
+
             juce::DirectoryIterator iter(controlsDir, false, "*.json");
             int controlFilesAudited = 0;
             bool leakFound = false;
@@ -85,6 +92,14 @@ public:
                 reporter.expect(parsed.isObject(), "Control file " + f.getFileName() + " parses as valid JSON object");
                 if (parsed.isObject()) {
                     auto* obj = parsed.getDynamicObject();
+                    if (obj->hasProperty("ui_strings")) {
+                        reporter.expect(false, "Schema leak in " + f.getFileName() + ": contains 'ui_strings'");
+                        leakFound = true;
+                    }
+                    if (obj->hasProperty("global_strings")) {
+                        reporter.expect(false, "Schema leak in " + f.getFileName() + ": contains 'global_strings'");
+                        leakFound = true;
+                    }
                     if (obj->hasProperty("ui_colors")) {
                         reporter.expect(false, "Schema leak in " + f.getFileName() + ": contains 'ui_colors'");
                         leakFound = true;
@@ -101,10 +116,45 @@ public:
                         reporter.expect(false, "Schema leak in " + f.getFileName() + ": contains 'height'");
                         leakFound = true;
                     }
+                    for (auto& prop : obj->getProperties()) {
+                        auto* pObj = prop.value.getDynamicObject();
+                        if (pObj != nullptr) {
+                            if (pObj->hasProperty("description")) {
+                                reporter.expect(false, "Schema leak in " + f.getFileName() + " (" + prop.name.toString() + "): contains 'description'");
+                                leakFound = true;
+                            }
+                            if (pObj->hasProperty("choice_tooltips")) {
+                                reporter.expect(false, "Schema leak in " + f.getFileName() + " (" + prop.name.toString() + "): contains 'choice_tooltips'");
+                                leakFound = true;
+                            }
+                        }
+                    }
                 }
             }
             reporter.expect(controlFilesAudited > 0, "Audited " + juce::String(controlFilesAudited) + " control JSON files");
-            reporter.expect(!leakFound, "assets/controls/*.json contains zero visual styling or callout leaks");
+            reporter.expect(!leakFound, "assets/controls/*.json contains zero visual styling, description, or choice_tooltip leaks");
+
+            // Audit assets/text/strings.json
+            auto stringsFile = assetsFolder.getChildFile("text").getChildFile("strings.json");
+            reporter.expect(stringsFile.existsAsFile(), "assets/text/strings.json exists");
+            if (stringsFile.existsAsFile()) {
+                auto parsedStrings = juce::JSON::parse(stringsFile.loadFileAsString());
+                reporter.expect(parsedStrings.isObject(), "strings.json parses as valid JSON object");
+                if (parsedStrings.isObject()) {
+                    auto* sObj = parsedStrings.getDynamicObject();
+                    reporter.expect(sObj->hasProperty("shared"), "strings.json has 'shared' namespace");
+                    reporter.expect(sObj->hasProperty("farmer"), "strings.json has 'farmer' namespace");
+                    reporter.expect(sObj->hasProperty("planter"), "strings.json has 'planter' namespace");
+                }
+            }
+
+            // Verify ParameterManager merged strings into ControlDef
+            const auto* c1Shape = pm.getControlDef("carrier1_shape");
+            reporter.expect(c1Shape != nullptr && c1Shape->description.isNotEmpty(), "ParameterManager merged description for carrier1_shape from strings.json");
+            const auto* c1Track = pm.getControlDef("carrier1_tracking");
+            reporter.expect(c1Track != nullptr && c1Track->choiceTooltips.size() > 0, "ParameterManager merged choiceTooltips for carrier1_tracking from strings.json");
+            const auto* limGain = pm.getControlDef("planter_limiter_gain");
+            reporter.expect(limGain != nullptr && limGain->description.isNotEmpty(), "ParameterManager merged description for planter_limiter_gain from strings.json");
 
             // Audit assets/themes/theme.json
             auto themeFile = assetsFolder.getChildFile("themes").getChildFile("theme.json");
@@ -114,7 +164,7 @@ public:
                 reporter.expect(parsedTheme.isObject(), "theme.json parses as valid JSON object");
                 if (parsedTheme.isObject()) {
                     auto* obj = parsedTheme.getDynamicObject();
-                    reporter.expect(obj->hasProperty("global_strings"), "theme.json has 'global_strings'");
+                    reporter.expect(!obj->hasProperty("global_strings"), "theme.json contains zero 'global_strings' (cleanly extracted)");
                     reporter.expect(obj->hasProperty("module_colors"), "theme.json has 'module_colors'");
                     reporter.expect(obj->hasProperty("global_colors"), "theme.json has 'global_colors'");
                 }

@@ -70,17 +70,14 @@ private:
     juce::String getControlFileForParam(const juce::String& paramId);
     void syncJsonToPreview(const juce::String& forcedJson = "");
 
-    class NavTabbedComponent : public juce::TabbedComponent {
-    public:
-        NavTabbedComponent(MainComponent* owner) : juce::TabbedComponent(juce::TabbedButtonBar::Orientation::TabsAtTop), mc(owner) {}
-        void currentTabChanged(int newCurrentTabIndex, const juce::String& newCurrentTabName) override;
-        MainComponent* mc;
-    };
-
-    NavTabbedComponent navigationTabs { this };
-    juce::TreeView layoutsTree;
-    juce::TreeView controlsTree;
-    void onTabChanged();
+    juce::TextButton filterControlsButton { "Controls" };
+    juce::TextButton filterLayoutButton { "Layout" };
+    juce::TextButton filterThemeButton { "Theme" };
+    bool showControls = true;
+    bool showLayout = true;
+    bool showTheme = true;
+    juce::TreeView masterTree;
+    void updateFilters(bool controls, bool layout, bool theme);
     WhereUsedListModel whereUsedModel { this };
     juce::Label whereUsedLabel { {}, "WHERE USED & ASSOCIATIONS" };
     juce::ListBox whereUsedListBox { "WhereUsedList", &whereUsedModel };
@@ -130,6 +127,12 @@ private:
     juce::String originalLayoutJson;
     juce::String originalControlsJson;
     std::unordered_map<juce::String, juce::String> paramToFileMap;
+    void loadStringsJson();
+    void updateParamText(const juce::String& paramId, const juce::String& key, const juce::var& value);
+    juce::var stringsJsonVar;
+    juce::String originalStringsJson;
+    bool hasStringsEdits = false;
+    EditorTreeItem* currentSelectedItem = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

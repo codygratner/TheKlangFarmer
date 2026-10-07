@@ -521,8 +521,8 @@ private:
 
 void EditorTreeItem::paintItem(juce::Graphics& g, int width, int height) {
     if (isSelected()) g.fillAll(juce::Colours::lightblue.withAlpha(0.2f));
-    g.setColour(juce::Colours::white);
-    g.setFont(itemType == "product" ? 16.0f : (itemType == "page" ? 14.0f : 13.0f));
+    g.setColour(itemType == "section" ? juce::Colour(0xff90caf9) : juce::Colours::white);
+    g.setFont(itemType == "product" ? 15.0f : (itemType == "section" ? 14.0f : (itemType == "page" ? 14.0f : 13.0f)));
     juce::String text = name;
     if (itemType == "product") text = text.toUpperCase();
     g.drawText(text, 4, 0, width - 4, height, juce::Justification::centredLeft, true);
@@ -574,12 +574,52 @@ MainComponent::MainComponent()
       splitterBar2(&verticalLayout, 3, true),
       treeSplitter(&horizontalLayout, 1, false)
 {
-    addAndMakeVisible(navigationTabs);
-    navigationTabs.addTab("CONTROLS", juce::Colours::transparentBlack, &controlsTree, false);
-    navigationTabs.addTab("LAYOUTS", juce::Colours::transparentBlack, &layoutsTree, false);
-    layoutsTree.setMultiSelectEnabled(false);
-    controlsTree.setMultiSelectEnabled(false);
-    navigationTabs.getTabbedButtonBar().setMinimumTabScaleFactor(0.5);
+    addAndMakeVisible(filterControlsButton);
+    addAndMakeVisible(filterLayoutButton);
+    addAndMakeVisible(filterThemeButton);
+
+    filterControlsButton.setClickingTogglesState(true);
+    filterLayoutButton.setClickingTogglesState(true);
+    filterThemeButton.setClickingTogglesState(true);
+
+    filterControlsButton.setToggleState(true, juce::dontSendNotification);
+    filterLayoutButton.setToggleState(true, juce::dontSendNotification);
+    filterThemeButton.setToggleState(true, juce::dontSendNotification);
+
+    filterControlsButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff2d5a88));
+    filterLayoutButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff2d5a88));
+    filterThemeButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff2d5a88));
+
+    filterControlsButton.onClick = [this]() {
+        bool next = filterControlsButton.getToggleState();
+        if (!next && !showLayout && !showTheme) {
+            filterControlsButton.setToggleState(true, juce::dontSendNotification);
+            return;
+        }
+        updateFilters(next, showLayout, showTheme);
+    };
+
+    filterLayoutButton.onClick = [this]() {
+        bool next = filterLayoutButton.getToggleState();
+        if (!showControls && !next && !showTheme) {
+            filterLayoutButton.setToggleState(true, juce::dontSendNotification);
+            return;
+        }
+        updateFilters(showControls, next, showTheme);
+    };
+
+    filterThemeButton.onClick = [this]() {
+        bool next = filterThemeButton.getToggleState();
+        if (!showControls && !showLayout && !next) {
+            filterThemeButton.setToggleState(true, juce::dontSendNotification);
+            return;
+        }
+        updateFilters(showControls, showLayout, next);
+    };
+
+    addAndMakeVisible(masterTree);
+    masterTree.setMultiSelectEnabled(false);
+    loadStringsJson();
 
     whereUsedLabel.setFont(juce::Font(juce::FontOptions(11.0f, juce::Font::bold)));
     whereUsedLabel.setColour(juce::Label::textColourId, juce::Colour(0xff90a4ae));
@@ -596,7 +636,7 @@ MainComponent::MainComponent()
     addAndMakeVisible(expandAllButton);
     addAndMakeVisible(collapseAllButton);
     expandAllButton.onClick = [this]() {
-        auto* tree = navigationTabs.getCurrentTabIndex() == 0 ? &controlsTree : &layoutsTree;
+        auto* tree = &masterTree;
         std::function<void(juce::TreeViewItem*, bool)> setOpenRec = [&](juce::TreeViewItem* item, bool open) {
             if (!item) return;
             item->setOpen(open);
@@ -605,7 +645,7 @@ MainComponent::MainComponent()
         setOpenRec(tree->getRootItem(), true);
     };
     collapseAllButton.onClick = [this]() {
-        auto* tree = navigationTabs.getCurrentTabIndex() == 0 ? &controlsTree : &layoutsTree;
+        auto* tree = &masterTree;
         std::function<void(juce::TreeViewItem*, bool)> setOpenRec = [&](juce::TreeViewItem* item, bool open) {
             if (!item) return;
             item->setOpen(open);
@@ -711,30 +751,31 @@ MainComponent::MainComponent()
 
     refreshButton.onClick = [this]() { 
         RlyehSound::ParameterManager::getInstance().reloadFromJson(controlsJsonDocument.getAllContent());
-        auto xmlL = layoutsTree.getOpennessState(false);
-        auto xmlC = controlsTree.getOpennessState(false);
-        auto* tree = navigationTabs.getCurrentTabIndex() == 0 ? &controlsTree : &layoutsTree;
-        auto* selected = tree->getSelectedItem(0);
+        loadStringsJson();
+        auto xmlState = masterTree.getOpennessState(false);
+        auto* selected = masterTree.getSelectedItem(0);
         juce::String selName = selected ? static_cast<EditorTreeItem*>(selected)->name : "";
-        juce::String selPage = selected ? static_cast<EditorTreeItem*>(selected)->pageId : "";
+        juce::String selType = selected ? static_cast<EditorTreeItem*>(selected)->itemType : "";
         juce::String selProd = selected ? static_cast<EditorTreeItem*>(selected)->productId : "";
+        juce::String selPage = selected ? static_cast<EditorTreeItem*>(selected)->pageId : "";
+        juce::String selCard = selected ? static_cast<EditorTreeItem*>(selected)->cardId : "";
+        juce::String selParam = selected ? static_cast<EditorTreeItem*>(selected)->paramId : "";
         
         buildTree();
         buildReferencesIndex();
         
-        if (xmlL) layoutsTree.restoreOpennessState(*xmlL, false);
-        if (xmlC) controlsTree.restoreOpennessState(*xmlC, false);
+        if (xmlState) masterTree.restoreOpennessState(*xmlState, false);
         
-        
-                if (selName.isNotEmpty()) {
+        if (selName.isNotEmpty()) {
             std::function<void(EditorTreeItem*)> findAndSelect = [&](EditorTreeItem* n) {
-                if (n->name == selName && n->pageId == selPage && n->productId == selProd) {
+                if (!n) return;
+                if (n->name == selName && n->itemType == selType && n->productId == selProd && n->cardId == selCard && n->paramId == selParam) {
                     n->setSelected(true, true);
                     return;
                 }
                 for (int i=0; i < n->getNumSubItems(); ++i) findAndSelect(static_cast<EditorTreeItem*>(n->getSubItem(i)));
             };
-            findAndSelect(static_cast<EditorTreeItem*>(tree->getRootItem()));
+            findAndSelect(static_cast<EditorTreeItem*>(masterTree.getRootItem()));
         }
     };
     
@@ -765,6 +806,11 @@ MainComponent::MainComponent()
             for (auto& prop : newControls->getProperties()) {
                 if (!oldControls->hasProperty(prop.name) || oldControls->getProperty(prop.name) != prop.value) changes += "- Control: " + prop.name.toString() + "\n";
             }
+        }
+
+        // Text Diff
+        if (hasStringsEdits || juce::JSON::toString(stringsJsonVar) != originalStringsJson) {
+            changes += "- Text: strings.json\n";
         }
         
         if (changes.isEmpty()) changes = "No changes detected.";
@@ -818,6 +864,16 @@ MainComponent::MainComponent()
                                 }
                             }
                         }
+                    }
+                }
+
+                // Save Text / Strings
+                if (hasStringsEdits || juce::JSON::toString(stringsJsonVar) != originalStringsJson) {
+                    auto sFile = getAssetFile("text", "strings.json");
+                    if (sFile.existsAsFile()) {
+                        sFile.replaceWithText(juce::JSON::toString(stringsJsonVar));
+                        originalStringsJson = juce::JSON::toString(stringsJsonVar);
+                        hasStringsEdits = false;
                     }
                 }
                 
@@ -908,6 +964,7 @@ MainComponent::MainComponent()
 }
 
 MainComponent::~MainComponent() {
+    stopTimer();
     layoutJsonDocument.removeListener(this);
     controlsJsonDocument.removeListener(this);
 }
@@ -925,133 +982,155 @@ juce::File MainComponent::getAssetFile(const juce::String& subfolder, const juce
 }
 
 void MainComponent::buildTree() {
-    auto* lRoot = new EditorTreeItem(this, "Root", "root");
-    auto* cRoot = new EditorTreeItem(this, "Root", "root");
+    auto* root = new EditorTreeItem(this, "Root", "root");
 
     const char* products[] = { "The Klang Farmer", "The Klang Mill", "The Klang Planter", "The Klang Seed" };
     const char* productIds[] = { "tkf", "tkm", "tkp", "tks" };
-    
+
     for (int p = 0; p < 4; ++p) {
-        auto* lProdNode = new EditorTreeItem(this, products[p], "product", productIds[p]);
-        auto* cProdNode = new EditorTreeItem(this, products[p], "product", productIds[p]);
-        
-        juce::String layoutFile = juce::String(productIds[p]) + "_layout.json";
-        auto file = getAssetFile("layouts", layoutFile);
-        if (file.existsAsFile()) {
-            auto layout = juce::JSON::parse(file.loadFileAsString());
-            if (layout.isObject()) {
-                auto* lObj = layout.getDynamicObject();
-                for (auto& prop : lObj->getProperties()) {
-                    if (prop.value.isObject()) {
-                        auto* pObj = prop.value.getDynamicObject();
-                        if (pObj->hasProperty("parameters")) {
-                            juce::String cardName = prop.name.toString();
-                            lProdNode->addSubItem(new EditorTreeItem(this, cardName, "card_theme", productIds[p], "", cardName));
-                            
-                            auto* cCardNode = new EditorTreeItem(this, cardName, "card", productIds[p], "", cardName);
-                            auto params = pObj->getProperty("parameters");
-                            if (params.isArray()) {
-                                int i = 1;
-                                for (auto& param : *params.getArray()) {
-                                    cCardNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", productIds[p], "", cardName, param.toString()));
-                                }
-                            }
-                            cProdNode->addSubItem(cCardNode);
-                        } else {
-                            juce::String pageName = prop.name.toString();
-                            auto* lPageNode = new EditorTreeItem(this, pageName, "page", productIds[p], pageName);
-                            auto* cPageNode = new EditorTreeItem(this, pageName, "page", productIds[p], pageName);
-                            
-                            for (auto& cardProp : pObj->getProperties()) {
-                                juce::String cardName = cardProp.name.toString();
-                                lPageNode->addSubItem(new EditorTreeItem(this, cardName, "card_theme", productIds[p], pageName, cardName));
-                                
-                                auto* cCardNode = new EditorTreeItem(this, cardName, "card", productIds[p], pageName, cardName);
-                                if (cardProp.value.isObject()) {
-                                    auto params = cardProp.value.getDynamicObject()->getProperty("parameters");
+        auto* prodNode = new EditorTreeItem(this, products[p], "product", productIds[p]);
+
+        // 1. Controls Section
+        if (showControls) {
+            auto* controlsSection = new EditorTreeItem(this, "Controls", "section", productIds[p]);
+
+            juce::DirectoryIterator iterC(getAssetFile("controls", ""), false, "*.json");
+            while (iterC.next()) {
+                auto f = iterC.getFile();
+                if (f.getFileName() == "theme.json") continue;
+                juce::String fileName = f.getFileName();
+                juce::String pageId = f.getFileNameWithoutExtension();
+
+                bool belongsToProduct = false;
+                if (juce::String(productIds[p]) == "tkp") {
+                    belongsToProduct = (pageId == "planter");
+                } else if (juce::String(productIds[p]) == "tkf") {
+                    belongsToProduct = (pageId != "planter");
+                }
+
+                if (!belongsToProduct) continue;
+
+                auto* fileNode = new EditorTreeItem(this, fileName, "control_file", productIds[p], pageId);
+                auto parsedC = juce::JSON::parse(f.loadFileAsString());
+                if (parsedC.isObject()) {
+                    for (auto& prop : parsedC.getDynamicObject()->getProperties()) {
+                        if (prop.name.toString() == "ui_strings" || prop.name.toString() == "global_strings") continue;
+                        auto* dynObj = prop.value.getDynamicObject();
+                        if (dynObj != nullptr && dynObj->hasProperty("type")) {
+                            fileNode->addSubItem(new EditorTreeItem(this, prop.name.toString(), "card_param", productIds[p], pageId, pageId, prop.name.toString()));
+                        }
+                    }
+                }
+                controlsSection->addSubItem(fileNode);
+            }
+
+            // Mount Product-Specific Callouts (e.g. Master Limiter for TKP)
+            auto calloutsFile = getAssetFile("themes", "callouts.json");
+            if (calloutsFile.existsAsFile()) {
+                auto parsedCallouts = juce::JSON::parse(calloutsFile.loadFileAsString());
+                if (parsedCallouts.isObject() && parsedCallouts.getDynamicObject()->hasProperty("callout_styles")) {
+                    auto* cStyles = parsedCallouts.getDynamicObject()->getProperty("callout_styles").getDynamicObject();
+                    if (cStyles) {
+                        for (auto& cProp : cStyles->getProperties()) {
+                            if (cProp.value.isObject()) {
+                                auto* cDef = cProp.value.getDynamicObject();
+                                if (cDef->getProperty("product").toString() == productIds[p]) {
+                                    juce::String calloutKey = cProp.name.toString();
+                                    juce::String title = (calloutKey == "planter_limiter") ? "Master Limiter" : cDef->getProperty("title").toString();
+                                    juce::String displayTitle = "[Callout] " + title;
+
+                                    auto* cCalloutNode = new EditorTreeItem(this, displayTitle, "callout_preview", productIds[p], "", calloutKey);
+                                    auto params = cDef->getProperty("parameters");
                                     if (params.isArray()) {
                                         int i = 1;
                                         for (auto& param : *params.getArray()) {
-                                            cCardNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", productIds[p], pageName, cardName, param.toString()));
+                                            cCalloutNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", productIds[p], "", calloutKey, param.toString()));
                                         }
                                     }
+                                    controlsSection->addSubItem(cCalloutNode);
                                 }
-                                cPageNode->addSubItem(cCardNode);
-                            }
-                            lProdNode->addSubItem(lPageNode);
-                            cProdNode->addSubItem(cPageNode);
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Mount Product-Specific Callouts (e.g. Master Limiter for TKP)
-        auto calloutsFile = getAssetFile("themes", "callouts.json");
-        if (calloutsFile.existsAsFile()) {
-            auto parsedCallouts = juce::JSON::parse(calloutsFile.loadFileAsString());
-            if (parsedCallouts.isObject() && parsedCallouts.getDynamicObject()->hasProperty("callout_styles")) {
-                auto* cStyles = parsedCallouts.getDynamicObject()->getProperty("callout_styles").getDynamicObject();
-                if (cStyles) {
-                    for (auto& cProp : cStyles->getProperties()) {
-                        if (cProp.value.isObject()) {
-                            auto* cDef = cProp.value.getDynamicObject();
-                            if (cDef->getProperty("product").toString() == productIds[p]) {
-                                juce::String calloutKey = cProp.name.toString();
-                                juce::String title = (calloutKey == "planter_limiter") ? "Master Limiter" : cDef->getProperty("title").toString();
-                                juce::String displayTitle = "[Callout] " + title;
-
-                                lProdNode->addSubItem(new EditorTreeItem(this, displayTitle, "callout_preview", productIds[p], "", calloutKey));
-
-                                auto* cCalloutNode = new EditorTreeItem(this, displayTitle, "callout_preview", productIds[p], "", calloutKey);
-                                auto params = cDef->getProperty("parameters");
-                                if (params.isArray()) {
-                                    int i = 1;
-                                    for (auto& param : *params.getArray()) {
-                                        cCalloutNode->addSubItem(new EditorTreeItem(this, juce::String(i++) + ": " + param.toString(), "card_param", productIds[p], "", calloutKey, param.toString()));
-                                    }
-                                }
-                                cProdNode->addSubItem(cCalloutNode);
                             }
                         }
                     }
                 }
             }
+
+            if (controlsSection->getNumSubItems() > 0)
+                prodNode->addSubItem(controlsSection);
+            else
+                delete controlsSection;
         }
 
-        lRoot->addSubItem(lProdNode);
-        cRoot->addSubItem(cProdNode);
-    }
-    
-    auto* layoutsRootNode = new EditorTreeItem(this, "Raw Layout JSONs", "product", "all_layouts");
-    juce::DirectoryIterator iterL(getAssetFile("layouts", ""), false, "*.json");
-    while (iterL.next()) {
-        auto f = iterL.getFile();
-        layoutsRootNode->addSubItem(new EditorTreeItem(this, f.getFileName(), "layout_file", "all_layouts", f.getFileNameWithoutExtension()));
-    }
-    lRoot->addSubItem(layoutsRootNode);
-    
-    auto* controlsRootNode = new EditorTreeItem(this, "Raw Control JSONs", "product", "all_controls");
-    juce::DirectoryIterator iterC(getAssetFile("controls", ""), false, "*.json");
-    while (iterC.next()) {
-        auto f = iterC.getFile();
-        if (f.getFileName() == "theme.json") continue; 
-        
-        juce::String fileName = f.getFileName();
-        juce::String pageId = f.getFileNameWithoutExtension();
-        auto* fileNode = new EditorTreeItem(this, fileName, "control_file", "all_controls", pageId);
-        
-        auto parsedC = juce::JSON::parse(f.loadFileAsString());
-        if (parsedC.isObject()) {
-            for (auto& prop : parsedC.getDynamicObject()->getProperties()) {
-                if (prop.value.isObject()) {
-                    fileNode->addSubItem(new EditorTreeItem(this, prop.name.toString(), "card_param", "all_controls", pageId, pageId, prop.name.toString()));
+        // 2. Layout Section
+        if (showLayout) {
+            auto* layoutSection = new EditorTreeItem(this, "Layout", "section", productIds[p]);
+
+            juce::String layoutFile = juce::String(productIds[p]) + "_layout.json";
+            auto file = getAssetFile("layouts", layoutFile);
+            if (file.existsAsFile()) {
+                auto layout = juce::JSON::parse(file.loadFileAsString());
+                if (layout.isObject()) {
+                    auto* lObj = layout.getDynamicObject();
+                    for (auto& prop : lObj->getProperties()) {
+                        if (prop.value.isObject()) {
+                            auto* pObj = prop.value.getDynamicObject();
+                            if (pObj->hasProperty("parameters")) {
+                                juce::String cardName = prop.name.toString();
+                                layoutSection->addSubItem(new EditorTreeItem(this, cardName, "card_theme", productIds[p], "", cardName));
+                            } else {
+                                juce::String pageName = prop.name.toString();
+                                auto* lPageNode = new EditorTreeItem(this, pageName, "page", productIds[p], pageName);
+                                for (auto& cardProp : pObj->getProperties()) {
+                                    juce::String cardName = cardProp.name.toString();
+                                    lPageNode->addSubItem(new EditorTreeItem(this, cardName, "card_theme", productIds[p], pageName, cardName));
+                                }
+                                layoutSection->addSubItem(lPageNode);
+                            }
+                        }
+                    }
                 }
             }
+
+            auto calloutsFile = getAssetFile("themes", "callouts.json");
+            if (calloutsFile.existsAsFile()) {
+                auto parsedCallouts = juce::JSON::parse(calloutsFile.loadFileAsString());
+                if (parsedCallouts.isObject() && parsedCallouts.getDynamicObject()->hasProperty("callout_styles")) {
+                    auto* cStyles = parsedCallouts.getDynamicObject()->getProperty("callout_styles").getDynamicObject();
+                    if (cStyles) {
+                        for (auto& cProp : cStyles->getProperties()) {
+                            if (cProp.value.isObject()) {
+                                auto* cDef = cProp.value.getDynamicObject();
+                                if (cDef->getProperty("product").toString() == productIds[p]) {
+                                    juce::String calloutKey = cProp.name.toString();
+                                    juce::String title = (calloutKey == "planter_limiter") ? "Master Limiter" : cDef->getProperty("title").toString();
+                                    juce::String displayTitle = "[Callout] " + title;
+                                    layoutSection->addSubItem(new EditorTreeItem(this, displayTitle, "callout_preview", productIds[p], "", calloutKey));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (layoutSection->getNumSubItems() > 0)
+                prodNode->addSubItem(layoutSection);
+            else
+                delete layoutSection;
         }
-        controlsRootNode->addSubItem(fileNode);
+
+        // 3. Theme Section
+        if (showTheme) {
+            auto* themeSection = new EditorTreeItem(this, "Theme", "section", productIds[p]);
+            themeSection->addSubItem(new EditorTreeItem(this, "Module Accents", "product", "theme"));
+            themeSection->addSubItem(new EditorTreeItem(this, "Global Colors", "product", "theme"));
+            prodNode->addSubItem(themeSection);
+        }
+
+        if (prodNode->getNumSubItems() > 0)
+            root->addSubItem(prodNode);
+        else
+            delete prodNode;
     }
-    cRoot->addSubItem(controlsRootNode);
 
     auto makeCalloutsNode = [this]() {
         auto* calloutsNode = new EditorTreeItem(this, "Callouts & Overlays", "product", "callouts");
@@ -1096,13 +1175,44 @@ void MainComponent::buildTree() {
         calloutsNode->addSubItem(modNode);
         return calloutsNode;
     };
-    lRoot->addSubItem(makeCalloutsNode());
-    cRoot->addSubItem(makeCalloutsNode());
-    
-    layoutsTree.setRootItem(lRoot);
-    layoutsTree.setRootItemVisible(false);
-    controlsTree.setRootItem(cRoot);
-    controlsTree.setRootItemVisible(false);
+    root->addSubItem(makeCalloutsNode());
+
+    if (showLayout) {
+        auto* layoutsRootNode = new EditorTreeItem(this, "Raw Layout JSONs", "product", "all_layouts");
+        juce::DirectoryIterator iterL(getAssetFile("layouts", ""), false, "*.json");
+        while (iterL.next()) {
+            auto f = iterL.getFile();
+            layoutsRootNode->addSubItem(new EditorTreeItem(this, f.getFileName(), "layout_file", "all_layouts", f.getFileNameWithoutExtension()));
+        }
+        root->addSubItem(layoutsRootNode);
+    }
+
+    if (showControls) {
+        auto* controlsRootNode = new EditorTreeItem(this, "Raw Control JSONs", "product", "all_controls");
+        juce::DirectoryIterator iterC(getAssetFile("controls", ""), false, "*.json");
+        while (iterC.next()) {
+            auto f = iterC.getFile();
+            if (f.getFileName() == "theme.json") continue;
+            juce::String fileName = f.getFileName();
+            juce::String pageId = f.getFileNameWithoutExtension();
+            auto* fileNode = new EditorTreeItem(this, fileName, "control_file", "all_controls", pageId);
+            auto parsedC = juce::JSON::parse(f.loadFileAsString());
+            if (parsedC.isObject()) {
+                for (auto& prop : parsedC.getDynamicObject()->getProperties()) {
+                    if (prop.name.toString() == "ui_strings" || prop.name.toString() == "global_strings") continue;
+                    auto* dynObj = prop.value.getDynamicObject();
+                    if (dynObj != nullptr && dynObj->hasProperty("type")) {
+                        fileNode->addSubItem(new EditorTreeItem(this, prop.name.toString(), "card_param", "all_controls", pageId, pageId, prop.name.toString()));
+                    }
+                }
+            }
+            controlsRootNode->addSubItem(fileNode);
+        }
+        root->addSubItem(controlsRootNode);
+    }
+
+    masterTree.setRootItem(root);
+    masterTree.setRootItemVisible(false);
 }
 
 juce::String MainComponent::getControlFileForParam(const juce::String& paramId) {
@@ -1119,6 +1229,7 @@ juce::String MainComponent::getControlFileForParam(const juce::String& paramId) 
 }
 
 void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
+    currentSelectedItem = item;
     if (!item) {
         updateWhereUsed(nullptr);
         return;
@@ -1267,8 +1378,11 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
             paramToFileMap.clear();
             if (parsedC.isObject()) {
                 for (auto& prop : parsedC.getDynamicObject()->getProperties()) {
-                    paramArray.add(prop.name.toString());
-                    paramToFileMap[prop.name.toString()] = currentParamJsonFile;
+                    auto* dynObj = prop.value.getDynamicObject();
+                    if (dynObj != nullptr && dynObj->hasProperty("type")) {
+                        paramArray.add(prop.name.toString());
+                        paramToFileMap[prop.name.toString()] = currentParamJsonFile;
+                    }
                 }
             }
             fakeCard->setProperty("parameters", juce::var(paramArray));
@@ -1281,18 +1395,18 @@ void MainComponent::onTreeItemSelected(EditorTreeItem* item) {
         layoutJsonDocument.replaceAllContent(originalLayoutJson);
         controlsJsonDocument.replaceAllContent(originalControlsJson);
         
-        if (currentProductId == "callouts") {
+        if (currentProductId == "callouts" || currentProductId == "theme") {
             jsonSplitterLayout.setItemLayout(0, -1.0, -1.0, -1.0);
             jsonSplitterLayout.setItemLayout(1, 0, 0, 0);
             jsonSplitterLayout.setItemLayout(2, 0, 0, 0);
-        } else if (navigationTabs.getCurrentTabIndex() == 1) { // LAYOUTS
+        } else if (item->itemType == "card_param" || item->itemType == "control_file" || currentProductId == "all_controls") {
+            jsonSplitterLayout.setItemLayout(0, 0, 0, 0);
+            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);
+            jsonSplitterLayout.setItemLayout(2, -1.0, -1.0, -1.0);
+        } else {
             jsonSplitterLayout.setItemLayout(0, -1.0, -1.0, -1.0);
-            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);          
-            jsonSplitterLayout.setItemLayout(2, 0, 0, 0);          
-        } else { // CONTROLS
-            jsonSplitterLayout.setItemLayout(0, 0, 0, 0);          
-            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);          
-            jsonSplitterLayout.setItemLayout(2, -1.0, -1.0, -1.0); 
+            jsonSplitterLayout.setItemLayout(1, 0, 0, 0);
+            jsonSplitterLayout.setItemLayout(2, 0, 0, 0);
         }
         resized();
         formEditor.clear();
@@ -1740,11 +1854,11 @@ if (isTheme && parsed.isObject()) {
     }
     previewWrapper.repaint();
 
-    auto* tree = navigationTabs.getCurrentTabIndex() == 0 ? &controlsTree : &layoutsTree;
-    auto* selected = tree->getSelectedItem(0);
-    juce::String selType = selected ? static_cast<EditorTreeItem*>(selected)->itemType : "";
-    bool showLayout = (navigationTabs.getCurrentTabIndex() == 1); // Only in LAYOUTS tab
-    bool showParams = (navigationTabs.getCurrentTabIndex() == 0); // Only in CONTROLS tab
+    auto* tree = &masterTree;
+    auto* selected = currentSelectedItem ? currentSelectedItem : static_cast<EditorTreeItem*>(tree->getSelectedItem(0));
+    juce::String selType = selected ? selected->itemType : "";
+    bool showLayout = (selType == "card_theme" || selType == "layout_file" || selType == "page");
+    bool showParams = isCallout || (selType == "card_param" || selType == "control_file" || selType == "callout_preview" || selType == "card" || currentParamTarget.isNotEmpty());
 
     juce::Array<juce::PropertyComponent*> props;
     if (!isCallout && showLayout && parsed.isObject()) {
@@ -1879,7 +1993,10 @@ if (isTheme && parsed.isObject()) {
             auto parsedC = juce::JSON::parse(controlsJsonDocument.getAllContent());
             if (parsedC.isObject()) {
                 for (auto& prop : parsedC.getDynamicObject()->getProperties()) {
-                    paramIds.add(prop.name.toString());
+                    auto* dynObj = prop.value.getDynamicObject();
+                    if (dynObj != nullptr && dynObj->hasProperty("type")) {
+                        paramIds.add(prop.name.toString());
+                    }
                 }
             }
         } else {
@@ -2040,15 +2157,34 @@ if (isTheme && parsed.isObject()) {
                                 }
                             }
                         ));
-                    }                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Tooltip", "string", juce::StringArray(),
-                            []() { return 0.0; },
-                            [def]() { return def->description; },
+                    }
+
+                    pProps.add(new ParamRowPropertyComponent(linkedComp, "Description", "string", juce::StringArray(),
+                        []() { return 0.0; },
+                        [def]() { return def->description; },
+                        nullptr,
+                        [this, def, paramId](juce::String s) {
+                            def->description = s;
+                            updateParamText(paramId, "description", s);
+                        }
+                    ));
+
+                    if (def->type == "choice") {
+                        pProps.add(new ParamRowPropertyComponent(linkedComp, "Choice Tooltips", "string", juce::StringArray(),
+                            [def]() { return (double)def->choiceTooltips.size(); },
+                            [def]() { return def->choiceTooltips.joinIntoString(" | "); },
                             nullptr,
-                            [def, updateControlsJson](juce::String s) {
-                                def->description = s;
-                                updateControlsJson("description", s);
+                            [this, def, paramId](juce::String s) {
+                                juce::StringArray arr;
+                                arr.addTokens(s, "|", "\"");
+                                for (auto& t : arr) t = t.trim();
+                                def->choiceTooltips = arr;
+                                juce::Array<juce::var> varArr;
+                                for (auto& t : arr) varArr.add(t);
+                                updateParamText(paramId, "choice_tooltips", juce::var(varArr));
                             }
                         ));
+                    }
                         
                         auto refreshPanel = [this]() {
                             syncJsonToPreview("");
@@ -2116,6 +2252,12 @@ void MainComponent::resized() {
         juce::Component* rightComps[] = { &formEditor, &splitterBar1, &previewWrapper, &splitterBar2, &jsonContainer };
     
     auto treeBounds = bounds.removeFromLeft(200);
+    auto filterToolbar = treeBounds.removeFromTop(24);
+    int filterBtnW = filterToolbar.getWidth() / 3;
+    filterControlsButton.setBounds(filterToolbar.removeFromLeft(filterBtnW).reduced(1));
+    filterLayoutButton.setBounds(filterToolbar.removeFromLeft(filterBtnW).reduced(1));
+    filterThemeButton.setBounds(filterToolbar.reduced(1));
+
     auto treeToolbar = treeBounds.removeFromTop(24);
     expandAllButton.setBounds(treeToolbar.removeFromLeft(treeToolbar.getWidth() / 2).reduced(2));
     collapseAllButton.setBounds(treeToolbar.reduced(2));
@@ -2126,7 +2268,7 @@ void MainComponent::resized() {
     whereUsedListBox.setBounds(whereUsedArea);
 
     treeSplitter.setBounds(bounds.removeFromLeft(8));
-    navigationTabs.setBounds(treeBounds);
+    masterTree.setBounds(treeBounds);
     
     verticalLayout.layOutComponents(rightComps, 5, bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight(), false, true);
     
@@ -2239,20 +2381,93 @@ void MainComponent::resized() {
 
 
 
-void MainComponent::NavTabbedComponent::currentTabChanged(int newCurrentTabIndex, const juce::String& newCurrentTabName) {
-    juce::TabbedComponent::currentTabChanged(newCurrentTabIndex, newCurrentTabName);
-    if (mc) mc->onTabChanged();
+void MainComponent::updateFilters(bool controls, bool layout, bool theme) {
+    if (!controls && !layout && !theme) {
+        return;
+    }
+    showControls = controls;
+    showLayout = layout;
+    showTheme = theme;
+
+    filterControlsButton.setToggleState(showControls, juce::dontSendNotification);
+    filterLayoutButton.setToggleState(showLayout, juce::dontSendNotification);
+    filterThemeButton.setToggleState(showTheme, juce::dontSendNotification);
+
+    auto xmlState = masterTree.getOpennessState(false);
+    auto* selected = masterTree.getSelectedItem(0);
+    juce::String selName = selected ? static_cast<EditorTreeItem*>(selected)->name : "";
+    juce::String selType = selected ? static_cast<EditorTreeItem*>(selected)->itemType : "";
+    juce::String selProd = selected ? static_cast<EditorTreeItem*>(selected)->productId : "";
+    juce::String selPage = selected ? static_cast<EditorTreeItem*>(selected)->pageId : "";
+    juce::String selCard = selected ? static_cast<EditorTreeItem*>(selected)->cardId : "";
+    juce::String selParam = selected ? static_cast<EditorTreeItem*>(selected)->paramId : "";
+
+    buildTree();
+    if (xmlState) masterTree.restoreOpennessState(*xmlState, false);
+
+    if (selName.isNotEmpty()) {
+        std::function<void(EditorTreeItem*)> findAndSelect = [&](EditorTreeItem* n) {
+            if (!n) return;
+            if (n->name == selName && n->itemType == selType && n->productId == selProd && n->cardId == selCard && n->paramId == selParam) {
+                n->setSelected(true, true);
+                return;
+            }
+            for (int i = 0; i < n->getNumSubItems(); ++i) {
+                findAndSelect(static_cast<EditorTreeItem*>(n->getSubItem(i)));
+            }
+        };
+        findAndSelect(static_cast<EditorTreeItem*>(masterTree.getRootItem()));
+    }
 }
 
-void MainComponent::onTabChanged() {
-    auto* tree = navigationTabs.getCurrentTabIndex() == 0 ? &controlsTree : &layoutsTree;
-    auto* selected = tree->getSelectedItem(0);
-    if (selected) {
-        onTreeItemSelected(static_cast<EditorTreeItem*>(selected));
+void MainComponent::loadStringsJson() {
+    auto f = getAssetFile("text", "strings.json");
+    if (f.existsAsFile()) {
+        originalStringsJson = f.loadFileAsString();
+        stringsJsonVar = juce::JSON::parse(originalStringsJson);
     } else {
-        formEditor.clear();
-        previewWrapper.deleteAllChildren();
+        originalStringsJson = "{}";
+        stringsJsonVar = new juce::DynamicObject();
     }
+    hasStringsEdits = false;
+}
+
+void MainComponent::updateParamText(const juce::String& paramId, const juce::String& key, const juce::var& value) {
+    if (!stringsJsonVar.isObject()) {
+        stringsJsonVar = new juce::DynamicObject();
+    }
+    auto* rootObj = stringsJsonVar.getDynamicObject();
+
+    juce::String prodKey = (paramToFileMap.count(paramId) > 0 && paramToFileMap[paramId] == "planter.json") || paramId.startsWith("planter_") ? "planter" : "farmer";
+    juce::String modKey = "carrier";
+    if (prodKey == "planter") {
+        modKey = "planter";
+    } else if (paramToFileMap.count(paramId) > 0) {
+        modKey = juce::File(paramToFileMap[paramId]).getFileNameWithoutExtension();
+    } else {
+        juce::String cFile = getControlFileForParam(paramId);
+        if (cFile.isNotEmpty()) {
+            modKey = juce::File(cFile).getFileNameWithoutExtension();
+        }
+    }
+
+    if (!rootObj->hasProperty(prodKey) || !rootObj->getProperty(prodKey).isObject()) {
+        rootObj->setProperty(prodKey, new juce::DynamicObject());
+    }
+    auto* prodObj = rootObj->getProperty(prodKey).getDynamicObject();
+
+    if (!prodObj->hasProperty(modKey) || !prodObj->getProperty(modKey).isObject()) {
+        prodObj->setProperty(modKey, new juce::DynamicObject());
+    }
+    auto* modObj = prodObj->getProperty(modKey).getDynamicObject();
+
+    if (!modObj->hasProperty(paramId) || !modObj->getProperty(paramId).isObject()) {
+        modObj->setProperty(paramId, new juce::DynamicObject());
+    }
+    auto* paramObj = modObj->getProperty(paramId).getDynamicObject();
+
+    paramObj->setProperty(key, value);
+    hasStringsEdits = true;
 }
 
 void MainComponent::updateWhereUsed(EditorTreeItem* item) {
@@ -2285,6 +2500,20 @@ void MainComponent::updateWhereUsed(EditorTreeItem* item) {
 }
 
 bool MainComponent::navigateToTreeItem(const ReferenceItem& ref) {
+    if (ref.targetType == "card_param" || ref.targetType == "control_file") {
+        if (!showControls) {
+            updateFilters(true, showLayout, showTheme);
+        }
+    } else if (ref.targetType == "card" || ref.targetType == "card_theme" || ref.targetType == "layout_file") {
+        if (!showLayout) {
+            updateFilters(showControls, true, showTheme);
+        }
+    } else if (ref.targetType == "callout_preview") {
+        if (!showLayout && !showControls) {
+            updateFilters(true, true, showTheme);
+        }
+    }
+
     auto searchInTree = [&](juce::TreeView& tree) -> EditorTreeItem* {
         std::function<EditorTreeItem*(juce::TreeViewItem*)> searchRec = [&](juce::TreeViewItem* cur) -> EditorTreeItem* {
             if (!cur) return nullptr;
@@ -2326,16 +2555,18 @@ bool MainComponent::navigateToTreeItem(const ReferenceItem& ref) {
         return searchRec(tree.getRootItem());
     };
 
-    juce::TreeView* primaryTree = (navigationTabs.getCurrentTabIndex() == 0) ? &controlsTree : &layoutsTree;
-    juce::TreeView* secondaryTree = (navigationTabs.getCurrentTabIndex() == 0) ? &layoutsTree : &controlsTree;
-    int secondaryTab = (navigationTabs.getCurrentTabIndex() == 0) ? 1 : 0;
-
-    EditorTreeItem* target = searchInTree(*primaryTree);
-    if (!target) {
-        target = searchInTree(*secondaryTree);
-        if (target) {
-            navigationTabs.setCurrentTabIndex(secondaryTab);
-        }
+    EditorTreeItem* target = searchInTree(masterTree);
+    if (!target && ref.targetType == "card_param") {
+        std::function<EditorTreeItem*(juce::TreeViewItem*)> searchParam = [&](juce::TreeViewItem* cur) -> EditorTreeItem* {
+            if (!cur) return nullptr;
+            auto* eti = dynamic_cast<EditorTreeItem*>(cur);
+            if (eti && eti->itemType == "card_param" && eti->paramId == ref.paramId) return eti;
+            for (int i = 0; i < cur->getNumSubItems(); ++i) {
+                if (auto* found = searchParam(cur->getSubItem(i))) return found;
+            }
+            return nullptr;
+        };
+        target = searchParam(masterTree.getRootItem());
     }
 
     if (target) {
@@ -2345,11 +2576,7 @@ bool MainComponent::navigateToTreeItem(const ReferenceItem& ref) {
             p = p->getParentItem();
         }
         target->setSelected(true, true);
-        if (navigationTabs.getCurrentTabIndex() == 0) {
-            controlsTree.scrollToKeepItemVisible(target);
-        } else {
-            layoutsTree.scrollToKeepItemVisible(target);
-        }
+        masterTree.scrollToKeepItemVisible(target);
         onTreeItemSelected(target);
         return true;
     }

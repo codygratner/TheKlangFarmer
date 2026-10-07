@@ -2,7 +2,6 @@
   "noise_sh_rate": {
     "type": "float",
     "name": "Noise: S&H Rate",
-    "description": "Sample-and-hold downsampling clock rate for metallic textures",
     "is_bipolar": false,
     "default": 1.0,
     "double_click": 1.0,
@@ -18,7 +17,6 @@
   "noise_filter": {
     "type": "float",
     "name": "Noise: Filter",
-    "description": "Transient noise band-pass / center frequency color",
     "is_bipolar": false,
     "default": 0.5,
     "double_click": 0.5,
@@ -34,7 +32,6 @@
   "noise_drive": {
     "type": "float",
     "name": "Noise: Drive",
-    "description": "Transient noise saturation drive gain",
     "is_bipolar": false,
     "default": 0.5,
     "double_click": 0.5,
@@ -50,7 +47,6 @@
   "noise_decay": {
     "type": "float",
     "name": "Noise: Decay",
-    "description": "Transient noise burst decay time",
     "is_bipolar": false,
     "default": 0.3078,
     "double_click": 0.3078,
@@ -66,7 +62,6 @@
   "mixer_carrier1_level": {
     "type": "float",
     "name": "Mixer: Carrier 1 Level",
-    "description": "Carrier 1 voice output volume level",
     "is_bipolar": false,
     "default": 0.5,
     "double_click": 0.5,
@@ -82,7 +77,6 @@
   "mixer_carrier2_level": {
     "type": "float",
     "name": "Mixer: Carrier 2 Level",
-    "description": "Carrier 2 voice output volume level",
     "is_bipolar": false,
     "default": 0.0,
     "double_click": 0.5,
@@ -98,7 +92,6 @@
   "mixer_ringmod": {
     "type": "float",
     "name": "Mixer: Ring Mod Level",
-    "description": "Ring modulator (Carrier 1 x Carrier 2) mix level",
     "is_bipolar": false,
     "default": 0.0,
     "double_click": 0.0,
@@ -114,7 +107,6 @@
   "mixer_noise_level": {
     "type": "float",
     "name": "Mixer: Noise Level",
-    "description": "Transients noise generator mix level",
     "is_bipolar": false,
     "default": 0.0,
     "snap_points": [
@@ -139,9 +131,5 @@
     },
     "double_click": 0.0,
     "format": "gain"
-  },
-  "ui_strings": {
-    "card_mixer_tooltip": "MIXER: 4-channel analog summing mixer blending Carrier 1, Carrier 2, Ring Mod, and Noise.",
-    "card_amp_tooltip": "AMPLIFIER: Master output gain stage with stereo panning and pre-limiter saturation drive."
   }
 }

@@ -16,26 +16,47 @@ public:
         auto bounds = editor.getBounds();
         reporter.expect(bounds.getWidth() == 1200 && bounds.getHeight() == 800, "Initial dimensions 1200x800");
 
-        reporter.expect(editor.navigationTabs.getBounds().getWidth() > 0, "navigationTabs has bounds");
-        reporter.expect(editor.layoutsTree.getBounds().getWidth() > 0, "layoutsTree has bounds");
-        reporter.expect(editor.controlsTree.getBounds().getWidth() > 0, "controlsTree has bounds");
+        reporter.expect(editor.filterControlsButton.getBounds().getWidth() > 0, "filterControlsButton has bounds");
+        reporter.expect(editor.filterLayoutButton.getBounds().getWidth() > 0, "filterLayoutButton has bounds");
+        reporter.expect(editor.filterThemeButton.getBounds().getWidth() > 0, "filterThemeButton has bounds");
+        reporter.expect(editor.masterTree.getBounds().getWidth() > 0, "masterTree has bounds");
         reporter.expect(editor.formEditor.getBounds().getWidth() > 0, "formEditor has bounds");
         reporter.expect(editor.previewWrapper.getBounds().getWidth() > 0, "previewWrapper has bounds");
         reporter.expect(editor.jsonContainer.getBounds().getWidth() > 0, "jsonContainer has bounds");
 
-        // --- Stage 2: Tab Switching ---
-        reporter.expect(editor.navigationTabs.getCurrentTabIndex() == 0, "Initial tab is CONTROLS (0)");
-        
-        editor.navigationTabs.setCurrentTabIndex(1);
-        reporter.expect(editor.navigationTabs.getCurrentTabIndex() == 1, "Switched to LAYOUTS tab (1)");
-        
-        editor.navigationTabs.setCurrentTabIndex(0);
+        // --- Stage 2: Filter Buttons & Smart Minimum ---
+        reporter.expect(editor.showControls && editor.showLayout && editor.showTheme, "Initial filter states all true");
+
+        // Toggle off Controls
+        editor.filterControlsButton.setToggleState(false, juce::dontSendNotification);
+        if (editor.filterControlsButton.onClick) editor.filterControlsButton.onClick();
+        pumpMessageLoop();
+        reporter.expect(!editor.showControls && editor.showLayout && editor.showTheme, "Controls filter toggled off");
+
+        // Toggle off Layout
+        editor.filterLayoutButton.setToggleState(false, juce::dontSendNotification);
+        if (editor.filterLayoutButton.onClick) editor.filterLayoutButton.onClick();
+        pumpMessageLoop();
+        reporter.expect(!editor.showControls && !editor.showLayout && editor.showTheme, "Layout filter toggled off");
+
+        // Attempt to toggle off Theme (Smart Minimum kicks in and keeps it on)
+        editor.filterThemeButton.setToggleState(false, juce::dontSendNotification);
+        if (editor.filterThemeButton.onClick) editor.filterThemeButton.onClick();
+        pumpMessageLoop();
+        reporter.expect(editor.showTheme, "Smart Minimum: Theme remains active because all others are off");
+        reporter.expect(editor.filterThemeButton.getToggleState(), "Theme button remains checked");
+
+        // Restore all filters
+        editor.filterControlsButton.setToggleState(true, juce::dontSendNotification);
+        if (editor.filterControlsButton.onClick) editor.filterControlsButton.onClick();
+        editor.filterLayoutButton.setToggleState(true, juce::dontSendNotification);
+        if (editor.filterLayoutButton.onClick) editor.filterLayoutButton.onClick();
+        pumpMessageLoop();
+        reporter.expect(editor.showControls && editor.showLayout && editor.showTheme, "All filters restored to true");
 
         // --- Stage 3: Tree Hierarchy Audit ---
-        auto* lRoot = editor.layoutsTree.getRootItem();
-        auto* cRoot = editor.controlsTree.getRootItem();
-        reporter.expect(lRoot != nullptr && lRoot->getNumSubItems() > 0, "layoutsTree populated");
-        reporter.expect(cRoot != nullptr && cRoot->getNumSubItems() > 0, "controlsTree populated");
+        auto* root = editor.masterTree.getRootItem();
+        reporter.expect(root != nullptr && root->getNumSubItems() > 0, "masterTree populated with product sections");
 
         // --- Stage 4: Headless Data Sync Test & Crash Safety ---
         int totalNodesTested = 0;
@@ -56,10 +77,25 @@ public:
                     auto props = ComponentFinder::findAllByType<juce::PropertyComponent>(&editor.formEditor);
                     if (node->itemType == "card_param") {
                         paramNodesTested++;
-                        if (editor.currentParamTarget != node->paramId) anyCrash = true; // Not a crash, but a failure
+                        if (editor.currentParamTarget != node->paramId) {
+                            reporter.expect(false, "ParamTarget mismatch: expected " + node->paramId + " got " + editor.currentParamTarget);
+                            anyCrash = true;
+                        }
+                        bool hasDesc = false;
+                        for (auto* p : props) {
+                            if (p->getName() == "Description") hasDesc = true;
+                        }
+                        if (!hasDesc) {
+                            reporter.expect(false, "No Description property found for node: " + node->name + " (paramId: " + node->paramId + ", itemType: " + node->itemType + ", productId: " + node->productId + ", numProps: " + juce::String(props.size()) + ")");
+                            anyCrash = true;
+                        }
                     }
                 }
+            } catch (const std::exception& e) {
+                reporter.expect(false, "Exception selecting node " + node->name + ": " + e.what());
+                anyCrash = true;
             } catch (...) {
+                reporter.expect(false, "Unknown exception selecting node " + node->name);
                 anyCrash = true;
             }
             totalNodesTested++;
@@ -71,8 +107,7 @@ public:
             }
         };
 
-        if (cRoot) testAllNodes(static_cast<EditorTreeItem*>(cRoot), editor.controlsTree);
-        if (lRoot) testAllNodes(static_cast<EditorTreeItem*>(lRoot), editor.layoutsTree);
+        if (root) testAllNodes(static_cast<EditorTreeItem*>(root), editor.masterTree);
 
         reporter.expect(!anyCrash, "100% of Tree View nodes selected without crashing or failing binding");
         reporter.expect(totalNodesTested > 0, "Iterated through " + juce::String(totalNodesTested) + " total nodes");
@@ -100,11 +135,13 @@ public:
         reporter.beginTest("Callouts & Overlays Inspection & Live Preview");
 
         EditorTreeItem* calloutsNode = nullptr;
-        for (int i = 0; i < cRoot->getNumSubItems(); ++i) {
-            auto* item = dynamic_cast<EditorTreeItem*>(cRoot->getSubItem(i));
-            if (item && item->name == "Callouts & Overlays") {
-                calloutsNode = item;
-                break;
+        if (root != nullptr) {
+            for (int i = 0; i < root->getNumSubItems(); ++i) {
+                auto* item = dynamic_cast<EditorTreeItem*>(root->getSubItem(i));
+                if (item && item->name == "Callouts & Overlays") {
+                    calloutsNode = item;
+                    break;
+                }
             }
         }
         reporter.expect(calloutsNode != nullptr, "Callouts & Overlays node present in tree");
@@ -137,23 +174,27 @@ public:
         // --- Stage 8: Verify Master Limiter exists under The Klang Planter in the tree ---
         reporter.beginTest("Editor Stage 8: Master Limiter in The Klang Planter Tree");
         EditorTreeItem* tkpNode = nullptr;
-        for (int i = 0; i < cRoot->getNumSubItems(); ++i) {
-            auto* item = dynamic_cast<EditorTreeItem*>(cRoot->getSubItem(i));
-            if (item && item->productId == "tkp") {
-                tkpNode = item;
-                break;
-            }
-        }
-        reporter.expect(tkpNode != nullptr, "The Klang Planter node present in controls tree");
-        EditorTreeItem* limiterUnderTkp = nullptr;
-        if (tkpNode != nullptr) {
-            for (int i = 0; i < tkpNode->getNumSubItems(); ++i) {
-                auto* item = dynamic_cast<EditorTreeItem*>(tkpNode->getSubItem(i));
-                if (item && item->name.contains("Master Limiter")) {
-                    limiterUnderTkp = item;
+        if (root != nullptr) {
+            for (int i = 0; i < root->getNumSubItems(); ++i) {
+                auto* item = dynamic_cast<EditorTreeItem*>(root->getSubItem(i));
+                if (item && item->productId == "tkp") {
+                    tkpNode = item;
                     break;
                 }
             }
+        }
+        reporter.expect(tkpNode != nullptr, "The Klang Planter node present in master tree");
+        EditorTreeItem* limiterUnderTkp = nullptr;
+        if (tkpNode != nullptr) {
+            std::function<EditorTreeItem*(EditorTreeItem*)> findLimiter = [&](EditorTreeItem* p) -> EditorTreeItem* {
+                if (!p) return nullptr;
+                if (p->name.contains("Master Limiter")) return p;
+                for (int i = 0; i < p->getNumSubItems(); ++i) {
+                    if (auto* found = findLimiter(dynamic_cast<EditorTreeItem*>(p->getSubItem(i)))) return found;
+                }
+                return nullptr;
+            };
+            limiterUnderTkp = findLimiter(tkpNode);
             reporter.expect(limiterUnderTkp != nullptr, "Master Limiter node found under The Klang Planter");
             if (limiterUnderTkp != nullptr) {
                 reporter.expect(limiterUnderTkp->getNumSubItems() == 4, "Master Limiter under TKP has 4 child parameters");
@@ -162,14 +203,7 @@ public:
 
         // --- Stage 9: Verify Planter Master Limiter callout has 4 child parameter tree items ---
         reporter.beginTest("Editor Stage 9: Planter Master Limiter Callout Child Parameters");
-        EditorTreeItem* calloutsRoot = nullptr;
-        for (int i = 0; i < cRoot->getNumSubItems(); ++i) {
-            auto* item = dynamic_cast<EditorTreeItem*>(cRoot->getSubItem(i));
-            if (item && item->name == "Callouts & Overlays") {
-                calloutsRoot = item;
-                break;
-            }
-        }
+        EditorTreeItem* calloutsRoot = calloutsNode;
         reporter.expect(calloutsRoot != nullptr, "Callouts & Overlays root node present");
         if (calloutsRoot != nullptr) {
             EditorTreeItem* planterLimiterCallout = nullptr;

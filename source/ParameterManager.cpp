@@ -14,6 +14,7 @@ ParameterManager::ParameterManager() {
             parseJsonBlob(data, dataSizeInBytes);
         }
     }
+    mergeTextIntoControls();
 }
 
 juce::Colour ParameterManager::getModuleColor(const juce::String& colorId, juce::Colour defaultFallback) const {
@@ -42,6 +43,11 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
 
     if (var.isObject()) {
         auto* obj = var.getDynamicObject();
+        if (obj->hasProperty("shared") || obj->hasProperty("farmer") || obj->hasProperty("planter")) {
+            parseStringsJson(var);
+            return;
+        }
+
         for (auto& prop : obj->getProperties()) {
             ControlDef def;
             def.id = prop.name.toString();
@@ -148,9 +154,74 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
     }
 }
 
+void ParameterManager::parseStringsJson(const juce::var& var) {
+    if (!var.isObject()) return;
+    auto* rootObj = var.getDynamicObject();
+
+    // 1. Shared strings
+    if (rootObj->hasProperty("shared")) {
+        auto& sharedVar = rootObj->getProperty("shared");
+        if (sharedVar.isObject()) {
+            auto* sObj = sharedVar.getDynamicObject();
+            for (auto& prop : sObj->getProperties()) {
+                globalStrings[prop.name.toString()] = prop.value.toString();
+            }
+        }
+    }
+
+    // 2. Namespaced product strings (farmer, planter)
+    auto parseProductStrings = [this](const juce::var& pVar) {
+        if (!pVar.isObject()) return;
+        auto* pObj = pVar.getDynamicObject();
+        for (auto& modProp : pObj->getProperties()) {
+            if (!modProp.value.isObject()) continue;
+            auto* modObj = modProp.value.getDynamicObject();
+            for (auto& paramProp : modObj->getProperties()) {
+                juce::String paramId = paramProp.name.toString();
+                if (!paramProp.value.isObject()) continue;
+                auto* entryObj = paramProp.value.getDynamicObject();
+                if (entryObj->hasProperty("description")) {
+                    textDescriptions[paramId] = entryObj->getProperty("description").toString();
+                }
+                if (entryObj->hasProperty("choice_tooltips")) {
+                    auto& tVar = entryObj->getProperty("choice_tooltips");
+                    if (tVar.isArray()) {
+                        juce::StringArray tooltips;
+                        for (auto& item : *tVar.getArray()) {
+                            tooltips.add(item.toString());
+                        }
+                        textChoiceTooltips[paramId] = tooltips;
+                    }
+                }
+            }
+        }
+    };
+
+    if (rootObj->hasProperty("farmer"))
+        parseProductStrings(rootObj->getProperty("farmer"));
+    if (rootObj->hasProperty("planter"))
+        parseProductStrings(rootObj->getProperty("planter"));
+}
+
+void ParameterManager::mergeTextIntoControls() {
+    for (auto& [paramId, desc] : textDescriptions) {
+        auto it = controls.find(paramId);
+        if (it != controls.end()) {
+            it->second.description = desc;
+        }
+    }
+    for (auto& [paramId, tooltips] : textChoiceTooltips) {
+        auto it = controls.find(paramId);
+        if (it != controls.end()) {
+            it->second.choiceTooltips = tooltips;
+        }
+    }
+}
+
 void ParameterManager::reloadFromJson(const juce::String& jsonString) {
     auto stdString = jsonString.toStdString();
     parseJsonBlob(stdString.c_str(), static_cast<int>(stdString.size()));
+    mergeTextIntoControls();
 }
 
 } // namespace RlyehSound

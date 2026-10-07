@@ -2,7 +2,6 @@
   "mod1_shape": {
     "type": "float",
     "name": "Modulator 1: Shape",
-    "description": "Modulator 1 waveform shape / symmetry",
     "is_bipolar": false,
     "default": 0.0,
     "snap_points": [
@@ -39,7 +38,6 @@
   "mod1_speed": {
     "type": "float",
     "name": "Modulator 1: Speed",
-    "description": "Modulator 1 frequency / semitone offset / FM ratio",
     "is_bipolar": false,
     "default": 0.5,
     "range": {
@@ -55,7 +53,6 @@
   "mod2_shape": {
     "type": "float",
     "name": "Modulator 2: Shape",
-    "description": "Modulator 2 waveform shape / symmetry",
     "is_bipolar": false,
     "default": 0.0,
     "snap_points": [
@@ -92,7 +89,6 @@
   "mod2_speed": {
     "type": "float",
     "name": "Modulator 2: Speed",
-    "description": "Modulator 2 frequency / semitone offset / FM ratio",
     "is_bipolar": false,
     "default": 0.5,
     "range": {
@@ -108,7 +104,6 @@
   "mixer_ringmod": {
     "type": "float",
     "name": "Mixer: Ring Mod Level",
-    "description": "Ring modulator (Carrier 1 x Carrier 2) mix level",
     "is_bipolar": false,
     "default": 0.0,
     "snap_points": [
@@ -137,7 +132,6 @@
   "ringmod_shape": {
     "type": "float",
     "name": "RingMod: Waveform",
-    "description": "",
     "is_bipolar": false,
     "default": 0.0,
     "snap_points": [
@@ -174,7 +168,6 @@
   "ringmod_rate": {
     "type": "float",
     "name": "RingMod: Rate",
-    "description": "",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -190,7 +183,6 @@
   "ringmod_amount": {
     "type": "float",
     "name": "RingMod: Amount",
-    "description": "",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -206,7 +198,6 @@
   "ringmod_width": {
     "type": "float",
     "name": "RingMod: Width",
-    "description": "",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -222,7 +213,6 @@
   "mod1_track": {
     "type": "choice",
     "name": "Modulator 1: Pitch Tracking",
-    "description": "",
     "choices": [
       "Fixed",
       "Follow",
@@ -233,7 +223,6 @@
   "mod1_type": {
     "type": "choice",
     "name": "Modulator 1: Type",
-    "description": "",
     "choices": [
       "Osc",
       "Cyclic",
@@ -244,7 +233,6 @@
   "mod2_track": {
     "type": "choice",
     "name": "Modulator 2: Pitch Tracking",
-    "description": "",
     "choices": [
       "Fixed",
       "Follow",
@@ -255,16 +243,11 @@
   "mod2_type": {
     "type": "choice",
     "name": "Modulator 2: Type",
-    "description": "",
     "choices": [
       "Osc",
       "Cyclic",
       "Noise"
     ],
     "default": 0
-  },
-  "ui_strings": {
-    "card_mod1_tooltip": "MODULATOR 1: Frequency modulation oscillator in Fixed Hz, Pitch Follow, or Harmonic Ratio modes.",
-    "card_mod2_tooltip": "MODULATOR 2: Secondary modulation source (Oscillator, Cyclic LFO, or Noise)."
   }
 }

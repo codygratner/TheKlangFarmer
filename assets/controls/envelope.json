@@ -2,7 +2,6 @@
   "pitchenv1_slope": {
     "type": "float",
     "name": "PitchEnv 1: Slope",
-    "description": "Pitch envelope decay curve tension from punchy exponential to linear",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -18,7 +17,6 @@
   "pitchenv1_depth": {
     "type": "float",
     "name": "PitchEnv 1: Depth",
-    "description": "Bipolar pitch envelope modulation depth in semitones",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -34,7 +32,6 @@
   "pitchenv1_decay": {
     "type": "float",
     "name": "PitchEnv 1: Decay",
-    "description": "Pitch envelope decay duration",
     "is_bipolar": false,
     "default": 0.3806,
     "range": {
@@ -50,7 +47,6 @@
   "pitchenv2_slope": {
     "type": "float",
     "name": "PitchEnv 2: Slope",
-    "description": "Voice 2 pitch envelope decay curve tension",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -66,7 +62,6 @@
   "pitchenv2_depth": {
     "type": "float",
     "name": "PitchEnv 2: Depth",
-    "description": "Voice 2 pitch envelope modulation depth in semitones",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -82,7 +77,6 @@
   "pitchenv2_decay": {
     "type": "float",
     "name": "PitchEnv 2: Decay",
-    "description": "Voice 2 pitch envelope decay duration",
     "is_bipolar": false,
     "default": 0.3806,
     "range": {
@@ -98,7 +92,6 @@
   "filterenv1_slope": {
     "type": "float",
     "name": "FilterEnv 1: Slope",
-    "description": "Filter envelope decay curve tension",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -114,7 +107,6 @@
   "filterenv1_depth": {
     "type": "float",
     "name": "FilterEnv 1: Depth",
-    "description": "Cutoff modulation depth in octaves (-10 to +10 oct)",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -130,7 +122,6 @@
   "filterenv1_decay": {
     "type": "float",
     "name": "FilterEnv 1: Decay",
-    "description": "Filter envelope decay duration",
     "is_bipolar": false,
     "default": 0.3806,
     "range": {
@@ -146,7 +137,6 @@
   "filterenv1_postdrive": {
     "type": "float",
     "name": "FilterEnv 1: Post-Drive",
-    "description": "Pre-filter analog saturation drive gain (-6 to +24 dB)",
     "is_bipolar": false,
     "default": 0.5,
     "range": {
@@ -162,7 +152,6 @@
   "filterenv2_slope": {
     "type": "float",
     "name": "FilterEnv 2: Slope",
-    "description": "Filter 2 envelope decay curve tension",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -178,7 +167,6 @@
   "filterenv2_depth": {
     "type": "float",
     "name": "FilterEnv 2: Depth",
-    "description": "Filter 2 cutoff modulation depth in octaves",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -194,7 +182,6 @@
   "filterenv2_decay": {
     "type": "float",
     "name": "FilterEnv 2: Decay",
-    "description": "Filter 2 envelope decay duration",
     "is_bipolar": false,
     "default": 0.3806,
     "range": {
@@ -210,7 +197,6 @@
   "filterenv2_postdrive": {
     "type": "float",
     "name": "FilterEnv 2: Post-Drive",
-    "description": "Filter 2 pre-filter saturation drive gain",
     "is_bipolar": false,
     "default": 0.5,
     "range": {
@@ -226,7 +212,6 @@
   "filterenv3_slope": {
     "type": "float",
     "name": "FilterEnv 3: Slope",
-    "description": "Filter 3 envelope decay curve tension",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -242,7 +227,6 @@
   "filterenv3_depth": {
     "type": "float",
     "name": "FilterEnv 3: Depth",
-    "description": "Filter 3 cutoff modulation depth in octaves",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -258,7 +242,6 @@
   "filterenv3_decay": {
     "type": "float",
     "name": "FilterEnv 3: Decay",
-    "description": "Filter 3 envelope decay duration",
     "is_bipolar": false,
     "default": 0.3078,
     "range": {
@@ -274,7 +257,6 @@
   "filterenv3_postdrive": {
     "type": "float",
     "name": "FilterEnv 3: Post-Drive",
-    "description": "Filter 3 pre-filter saturation drive gain",
     "is_bipolar": false,
     "default": 0.5,
     "range": {
@@ -290,7 +272,6 @@
   "ampenv_claps": {
     "type": "float",
     "name": "AmpEnv: Claps",
-    "description": "Pre-decay transient hand-clap burst count (0 to 32 bursts)",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -306,7 +287,6 @@
   "ampenv_clapspeed": {
     "type": "float",
     "name": "AmpEnv: Clap Speed",
-    "description": "Time spacing interval between clap bursts (1 to 15 ms)",
     "is_bipolar": false,
     "default": 0.142857,
     "range": {
@@ -322,7 +302,6 @@
   "ampenv_slope": {
     "type": "float",
     "name": "AmpEnv: Slope",
-    "description": "Master amplitude envelope decay curve tension",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -338,7 +317,6 @@
   "ampenv_decay": {
     "type": "float",
     "name": "AmpEnv: Decay",
-    "description": "Master amplitude envelope decay duration",
     "is_bipolar": false,
     "default": 0.3806,
     "range": {
@@ -354,7 +332,6 @@
   "modenv1_slope": {
     "type": "float",
     "name": "ModEnv 1: Slope",
-    "description": "Modulation envelope decay curve tension",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -370,7 +347,6 @@
   "modenv1_depth": {
     "type": "float",
     "name": "ModEnv 1: Depth",
-    "description": "Bipolar modulation envelope depth to assigned target",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -386,7 +362,6 @@
   "modenv1_decay": {
     "type": "float",
     "name": "ModEnv 1: Decay",
-    "description": "Modulation envelope decay duration",
     "is_bipolar": false,
     "default": 0.3806,
     "range": {
@@ -402,7 +377,6 @@
   "modenv2_slope": {
     "type": "float",
     "name": "ModEnv 2: Slope",
-    "description": "Modulation envelope decay curve tension",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -418,7 +392,6 @@
   "modenv2_depth": {
     "type": "float",
     "name": "ModEnv 2: Depth",
-    "description": "Bipolar modulation envelope depth to assigned target",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -434,7 +407,6 @@
   "modenv2_decay": {
     "type": "float",
     "name": "ModEnv 2: Decay",
-    "description": "Modulation envelope decay duration",
     "is_bipolar": false,
     "default": 0.3806,
     "range": {
@@ -450,7 +422,6 @@
   "modenv3_slope": {
     "type": "float",
     "name": "ModEnv 3: Slope",
-    "description": "Modulation envelope decay curve tension",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -466,7 +437,6 @@
   "modenv3_depth": {
     "type": "float",
     "name": "ModEnv 3: Depth",
-    "description": "Bipolar modulation envelope depth to assigned target",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -482,7 +452,6 @@
   "modenv3_decay": {
     "type": "float",
     "name": "ModEnv 3: Decay",
-    "description": "Modulation envelope decay duration",
     "is_bipolar": false,
     "default": 0.3806,
     "range": {
@@ -498,81 +467,45 @@
   "pitchenv1_target": {
     "type": "choice",
     "name": "PitchEnv 1: Target",
-    "description": "Pitch envelope 1 modulation routing destination",
     "choices": [
       "Car",
       "Mod",
       "Both",
       "Opp"
     ],
-    "default": 0,
-    "choice_tooltips": [
-      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
-      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
-      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
-      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
-    ]
+    "default": 0
   },
   "pitchenv2_target": {
     "type": "choice",
     "name": "PitchEnv 2: Target",
-    "description": "",
     "choices": [
       "Car",
       "Mod",
       "Both",
       "Opp"
     ],
-    "default": 0,
-    "choice_tooltips": [
-      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
-      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
-      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
-      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
-    ]
+    "default": 0
   },
   "modenv2_target": {
     "type": "choice",
     "name": "ModEnv 2: Destination",
-    "description": "",
     "choices": [
       "None",
       "Carrier 1 Pitch",
       "Carrier 2 Pitch",
       "Filter 1 Cutoff"
     ],
-    "default": 0,
-    "choice_tooltips": [
-      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
-      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
-      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
-      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
-    ]
+    "default": 0
   },
   "modenv3_target": {
     "type": "choice",
     "name": "ModEnv 3: Destination",
-    "description": "",
     "choices": [
       "None",
       "Carrier 1 Pitch",
       "Carrier 2 Pitch",
       "Filter 1 Cutoff"
     ],
-    "default": 0,
-    "choice_tooltips": [
-      "CAR: Routes pitch envelope modulation strictly to Carrier frequency.",
-      "MOD: Routes pitch envelope modulation strictly to Modulator frequency for dynamic FM timbre sweeps.",
-      "BOTH: Routes pitch envelope modulation equally to both Carrier and Modulator frequencies in parallel.",
-      "OPP: Routes pitch envelope modulation in opposite polarities (Carrier up, Modulator down)."
-    ]
-  },
-  "ui_strings": {
-    "card_pitchenv1_tooltip": "PITCH ENV 1: High-speed exponential pitch envelope routable to Carrier, Modulator, or Both.",
-    "card_pitchenv2_tooltip": "PITCH ENV 2: Voice 2 pitch envelope for transient attack sweeps.",
-    "card_ampenv_tooltip": "AMP ENVELOPE: Master amplitude decay envelope with integrated multi-burst clap generator.",
-    "card_modenv1_tooltip": "MOD ENV 1: Freely assignable modulation envelope routable to any synthesizer parameter.",
-    "card_modenv2_tooltip": "MOD ENV 2: Freely assignable modulation envelope routable to any synthesizer parameter.",
-    "card_modenv3_tooltip": "MOD ENV 3: Freely assignable modulation envelope routable to any synthesizer parameter."
+    "default": 0
   }
 }

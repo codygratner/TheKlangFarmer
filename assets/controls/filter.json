@@ -2,7 +2,6 @@
   "drive_filter": {
     "type": "float",
     "name": "Drive: Filter",
-    "description": "",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -18,7 +17,6 @@
   "filter1_cutoff": {
     "type": "float",
     "name": "Filter 1: Cutoff",
-    "description": "Filter 1 cutoff corner / center frequency (20 Hz - 24 kHz)",
     "is_bipolar": false,
     "default": 1.0,
     "range": {
@@ -34,7 +32,6 @@
   "filter1_resonance": {
     "type": "float",
     "name": "Filter 1: Resonance",
-    "description": "Filter 1 resonance / Q sharpness boost at cutoff",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -50,7 +47,6 @@
   "filter2_cutoff": {
     "type": "float",
     "name": "Filter 2: Cutoff",
-    "description": "Filter 2 cutoff corner / center frequency",
     "is_bipolar": false,
     "default": 1.0,
     "range": {
@@ -66,7 +62,6 @@
   "filter2_resonance": {
     "type": "float",
     "name": "Filter 2: Resonance",
-    "description": "Filter 2 resonance / Q sharpness boost at cutoff",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -82,7 +77,6 @@
   "filter3_cutoff": {
     "type": "float",
     "name": "Filter 3: Cutoff",
-    "description": "Filter 3 cutoff corner / center frequency",
     "is_bipolar": false,
     "default": 1.0,
     "range": {
@@ -98,7 +92,6 @@
   "filter3_resonance": {
     "type": "float",
     "name": "Filter 3: Resonance",
-    "description": "Filter 3 resonance / Q sharpness boost at cutoff",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -114,7 +107,6 @@
   "wavefolder_filter": {
     "type": "float",
     "name": "WaveFolder: Filter",
-    "description": "",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -130,7 +122,6 @@
   "eq_filter": {
     "type": "float",
     "name": "EQ: DJ Filter",
-    "description": "",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -146,7 +137,6 @@
   "filter1_type": {
     "type": "choice",
     "name": "Filter 1: Type",
-    "description": "",
     "choices": [
       "LPF",
       "BPF",
@@ -158,7 +148,6 @@
   "filter1_slope": {
     "type": "choice",
     "name": "Filter 1: Slope",
-    "description": "",
     "choices": [
       "6",
       "12",
@@ -171,7 +160,6 @@
   "filter2_type": {
     "type": "choice",
     "name": "Filter 2: Type",
-    "description": "",
     "choices": [
       "LPF",
       "BPF",
@@ -183,7 +171,6 @@
   "filter2_slope": {
     "type": "choice",
     "name": "Filter 2: Slope",
-    "description": "",
     "choices": [
       "6",
       "12",
@@ -196,7 +183,6 @@
   "filter3_type": {
     "type": "choice",
     "name": "Filter 3: Type",
-    "description": "",
     "choices": [
       "LPF",
       "BPF",
@@ -208,7 +194,6 @@
   "filter3_slope": {
     "type": "choice",
     "name": "Filter 3: Slope",
-    "description": "",
     "choices": [
       "6",
       "12",
@@ -217,13 +202,5 @@
       "36"
     ],
     "default": 1
-  },
-  "ui_strings": {
-    "card_filter1_tooltip": "FILTER 1: Voice 1 multi-mode resonant filter with selectable 6-36 dB/oct slope.",
-    "card_filterenv1_tooltip": "FILTER ENV 1: Voice 1 filter cutoff modulation envelope and pre-filter overdrive.",
-    "card_filter2_tooltip": "FILTER 2: Voice 2 multi-mode resonant filter.",
-    "card_filterenv2_tooltip": "FILTER ENV 2: Voice 2 cutoff modulation envelope and pre-filter overdrive.",
-    "card_filter3_tooltip": "FILTER 3: Dedicated multi-mode filter processing the Noise transient burst.",
-    "card_filterenv3_tooltip": "FILTER ENV 3: Envelope shaping Noise filter cutoff modulation and pre-filter drive."
   }
 }

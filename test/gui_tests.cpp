@@ -62,6 +62,8 @@ int main(int argc, char* argv[]) {
     }
 
     reporter.printSummary();
+    std::cout.flush();
+    std::cerr.flush();
 
     VersionChecker::teardown();
     GuiTestHelpers::pumpMessageLoop(20, 10);

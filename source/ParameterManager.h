@@ -85,6 +85,24 @@ public:
     }
 
 
+    juce::String getTextDescription(const juce::String& paramId) const {
+        auto it = textDescriptions.find(paramId);
+        if (it != textDescriptions.end())
+            return it->second;
+        if (auto def = getControlDef(paramId))
+            return def->description;
+        return {};
+    }
+
+    juce::StringArray getChoiceTooltips(const juce::String& paramId) const {
+        auto it = textChoiceTooltips.find(paramId);
+        if (it != textChoiceTooltips.end())
+            return it->second;
+        if (auto def = getControlDef(paramId))
+            return def->choiceTooltips;
+        return {};
+    }
+
     juce::Colour getModuleColor(const juce::String& colorId, juce::Colour defaultFallback = juce::Colours::transparentBlack) const;
     juce::Colour getGlobalColor(const juce::String& colorId, juce::Colour defaultFallback = juce::Colours::transparentBlack) const;
     void reloadFromJson(const juce::String& jsonString);
@@ -100,8 +118,12 @@ private:
     std::unordered_map<juce::String, ControlDef> controls;
     std::unordered_map<int, FxAlgorithmDef> fxAlgorithms;
     std::unordered_map<juce::String, juce::String> globalStrings;
+    std::unordered_map<juce::String, juce::String> textDescriptions;
+    std::unordered_map<juce::String, juce::StringArray> textChoiceTooltips;
 
     void parseJsonBlob(const char* data, int size);
+    void parseStringsJson(const juce::var& var);
+    void mergeTextIntoControls();
 };
 
 } // namespace RlyehSound

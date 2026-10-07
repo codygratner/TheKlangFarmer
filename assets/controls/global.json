@@ -2,7 +2,6 @@
   "pre_limiter_thresh": {
     "type": "float",
     "name": "Pre-Limiter: Threshold",
-    "description": "Ceiling threshold for pre-limiter peak reduction",
     "is_bipolar": false,
     "default": 1.0,
     "range": {
@@ -18,7 +17,6 @@
   "pre_limiter_release": {
     "type": "float",
     "name": "Pre-Limiter: Release",
-    "description": "Release recovery time for the pre-limiter",
     "is_bipolar": false,
     "default": 0.6296,
     "range": {
@@ -34,7 +32,6 @@
   "post_limiter_thresh": {
     "type": "float",
     "name": "Post-Limiter: Threshold",
-    "description": "Master ceiling threshold for peak limiting",
     "is_bipolar": false,
     "default": 1.0,
     "range": {
@@ -50,7 +47,6 @@
   "post_limiter_release": {
     "type": "float",
     "name": "Post-Limiter: Release",
-    "description": "Release recovery time for the master limiter",
     "is_bipolar": false,
     "default": 0.6296,
     "range": {
@@ -66,7 +62,6 @@
   "amp_level": {
     "type": "float",
     "name": "Amp: Level",
-    "description": "Master amplifier output volume level",
     "is_bipolar": false,
     "default": 1.0,
     "range": {
@@ -82,7 +77,6 @@
   "amp_pan": {
     "type": "float",
     "name": "Amp: Pan",
-    "description": "Stereo panorama position (Left <-> Right)",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -111,7 +105,6 @@
   "amp_drive": {
     "type": "float",
     "name": "Amp: Drive",
-    "description": "Pre-limiter analog saturation drive gain",
     "is_bipolar": false,
     "default": 0.5,
     "range": {
@@ -127,7 +120,6 @@
   "vel_slope": {
     "type": "float",
     "name": "Velocity: Slope",
-    "description": "MIDI velocity dynamic response curve",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -143,7 +135,6 @@
   "vel_depth": {
     "type": "float",
     "name": "Velocity: Depth",
-    "description": "Velocity scaling of modulation envelope depth",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -159,7 +150,6 @@
   "vel_decay": {
     "type": "float",
     "name": "Velocity: Decay",
-    "description": "Velocity scaling of envelope decay durations",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -175,7 +165,6 @@
   "vel_volume": {
     "type": "float",
     "name": "Velocity: Volume",
-    "description": "Minimum volume floor attenuation at zero velocity",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -191,7 +180,6 @@
   "key_slope": {
     "type": "float",
     "name": "KeyTrack: Slope",
-    "description": "MIDI note keyboard tracking response curve",
     "is_bipolar": false,
     "default": 0.5886,
     "range": {
@@ -207,7 +195,6 @@
   "key_depth": {
     "type": "float",
     "name": "KeyTrack: Depth",
-    "description": "Key tracking scaling of modulation envelope depth",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -223,7 +210,6 @@
   "key_decay": {
     "type": "float",
     "name": "KeyTrack: Decay",
-    "description": "Key tracking scaling of envelope decay durations",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
@@ -239,7 +225,6 @@
   "key_volume": {
     "type": "float",
     "name": "KeyTrack: Volume",
-    "description": "Key tracking scaling of voice output volume",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -255,7 +240,6 @@
   "slop_depth": {
     "type": "float",
     "name": "Slop: Depth",
-    "description": "Analog envelope depth fluctuation amount",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -271,7 +255,6 @@
   "slop_decay": {
     "type": "float",
     "name": "Slop: Decay",
-    "description": "Analog envelope decay time fluctuation amount",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -287,7 +270,6 @@
   "slop_pan": {
     "type": "float",
     "name": "Slop: Pan",
-    "description": "Subtle stereo position wander per note strike",
     "is_bipolar": false,
     "default": 0.0,
     "snap_points": [
@@ -316,7 +298,6 @@
   "drive_limiter": {
     "type": "choice",
     "name": "Drive: Limiter",
-    "description": "",
     "choices": [
       "Off",
       "On"
@@ -326,7 +307,6 @@
   "pre_limiter_enable": {
     "type": "choice",
     "name": "Pre-Limiter: Enable",
-    "description": "",
     "choices": [
       "Off",
       "On"
@@ -336,7 +316,6 @@
   "post_limiter_enable": {
     "type": "choice",
     "name": "Post-Limiter: Enable",
-    "description": "",
     "choices": [
       "Off",
       "On"
@@ -346,7 +325,6 @@
   "amp_limiter": {
     "type": "choice",
     "name": "Amp: Limiter",
-    "description": "",
     "choices": [
       "Off",
       "On"
@@ -356,7 +334,6 @@
   "pre_limiter_gain": {
     "type": "float",
     "name": "Pre-Limiter: Input Gain",
-    "description": "Input boost gain into the pre-limiter",
     "is_bipolar": false,
     "default": 0.333333,
     "range": {
@@ -372,7 +349,6 @@
   "post_limiter_gain": {
     "type": "float",
     "name": "Post-Limiter: Input Gain",
-    "description": "Input boost gain into the master post-limiter",
     "is_bipolar": false,
     "default": 0.333333,
     "range": {
@@ -388,7 +364,6 @@
   "drive_amount": {
     "type": "float",
     "name": "Drive: Amount",
-    "description": "",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
@@ -404,7 +379,6 @@
   "drive_bias": {
     "type": "float",
     "name": "Drive: Bias",
-    "description": "",
     "is_bipolar": false,
     "default": 0.0,
     "range": {
