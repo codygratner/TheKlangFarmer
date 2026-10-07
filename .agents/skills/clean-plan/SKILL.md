@@ -50,6 +50,10 @@ If `PLAN.md` exists at the project root:
    - **Communiqué Sync (If Present):** If `.agents/pipeline/communique/` exists:
      - Update `.agents/pipeline/communique/build_to_plan.md` setting `Status: COMPLETE ✅` with link to archived plan and timestamp.
      - Update `.agents/pipeline/communique/plan_to_build.md` setting `Status: COMPLETED ✅`.
+   - **Vault Inbox Archival (If Applicable):** If `PLAN.md` references an inbox note (`Source Note: <note_name>.md`) or an associated note exists in `C:\Dev\TheKlangVault\Inbox\`:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File .\tools\sync_obsidian_vault.ps1 -ArchiveNotes "<note_name>"
+     ```
 
 ### 4. Output Cleanliness Report
 Display a concise summary:

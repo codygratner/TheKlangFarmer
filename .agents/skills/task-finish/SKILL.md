@@ -63,6 +63,12 @@ Close out a completed engineering milestone with absolute discipline: verify 100
    ```powershell
    Remove-Item -Path "context_snapshot*.md", "PLAN_BACKUP*.md" -Force -ErrorAction SilentlyContinue
    ```
+5. **Obsidian Vault Inbox Archival (If Applicable):**
+   If `PLAN.md` specifies a source note (e.g. `Source Note: <note_name>.md`) or originated from an inbox note in `C:\Dev\TheKlangVault\Inbox\`, automatically archive it:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\tools\sync_obsidian_vault.ps1 -ArchiveNotes "<note_name>"
+   ```
+   This moves the note to `TheKlangVault/Inbox/Archive/` and cleans up the repo staging copy.
 
 ---
 

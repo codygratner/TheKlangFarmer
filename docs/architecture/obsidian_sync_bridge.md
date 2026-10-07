@@ -50,6 +50,13 @@ Run continuous background synchronization (polls every 10 seconds):
 ./tools/sync_obsidian_vault.ps1 -Watch -IntervalSeconds 10
 ```
 
+### Automated Inbox Archiving (`-ArchiveNotes`)
+When a plan or note is completed by the team or agent skills (`/task-finish`, `/clean-plan`), the sync script can automatically move processed notes from `TheKlangVault/Inbox/` to `TheKlangVault/Inbox/Archive/` and clean up the repo staging copy:
+```powershell
+./tools/sync_obsidian_vault.ps1 -ArchiveNotes "My Idea.md", "Bass Mode"
+```
+The sync engine ensures that notes in `Archive/` are never synced back to `docs/inbox/`, keeping your mobile capture screen at a pristine **Inbox Zero**.
+
 ### Heartbeat & Health Check
 Every sync pass updates `_sync_heartbeat.md` at the root of the vault:
 ```markdown

@@ -27,7 +27,8 @@
 param(
     [string]$VaultPath = "C:\Dev\TheKlangVault",
     [switch]$Watch,
-    [int]$IntervalSeconds = 10
+    [int]$IntervalSeconds = 10,
+    [string[]]$ArchiveNotes = @()
 )
 
 $RepoRoot = (Resolve-Path "$PSScriptRoot\..").Path
@@ -61,10 +62,36 @@ function Sync-Once {
         }
     }
 
-    # 1. SYNC INBOX: Vault -> Repo (Never deletes from Vault)
+    # 0. ARCHIVE SPECIFIC INBOX NOTES (If requested via -ArchiveNotes)
+    if ($ArchiveNotes.Count -gt 0) {
+        $archiveDir = Join-Path $VaultInbox "Archive"
+        if (-not (Test-Path $archiveDir)) {
+            New-Item -ItemType Directory -Path $archiveDir -Force | Out-Null
+        }
+        foreach ($noteName in $ArchiveNotes) {
+            $matchingFiles = Get-ChildItem -Path $VaultInbox -File | Where-Object { 
+                $_.Name -like "*$noteName*" -or $_.BaseName -like "*$noteName*" 
+            }
+            foreach ($match in $matchingFiles) {
+                $targetVaultArchive = Join-Path $archiveDir $match.Name
+                Move-Item -Path $match.FullName -Destination $targetVaultArchive -Force
+                Write-Host "[VAULT INBOX ARCHIVED] Moved $($match.Name) -> Vault/Inbox/Archive/" -ForegroundColor Green
+                
+                # Clean up corresponding repo inbox file if present
+                $repoCopy = Join-Path $RepoInbox $match.Name
+                if (Test-Path $repoCopy) {
+                    Remove-Item -Path $repoCopy -Force
+                    Write-Host "[REPO INBOX REMOVED] $($match.Name)" -ForegroundColor DarkYellow
+                }
+            }
+        }
+    }
+
+    # 1. SYNC INBOX: Vault -> Repo (Never deletes from Vault, ignores Archive/)
     if (Test-Path $VaultInbox) {
         $inboxFiles = Get-ChildItem -Path $VaultInbox -File -Recurse | Where-Object { 
-            -not ($_.Name.StartsWith("_sync_")) -and -not ($_.Name.StartsWith("."))
+            -not ($_.Name.StartsWith("_sync_")) -and -not ($_.Name.StartsWith(".")) -and
+            $_.FullName -notmatch '[\\/]Archive([\\/]|$)'
         }
         foreach ($file in $inboxFiles) {
             $relPath = $file.FullName.Substring($VaultInbox.Length).TrimStart('\', '/')
@@ -106,10 +133,18 @@ function Sync-Once {
             foreach ($repoFile in $repoInboxFiles) {
                 $relPath = $repoFile.FullName.Substring($RepoInbox.Length).TrimStart('\', '/')
                 $vaultCounterpart = Join-Path $VaultInbox $relPath
-                if (-not (Test-Path $vaultCounterpart)) {
+                $isArchivedOrStale = ($relPath -match '(?i)^Archive([\\/]|$)' -or (-not (Test-Path $vaultCounterpart)) -or ($vaultCounterpart -match '(?i)[\\/]Archive([\\/]|$)'))
+                if ($isArchivedOrStale) {
                     Remove-Item -Path $repoFile.FullName -Force
                     Write-Host "[INBOX CLEANUP] Removed stale $relPath from docs/inbox/" -ForegroundColor DarkYellow
                 }
+            }
+
+            # Remove empty directories in RepoInbox (e.g. docs/inbox/Archive/)
+            Get-ChildItem -Path $RepoInbox -Directory -Recurse | Where-Object {
+                (Get-ChildItem -Path $_.FullName -Recurse -File | Measure-Object).Count -eq 0
+            } | ForEach-Object {
+                Remove-Item -Path $_.FullName -Recurse -Force
             }
         }
     }
