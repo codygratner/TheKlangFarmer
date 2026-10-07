@@ -138,3 +138,21 @@ Behind the musician-facing instruments lies the architectural infrastructure tha
 2. **The Klang Vault**:
    - Private Obsidian Second Brain and Asymmetric Sync Bridge (`tools/sync_obsidian_vault.ps1`).
    - Enables conflict-free mobile note capture via Obsidian Sync, offline documentation reading, and live build/error telemetry reporting.
+
+---
+
+## 🚨 Product Identity Drift Guardrail (The "Stay in Your Lane" Policy)
+
+To preserve the focus and punch of each offering, **New Klang City (Planning Headquarters)** is officially chartered to monitor incoming ideas, `/plan` drafts, and `/grill-me` interviews for **scope drift**.
+
+Whenever a proposed feature threatens to blur a product's core identity, the agent will flag it:
+
+| Product | The Core Trap (Scope Drift) | The Guardrail Response |
+| :--- | :--- | :--- |
+| **TKF** *(Farmer)* | **Dumbing it down**: Stripping out modular modulation, operator routing, or parameter depth to make it "easy". | *Flag*: "Farmer is the flagship sound-design laboratory. Keep the depth; if you want rapid sweet-spots, route this idea to Planter!" |
+| **TKP** *(Planter)* | **Feature creep & menu bloat**: Adding multi-page tabs, deep sub-menus, or multi-slot FX racks. | *Flag*: "Planter is the lean & mean BIA machine. Keep it single-surface and immediate. If it needs 8 pages, it belongs in Farmer!" |
+| **TKM** *(Mill)* | **Identity confusion**: Adding synth oscillators, MIDI note playback, or complex modulation matrices. | *Flag*: "Mill is a pure multi-effects rack (Soundtoys style). It processes external audio; it does not generate notes." |
+| **TKR** *(R1)* | **Tab & complexity clutter**: Adding tabs, sample layering, or micro-editing menus that break live finger drumming. | *Flag*: "R1 is an ER-1 tribute console. All 7 voice strips must stay on one screen with octave-invariant white-key triggers." |
+| **TKB** *(The Klang Box)* | **Embedded unfriendliness**: Allocating heap memory, exceeding microcontroller SRAM/Flash budgets, or confusing acronyms (`TKS`). | *Flag*: "TKB is dedicated bare-metal hardware. Keep DSP zero-allocation, enforce hardware budgets, and protect the `TKB` designation." |
+| **TKE** *(Editor)* | **Engine bloat**: Adding audio playback, recording, or turning the developer deck into a mini-DAW. | *Flag*: "The Klang Editor is an offline declarative data, curve, and theme inspector. Keep it lean and decoupled from DAW runtimes." |
+
