@@ -66,6 +66,20 @@ Safely and deterministically cut an official Git release tag for **The Klang Sui
 
 ---
 
+### Phase 2.5: Pro High Documentation Polish & Wiki Sync
+1. **Model Advisory Verification (Tier 1 Pro High)**:
+   - Verify active model is `Gemini 3.1 Pro (Thinking: High)`. If not, render the Model Advisory banner and pause for user model swap.
+2. **Release Documentation Audit**:
+   - Update `CHANGELOG.md` with structured user-facing release notes.
+   - Update `docs/history/DEV_HISTORY.md` with key milestone accomplishments.
+   - Archive completed specs in `docs/specs/` to `docs/history/archives/`.
+   - Normalize cross-document links across `docs/` (ensure standard Markdown links `[Title](path.md)`).
+3. **Obsidian Vault Mirror Sync**:
+   - Run `powershell -ExecutionPolicy Bypass -File .\tools\sync_obsidian_vault.ps1`.
+   - Verify `TheKlangVault/Docs/` receives clean documentation with zero errors.
+
+---
+
 ### Phase 3: Automated Version Bump, Tagging & Deployment
 1. **Target Version Determination**:
    - Read current version from `CMakeLists.txt` (`project(TheKlangSuite VERSION X.X.X)`).
@@ -77,7 +91,7 @@ Safely and deterministically cut an official Git release tag for **The Klang Sui
    - Run `deploy.ps1` to place fresh binaries into `current_build/` and system VST3 directory.
 4. **Git Commit & Annotated Tag**:
    ```powershell
-   git add CMakeLists.txt source/VersionChecker.h
+   git add CMakeLists.txt source/VersionChecker.h CHANGELOG.md docs/
    git commit -m "chore(release): bump version to v<NEW_VERSION>"
    git tag -a "v<NEW_VERSION>" -m "Release v<NEW_VERSION>"
    ```
@@ -105,10 +119,11 @@ Safely and deterministically cut an official Git release tag for **The Klang Sui
    - Present modal:
      - Question: `"Release v<NEW_VERSION> successfully finalized! Would you like to summon the transcript harvester to archive institutional memory and wipe context for the next milestone?"`
      - Options:
-       - `(Recommended) Yes: Harvest all chat memory into docs/DEV_HISTORY.md and reset context`
+       - `(Recommended) Yes: Harvest all chat memory into docs/history/DEV_HISTORY.md and reset context`
        - `No: Keep active chat transcripts intact`
 2. **If Harvest Confirmed**:
-   - Archive previous `docs/DEV_HISTORY.md` to `docs/archives/DEV_HISTORY_v<OLD_VERSION>.md`.
-   - Append distilled summary of this release to `docs/DEV_HISTORY.md`.
+   - Archive previous `docs/history/DEV_HISTORY.md` to `docs/history/archives/DEV_HISTORY_v<OLD_VERSION>.md`.
+   - Append distilled summary of this release to `docs/history/DEV_HISTORY.md`.
    - Overwrite `context_clues_build.md` and `context_clues_plan.md` with clean slate message pointing to the next milestone in `docs/BACKLOG.md`.
    - Notify user that context is wiped and ready for a fresh start!
+

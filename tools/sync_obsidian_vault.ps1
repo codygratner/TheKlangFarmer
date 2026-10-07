@@ -39,6 +39,15 @@ $VaultDocs = Join-Path $VaultPath "Docs"
 $VaultTelemetry = Join-Path $VaultPath "Telemetry"
 $VaultCanvas = Join-Path $VaultPath "Canvas"
 
+function Convert-WikiLinksToMarkdown([string]$text) {
+    if ([string]::IsNullOrEmpty($text)) { return $text }
+    # 1. [[Target|Alias]] -> [Alias](Target.md)
+    $text = [System.Text.RegularExpressions.Regex]::Replace($text, '\[\[([^\]\|]+)\|([^\]]+)\]\]', '[$2]($1.md)')
+    # 2. [[Target]] -> [Target](Target.md)
+    $text = [System.Text.RegularExpressions.Regex]::Replace($text, '\[\[([^\]]+)\]\]', '[$1]($1.md)')
+    return $text
+}
+
 function Sync-Once {
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $timestamp = (Get-Date).ToString("yyyy-MM-dd HH:mm:ss")
@@ -77,7 +86,13 @@ function Sync-Once {
             }
 
             if ($shouldCopy) {
-                Copy-Item -Path $file.FullName -Destination $destPath -Force
+                if ($file.Extension -eq ".md") {
+                    $raw = Get-Content -Path $file.FullName -Raw -Encoding UTF8
+                    $converted = Convert-WikiLinksToMarkdown $raw
+                    Set-Content -Path $destPath -Value $converted -Encoding UTF8 -NoNewline
+                } else {
+                    Copy-Item -Path $file.FullName -Destination $destPath -Force
+                }
                 $inboxSynced++
                 Write-Host "[INBOX -> REPO] $($file.Name)" -ForegroundColor Cyan
             }
@@ -133,6 +148,23 @@ function Sync-Once {
                 $docsSynced++
                 Write-Host "[REPO -> DOCS] $relPath" -ForegroundColor DarkGray
             }
+        }
+
+        # Clean up stale files in VaultDocs that no longer exist in RepoDocs
+        if (Test-Path $VaultDocs) {
+            $vaultDocsFiles = Get-ChildItem -Path $VaultDocs -File -Recurse
+            foreach ($vFile in $vaultDocsFiles) {
+                $relPath = $vFile.FullName.Substring($VaultDocs.Length).TrimStart('\', '/')
+                $repoCounterpart = Join-Path $RepoDocs $relPath
+                if (-not (Test-Path $repoCounterpart)) {
+                    Remove-Item -Path $vFile.FullName -Force
+                    Write-Host "[DOCS CLEANUP] Removed stale $relPath from Vault/Docs/" -ForegroundColor DarkYellow
+                }
+            }
+            # Clean up empty directories in VaultDocs
+            Get-ChildItem -Path $VaultDocs -Directory -Recurse | Where-Object { 
+                (Get-ChildItem -Path $_.FullName -Recurse -File).Count -eq 0 
+            } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
         }
     }
 

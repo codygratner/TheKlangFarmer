@@ -35,3 +35,5 @@ _sync_*.tmp
 docs/inbox/*
 !docs/inbox/README.md
 
+# Private notes
+.vault_hint

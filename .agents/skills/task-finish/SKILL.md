@@ -6,7 +6,7 @@ description: Closes out a completed feature from PLAN.md, validates full check-o
 # Factory Task Closer & Communiqué Handshake (`task-finish`)
 
 ## Goal
-Close out a completed engineering milestone with absolute discipline: verify 100% check-off in `PLAN.md`, stage clean changes, generate a structured conventional commit, autonomously archive `PLAN.md` to `docs/completed_plans/`, update both communiqué mailboxes to `COMPLETED`, and sound the Job's Done chime—with zero blocking modals or external tracker bloat.
+Close out a completed engineering milestone with absolute discipline: verify 100% check-off in `PLAN.md`, stage clean changes, generate a structured conventional commit, autonomously archive `PLAN.md` to `.agents/pipeline/plans/completed/`, update both communiqué mailboxes to `COMPLETED`, and sound the Job's Done chime—with zero blocking modals or external tracker bloat.
 
 ---
 
@@ -52,7 +52,7 @@ Close out a completed engineering milestone with absolute discipline: verify 100
 ### 3. Autonomous Archival & Clean Reset
 1. Extract the plan title or slug and current date (`YYYY-MM-DD`).
 2. Move [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) to:
-   `docs/completed_plans/<YYYY-MM-DD>_<task_slug>.md`
+   `.agents/pipeline/plans/completed/<YYYY-MM-DD>_<task_slug>.md`
 3. Reset [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) at root:
    ```markdown
    # Implementation Plan
@@ -67,12 +67,12 @@ Close out a completed engineering milestone with absolute discipline: verify 100
 ---
 
 ### 4. Dual Communiqué Mailbox Synchronization
-If `docs/communique/` exists in the repository:
-1. Update [`docs/communique/build_to_plan.md`](file:///c:/Dev/TheKlangSuite/docs/communique/build_to_plan.md):
+If `.agents/pipeline/communique/` exists in the repository:
+1. Update [`.agents/pipeline/communique/build_to_plan.md`](file:///c:/Dev/TheKlangSuite/.agents/pipeline/communique/build_to_plan.md):
    - Set `Status: COMPLETE ✅`
    - Include test metrics (GUI tests passed, DSP tests passed).
-   - Link to the archived plan in `docs/completed_plans/`.
-2. Update [`docs/communique/plan_to_build.md`](file:///c:/Dev/TheKlangSuite/docs/communique/plan_to_build.md):
+   - Link to the archived plan in `.agents/pipeline/plans/completed/`.
+2. Update [`.agents/pipeline/communique/plan_to_build.md`](file:///c:/Dev/TheKlangSuite/.agents/pipeline/communique/plan_to_build.md):
    - Set `Status: COMPLETED` (with completion timestamp and link to archived plan).
 
 ---
@@ -84,7 +84,7 @@ Conclude your turn with the prominent handoff chime:
 # ✅ Task Completed, Verified & Archived
 
 - **Git Commit:** Committed to branch `<branch>`.
-- **Archived Plan:** [`docs/completed_plans/<archive_name>.md`](file:///docs/completed_plans/<archive_name>.md)
+- **Archived Plan:** [`.agents/pipeline/plans/completed/<archive_name>.md`](file:///.agents/pipeline/plans/completed/<archive_name>.md)
 - **Communiqué Status:** Both `build_to_plan.md` and `plan_to_build.md` updated to `COMPLETED`.
 
 > 🔔 **JOB'S DONE!** `<Task Name>` is fully built, tested, and deployed. Switch to New Klang City to review and advance!

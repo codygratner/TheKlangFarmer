@@ -67,10 +67,10 @@
     2. *Sanity Gate (Tier 1 Pro High)*: User temporarily swaps to Pro High to stress-test the draft for DAW automation compatibility, edge cases, industry standards, and daily developer ergonomics (the "insanity check").
     3. *Dispatch & Build (Tier 2 Flash High)*: User swaps back to Flash High so Klang Industries executes the refined plan on sustainable quota.
   - **Routine Exemption**: Skip the Pro Sanity Gate for routine bug fixes, test suite expansions, CMake tweaks, and mechanical chores.
-- **The Staged Planning Buffer (`docs/draft_plans/`)**:
-  - While Klang Industries is executing an active task, New Klang City MUST author all new plans, brainstorming, and `/grill-me` blueprints into `docs/draft_plans/<task_slug>.md`.
+- **The Staged Planning Buffer (`.agents/pipeline/plans/drafts/`)**:
+  - While Klang Industries is executing an active task, New Klang City MUST author all new plans, brainstorming, and `/grill-me` blueprints into `.agents/pipeline/plans/drafts/<task_slug>.md`.
   - Under no circumstances should New Klang City overwrite the active `PLAN.md` or set `READY_FOR_EXECUTION` while Klang Industries is in progress (`STATUS: IN_PROGRESS`).
-  - **The Factory-Idle Promotion Gate**: Only after Klang Industries concludes its task, sounds the "JOB'S DONE" chime, and archives the previous plan, may New Klang City promote the approved draft to `PLAN.md`, remove it from `docs/draft_plans/` (acting as a clean inbox queue), and dispatch via `plan_to_build.md`.
+  - **The Factory-Idle Promotion Gate**: Only after Klang Industries concludes its task, sounds the "JOB'S DONE" chime, and archives the previous plan, may New Klang City promote the approved draft to `PLAN.md`, remove it from `.agents/pipeline/plans/drafts/` (acting as a clean inbox queue), and dispatch via `plan_to_build.md`.
 
 ## Strict Background Task Etiquette & Watchdog Timer Policy
 - **No Polling or Pinging**: When a command goes to the background, NEVER use `manage_task` to poll its status in a loop or spam the chat.
@@ -136,14 +136,14 @@
 - When the user indicates mobile (*"I'm on mobile"*, *"run full task"*), Klang Industries executes all plan phases continuously end-to-end (`Code Edits ➔ audiothread-guard ➔ cmake build ➔ gui_tests ➔ deploy.ps1 ➔ archive PLAN.md ➔ update build_to_plan.md`) without halting for intermediate chat approvals.
 
 ## Strict Inter-Chat Communique Protocol & "Job's Done" Handshake
-- **Mailbox Protocol (`docs/communique/`)**:
+- **Mailbox Protocol (`.agents/pipeline/communique/`)**:
   - `plan_to_build.md`: Authored strictly by New Klang City. Declares state machine: `STATUS: DRAFTING` ➔ `STATUS: READY_FOR_EXECUTION` ➔ `STATUS: IN_PROGRESS` ➔ `STATUS: COMPLETED`.
   - `build_to_plan.md`: Authored strictly by Klang Industries. Contains live execution status, test results, and completion reports.
 - **Zero-Polling Discipline**: No terminal status loops waiting for the other chat. Handoffs are event-driven.
-- **The "Job's Done" Chime & Dual Mailbox Closure**: When Klang Industries finishes compilation, test passes, and artifact deployment, it MUST update BOTH `build_to_plan.md` (to `Status: COMPLETE ✅`) and `plan_to_build.md` (to `Status: COMPLETED ✅`), archive `PLAN.md` to `docs/completed_plans/`, and conclude its turn with this prominent handoff chime:
+- **The "Job's Done" Chime & Dual Mailbox Closure**: When Klang Industries finishes compilation, test passes, and artifact deployment, it MUST update BOTH `build_to_plan.md` (to `Status: COMPLETE ✅`) and `plan_to_build.md` (to `Status: COMPLETED ✅`), archive `PLAN.md` to `.agents/pipeline/plans/completed/`, and conclude its turn with this prominent handoff chime:
   > 🔔 **JOB'S DONE!** `<Task Name>` is fully built, tested, and deployed. Switch to New Klang City to review and advance!
 - **Single-Read Ingest**: Returning to New Klang City triggers **exactly ONE read** of `build_to_plan.md` to confirm completion.
-- **Auto-Archive & Reset on Task Finish**: Klang Industries must immediately archive `PLAN.md` to `docs/completed_plans/<YYYY-MM-DD>_<task_slug>.md` and reset `PLAN.md` to an idle state (`# No Active Plan`).
+- **Auto-Archive & Reset on Task Finish**: Klang Industries must immediately archive `PLAN.md` to `.agents/pipeline/plans/completed/<YYYY-MM-DD>_<task_slug>.md` and reset `PLAN.md` to an idle state (`# No Active Plan`).
 
 ## Pre-Release "Clean Slate & Regression Gauntlet" Guardrail
 - Mandatory pre-flight checklist before any version bump, git release tagging, or `/cut-release`:
@@ -152,9 +152,10 @@
   3. **Universal 100% Test Pass**: `dsp_tests.exe` (100% audio invariants, SIMD, FastMath) and `gui_tests.exe` (100% parameter reflection, component bindings, modal lifecycles, offscreen paint smoke passes).
   4. **Strict Schema Parity**: 100% of APVTS parameters registered in both plugins have matching `ControlDef` entries in `assets/controls/*.json`.
   5. **JUCE 9.0.3 Timer Hygiene**: 100% of `juce::Timer` subclasses call `stopTimer()` as first line of destructor.
+  6. **Pro High Documentation Polish & Wiki Sync (Phase 2.5)**: Review and update `CHANGELOG.md`, `docs/history/DEV_HISTORY.md`, cross-link integrity, and mirror to `TheKlangVault/Docs/` in Tier 1 Pro High before tagging.
 
 ## Strict Clipboard & External Link Ingestion Guardrail
 - **Zero Arbitrary Clipboard Sniffing**: Agents must NEVER inspect or read the host system clipboard (`Get-Clipboard`). Blueprints, tasks, and code must originate exclusively from local workspace files or direct chat input.
 - **Never Fetch External URLs**: Agents must NEVER automatically fetch or scrape external web URLs via `read_url_content` or `curl` during planning, building, or task ingestion without explicit user confirmation.
-- **Local-Only Plan Priority**: All plans, tasks, and communique documents MUST come exclusively from local workspace files (e.g. `PLAN.md`, `docs/communique/plan_to_build.md`) or direct text provided by user.
+- **Local-Only Plan Priority**: All plans, tasks, and communique documents MUST come exclusively from local workspace files (e.g. `PLAN.md`, `.agents/pipeline/communique/plan_to_build.md`) or direct text provided by user.
 - **Privacy & Context Boundary**: The host system clipboard may contain private, out-of-band user data from other applications (notes, meeting links, passwords, tokens). Respect context boundaries at all times.

@@ -409,8 +409,10 @@ Expand the FX catalog from 13 to 26 algorithms (appended as indices 14–26 for 
 - **Phase 4: Categorized FX Selection Modal (Kilohearts-Style Browser)**:
   - 5-Column Categorized Modal: Dynamics & Gain, Filters & Tone, Modulation & Pitch, Delay & Space, Lo-Fi & Character.
   - Left-click on FX card header launches browser modal; `<` / `>` steppers continue to cycle sequentially.
-- **Phase 5: Automated DSP Unit Tests (`test/dsp_tests.cpp`)**:
   - Zero-allocation verification suite testing dual-mode mix curves and stereo imaging.
+- **Phase Smear (Disperser) Enhancements (Algorithm 9)**:
+  - *True Zero-DSP Bypass*: Ensure Amount set to 0 strictly bypasses all allpass stages (`if (apfStages == 0) return;`).
+  - *Order Switch Replacement*: Retire the subtle 2nd vs 4th order toggle in favor of a post-dispersion **Bipolar Drive** knob (`-100%` hard diode clip $\leftrightarrow$ `0%` clean $\leftrightarrow$ `+100%` warm saturating $\tanh$ drive) with automated gain compensation, turning Phase Smear into a lethal bass and transient sculpting tool.
 
 ### 3. Dual Sample Players for Noise Transient Page (Plugin Only)
 - Add two dedicated sample player modules to the Transients page (desktop plugin specific).
@@ -452,6 +454,9 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - **Glide Time / Sync**: Free milliseconds (`5.0 ms` to `2000.0 ms`) vs Tempo Sync (`1/64` to `1/2 bar`).
   - **Glide Slope**: Slew curve control: `Exponential (0.0)` (analog RC curve) &rarr; `Linear (0.5)` &rarr; `Logarithmic (1.0)`.
   - **Legato Retrigger**: `Off (Continuous)` for fluid acid slides vs `On (Punchy)` for modern trap 808 re-striking slides.
+- **Planter Voice Modes & Dual-Oscillator Hard Sync Engine**:
+  - **Mode Selector**: `[Percussion]` (traditional 2-op FM with fast percussive pitch envelopes) $\to$ `[Bass FM]` (dedicated FM bass engine with sustain, glide, and tighter keyboard tracking) $\to$ `[Dual Osc Sync]` (Carrier and Modulator act as twin free-running oscillators with classic hard-sync phase resets from Osc 1 to Osc 2, detune, and harmonic richness).
+  - Integrates with the Bipolar Drive on Phase Smear and gated releases for lethal, heavy analog and FM bass synthesis.
 - **Click-Free Semitone-Space Pitch Slew & Release DSP**:
   - Slews pitch in musical semitone space so 1-octave bass slides match 1-octave lead slides identically.
   - Exponential amplitude release ramp via `TbdAudio::FastMath::fastExp`.

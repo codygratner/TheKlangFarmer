@@ -1,16 +1,16 @@
 ---
 name: clean-plan
-description: Cleans up temporary planning artifacts (context_snapshot*.md, PLAN_BACKUP*.md) and archives completed PLAN.md files to docs/completed_plans/ to keep the workspace clean. Triggers on `/cleanplan`, `/clean-plan`, `/snapshot-clean`, `/cleansnapshot`, or "clean plan".
+description: Cleans up temporary planning artifacts (context_snapshot*.md, PLAN_BACKUP*.md) and archives completed PLAN.md files to .agents/pipeline/plans/completed/ to keep the workspace clean. Triggers on `/cleanplan`, `/clean-plan`, `/snapshot-clean`, `/cleansnapshot`, or "clean plan".
 ---
 
 # Planning Hygiene & Snapshot Cleaner
 
 ## Goal
-Purge temporary planning snapshots (`context_snapshot*.md`) and scratchpad backups, and archive completed `PLAN.md` files into `docs/completed_plans/` to maintain a pristine, clutter-free repository root.
+Purge temporary planning snapshots (`context_snapshot*.md`) and scratchpad backups, and archive completed `PLAN.md` files into `.agents/pipeline/plans/completed/` to maintain a pristine, clutter-free repository root.
 
 ## Operational Constraints
 - **Preserve Unfinished Work:** Do not delete an uncompleted `PLAN.md` without explicit user confirmation.
-- **Permanent Archival:** Always archive completed plans to `docs/completed_plans/` rather than hard-deleting them so historical engineering context is preserved.
+- **Permanent Archival:** Always archive completed plans to `.agents/pipeline/plans/completed/` rather than hard-deleting them so historical engineering context is preserved.
 
 ## Workflow
 
@@ -39,17 +39,17 @@ If `PLAN.md` exists at the project root:
 2. **Archive Completed Plan:**
    - Extract the plan title and ticket identifier (e.g., `THE-6`, `THE-7`, or the primary heading).
    - Get the current date in `YYYY-MM-DD` format.
-   - Target directory: `docs/completed_plans/` (create if it does not exist).
+   - Target directory: `.agents/pipeline/plans/completed/` (create if it does not exist).
    - Copy or move `PLAN.md` to:
-     `docs/completed_plans/<YYYY-MM-DD>_<IDENTIFIER_OR_TITLE>.md`
+     `.agents/pipeline/plans/completed/<YYYY-MM-DD>_<IDENTIFIER_OR_TITLE>.md`
    - Reset `PLAN.md` at project root:
      ```powershell
      Set-Content -Path "PLAN.md" -Value "# No Active Plan`n"
      ```
    <!-- [Strategy Experiment: Multi-Chat Communiqué Awareness] -->
-   - **Communiqué Sync (If Present):** If `docs/communique/` exists:
-     - Update `docs/communique/build_to_plan.md` setting `Status: COMPLETE ✅` with link to archived plan and timestamp.
-     - Update `docs/communique/plan_to_build.md` setting `Status: COMPLETED ✅`.
+   - **Communiqué Sync (If Present):** If `.agents/pipeline/communique/` exists:
+     - Update `.agents/pipeline/communique/build_to_plan.md` setting `Status: COMPLETE ✅` with link to archived plan and timestamp.
+     - Update `.agents/pipeline/communique/plan_to_build.md` setting `Status: COMPLETED ✅`.
 
 ### 4. Output Cleanliness Report
 Display a concise summary:
@@ -58,6 +58,7 @@ Display a concise summary:
 ### 🧹 Workspace Cleaned
 
 - **Temporary Snapshots Removed:** `context_snapshot.md` deleted.
-- **Plan Archival:** `PLAN.md` archived to [`docs/completed_plans/<archive_name>.md`](file:///docs/completed_plans/<archive_name>.md).
+- **Plan Archival:** `PLAN.md` archived to [`.agents/pipeline/plans/completed/<archive_name>.md`](file:///.agents/pipeline/plans/completed/<archive_name>.md).
 - **Repository Root:** Clean (zero untracked scratchpads).
 ```
+

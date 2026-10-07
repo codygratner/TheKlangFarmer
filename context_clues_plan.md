@@ -1,11 +1,11 @@
 # Context Clues: New Klang City (Planning Headquarters)
 
 **Chat Role:** Chief Architecture & Strategic Planning (New Klang City)  
-**Bureaucratic Stance:** Strategic Planning Hub. Release v0.3.2 validated, merged, and stamped with Silent Git Tag. Active focus ready for Milestone v0.4.0 or post-meeting SQA backlog items.  
+**Bureaucratic Stance:** Strategic Planning Hub. Documentation Wiki & Agent Pipeline Reorganization completed and synced. Active focus ready for SQA Automation Hardening or Milestone v0.4.0 Neo-Slate UX Overhaul.  
 **Active Milestone:** v0.4.0 "The Interface & Experience Update"  
-**Current Objective:** SQA Briefing & Discussion Guide ([`docs/SQA_MEETING_BRIEFING.md`](docs/SQA_MEETING_BRIEFING.md)) prepared, Simplenote-optimized, and harvested into `docs/DEV_HISTORY.md`. Ready to resume Milestone v0.4.0 UX overhaul or review SQA meeting takeaways.  
-**Active Plan:** Master plan defined in [`docs/v040_ux_overhaul_plan.md`](docs/v040_ux_overhaul_plan.md).  
+**Current Objective:** Architecture Wiki ([`docs/README.md`](docs/README.md)) active with 4 pillars (`specs/`, `architecture/`, `history/`, `briefings/`). Agent pipeline cleanly relocated to `.agents/pipeline/`.  
+**Active Plan:** Staged SQA Hardening plan in [`.agents/pipeline/plans/drafts/2026-10-07_sqa_automation_hardening.md`](.agents/pipeline/plans/drafts/2026-10-07_sqa_automation_hardening.md) and [`docs/specs/sqa_automation_hardening.md`](docs/specs/sqa_automation_hardening.md).  
 **Current State:** 
 - Git branch: `0.4.0-dev`.
-- Working tree: `docs/DEV_HISTORY.md` harvested.
-- Pending actions: Awaiting user return from SQA meeting or directive to resume v0.4.0 overhaul.
+- Working tree: Docs reorganization complete, sync bridge updated.
+- Pending actions: Review SQA Hardening draft plan or advance to dispatch.

@@ -13,6 +13,10 @@
 > **AI / Pair-Programming Note**:  
 > **The Klang Farmer and The Klang Planter were vibe-coded with Google Gemini using Antigravity.** From initial DSP architecture and modular voice routing to real-time oscilloscopes, Bode plots, zero-allocation real-time audio threads, and hardware-style UI ergonomics, the entire project was designed, implemented, and iteratively refined through autonomous pair-programming with Gemini in Antigravity.
 
+> [!TIP]
+> **Engineering Documentation & Architecture Wiki**:  
+> For technical deep-dives into our real-time DSP safety rules, 4-layer declarative JSON schemas, headless GUI testing harness, and future milestone specifications, visit the **[Documentation Wiki](docs/README.md)**.
+
 ---
 
 ### The Klang Farmer (22-Module Paged Modular Drum Synthesizer)
