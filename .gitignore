@@ -37,3 +37,7 @@ docs/inbox/*
 
 # Private notes
 .vault_hint
+
+# SQA Test Snapshots & Artifacts
+test_screenshots/
+test_artifacts/

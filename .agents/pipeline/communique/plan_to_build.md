@@ -5,8 +5,8 @@
 **Active Milestone:** v0.4.0 "The Interface & Experience Update"  
 **Task Name:** SQA Automation Hardening  
 **Recommended Model Tier:** Tier 2 (`Gemini 3.8 Flash (Thinking: High)`)  
-**Status:** READY_FOR_EXECUTION  
-**Source Plan:** [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md)  
+**Status:** COMPLETED ✅  
+**Source Plan:** [`c:\Dev\TheKlangSuite\.agents\pipeline\plans\completed\2026-10-07_sqa_automation_hardening.md`](file:///c:/Dev/TheKlangSuite/.agents/pipeline/plans/completed/2026-10-07_sqa_automation_hardening.md)  
 
 ---
 

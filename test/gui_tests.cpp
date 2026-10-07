@@ -9,6 +9,7 @@
 #include "ParameterSchemaAuditTest.h"
 #include "PluginIntensiveTestSuite.h"
 #include "DevLoggerTest.h"
+#include "ChaosMonkeySuite.h"
 
 int main(int argc, char* argv[]) {
     juce::StringArray args;
@@ -16,7 +17,15 @@ int main(int argc, char* argv[]) {
         args.add(juce::String(argv[i]));
     }
 
-    bool runAll = args.isEmpty() || args.contains("--all");
+    bool runChaos = args.contains("--chaos");
+    uint32_t chaosSeed = 0;
+    for (const auto& arg : args) {
+        if (arg.startsWith("--seed=")) {
+            chaosSeed = static_cast<uint32_t>(arg.substring(7).getLargeIntValue());
+        }
+    }
+
+    bool runAll = (args.isEmpty() || args.contains("--all")) && !runChaos;
     bool runFarmer = runAll || args.contains("--farmer");
     bool runPlanter = runAll || args.contains("--planter");
     bool runEditor = runAll || args.contains("--editor");
@@ -28,6 +37,9 @@ int main(int argc, char* argv[]) {
     bool intensiveOnly = args.contains("--intensive-only");
     bool loggerOnly = args.contains("--logger-only");
 
+    // Initialize Watchdog: 5m global timeout, 30s step heartbeat limit
+    GuiTestHelpers::Watchdog::start(5, 30);
+
     GuiTestHelpers::TestReporter reporter;
     GuiTestHelpers::ScopedGuiContext guiContext;
 
@@ -35,7 +47,9 @@ int main(int argc, char* argv[]) {
     std::cout << "THE KLANG FARMER - UNIVERSAL GUI TEST HARNESS" << std::endl;
     std::cout << "========================================" << std::endl;
 
-    if (stressOnly) {
+    if (runChaos) {
+        ChaosMonkeySuite::runSuite(reporter, chaosSeed);
+    } else if (stressOnly) {
         HardeningSuites::runSuite(reporter);
     } else if (reflectionOnly) {
         ReflectionGuardrailSuite::runSuite(reporter);
@@ -66,12 +80,18 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if (GuiTestHelpers::Watchdog::testFailedDueToTimeout.load()) {
+        reporter.expect(false, "One or more test steps timed out waiting for heartbeat");
+    }
+
     reporter.printSummary();
     std::cout.flush();
     std::cerr.flush();
 
     VersionChecker::teardown();
     GuiTestHelpers::pumpMessageLoop(20, 10);
+
+    GuiTestHelpers::Watchdog::stop();
 
     return (reporter.failed == 0) ? 0 : 1;
 }

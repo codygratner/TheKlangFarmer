@@ -317,6 +317,7 @@ add_custom_command(TARGET TheKlangEditor POST_BUILD
 # 11. Automated GUI Test Harness
 add_executable(gui_tests
     test/gui_tests.cpp
+    test/ChaosMonkeySuite.h
     source/PlanterProcessor.cpp
     source/PlanterEditor.cpp
     tools/editor/MainComponent.cpp

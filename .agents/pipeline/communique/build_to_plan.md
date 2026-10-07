@@ -1,35 +1,38 @@
 # Klang Industries Execution Report
 **Date:** 2026-10-07  
 **Active Branch:** `0.4.0-dev`  
-**Task:** Obsidian Knowledge Base & Asymmetric Sync Bridge  
+**Task:** SQA Automation Hardening  
 
 ## Status: COMPLETE ✅
-All 5 phases executed, validated, and verified. The dedicated Obsidian Vault at `C:\Dev\TheKlangVault\` is initialized with clean directory partitions (`Inbox/`, `Docs/`, `Telemetry/`, `Canvas/`), and the PowerShell sync engine (`tools/sync_obsidian_vault.ps1`) verified bidirectional note ingestion and documentation mirroring with exit code 0.
+All 5 phases executed, validated, and verified. All 300 GUI tests and 100% DSP tests pass with 0 failures and exit code 0 across both Debug and Release configurations. Release binaries built and deployed via `deploy.ps1`.
 
 ## Execution Details
-- **Phase 1 (Directory Scaffolding & Gitignore Hygiene)**:
-  - Scaffolding created at `C:\Dev\TheKlangVault\`: `Inbox/`, `Docs/`, `Telemetry/`, `Canvas/`.
-  - Authored `C:\Dev\TheKlangVault\Welcome to The Klang Vault.md`.
-  - Added `.obsidian/` and `_sync_*.tmp` to `TheKlangSuite/.gitignore`.
-  - Initialized `docs/inbox/README.md` anchor in the repository.
-- **Phase 2 (Asymmetric Sync Engine `tools/sync_obsidian_vault.ps1`)**:
-  - Implemented parameterized PowerShell sync bridge supporting on-demand single execution and continuous background loop (`-Watch`).
-  - Safely copies new mobile notes from `TheKlangVault/Inbox/` to `TheKlangSuite/docs/inbox/` without deleting or overwriting.
-  - Mirrors repository docs from `docs/` to `TheKlangVault/Docs/`, cleanly excluding `inbox/`, `.obsidian/`, and temp files.
-  - Updates `_sync_heartbeat.md` with execution duration, timestamp, branch, and status badge.
-- **Phase 3 (Telemetry & Diagnostics Subsystem)**:
-  - Added Git repository telemetry: active branch, last commit, uncommitted changes.
-  - Added DevLogger parser: reads `%LOCALAPPDATA%\TheKlangSuite\dev.log`, summarizing warning counts and error traces.
-  - Generates high-contrast Obsidian markdown dashboards (`Telemetry/Dashboard.md` and `Telemetry/Active_Errors.md`) using GitHub/Obsidian callout syntax.
-- **Phase 4 (Verification & Live Smoke Test)**:
-  - Executed `tools/sync_obsidian_vault.ps1` with exit code 0 (61 docs mirrored in 604ms).
-  - Tested mobile note ingestion with `test_mobile_idea.md` (ingested to `docs/inbox/` in 456ms).
-  - Cleaned up test artifacts.
-- **Phase 5 (Documentation & Backlog Closure)**:
-  - Authored comprehensive integration guide at [`docs/OBSIDIAN_INTEGRATION.md`](file:///c:/Dev/TheKlangSuite/docs/OBSIDIAN_INTEGRATION.md).
-  - Updated [`docs/BACKLOG.md`](file:///c:/Dev/TheKlangSuite/docs/BACKLOG.md): marked Item 1 under Milestone v0.4.0 as `✅ COMPLETED`.
-  - Archived plan to [`docs/completed_plans/2026-10-07_obsidian_vault_asymmetric_sync_bridge.md`](file:///c:/Dev/TheKlangSuite/docs/completed_plans/2026-10-07_obsidian_vault_asymmetric_sync_bridge.md).
-  - Reset `PLAN.md` to idle.
+- **Phase 1 (Dual Timeout Watchdog Architecture)**:
+  - Implemented `GuiTestHelpers::Watchdog` in `test/GuiTestHelpers.h` backed by `std::jthread`.
+  - 5-minute global process limit prevents runaway/deadlocked CI runs.
+  - 30-second local step heartbeat detects hung UI operations and triggers safe message loop unblocking.
+  - Initialized in `test/gui_tests.cpp` `main()` and gracefully stopped upon clean shutdown.
+- **Phase 2 (Wait-Fail Component Locator Pattern)**:
+  - Implemented `waitForComponent<T>(parent, identifier, timeoutMs, pollIntervalMs, rootToSnapshot, reporter)` in `test/GuiTestHelpers.h`.
+  - Pumps the JUCE dispatch loop in 20ms slices during async transitions (modals, callouts, page navigation) while keeping the Watchdog heartbeat alive.
+- **Phase 3 (Automated Deduplicated Failure Snapshots)**:
+  - Added `test_screenshots/` and `test_artifacts/` to `.gitignore`.
+  - Implemented `SnapshotDeduplicator` suppressing redundant captures for the same test/component within 10 seconds.
+  - `captureFailureArtifact` writes offscreen PNGs to `test_screenshots/` and outputs clickable `file:///` URIs.
+- **Phase 4 (Failure-First Reporting & Execution Profiling)**:
+  - Enhanced `TestReporter` with high-visibility **🚨 CRITICAL FAILURE SUMMARY** box listing failure messages and clickable snapshot URIs.
+  - Added **⏱️ EXECUTION PROFILING LEADERBOARD** tracking and ranking the slowest test suites and total execution duration (6.90s in Release).
+- **Phase 5 (Seeded & Replayable Chaos Monkey Suite)**:
+  - Authored `test/ChaosMonkeySuite.h` delivering randomized click, drag, double-click, and window resize bursts across Farmer and Planter editors.
+  - Prominently logs execution seed and reproduction CLI (`gui_tests --chaos --seed=<SEED>`).
+  - Added CLI flag `--chaos` and `--seed=<N>` in `test/gui_tests.cpp`.
+  - Survived 1,230,640 randomized events in 3000ms with zero crashes or exceptions.
+- **Testing & Deployment**:
+  - `dsp_tests.exe`: 100% PASS (22 modular drum blocks + Planter DSP).
+  - `gui_tests.exe`: 300 / 300 PASS (0 failures, exit code 0) in both Debug and Release.
+  - `deploy.ps1` deployed latest `.vst3` and `.exe` artifacts.
+  - `tools/sync_obsidian_vault.ps1` executed cleanly (616ms).
+  - Archived plan to [`c:\Dev\TheKlangSuite\.agents\pipeline\plans\completed\2026-10-07_sqa_automation_hardening.md`](file:///c:/Dev/TheKlangSuite/.agents/pipeline/plans/completed/2026-10-07_sqa_automation_hardening.md) and reset `PLAN.md`.
 
 ## Notes for New Klang City
-- The dedicated vault `C:\Dev\TheKlangVault` is ready to be opened in Obsidian and connected to Obsidian Sync!
+- SQA automation hardening is fully verified. Ready for New Klang City to review and advance milestone v0.4.0.

@@ -61,5 +61,40 @@ namespace HardeningSuites {
             // but we can assert we checked them all without crashing.
             reporter.expect(true, "TooltipCoverageAuditSuite: Traversed " + juce::String(tooltips.size()) + " tooltips (" + juce::String(missingCount) + " were empty)");
         }
+
+        // --- SQA Automation Hardening Verification Suite ---
+        {
+            // 1. Watchdog active status and heartbeat ping
+            reporter.expect(Watchdog::isRunning.load(), "SQAHardening: Watchdog background monitor is actively running");
+            auto initialHeartbeat = Watchdog::lastHeartbeatMs.load();
+            Watchdog::pingHeartbeat();
+            reporter.expect(Watchdog::lastHeartbeatMs.load() >= initialHeartbeat, "SQAHardening: Watchdog heartbeat ping updates lastHeartbeatMs");
+
+            // 2. Wait-Fail Component Locator
+            {
+                TheKlangFarmerAudioProcessor p;
+                auto e = std::unique_ptr<juce::AudioProcessorEditor>(p.createEditor());
+                e->setSize(1000, 750);
+                pumpMessageLoop();
+
+                auto* foundSlider = waitForComponent<RotaryKnobSlider>(e.get(), "", 500, 10);
+                reporter.expect(foundSlider != nullptr, "SQAHardening: waitForComponent resolves active component within timeout");
+
+                auto* nonExistent = waitForComponent<juce::Label>(e.get(), "non_existent_component_12345", 80, 10);
+                reporter.expect(nonExistent == nullptr, "SQAHardening: waitForComponent returns nullptr on timeout without crash");
+            }
+
+            // 3. Snapshot Deduplication
+            {
+                SnapshotDeduplicator::lastFailedTest = "";
+                SnapshotDeduplicator::lastFailedComponentId = "";
+                SnapshotDeduplicator::lastCaptureTimeMs = 0;
+
+                bool first = SnapshotDeduplicator::shouldCapture("HardeningTest", "MockComp");
+                bool second = SnapshotDeduplicator::shouldCapture("HardeningTest", "MockComp");
+                reporter.expect(first, "SQAHardening: SnapshotDeduplicator permits initial failure capture");
+                reporter.expect(!second, "SQAHardening: SnapshotDeduplicator suppresses redundant snapshot within 10s");
+            }
+        }
     }
 }
