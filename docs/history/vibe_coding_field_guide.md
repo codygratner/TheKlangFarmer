@@ -99,9 +99,10 @@ Through trial and error, we developed a cohesive operating system for AI pair-pr
 │ 1. Multi-Tier Model Economics (Pro vs. Flash)          │
 │ 2. The Granular Blueprint Handshake (PLAN.md)          │
 │ 3. Automated 2-Strike Factory Escalation               │
-│ 4. The 4-Layer Declarative JSON Schema                 │
-│ 5. Asymmetric Second-Brain Knowledge Bridge (Obsidian) │
-│ 6. The Pre-Release Regression Gauntlet                 │
+│ 4. Asymmetric Second-Brain Knowledge Bridge (Obsidian) │
+│ 5. The Hardened Pre-Flight Sweep (vs git clean -fdx)   │
+│ 6. Continuous Backlog Integrity Gates                  │
+│ 7. The Pre-Release Regression Gauntlet                 │
 └────────────────────────────────────────────────────────┘
 ```
 
@@ -137,6 +138,14 @@ Instead, `/cut-release` employs a **4-Tier Surgical Pre-Flight Sweep**:
 2. **Pipeline & Inbox State:** Confirms `PLAN.md` is idle, the communiqué handshakes are marked `COMPLETED`, and the Vault inbox is at true Inbox Zero.
 3. **Diagnostic Disk Hygiene:** Flushes stale test screenshots from `test_screenshots/` so release assertion failures are fresh and unmistakable.
 4. **Static Audio Safety & Debug Leak Audit:** Runs a fast regex scan across modified C++ files to catch rogue `std::cout`, `printf`, audio-loop `DBG(` leaks, or missing `stopTimer()` destructor calls.
+
+### 6. Continuous Backlog Reconciliation & Integrity Gates
+In high-velocity pair programming, "Backlog Drift" occurs when the factory floor completes a feature and archives its plan, but the planner jumps straight into brainstorming the next feature without updating `docs/BACKLOG.md`. Over time, the backlog becomes littered with stale `PLAN.md` links and missing completion checkmarks.
+
+To eliminate Backlog Drift, we established a **3-Tier Backlog Integrity System**:
+1. **The Ingestion Handshake Rule:** When New Klang City reads a `Status: COMPLETE ✅` report from Klang Industries, its first mandatory action is updating the backlog item to `— ✅ COMPLETED`, recording test metrics, and replacing temporary `PLAN.md` references with the permanent path in `.agents/pipeline/plans/completed/`.
+2. **The Passive Sync Linter:** The Obsidian sync bridge (`sync_obsidian_vault.ps1`) runs an automated regex audit across `docs/BACKLOG.md` on every pass, actively warning if any stale `[`PLAN.md`]` links linger in the text.
+3. **The Pre-Release Milestone Lockout:** `/cut-release` hard-fails and halts if any item in the target release milestone is uncompleted or links to an unarchived plan, guaranteeing 100% backlog integrity before a release tag is stamped.
 
 ---
 

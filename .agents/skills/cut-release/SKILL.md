@@ -30,6 +30,7 @@ Safely and deterministically cut an official Git release tag for **The Klang Sui
    - **Active Plan**: Verify `PLAN.md` is strictly in an idle state (`# No Active Plan` or `# Implementation Plan` with zero active unchecked tasks). If an active plan is in progress, halt release.
    - **Communiqués**: Verify `.agents/pipeline/communique/plan_to_build.md` is marked `COMPLETED` and `build_to_plan.md` is marked `COMPLETE ✅`.
    - **Vault Inbox Zero**: Run a sync pass with `tools/sync_obsidian_vault.ps1` to ensure all completed mobile notes are archived to `TheKlangVault/Inbox/Archive/` and `docs/inbox/` only contains `README.md`.
+   - **Backlog Integrity Lockout**: Scan `docs/BACKLOG.md` for the target release milestone. Verify that 100% of items are marked `— ✅ COMPLETED` and zero stale `[`PLAN.md`]` links exist. If any item is uncompleted or points to an unarchived plan, **HALT RELEASE IMMEDIATELY** and report the unreconciled backlog items.
 3. **Tier 3: Diagnostic Disk Hygiene**:
    - Clear out stale test failure artifacts so release gauntlet screenshots are 100% fresh:
      ```powershell

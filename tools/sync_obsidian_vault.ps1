@@ -203,6 +203,17 @@ function Sync-Once {
         }
     }
 
+    # 2.5 BACKLOG INTEGRITY LINTER
+    $backlogPath = Join-Path $RepoDocs "BACKLOG.md"
+    if (Test-Path $backlogPath) {
+        $staleMatches = Select-String -Path $backlogPath -Pattern '\[`?PLAN\.md`?\]\([^)]*PLAN\.md\)'
+        if ($staleMatches) {
+            foreach ($match in $staleMatches) {
+                Write-Host "⚠️ [BACKLOG LINTER WARNING] Line $($match.LineNumber): Stale PLAN.md reference detected! Please update to archived plan in .agents/pipeline/plans/completed/" -ForegroundColor Yellow
+            }
+        }
+    }
+
     # 3. TELEMETRY: Git Inspection
     $gitBranch = "unknown"
     $gitCommit = "unknown"

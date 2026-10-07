@@ -144,11 +144,12 @@
 - **The "Job's Done" Chime & Dual Mailbox Closure**: When Klang Industries finishes compilation, test passes, and artifact deployment, it MUST update BOTH `build_to_plan.md` (to `Status: COMPLETE ✅`) and `plan_to_build.md` (to `Status: COMPLETED ✅`), archive `PLAN.md` to `.agents/pipeline/plans/completed/`, and conclude its turn with this prominent handoff chime:
   > 🔔 **JOB'S DONE!** `<Task Name>` is fully built, tested, and deployed. Switch to New Klang City to review and advance!
 - **Single-Read Ingest**: Returning to New Klang City triggers **exactly ONE read** of `build_to_plan.md` to confirm completion.
+- **Mandatory Backlog Reconciliation upon Ingestion**: When New Klang City ingests a `Status: COMPLETE ✅` report from `build_to_plan.md`, its FIRST mandatory action before discussing or drafting new features is to update `docs/BACKLOG.md` (marking the matching task `— ✅ COMPLETED`, updating any `PLAN.md` references to the permanent archive path in `.agents/pipeline/plans/completed/`, and documenting verification metrics).
 - **Auto-Archive & Reset on Task Finish**: Klang Industries must immediately archive `PLAN.md` to `.agents/pipeline/plans/completed/<YYYY-MM-DD>_<task_slug>.md` and reset `PLAN.md` to an idle state (`# No Active Plan`).
 
 ## Pre-Release "Clean Slate & Regression Gauntlet" Guardrail
 - Mandatory pre-flight checklist before any version bump, git release tagging, or `/cut-release`:
-  1. **Hardened Cruft Sweep (4 Tiers)**: Recursive scratch purge (no sub-tree scripts), pipeline/inbox cleanliness (`PLAN.md` idle, inbox zero), diagnostic disk hygiene (pruned `test_screenshots/`), and static code audit (zero debug console leaks, JUCE 9.0.3 timer hygiene).
+  1. **Hardened Cruft Sweep (4 Tiers)**: Recursive scratch purge (no sub-tree scripts), pipeline/inbox cleanliness (`PLAN.md` idle, inbox zero, active milestone backlog items 100% reconciled with zero stale `PLAN.md` links), diagnostic disk hygiene (pruned `test_screenshots/`), and static code audit (zero debug console leaks, JUCE 9.0.3 timer hygiene).
   2. **Dual-Configuration Parity**: Both `Debug` and `Release` compile cleanly with zero errors.
   3. **Universal 100% Test Pass**: `dsp_tests.exe` (100% audio invariants, SIMD, FastMath) and `gui_tests.exe` (100% parameter reflection, component bindings, modal lifecycles, offscreen paint smoke passes).
   4. **Strict Schema Parity**: 100% of APVTS parameters registered in both plugins have matching `ControlDef` entries in `assets/controls/*.json`.
