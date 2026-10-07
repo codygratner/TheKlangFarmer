@@ -215,6 +215,21 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Conduct an interactive architectural review of file naming conventions for modular DSP blocks in `assets/controls/`.
   - Specifically resolve confusing or inconsistent naming—such as `carrier.json` (singular) vs. `modulators.json` (plural), and operator roles vs. modulation functions—and establish an intuitive, unified naming standard prior to the v0.4.0 effects expansion.
 
+### 3. Developer Logging Subsystem (`TKS_LOG`) & Diagnostics Engine
+*Goal: Provide structured, leveled developer logging for UI lifecycles, asset loading, and DAW diagnostics in debug builds, strictly guarded against real-time audio thread abuse and stripped completely in release builds.*
+- **Dual-Mode Output**:
+  - Debug builds pipe timestamped entries to system debugger (`OutputDebugString` / `DBG`) and write to a rotating `%LOCALAPPDATA%/TheKlangSuite/Logs/dev.log`.
+  - File retention is capped at 5 MB with a maximum of 2 rolled backup files (`dev.log.1`).
+- **Leveled Diagnostics**:
+  - `TKS_LOG_INFO`: Normal lifecycle events (JSON asset loading, window resize, preset init).
+  - `TKS_LOG_WARN`: Non-fatal anomalies (missing optional property, fallback styling used).
+  - `TKS_LOG_ERROR`: Critical errors (JSON syntax parse failure, missing APVTS binding).
+- **Strict Audio Thread Safety & Static Guardrail**:
+  - `TKS_LOG` asserts in Debug builds if invoked outside the message or background threads.
+  - `audiothread-guard` static analysis rules flag any `TKS_LOG` invocations inside audio loops (`processBlock`, `renderVoice`) at build time.
+- **Zero Release Overhead**:
+  - Compiled out completely to empty no-ops (`do {} while (false)`) when `JUCE_DEBUG` is not defined. Zero binary strings, zero allocations, zero CPU overhead.
+
 ---
 
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
