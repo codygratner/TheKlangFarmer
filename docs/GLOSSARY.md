@@ -54,3 +54,6 @@
 | **Version (SemVer)** | Numerical standard | Vehicle model year & trim | `MAJOR.MINOR.PATCH` (`v0.3.2`): Breaking changes = Major; Features = Minor; Fixes = Patch. |
 | **Milestone** | Project container | The sprint checklist | Roadmap container in `docs/BACKLOG.md` grouping features and fixes targeting a version. |
 | **Release** | Public distribution | Placing boxed product on retail shelves | Published GitHub Release bundled with installer artifacts (`.vst3`, `.exe`, `.pkg`) and changelogs. |
+
+> [!TIP]
+> **The "Silent Git Tag" Policy**: When a milestone consists strictly of internal architectural cleanup, developer tooling, or schema refactors with zero user-facing sound/UI changes (e.g. `v0.3.2`), we stamp and push an annotated Git Tag (`git tag -a vX.Y.Z`) and merge to `main`, but do not publish a public GitHub Release entry. This preserves clean SemVer and reproducible builds while preventing spurious "Update Available" notifications in end-user DAWs.

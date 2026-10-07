@@ -89,6 +89,7 @@
 - **Conventional Commits**: Format strictly as `<type>(<optional scope>): <description>` (`feat:`, `fix:`, `refactor:`, `chore:`, `docs:`).
 - **NEVER Work Directly on Master/Main**: Check active branch (`git branch --show-current`). If on `master` or `main`, immediately create and switch to a descriptive branch (`git checkout -b feat/<slug>`). Direct commits to `master`/`main` are allowed ONLY by explicit user order.
 - **Ruthless Deletion (Git is the Archive)**: Ruthlessly delete obsolete source code and files. Never comment out dead code blocks or create `old_Component.cpp`/`legacy/` folders.
+- **Silent Git Tags for Architectural Refactors**: When a milestone consists strictly of internal architectural cleanup, developer tooling, or data schema refactoring with zero user-facing sound/UI changes, create and push an annotated Git Tag (`git tag -a vX.Y.Z -m "..."`) and merge to `main`, but do NOT publish a public GitHub Release entry. This preserves clean SemVer and reproducible build history while preventing spurious 'Update Available' prompts in end-user DAWs.
 
 ## Strict Debugging Heuristics
 - **Initialization Order First**: When encountering garbage data, parse failures, or unexplained crashes during asset loading, ALWAYS verify C++ object lifecycles and static initialization order *before* investigating encoding or unicode issues.
