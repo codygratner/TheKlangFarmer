@@ -168,11 +168,18 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
 
-### 0.5. Interactive Parameter & Curve Overhaul (Breaking Parity)
-*Goal: Systematically audit and redesign the interactive tactile feel of all cards, adding custom snap points, logarithmic slider slopes, and ergonomic double-click defaults.*
-- Audit all card controls for optimal double-click reset values.
-- Tune slider skew factors (slopes) for frequency, time, and resonance controls.
-- Add discrete snap points and magnetism to key musical intervals and center points.
+### 0.5. The Klang Editor Interactive Parameter & Curve Audit Tool (Breaking Parity)
+*Goal: Build an interactive parameter audit and curve calibration workspace directly inside The Klang Editor (TKE) to systematically audit and redesign the tactile feel, custom snap points, logarithmic slider slopes, and ergonomic double-click defaults of all controls.*
+> ⚠️ **MANDATORY PLANNING DIRECTIVE (New Klang City):** When this item is reached on the backlog, the planning agent MUST NOT jump straight to blueprinting or implementation. New Klang City MUST initiate an interactive architectural discussion / interview (`/grill-me` or interactive decision modal) with the user to collaboratively explore and align on the editor workflow, curve tooling requirements, and visual UI before drafting `PLAN.md`.
+- **Integrated Editor Audit Workspace**:
+  - Integrate an interactive audit / calibration view directly into The Klang Editor navigation tree (`The Klang Editor`).
+  - Provide live interactive slider evaluation, tactile response tuning, and real-time visualization of parameter skew factor curves.
+- **Double-Click Reset & Tactile Ergonomics**:
+  - Audit all card controls across Farmer and Planter for musically optimal double-click reset values.
+  - Tune slider skew factors (logarithmic/exponential/linear curves) for frequency, time, and resonance parameters.
+- **Discrete Musical Snap Points & Magnetism**:
+  - Add discrete snap points, detents, and magnetism to key musical intervals (e.g. semitones, octaves, harmonic ratios, tempo sync fractions) and zero-crossings.
+  - Test and calibrate snap points live within the editor before persisting to `assets/controls/*.json`.
 
 ### 0.6. Transparent Quota Telemetry & Language Server Probe (`/quota` Skill)
 *Goal: Provide instant, transparent visibility into Antigravity model quotas (5-hour rolling bucket, weekly tier allowances) without diving deep into IDE settings menus.*
