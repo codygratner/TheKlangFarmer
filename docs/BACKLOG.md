@@ -155,6 +155,15 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Authored portable runner script discovering `pluginval.exe` in `tools\` or system PATH at configurable strictness (default level 5).
 - **Verification Metric**: 207 / 207 `gui_tests` passed successfully with 100% assertion pass rate.
 
+### 8. Planter Header Visualizer Optimization & Latency Remediation
+*Detailed Plan: [`PLAN.md`](PLAN.md)*  
+*Goal: Eliminate UI thread input latency and sluggishness in The Klang Planter by optimizing visualizer repaint cascades and message thread overhead.*
+- **Opaque Visualizer (`setOpaque(true)`)**: Prevents JUCE from invalidating and repainting the entire parent window background during real-time oscilloscope animations.
+- **30 Hz Timer Frequency Alignment**: Aligned `PlanterEditor` timer rate with `FarmerEditor` (30 Hz down from 60 Hz), cutting message thread repaint events in half.
+- **Scope Spline & Point Optimization**: Downsampled oscilloscope resolution from 128 points to 64 points with smooth rounded stroke joints, dramatically reducing CPU Bézier calculation time during software rendering.
+- **String & Glyph Layout Caching**: Cached static title, subtitle, and version strings and computed widths at initialization, eliminating per-frame JSON dictionary lookups and glyph arrangement loops in `paint()`.
+- **Idle Silence Bypass**: Added signal gate checking for zero amplitude before queuing repaints when the synthesizer is silent.
+
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
 
@@ -202,6 +211,16 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Phase 3 (Version Bump & Tagging)**: Updates `CMakeLists.txt` and `source/VersionChecker.h`, runs `deploy.ps1`, commits `chore(release): bump version to vX.X.X`, and creates annotated Git tag.
 - **Phase 4 (Desktop Sanity & GitHub Remote Push)**: Prompts user to verify deployed binaries, then prompts to push active branch and release tags to GitHub (`git push origin <branch> --tags`).
 - **Phase 5 (Summon the Harvester)**: Interactive modal prompt to archive institutional memory into `docs/DEV_HISTORY.md`, slice previous releases to `docs/archives/`, wipe chat transcripts, and reset context clues for a clean slate kickoff.
+
+### 0.8. Smart Model Auto-Detection & Verification Badging (Frictionless Kickoff Guardrail) — ✅ COMPLETED
+*Rule Reference: [`GEMINI.md`](../GEMINI.md)*  
+*Goal: Eliminate redundant execution pause gates and modal deadlocks when the active AI agent model and thinking level already match or exceed the task's required complexity tier.*
+- **Contextual Self-Inspection**: The agent checks its active model identity and extended thinking level from session context instructions.
+- **Matched Tier Auto-Proceed**: If active configuration matches the required tier (e.g. Flash 3.8 High on Tier 2), outputs a subtle non-blocking verification badge (`✓ Model Verified: <Model> (<Thinking>) matches Tier <N>`) and begins immediately without pausing.
+- **Mismatched Tier Quota Defense**:
+  - If lower than required (e.g. Flash on Tier 1 DSP math): Full advisory banner + mandatory hard-pause to switch models.
+  - If higher than required (e.g. Pro 3.1 on Tier 2/3 task): Advisory banner + 5-minute downgrade timer (Tier 1 on 2) or hard pause (Tier 1 on 3) to prevent accidental Pro burn.
+- **Modal-Free Builder Gate**: Builder never pops up blocking `ask_question` modals during task initialization, ensuring the IDE model picker in the footer is never locked.
 
 ### 1. Parameter Randomization Engine (d6)
 Add a fully JSON-driven contextual randomization system:

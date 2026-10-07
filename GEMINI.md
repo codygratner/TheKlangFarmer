@@ -41,7 +41,19 @@
      - The agent displays the Model Advisory banner.
      - **Hard Pause Without Timer**: The agent MUST stop and wait indefinitely for the user to reply "proceed". Auto-proceeding is strictly forbidden because running Tier 3 tasks on Tier 1 Pro drains irreplaceable Pro quota ("burn time rather than allowance").
 
-- **Builder Pause Gate (Model Switch Friendly - NEVER use modal on execution start)**: Before Klang Industries calls any editing, code modification, or compilation tool on a new plan, it MUST NOT pop up an `ask_question` modal (because interactive modals freeze the IDE interface and completely prevent the user from changing the model dropdown in the IDE footer). Instead, Klang Industries MUST output the Model Advisory banner at the very end of its briefing in chat and PAUSE in regular text, explicitly waiting for the user to verify/switch their model dropdown in the IDE footer and reply "proceed" (or provide other instructions).
+- **Smart Model Auto-Detection & Verification Badging (Frictionless Execution)**:
+  - **Self-Inspection**: Agents can inspect their own active model and thinking configuration directly from session context (e.g., system instructions and environment metadata).
+  - **Matched Tier Auto-Proceed**: If the agent's active model and thinking level match or exceed the recommended tier for the task (e.g., active is `Gemini 3.8 Flash (Thinking: High)` on a Tier 2 task, or `Gemini 3.1 Pro (Thinking: High)` on a Tier 1 task):
+    - Output a subtle, non-blocking verification badge at kickoff:
+      `✓ Model Verified: <Model> (<Thinking Level>) matches Tier <N>`
+    - **No Blocking Pause**: The agent may proceed immediately with plan presentation or execution without forcing an unnecessary verification pause.
+  - **Mismatched Tier Handling**:
+    - **Tier Lower Than Recommended (e.g. Flash on Tier 1 DSP task)**: MUST display the full Model Advisory banner, **hard-pause**, and wait for the user to switch models in the IDE footer and reply "proceed".
+    - **Tier Higher Than Recommended (e.g. Pro 3.1 on Tier 2 or 3 task)**:
+      - For 1-level mismatch (Tier 1 on Tier 2): Display the Model Advisory banner recommending downgrade to save quota, start a 5-minute timer, and pause in chat text.
+      - For 2-level mismatch (Tier 1 on Tier 3): Display the banner and hard-pause indefinitely without timer to protect critical Pro quota.
+
+- **Builder Pause Gate (Model Switch Friendly - NEVER use modal on execution start)**: Before Klang Industries calls any editing, code modification, or compilation tool on a new plan, it MUST NOT pop up an `ask_question` modal (because interactive modals freeze the IDE interface and completely prevent the user from changing the model dropdown in the IDE footer). If the active model matches the recommended tier, output the subtle verification badge (`✓ Model Verified: ...`) and proceed immediately. If the active model does not match the recommended tier, Klang Industries MUST output the Model Advisory banner at the very end of its briefing in chat and PAUSE in regular text, explicitly waiting for the user to verify/switch their model dropdown in the IDE footer and reply "proceed" (or provide other instructions).
 - **Subagent Policy**: Always use `Model="flash"` for read-only research subagents (`invoke_subagent`), and `Model="pro"` only for heavy multi-file reasoning.
 
 ## Target Toolchain & Standards
