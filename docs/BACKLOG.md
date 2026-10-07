@@ -202,18 +202,21 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Added `STATUS: COMPLETED` as a formal terminal state in `plan_to_build.md` to prevent stale dispatch pickups.
   - Mandated dual-mailbox closure in `task-finish` (updating both `build_to_plan.md` and `plan_to_build.md`).
 
-### 2. Unified Filterable Master Tree & Dedicated Text/Localization Schema
-*Goal: Redesign The Klang Editor's navigation tree into a unified master tree with multi-state layer filters, and extract text/tooltips into a dedicated data schema.*
+### 2. Unified Filterable Master Tree & Dedicated Text/Localization Schema — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-07_unified_tree_text_schema.md`](completed_plans/2026-10-07_unified_tree_text_schema.md)*  
+*Goal: Redesign The Klang Editor's navigation tree into a unified master tree with multi-state layer filters, extract text/tooltips into a dedicated data schema, and standardize DSP block file naming.*
 - **Unified Master Tree with Layer Filters**:
-  - Replace the dual tabs (`CONTROLS` and `LAYOUTS`) with a single unified Master Tree.
-  - Add 4 toggle filter buttons above the tree: `[Controls]`, `[Layout]`, `[Theme]`, and `[Text]`.
-  - Toggling buttons dynamically filters what nodes and properties are displayed (e.g., enable `Controls + Layout` simultaneously to view structural cards and parameter slots together).
-- **Dedicated Text & Tooltip Schema (`assets/text/`)**:
-  - Extract all parameter descriptions, format units, mouse shortcut hints, and header strings into dedicated JSON files under `assets/text/` (e.g. `assets/text/farmer_strings.json`, `assets/text/planter_strings.json`).
-  - Prepares the suite for future localization / multi-language translation and zero-code copyediting.
-- **DSP Block File Naming & Taxonomy Review (`assets/controls/*.json`)**:
-  - Conduct an interactive architectural review of file naming conventions for modular DSP blocks in `assets/controls/`.
-  - Specifically resolve confusing or inconsistent naming—such as `carrier.json` (singular) vs. `modulators.json` (plural), and operator roles vs. modulation functions—and establish an intuitive, unified naming standard prior to the v0.4.0 effects expansion.
+  - Replaced the dual tabs (`CONTROLS` and `LAYOUTS`) with a single unified `masterTree`.
+  - Added 3 toggle filter buttons above the tree: `[Controls]`, `[Layout]`, and `[Theme]`, with Smart Minimum enforcement.
+  - Implemented simultaneous property editing: selecting a parameter node in `[Controls]` allows editing DSP limits and text descriptions side-by-side with smart routing to respective JSON files on save.
+- **Dedicated Text & Tooltip Schema (`assets/text/strings.json`)**:
+  - Extracted 100% of parameter descriptions and choice tooltips out of `assets/controls/*.json` into `assets/text/strings.json`.
+  - Organized under clean modular namespaces (`"shared"`, `"farmer"`, `"planter"`).
+  - Maintained parameter `"name"` in `assets/controls/` as the immutable DAW/Host automation contract.
+  - Implemented seamless startup text merge in `ParameterManager` for zero C++ call-site breakage.
+- **DSP Block File Naming Standardization (`assets/controls/*.json`)**:
+  - Renamed legacy plural files: `modulator.json`, `filter.json`, `envelope.json`. Ruthlessly purged plural files.
+- **Verification Metric**: 275 / 275 `gui_tests` passed successfully with 100% assertion pass rate across all 11 test suites; 100% `dsp_tests` passed. Binaries deployed to `current_build/` and system VST3 directories.
 
 ### 3. Developer Logging Subsystem (`TKS_LOG`) & Diagnostics Engine
 *Goal: Provide structured, leveled developer logging for UI lifecycles, asset loading, and DAW diagnostics in debug builds, strictly guarded against real-time audio thread abuse and stripped completely in release builds.*
