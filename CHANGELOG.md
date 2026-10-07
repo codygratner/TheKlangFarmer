@@ -6,6 +6,63 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
+## [0.3.2] - 2026-10-07 "Agent Infrastructure & Editor Upgrades"
+
+### Added
+- **The Klang Editor Unified Filterable Master Tree**:
+  - Replaced dual `CONTROLS`/`LAYOUTS` tabs with a single unified `masterTree`.
+  - Added 3-button filter toolbar (`[Controls]`, `[Layout]`, `[Theme]`) with Smart Minimum enforcement.
+  - Implemented simultaneous property editing: selecting a parameter node in `[Controls]` allows editing DSP numerical bounds and text descriptions side-by-side with smart routing to respective JSON files on save.
+- **Dedicated Centralized Text Schema (`assets/text/strings.json`)**:
+  - Extracted 100% of parameter descriptions and choice tooltips out of `assets/controls/*.json` into `assets/text/strings.json` under modular namespaces (`"shared"`, `"farmer"`, `"planter"`).
+  - Maintained parameter `"name"` in `assets/controls/` as the immutable DAW/Host automation contract.
+  - Implemented seamless startup text merge in `ParameterManager` for zero C++ call-site breakage.
+- **Developer Logging Subsystem (`TKS_LOG`) & Diagnostics Engine**:
+  - Header-only `RlyehSound::DevLogger` (`source/DevLogger.h`) routing simultaneously to system debugger (`OutputDebugString` / `DBG`) and a 5 MB rotating log file (`%LOCALAPPDATA%/TheKlangSuite/dev.log`).
+  - Strict audio thread safety guard: runtime assertion (`jassert`) and instant abort before memory allocation or locking.
+  - Preprocessor elision: all logging macros compile to empty `do {} while (false)` no-ops in Release builds (`!JUCE_DEBUG`).
+  - Unit test suite (`test/DevLoggerTest.h`) validating output formatting, audio thread safety, and log file creation.
+- **Repository Architecture & Governance**:
+  - Authored official architectural taxonomy and reference dictionary in `docs/GLOSSARY.md`.
+  - Codified the "Silent Git Tag" policy for non-breaking architectural refactors in `GEMINI.md` and `GLOSSARY.md`.
+  - Codified the "Pro Sanity & Standards Gate" (Flash Drafts, Pro Audits, Flash Builds) in `GEMINI.md`.
+
+### Changed
+- **DSP Block File Naming Standardization**:
+  - Renamed legacy plural files: `modulator.json`, `filter.json`, `envelope.json`. Purged old plural files from tree.
+- **Guardrails & Skills Optimization Audit**:
+  - Reduced `GEMINI.md` prompt footprint by 49.3% (~2,500 tokens/turn saved).
+  - Synchronized workspace (`.agents/skills/`) and global (`~/.gemini/config/skills/`) stores with 100% exact parity.
+  - Updated `audiothread-guard` to flag `TKS_LOG*` macros inside audio loops.
+- **Test Suite Expansion**:
+  - Expanded `gui_tests` to 294 automated tests across 12 suites (100% assertion pass rate).
+  - 100% pass across all 22 modular drum DSP tests.
+
+---
+
+## [0.3.1] - 2026-10-06 "Editor Quality & Data Schema"
+
+### Added
+- **The Klang Planter Limiter Right-Click CalloutBox**:
+  - Floating mini-card launched by right-clicking the center `LIMIT` badge, exposing Gain, Ceiling, and Release controls.
+- **Interactive Two-Line Status Bar**:
+  - Line 1: Permanent control name, formatted value readout, and contextual mouse shortcuts.
+  - Line 2: Dynamic tooltip feed and parameter descriptions toggled via header button.
+- **6-Pillar VST3 Parameter Validation Suite & pluginval Runner**:
+  - Dynamic parameter reflection, normalization roundtrip, boundary safety clamping, JSON parity, state serialization roundtrip, and audio smoke passes.
+  - Portable headless runner script `tools/run_pluginval.ps1`.
+- **The Klang Editor Tree UX & Property Binding**:
+  - Mini-toolbar with `Expand All` and `Collapse All` icon buttons.
+  - Headless component test suite testing 100% parameter selection and binding.
+
+### Changed
+- **Planter Visualizer Latency Remediation**:
+  - Enabled `setOpaque(true)` and downsampled scope resolution to 64 points.
+  - Aligned Planter timer rate with Farmer (30 Hz down from 60 Hz), eliminating UI thread latency.
+- **Parameter Metadata Extraction**:
+  - Extracted hardcoded descriptions from `FarmerEditor.cpp` into data assets.
+
+---
 ## [0.3.0] - 2026-10-06 "The Architecture Update"
 
 ### Added

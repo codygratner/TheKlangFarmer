@@ -9,7 +9,7 @@ if (APPLE)
 endif()
 
 # 1. Project definition
-project(TheKlangSuite VERSION 0.3.1 LANGUAGES C CXX)
+project(TheKlangSuite VERSION 0.3.2 LANGUAGES C CXX)
 
 # Feature branch build tag (e.g., "-tooltips"). Stripped upon merge back to master.
 set(TKF_FEATURE_TAG "" CACHE STRING "Prerelease feature tag for development builds")
