@@ -20,10 +20,26 @@ Safely and deterministically cut an official Git release tag for **The Klang Sui
 
 ## Workflow Phases
 
-### Phase 1: Safe Cruft Sweep & Workspace Hygiene
-1. **Auto-Delete Ephemeral Files**:
-   - Scan root for and remove: `temp_*.txt`, `*.tmp`, `update_*.py`, `fix_*.py`, `scratch_*.py`, `*.dump`.
-2. **Git Workspace Audit**:
+### Phase 1: Hardened Pre-Flight Cruft Sweep & Workspace Hygiene
+1. **Tier 1: Recursive Ephemeral Purge**:
+   - Recursively scan the entire repository (not just root) for disposable scratch, update, and planning backup files:
+     ```powershell
+     Get-ChildItem -Path . -Recurse -File -Include "temp_*.*", "update_*.py", "fix_*.py", "scratch_*.py", "*.dump", "context_snapshot*.md", "PLAN_BACKUP*.md" | Remove-Item -Force
+     ```
+2. **Tier 2: Pipeline, Inbox & Communiqué Cleanliness**:
+   - **Active Plan**: Verify `PLAN.md` is strictly in an idle state (`# No Active Plan` or `# Implementation Plan` with zero active unchecked tasks). If an active plan is in progress, halt release.
+   - **Communiqués**: Verify `.agents/pipeline/communique/plan_to_build.md` is marked `COMPLETED` and `build_to_plan.md` is marked `COMPLETE ✅`.
+   - **Vault Inbox Zero**: Run a sync pass with `tools/sync_obsidian_vault.ps1` to ensure all completed mobile notes are archived to `TheKlangVault/Inbox/Archive/` and `docs/inbox/` only contains `README.md`.
+3. **Tier 3: Diagnostic Disk Hygiene**:
+   - Clear out stale test failure artifacts so release gauntlet screenshots are 100% fresh:
+     ```powershell
+     if (Test-Path "test_screenshots") { Get-ChildItem -Path "test_screenshots" -File | Remove-Item -Force }
+     ```
+4. **Tier 4: Static Audio-Safety & Debug Leak Audit**:
+   - Fast static scan across modified C++ source files (`source/`, `test/`):
+     - Scan for leftover console output: `std::cout`, `printf`, or unvectorized `DBG(` in audio processing loops.
+     - Check timer hygiene: verify any `juce::Timer` subclasses call `stopTimer()` as the first line of their destructors.
+5. **Git Workspace Audit**:
    - Execute `git status --porcelain`.
    - If untracked temporary files were removed, verify status is now clean.
    - If there are uncommitted edits to tracked files (`source/`, `assets/`, `CMakeLists.txt`) or untracked source files:

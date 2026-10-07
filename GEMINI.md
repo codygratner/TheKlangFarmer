@@ -131,6 +131,7 @@
   - Klang Industries is strictly forbidden from modifying `GEMINI.md`, system rules, or authoring/editing agent Skills (`.agents/skills/`, `.gemini/config/skills/`). It must refuse rule changes and direct the user to New Klang City.
   - **The "Just Do It" Emergency Override**: Klang Industries may ONLY bypass this restriction if the user explicitly includes the exact phrase `"just do it"` in their prompt.
   - New Klang City is the sole authority for system architecture, `GEMINI.md` guardrails, agent workflows, skill definitions, and project backlogs.
+  - **Living Field Guide Maintenance**: Whenever agent skills, system guardrails, or workflow pipelines are updated or upgraded, New Klang City must document the rationale, operational lessons learned, and failure modes into `docs/history/vibe_coding_field_guide.md` to preserve institutional memory.
 
 ## Mobile-Aware Autopilot Factory Pipeline
 - When the user indicates mobile (*"I'm on mobile"*, *"run full task"*), Klang Industries executes all plan phases continuously end-to-end (`Code Edits ➔ audiothread-guard ➔ cmake build ➔ gui_tests ➔ deploy.ps1 ➔ archive PLAN.md ➔ update build_to_plan.md`) without halting for intermediate chat approvals.
@@ -147,7 +148,7 @@
 
 ## Pre-Release "Clean Slate & Regression Gauntlet" Guardrail
 - Mandatory pre-flight checklist before any version bump, git release tagging, or `/cut-release`:
-  1. **Cruft & Scratch Sweep**: Zero untracked scratch scripts (`*.tmp`, `temp_*.txt`, `update_*.py`) or loose artifacts (`git status --porcelain`).
+  1. **Hardened Cruft Sweep (4 Tiers)**: Recursive scratch purge (no sub-tree scripts), pipeline/inbox cleanliness (`PLAN.md` idle, inbox zero), diagnostic disk hygiene (pruned `test_screenshots/`), and static code audit (zero debug console leaks, JUCE 9.0.3 timer hygiene).
   2. **Dual-Configuration Parity**: Both `Debug` and `Release` compile cleanly with zero errors.
   3. **Universal 100% Test Pass**: `dsp_tests.exe` (100% audio invariants, SIMD, FastMath) and `gui_tests.exe` (100% parameter reflection, component bindings, modal lifecycles, offscreen paint smoke passes).
   4. **Strict Schema Parity**: 100% of APVTS parameters registered in both plugins have matching `ControlDef` entries in `assets/controls/*.json`.

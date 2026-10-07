@@ -129,6 +129,15 @@ To enable mobile idea capture without Git headaches:
 - Moving notes to `Inbox/Archive/` in Obsidian automatically sweeps and prunes the local repo copies.
 - An automated normalizer translates mobile `[[wikilinks]]` into standard GitHub-clickable relative Markdown links upon sync.
 
+### 5. The Hardened Pre-Flight Sweep (vs. The Aggressive `git clean` Trap)
+Before cutting an official release, the workspace must be pristine. But a common trap in automated build scripts is running a blunt `git clean -fdx`. In a C++ project, that wipes the entire `build/` directory, deleting the CMake cache, precompiled headers, and JUCE modules—turning a 45-second build into a 15-minute recompile, while potentially deleting local uncommitted tools.
+
+Instead, `/cut-release` employs a **4-Tier Surgical Pre-Flight Sweep**:
+1. **Recursive Ephemeral Purge:** Scans all subdirectories for disposable scratch scripts, update tools, and backup snapshots (`temp_*.*`, `update_*.py`, `context_snapshot*.md`, `PLAN_BACKUP*.md`).
+2. **Pipeline & Inbox State:** Confirms `PLAN.md` is idle, the communiqué handshakes are marked `COMPLETED`, and the Vault inbox is at true Inbox Zero.
+3. **Diagnostic Disk Hygiene:** Flushes stale test screenshots from `test_screenshots/` so release assertion failures are fresh and unmistakable.
+4. **Static Audio Safety & Debug Leak Audit:** Runs a fast regex scan across modified C++ files to catch rogue `std::cout`, `printf`, audio-loop `DBG(` leaks, or missing `stopTimer()` destructor calls.
+
 ---
 
 ## 5. Advice for Fellow Developers (From Python/JS to C++)
