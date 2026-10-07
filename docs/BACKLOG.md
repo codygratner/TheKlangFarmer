@@ -135,11 +135,13 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Toggled dynamically by the header `TOOLTIPS` button (when off, Line 2 is quiet or shows engine status).
 - **Verification Metric**: 164 / 164 `gui_tests` passed successfully with 100% assertion pass rate across all limiter controls and status bar hover callbacks.
 
-### 6. Diagnose & Restore Missing Two-Line Status Bar in Standalone & Plugin UI
-*Goal: Diagnose why the interactive two-line bottom status bar is not appearing or rendering visibly in The Klang Planter / The Klang Farmer standalone and plugin windows, and restore it to full visibility.*
-- **Diagnosis**: Check parent window bounds, z-ordering, layout resizing (`resized()` bottom margin allocation), and visibility flags in `PlanterEditor.cpp` and `FarmerEditor.cpp`.
-- **Restoration**: Ensure the 36px status bar is docked cleanly at the bottom, receives hover callbacks, and renders Line 1 (Permanent Control/Value + Shortcuts) and Line 2 (Tooltip feed).
-- **Verification**: Visual verification in standalone and headless component visibility assertions in `test/gui_tests.cpp`.
+### 6. Restore Two-Line Status Bar Visibility & Universal Hover Feed — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_two_line_status_bar_visibility_and_universal_hover.md`](completed_plans/2026-10-06_two_line_status_bar_visibility_and_universal_hover.md)*
+*Goal: Diagnose why the interactive two-line bottom status bar was low-contrast or appearing missing in The Klang Planter / The Klang Farmer standalone and plugin windows, and restore it to full visibility and responsiveness.*
+- **Visual Elevation**: Elevated chassis background (`0xff121622`) with a crisp 1.5px top demarcation border (`0xff2a3449`), green status LED (`● READY`), subtle version badge (`The Klang Suite v0.3.1`), and high-contrast Line 2 text luminance.
+- **Universal Header Hover Feeds**: Connected hover callbacks on `initButton`, `triggerButton`, `tooltipsButton`, `settingsButton`, `guideButton`, and `headerViz` so the entire interface feeds live parameter details into the status bar.
+- **Z-Order Assurance**: Enforced `statusBar.toFront(false)` in `resized()` across all editors.
+- **Verification Metric**: 191 / 191 `gui_tests` passed successfully with 100% assertion pass rate.
 
 ## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
