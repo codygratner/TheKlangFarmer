@@ -3,12 +3,15 @@
 > [!IMPORTANT]
 > **NEXT SESSION KICKOFF REMINDER**:  
 > When opening the next session, review the prioritized milestones below:
-> 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit.
-> 2. **v0.4.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
-> 3. **v0.5.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
-> 4. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
-> 5. **v1.1.0 (Hardware Universe)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
-> 6. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
+> 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit. — ✅ COMPLETED
+> 2. **v0.3.1 (Editor Quality & Data Schema)**: Standalone Tree UX, Limiter Callout, Two-Line Status Bar, pluginval Runner. — ✅ COMPLETED
+> 3. **v0.3.2 (Agent Infrastructure & Logging)**: Guardrails Audit, Unified Filterable Master Tree, Dedicated Text Schema, Developer Logging (TKS_LOG).
+> 4. **v0.4.0 (Interface & Experience)**: Complete Clean-Slate UX Overhaul, Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.
+> 5. **v0.5.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
+> 6. **v0.6.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
+> 7. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
+> 8. **v1.1.0 (Hardware Universe)**: dadamachines tbd-16, TKS-Daisy (Stereo), TKS-8 (Teensy Multi-Out), & Zynthian V5.
+> 9. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
 
 > [!TIP]
 > **CODE QUALITY STANDARD**: The C++ codebase currently maintains an A+ standard for defensive programming, descriptive `camelCase` variable naming, and explicit algorithmic comments (e.g., documenting DSP math curves directly above the function). All future contributions must rigidly match this level of in-line documentation and readability!
@@ -85,8 +88,271 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 
 ---
 
-## 🚀 Milestone: v0.4.0 "The Sound & Chaos Update"
+
+## ?? Milestone: v0.3.1 "Editor Quality & Data Schema"
+*Focus: Expanding the Editor's GUI tests, Tree View UX, and upgrading the JSON data schema for rigorous parameter definitions.*
+
+### 1. Editor GUI Test Suite Expansion & Tree View UX — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_editor_tree_ux.md`](completed_plans/2026-10-06_editor_tree_ux.md)*
+*Goal: Expand `gui_tests` to fully validate `The Klang Editor` through headless component testing, and improve the Tree View's user experience.*
+- **Headless Validation**: Added `juce::UnitTest` module simulating 100% parameter tree node selection with property manager synchronization.
+- **Global Tree Controls**: Added mini-toolbar with `Expand All` and `Collapse All` icon buttons.
+- **Contextual Tree Controls**: Added right-click context menu to tree items with `Collapse Others`, `Expand All`, and `Collapse All`.
+
+### 2. Extract Hardcoded C++ Parameter Metadata into JSON (Parity Preservation) — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_parameter_metadata_extraction.md`](completed_plans/2026-10-06_parameter_metadata_extraction.md)*
+*Goal: Pull all hardcoded parameter descriptions and bipolar flags out of `FarmerEditor.cpp` and populate them into `assets/controls/*.json` to match `PlanterEditor`'s modern `ControlDef` binding pattern, while maintaining 100% exact parity.*
+- **Extract Legacy Boilerplate**: Migrated ~120 lines from `getFarmerParamDescription()` into JSON asset schemas.
+- **Modernize `bindSlider`**: Refactored `FarmerEditor::bindSlider` to read `def->description`, `def->isBipolar`, `def->doubleClickValue`, and `def->snapPoints` from `ControlDef`.
+- **Zero Parity Breakage**: 84/84 tests passing with zero regressions.
+
+### 3. Intensive GUI Test Suite for Plugins & Standalone (Farmer & Planter) — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_intensive_gui_tests.md`](completed_plans/2026-10-06_intensive_gui_tests.md)*
+*Goal: Model intensive GUI testing after The Klang Editor's test harness, expanding `gui_tests` to comprehensively validate component trees, page navigation, modal popups, and offscreen rendering for both The Klang Farmer and The Klang Planter.*
+- **Headless Component & Parameter Sweep**: Programmatically verified 100% of cards, sliders, and selectors bind correctly to APVTS parameters and display non-empty tooltips (fixed 3 missing tooltips on Planter limiter).
+- **Page Navigation & Paint Smoke Test**: Cycled through all page views across 800x600, 1000x750, and 4K dimensions with offscreen paint passes (`paintEntireComponent()`). Zero crashes, zero division-by-zero.
+- **Modal Lifecycle Test**: Simulated opening and closing all modals (Settings, About, Quickstart) with zero timer leaks.
+- **Verification Metric**: 117 / 117 `gui_tests` passed successfully with 100% assertion pass rate.
+
+### 4. Planter Header Interactions: VU Meter Panic & Limiter CalloutBox — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_planter_header_and_status_bar.md`](completed_plans/2026-10-06_planter_header_and_status_bar.md)*
+*Goal: Transform The Klang Planter's header visualizer into an interactive control center with dedicated mouse targets for master panic and instant limiter adjustment.*
+- **Limiter Right-Click CalloutBox**:
+  - Right-clicking the center `LIMIT` badge launches a floating mini-card `juce::CalloutBox`.
+  - Houses an Enable toggle (`planter_limiter_enable`) and 3 mini rotary knobs for Gain (`planter_limiter_gain`), Ceiling/Threshold (`planter_limiter_thresh`), and Release (`planter_limiter_release`).
+  - Styled to match Card 6's Doepfer silver & red chassis theme (`0xffe53935`).
+- **Peak VU Meter Panic**:
+  - Clicking the stereo peak meters flushes all active voice and noise envelope timings, resets the S&H DJ filter, and clears master peak levels.
+  - Features a crisp 150ms visual flash on the meter bars upon panic trigger.
+- **Parity Safety**:
+  - Non-destructive: Binds directly to existing APVTS parameters without altering presets, audio DSP math, or Card 6.
+
+### 5. Interactive Two-Line Status Bar (Values, Mouse Shortcuts & Tooltip Feed) — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_planter_header_and_status_bar.md`](completed_plans/2026-10-06_planter_header_and_status_bar.md)*
+*Goal: Implement a Kilohearts/Ableton style 36px bottom status bar across The Klang Farmer and The Klang Planter, providing permanent value readouts, mouse shortcut badges, and a full-width tooltip feed.*
+- **Line 1 (Top Bar - Permanent)**:
+  - Left: Control Name and formatted Parameter Value in bold (e.g., `Carrier 1: Pitch  +12.0 st [440 Hz]`).
+  - Right: Contextual Mouse Shortcuts in subtle pill badges (e.g., `Right-Click: Snap Points | Double-Click: Reset (0.5)`). Always visible even if tooltips are toggled off.
+- **Line 2 (Bottom Bar - Tooltip Feed)**:
+  - Full-width parameter description and functional explanation.
+  - Toggled dynamically by the header `TOOLTIPS` button (when off, Line 2 is quiet or shows engine status).
+- **Verification Metric**: 164 / 164 `gui_tests` passed successfully with 100% assertion pass rate across all limiter controls and status bar hover callbacks.
+
+### 6. Restore Two-Line Status Bar Visibility & Universal Hover Feed — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_two_line_status_bar_visibility_and_universal_hover.md`](completed_plans/2026-10-06_two_line_status_bar_visibility_and_universal_hover.md)*
+*Goal: Diagnose why the interactive two-line bottom status bar was low-contrast or appearing missing in The Klang Planter / The Klang Farmer standalone and plugin windows, and restore it to full visibility and responsiveness.*
+- **Visual Elevation**: Elevated chassis background (`0xff121622`) with a crisp 1.5px top demarcation border (`0xff2a3449`), green status LED (`● READY`), subtle version badge (`The Klang Suite v0.3.1`), and high-contrast Line 2 text luminance.
+- **Universal Header Hover Feeds**: Connected hover callbacks on `initButton`, `triggerButton`, `tooltipsButton`, `settingsButton`, `guideButton`, and `headerViz` so the entire interface feeds live parameter details into the status bar.
+- **Z-Order Assurance**: Enforced `statusBar.toFront(false)` in `resized()` across all editors.
+### 7. Automated VST3 Parameter Validation Suite & Headless `pluginval` Runner — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_vst3_parameter_validation_and_pluginval.md`](completed_plans/2026-10-06_vst3_parameter_validation_and_pluginval.md)*
+*Goal: Systematically validate 100% of registered VST3 parameters across The Klang Farmer and The Klang Planter through an in-engine 6-pillar reflection suite, backed by a portable headless pluginval runner.*
+- **In-Engine 6-Pillar Parameter Suite (`test/PluginIntensiveTestSuite.h`)**:
+  1. **Dynamic Reflection & Identity**: Recursively sweeps 100% of `processor.getParameters()` for both plugins without hardcoded lists, verifying non-empty IDs and names.
+  2. **Normalization Roundtrip**: Asserts `convertTo0to1(convertFrom0to1(x)) == x` across `[0.0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0]` with step-aware tolerances.
+  3. **Boundary Clamping & Safety**: Tests out-of-bounds input (-1.0, 2.0) to mathematically verify parameters clamp safely without underflow, overflow, or NaN leaks.
+  4. **JSON Schema Parity**: Verifies all registered parameter IDs exist in `assets/controls/*.json` with matching defaults, min/max ranges, and skew factors.
+  5. **State Serialization Roundtrip**: Saves APVTS state to XML/MemoryBlock &rarr; randomizes all parameters &rarr; restores state &rarr; asserts 100% restoration parity.
+  6. **DSP Audio Smoke Pass**: Sweeps parameters from 0.0 to 1.0 while pumping audio through `processBlock()` to prove zero NaNs, Infs, or divisions by zero under rapid host automation.
+- **Headless `pluginval` Fallback Runner (`tools/run_pluginval.ps1`)**:
+  - Authored portable runner script discovering `pluginval.exe` in `tools\` or system PATH at configurable strictness (default level 5).
+- **Verification Metric**: 207 / 207 `gui_tests` passed successfully with 100% assertion pass rate.
+
+### 8. Planter Header Visualizer Optimization & Latency Remediation — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-06_optimize_planter_gui_rendering.md`](completed_plans/2026-10-06_optimize_planter_gui_rendering.md)*  
+*Goal: Eliminate UI thread input latency and sluggishness in The Klang Planter by optimizing visualizer repaint cascades and message thread overhead.*
+- **Opaque Visualizer (`setOpaque(true)`)**: Prevents JUCE from invalidating and repainting the entire parent window background during real-time oscilloscope animations.
+- **30 Hz Timer Frequency Alignment**: Aligned `PlanterEditor` timer rate with `FarmerEditor` (30 Hz down from 60 Hz), cutting message thread repaint events in half.
+- **Scope Spline & Point Optimization**: Downsampled oscilloscope resolution from 128 points to 64 points with smooth rounded stroke joints, dramatically reducing CPU Bézier calculation time during software rendering.
+- **String & Glyph Layout Caching**: Cached static title, subtitle, and version strings and computed widths at initialization, eliminating per-frame JSON dictionary lookups and glyph arrangement loops in `paint()`.
+- **Idle Silence Bypass**: Added signal gate checking for zero amplitude before queuing repaints when the synthesizer is silent.
+- **Verification Metric**: 215 / 215 `gui_tests` passed successfully with 100% assertion pass rate.
+
+### 9. Schema Separation of Concerns & Cross-Reference "Where Used" Inspector
+*Detailed Plan: [`PLAN.md`](PLAN.md)*  
+*Goal: Enforce strict separation of concerns across JSON data layers and eliminate parameter discoverability gaps in The Klang Editor by introducing a pre-indexed Cross-Reference ("Where Used") navigation panel.*
+- **Strict Schema Separation**:
+  - `assets/controls/*.json`: Strictly DSP/APVTS parameter definitions. Zero visual styling, zero colors, zero pixel dimensions.
+  - `assets/layouts/*.json`: Structural UI hierarchy (Pages -> Cards -> parameter ID bindings).
+  - `assets/themes/*.json`: Created `assets/themes/` containing `theme.json` (color palettes, module accents) and `callouts.json` (floating overlay geometry, colors, and bound parameter arrays).
+- **Planter Master Limiter Discovery**: Added `[Callout] Master Limiter` under The Klang Planter in `assets/layouts/tkp_layout.json` so all 9 modules (8 surface cards + 1 callout) and 100% of APVTS parameters are discoverable in one place.
+- **Cross-Reference ("Where Used") Panel**:
+  - Added a lower resizable list panel beneath the Tree View in The Klang Editor.
+  - Pre-computes a two-way index map at startup (`< 2ms`) with zero runtime filesystem crawling.
+  - Selecting any parameter, card, or callout displays its bidirectional associations.
+  - Double-clicking any reference item automatically focuses, expands, and selects it in the tree and property form.
+- **Automated Schema Audit**: Updated `ParameterSchemaAuditTest` to hard-fail if any visual styling or color properties leak into `assets/controls/`.
+
+---
+
+## 🚀 Milestone: v0.3.2 "Agent Infrastructure & Guardrails Audit"
+*Focus: Post-release optimization of GEMINI.md guardrails, custom skills, inter-chat handoffs, and agent telemetry.*
+
+### 1. Comprehensive Guardrails & Skills Optimization Audit — ✅ COMPLETED
+*Goal: Systematically audit GEMINI.md, system rules, custom skills, and inter-chat communiques to eliminate cruft, reduce context bloat, streamline execution pipelines, and expand missing capabilities.*
+- **Guardrails Audit (`GEMINI.md`)**:
+  - Removed all references to retired `/pasteplan`, `/paste-plan`, and `/strict-plan`.
+  - Fixed typos (`\x08uild-validate` -> `build-validate`).
+  - Aligned 2-Strike Factory Floor Escalation Protocol across `GEMINI.md` and `build-validate/SKILL.md`.
+  - Codified the Strict Clipboard & External Link Ingestion Guardrail to prevent accidental OS clipboard sniffing or URL scraping.
+  - Codified the Strict Guardrail & Skills Governance Gate, restricting `GEMINI.md`, system rules, and skills editing exclusively to New Klang City (Ivory Tower) unless explicitly bypassed by the user with `"just do it"`.
+- **Skills Modernization & 100% Directory Parity**:
+  - Retired and deleted obsolete skills (`strict-plan`, `paste-plan`) across both workspace (`.agents/skills/`) and global (`C:\Users\codyg\.gemini\config\skills\`) directories.
+  - Modernized `read-plan` as the official Communiqué Dispatch Ingestor (`docs/communique/plan_to_build.md` -> `PLAN.md`).
+  - Modernized `execute-task` and `task-finish` to purge all Linear.app references and dead backlog paths, sourcing strictly from `docs/BACKLOG.md`.
+  - Synchronized workspace (`.agents/skills/`) and global (`~/.gemini/config/skills/`) in 100% exact parity across all 12 active skills.
+- **Inter-Chat Communique Tuning (`docs/communique/`)**:
+  - Added `STATUS: COMPLETED` as a formal terminal state in `plan_to_build.md` to prevent stale dispatch pickups.
+  - Mandated dual-mailbox closure in `task-finish` (updating both `build_to_plan.md` and `plan_to_build.md`).
+
+### 2. Unified Filterable Master Tree & Dedicated Text/Localization Schema — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-07_unified_tree_text_schema.md`](completed_plans/2026-10-07_unified_tree_text_schema.md)*  
+*Goal: Redesign The Klang Editor's navigation tree into a unified master tree with multi-state layer filters, extract text/tooltips into a dedicated data schema, and standardize DSP block file naming.*
+- **Unified Master Tree with Layer Filters**:
+  - Replaced the dual tabs (`CONTROLS` and `LAYOUTS`) with a single unified `masterTree`.
+  - Added 3 toggle filter buttons above the tree: `[Controls]`, `[Layout]`, and `[Theme]`, with Smart Minimum enforcement.
+  - Implemented simultaneous property editing: selecting a parameter node in `[Controls]` allows editing DSP limits and text descriptions side-by-side with smart routing to respective JSON files on save.
+- **Dedicated Text & Tooltip Schema (`assets/text/strings.json`)**:
+  - Extracted 100% of parameter descriptions and choice tooltips out of `assets/controls/*.json` into `assets/text/strings.json`.
+  - Organized under clean modular namespaces (`"shared"`, `"farmer"`, `"planter"`).
+  - Maintained parameter `"name"` in `assets/controls/` as the immutable DAW/Host automation contract.
+  - Implemented seamless startup text merge in `ParameterManager` for zero C++ call-site breakage.
+- **DSP Block File Naming Standardization (`assets/controls/*.json`)**:
+  - Renamed legacy plural files: `modulator.json`, `filter.json`, `envelope.json`. Ruthlessly purged plural files.
+- **Verification Metric**: 275 / 275 `gui_tests` passed successfully with 100% assertion pass rate across all 11 test suites; 100% `dsp_tests` passed. Binaries deployed to `current_build/` and system VST3 directories.
+
+### 3. Developer Logging Subsystem (`TKS_LOG`) & Diagnostics Engine — ✅ COMPLETED
+*Detailed Plan: [`docs/completed_plans/2026-10-07_dev_logger_subsystem.md`](completed_plans/2026-10-07_dev_logger_subsystem.md)*  
+*Goal: Provide structured, leveled developer logging for UI lifecycles, asset loading, and DAW diagnostics in debug builds, strictly guarded against real-time audio thread abuse and stripped completely in release builds.*
+- **Dual-Mode Output**:
+  - Debug builds pipe timestamped entries to system debugger (`OutputDebugString` / `DBG`) and write to a rotating `%LOCALAPPDATA%/TheKlangSuite/dev.log`.
+  - File retention is capped at 5 MB with a maximum of 2 rolled backup files.
+- **Leveled Diagnostics**:
+  - `TKS_LOG_INFO`: Normal lifecycle events (JSON asset loading, window resize, preset init).
+  - `TKS_LOG_WARN`: Non-fatal anomalies (missing optional property, fallback styling used).
+  - `TKS_LOG_ERROR`: Critical errors (JSON syntax parse failure, missing APVTS binding).
+- **Strict Audio Thread Safety & Static Guardrail**:
+  - `TKS_LOG` asserts in Debug builds if invoked on audio threads, with safe early return before memory allocation.
+  - `audiothread-guard` static analysis rules flag any `TKS_LOG*` invocations inside audio loops (`processBlock`, `renderVoice`) at build time.
+- **Zero Release Overhead**:
+  - Compiled out completely to empty no-ops (`do {} while (false)`) when `JUCE_DEBUG` is not defined. Zero binary strings, zero allocations, zero CPU overhead.
+- **Verification Metric**: 294 / 294 `gui_tests` passed successfully with 100% assertion pass rate across all 12 test suites in both Debug and Release configurations; 100% `dsp_tests` passed. Binaries deployed to `current_build/` and system VST3 directories.
+
+---
+
+## 🚀 Milestone: v0.4.0 "The Interface & Experience Update"
+*Focus: Complete Clean-Slate UX Overhaul, Modern Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.*
+
+### 1. The Neo-Slate Vector Design System & Chassis Overhaul
+*Goal: Overhaul the overall plugin window chassis with a sleek, modern, non-skeuomorphic vector design inspired by Kilohearts Phase Plant, Vital, and Arturia Pigments.*
+- **Header-Integrated Navigation & Visualizer**:
+  - Evict the legacy navigation card and visualizer card from the module rack grid.
+  - Implement sleek horizontal Page Navigation tabs directly in the top Chassis Header (`[VOICE 1]`, `[VOICE 2]`, `[TRANSIENTS]`, `[FX 1-4]`, `[FX 5-8]`, `[MOD]`).
+  - Integrate a unified real-time stereo oscilloscope, peak VU meters, and Limiter badge into the header (modeled after The Klang Planter's high-performance header visualizer).
+  - Frees up 100% of the main rack canvas exclusively for sound-sculpting module cards!
+- **Neo-Slate Visual Aesthetic**:
+  - Dark matte slate surfaces (`0xff121622`), crisp 1px borders (`0xff2a3449`), high-contrast typography, and vibrant neon accent highlights.
+  - Zero faux-vintage screws, zero fake drop shadows, zero 3D skeuomorphism. Clean, futuristic, responsive, and distraction-free.
+
+### 2. The 4-Controls-Per-Card Clean Slate Architecture
+*Goal: Radically simplify the synthesizer surface into focused, punchy modules with exactly 4 primary performance controls per Card, establishing 1:1 hardware synergy with 4-encoder controllers (dadamachines TBD-16).*
+- **Clean-Slate Parity Break**:
+  - Cut the anchor to the legacy v0.2.0 prototype parameter sprawl.
+  - Curate each module down to its 4 most musically expressive controls.
+- **Vertical 1x4 Meter Slider Stacks**:
+  - Each Card contains 4 horizontal Meter Sliders stacked top-to-bottom.
+  - Full card width allows generous parameter labels on the left and live formatted values on the right with zero abbreviations.
+  - Integrated real-time diagram rendering (waveform morphs, exponential decay slopes, filter curves) inside slider troughs.
+- **TBD-16 Hardware Synergy**:
+  - The 4 sliders map directly to Encoders 1, 2, 3, 4 of a 1x4 encoder hardware controller.
+
+### 3. The Right-Click Callout Deep-Dive Layer
+*Goal: Keep the primary playing surface uncluttered while providing instant, elegant access to secondary parameters, tuning modes, and curve configurations.*
+- **Popover Callout Architecture**:
+  - Right-clicking any module card or parameter launches a sleek floating `juce::CallOutBox` mini-card.
+  - Houses secondary parameters: MIDI tracking modes, snap point selections, velocity sensitivity curves, and fine-tune detents.
+  - Translates cleanly to `[SHIFT]` / `[PAGE 2]` encoder views on physical hardware.
+
+### 4. Interactive Parameter & Curve Audit Tool in The Klang Editor
+*Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
+*Goal: Integrate an interactive curve calibration workspace in The Klang Editor to systematically tune the tactile response, snap points, logarithmic slider slopes, and ergonomic double-click defaults of the new curated 4-control parameter set.*
+- Live interactive slider evaluation, tactile response tuning, and real-time visualization of parameter skew factor curves.
+- Test and calibrate discrete musical snap points live within the editor before persisting to `assets/controls/*.json`.
+
+---
+
+## 🚀 Milestone: v0.5.0 "The Sound & Chaos Update"
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
+
+### 0.5. The Klang Editor Interactive Parameter & Curve Audit Tool (Breaking Parity)
+*Goal: Build an interactive parameter audit and curve calibration workspace directly inside The Klang Editor (TKE) to systematically audit and redesign the tactile feel, custom snap points, logarithmic slider slopes, and ergonomic double-click defaults of all controls.*
+> ⚠️ **MANDATORY PLANNING DIRECTIVE (New Klang City):** When this item is reached on the backlog, the planning agent MUST NOT jump straight to blueprinting or implementation. New Klang City MUST initiate an interactive architectural discussion / interview (`/grill-me` or interactive decision modal) with the user to collaboratively explore and align on the editor workflow, curve tooling requirements, and visual UI before drafting `PLAN.md`.
+- **Integrated Editor Audit Workspace**:
+  - Integrate an interactive audit / calibration view directly into The Klang Editor navigation tree (`The Klang Editor`).
+  - Provide live interactive slider evaluation, tactile response tuning, and real-time visualization of parameter skew factor curves.
+- **Double-Click Reset & Tactile Ergonomics**:
+  - Audit all card controls across Farmer and Planter for musically optimal double-click reset values.
+  - Tune slider skew factors (logarithmic/exponential/linear curves) for frequency, time, and resonance parameters.
+- **Discrete Musical Snap Points & Magnetism**:
+  - Add discrete snap points, detents, and magnetism to key musical intervals (e.g. semitones, octaves, harmonic ratios, tempo sync fractions) and zero-crossings.
+  - Test and calibrate snap points live within the editor before persisting to `assets/controls/*.json`.
+
+### 0.6. Transparent Quota Telemetry & Language Server Probe (`/quota` Skill)
+*Goal: Provide instant, transparent visibility into Antigravity model quotas (5-hour rolling bucket, weekly tier allowances) without diving deep into IDE settings menus.*
+- **Investigation & Probing**:
+  - Probe the local running `language_server.exe` gRPC/HTTP bridge (`localhost:61440/61441`) and Google Cloud Code endpoint to determine if quota/bucket metrics are accessible via a lightweight local socket call.
+  - Evaluate creating a custom slash command skill (`/quota`) or status bar widget that displays active tier allowances on demand in <50ms without network roundtrips.
+- **Guardrails**:
+  - Strictly on-demand execution (never polled automatically during every model evaluation to prevent latency, token bloat, and rate-limiting).
+
+### 0.7. Tier 1 SIMD Voice Summation & Branchless FM Phase Accumulators
+*Goal: Optimize real-time FM operator phase modulation and polyphonic voice summation using JUCE 9 SIMD wrappers and branchless bitwise math.*
+- **SIMD Voice Summation (`juce::dsp::SIMDRegister<float>`)**:
+  - Migrate polyphonic voice summation from sequential loops to hardware-abstracted 64-byte aligned SIMD registers (4-lane SSE / 8-lane AVX2).
+  - Adopt a Structure-of-Arrays (SoA) layout for active voice synthesis buffers to eliminate cache-line thrashing.
+- **Branchless Power-of-Two FM Phase Wrapping**:
+  - Replace conditional phase wrapping with 32-bit fixed-point integer phase accumulators (`uint32_t`) and power-of-two lookup table indexing with bitwise masking (`& 4095`).
+  - Completely eliminates CPU branch mispredictions and CRT transcendentals in hot FM feedback and cross-modulation loops.
+
+### 0.9. The Klang Editor CalloutBox Preview & Live Theming Harness — ✅ COMPLETED
+*Goal: Bring full parity and visual inspection capability for all modal CalloutBoxes directly into The Klang Editor, backed by automated GUI test coverage.*
+- **Editor Callout Inspection Toolbar**:
+  - Add dedicated preview triggers in The Klang Editor's property inspector for floating callout components:
+    1. `PlanterLimiterCalloutComponent` (Master Limiter mini-card).
+    2. `SliderCalloutComponent` (Snap points, modulation routing, numeric entry).
+    3. `SelectorCalloutComponent` (Discrete selector default reset menu).
+- **Data-Driven Theming Integration**:
+  - Expose callout chassis dimensions, border radii, accent colors, and typography profiles in `assets/controls/global_ui.json` under `"callout_styles"`.
+  - The Editor allows live adjustment of callout padding, knob width, and typography with real-time visual preview.
+- **Automated Test Coverage (`test/gui_tests.cpp`)**:
+  - Expand the Editor functional test suite to programmatically open, render, and dismiss every registered CalloutBox variant with zero leaks and 100% paint assertion success.
+
+### 0. Automated Version Bump Guardrail (`/cut-release` Skill) — ✅ COMPLETED
+*Skill Definition: [`C:\Users\codyg\.gemini\config\skills\cut-release\SKILL.md`](file:///C:/Users/codyg/.gemini/config/skills/cut-release/SKILL.md)*  
+*Goal: Formalize the "Version Bump = Clean Slate" workflow by building a dedicated AGY slash command to execute the 5-stage pre-release regression gauntlet safely.*
+- **Phase 1 (Safe Cruft Sweep)**: Auto-cleans ephemeral scratch scripts (`*.tmp`, `temp_*.txt`, `update_*.py`); halts if uncommitted edits to tracked C++/JSON files exist.
+- **Phase 2 (Dual-Config Regression Gauntlet)**: Compiles and runs `Debug` (asserts & memory checks) and `Release` (100% `dsp_tests` & `gui_tests` passes, plus `pluginval` host validation). If any failure occurs, halts and rolls back to Bug Squashing Mode.
+- **Phase 3 (Version Bump & Tagging)**: Updates `CMakeLists.txt` and `source/VersionChecker.h`, runs `deploy.ps1`, commits `chore(release): bump version to vX.X.X`, and creates annotated Git tag.
+- **Phase 4 (Desktop Sanity & GitHub Remote Push)**: Prompts user to verify deployed binaries, then prompts to push active branch and release tags to GitHub (`git push origin <branch> --tags`).
+- **Phase 5 (Summon the Harvester)**: Interactive modal prompt to archive institutional memory into `docs/DEV_HISTORY.md`, slice previous releases to `docs/archives/`, wipe chat transcripts, and reset context clues for a clean slate kickoff.
+
+### 0.8. Smart Model Auto-Detection & Verification Badging (Frictionless Kickoff Guardrail) — ✅ COMPLETED
+*Rule Reference: [`GEMINI.md`](../GEMINI.md)*  
+*Goal: Eliminate redundant execution pause gates and modal deadlocks when the active AI agent model and thinking level already match or exceed the task's required complexity tier.*
+- **Contextual Self-Inspection**: The agent checks its active model identity and extended thinking level from session context instructions.
+- **Matched Tier Auto-Proceed**: If active configuration matches the required tier (e.g. Flash 3.8 High on Tier 2), outputs a subtle non-blocking verification badge (`✓ Model Verified: <Model> (<Thinking>) matches Tier <N>`) and begins immediately without pausing.
+- **Mismatched Tier Quota Defense**:
+  - If lower than required (e.g. Flash on Tier 1 DSP math): Full advisory banner + mandatory hard-pause to switch models.
+  - If higher than required (e.g. Pro 3.1 on Tier 2/3 task): Advisory banner + 5-minute downgrade timer (Tier 1 on 2) or hard pause (Tier 1 on 3) to prevent accidental Pro burn.
+- **Modal-Free Builder Gate**: Builder never pops up blocking `ask_question` modals during task initialization, ensuring the IDE model picker in the footer is never locked.
+
+### 0.10. Threshold-Aware Factory Clean Slate & Soul Harvest Protocol — ✅ COMPLETED
+*Rule Reference: [`GEMINI.md`](../GEMINI.md)*  
+*Goal: Balance pristine context hygiene with working memory retention in Klang Industries, preventing model hallucinations while avoiding unnecessary agent amnesia on rapid iterations.*
+- **Zero-Friction Young Sessions (< 12 turns)**: Automatically proceeds without prompting to harvest, preserving warmed-up compiler insights, recent file state, and rapid iteration speed.
+- **Context-Aware Mature Sessions (> 15 turns)**: In mature sessions with heavy build/test logs, appends a subtle non-blocking 1-line note offering a clean slate (`💡 Factory Context Notice: ~N turns accumulated. Reply 'proceed' to build, or 'harvest & proceed' for a clean slate`).
+- **Power-User Override Flag**: Supports explicit `harvest & proceed` / `proceed --harvest` at any time, instantly triggering the `/refresh-context` workflow into `docs/DEV_HISTORY.md` and `context_clues_build.md` before compiling.
+- **Modal-Free Safety**: Never uses interactive modals on plan kickoff, keeping the IDE model picker in the footer accessible.
 
 ### 1. Parameter Randomization Engine (d6)
 Add a fully JSON-driven contextual randomization system:
@@ -190,9 +456,16 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - Flushes all internal delay lines, reverb tanks, and comb filter feedback buffers to zero.
   - Resets active MIDI voice tracking and legato gate memory.
 
+### 8. Evaluate Agentic Workflow Strategy (Context Wipes & Strict Chat Roles)
+*Goal: After completing v0.4.0, review how well the two-chat workflow held up against prompt drift and task bleeding.*
+- Did the `/clear` command with split `context_clues.md` files sufficiently protect against hidden state?
+- Did the strict "Planner vs Builder" guardrail successfully prevent task bleeding and keep architecture decisions centralized?
+- **Granular Hybrid Decomposition & 2-Strike Escalation**: Codified Flash 3.8 High as the universal default baseline for both planning and building. Pro High is strictly an exception reserved for complex DSP math/concurrency, and when used for planning, must decompose `PLAN.md` into granular drop-in C++ blueprints so execution drops back to Flash High.
+- Document final workflow decisions in `docs/post_v040_workflow_retro.md`.
+
 ---
 
-## 🚀 Milestone: v0.5.0 "The Pro Workflow Update"
+## 🚀 Milestone: v0.6.0 "The Pro Workflow Update"
 *Focus: Professional DAW Integration, File Management, Preset Library, and Export.*
 
 ### 1. JSON Preset Browser, Tagging & State Migration
@@ -291,7 +564,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 
 ---
 
-## 🚀 Milestone: v0.6.0 "The Visual Polish & UI Mastery Update"
+## 🚀 Milestone: v0.7.0 "The Visual Polish & UI Mastery Update"
 *Focus: Professional Boutique Aesthetics, High-DPI Scaling, 60 FPS Visualizers, and Tactile Industrial Hardware Styling.*
 
 ### 1. Dynamic UI Scaling (100% to 200%) & High-DPI Vector Crispness

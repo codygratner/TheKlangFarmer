@@ -1,9 +1,21 @@
 #include "VersionChecker.h"
 
+static VersionChecker* activeVersionCheckerInstance = nullptr;
+
 VersionChecker& VersionChecker::getInstance()
 {
-    static VersionChecker instance;
-    return instance;
+    if (activeVersionCheckerInstance == nullptr)
+        activeVersionCheckerInstance = new VersionChecker();
+    return *activeVersionCheckerInstance;
+}
+
+void VersionChecker::teardown()
+{
+    if (activeVersionCheckerInstance != nullptr)
+    {
+        delete activeVersionCheckerInstance;
+        activeVersionCheckerInstance = nullptr;
+    }
 }
 
 VersionChecker::VersionChecker()
@@ -14,6 +26,7 @@ VersionChecker::VersionChecker()
 VersionChecker::~VersionChecker()
 {
     stopThread(3000);
+    activeVersionCheckerInstance = nullptr;
 }
 
 void VersionChecker::checkForUpdates(bool force)

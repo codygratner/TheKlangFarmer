@@ -1,51 +1,82 @@
 ---
 name: read-plan
-description: Scans the workspace for existing architectural plans (PLAN.md, backlog, or completed plans) and presents an interactive picker to load them for review or execution. Triggers on `/readplan` or `/read-plan`.
+description: Serves as Klang Industries' official Communiqué Dispatch Ingestor. Inspects docs/communique/plan_to_build.md and PLAN.md, transitions dispatch lifecycle to IN_PROGRESS, outputs the model verification badge, and readies execution. Triggers on `/readplan`, `/read-plan`, "read plan", "ingest plan", "take job", or "take plan".
 ---
 
-# Internal Plan Ingestor (`read-plan`)
+# Communiqué Dispatch Ingestor (`read-plan`)
 
 ## Goal
-To locate and ingest internally stored plans (`PLAN.md`, `docs/*_plan.md`, `docs/completed_plans/*`, or tickets from `docs/BACKLOG.md`) and load them into the active workspace, while strictly honoring the "No Spontaneous Implementation" global guardrail.
+Ingest architectural blueprints and signed dispatch contracts published by New Klang City in `docs/communique/plan_to_build.md` (or `PLAN.md`), verify the contract lifecycle state, transition it to `STATUS: IN_PROGRESS`, output model advisory verification, and ready the factory floor for execution—with zero arbitrary clipboard sniffing.
+
+---
 
 ## Workflow
 
-### 1. File Discovery & Interactive Picker (If No Target Provided)
-If the user triggers `/readplan` without specifying a specific file name or feature:
-1. **Scan the Workspace:**
-   - Look for `PLAN.md` at the project root.
-   - Search the `docs/` directory for any active feature plans (`*_plan.md`).
-   - Search `docs/completed_plans/` for archived plans (if they wish to resume/review).
-   - Parse `docs/BACKLOG.md` for the current Top Priority tickets.
-2. **Present the Picker via `ask_question`:**
-   Invoke the `ask_question` tool with the list of discovered plans and backlog tickets:
-   - **Question:** *"Which plan would you like to load into the workspace?"*
-   - **Options:** Formatted as clickable choices (e.g., `(Recommended) [Active] PLAN.md - <Title>`, `[Backlog] docs/preset_system_plan.md - <Title>`, etc.)
-3. **Execution Proceeds Directly:** The selection is handled immediately from the user's click.
+### 1. Inspect Communiqué Mailbox (`docs/communique/plan_to_build.md`)
+1. Open and parse `docs/communique/plan_to_build.md` at project root.
+2. Check the `Status:` field:
+   - **Case A: `STATUS: READY_FOR_EXECUTION` (Active Signed Contract)**:
+     - Extract **Task Name**, **Active Milestone**, **Recommended Model Tier**, **Strategic Objective**, and **Directives**.
+     - Verify that [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) at root matches this task. If `PLAN.md` is empty or holds an older blueprint, synchronize the directives into `PLAN.md`.
+     - Update `docs/communique/plan_to_build.md` setting:
+       `Status: IN_PROGRESS` (with timestamp).
+     - Proceed directly to **Section 3 (Briefing & Model Gate)**.
+   - **Case B: `STATUS: COMPLETED` or `STATUS: DRAFTING` (No Pending Dispatch)**:
+     - Check [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) on disk.
+     - If `PLAN.md` exists and contains active unchecked items (`- [ ]`), load `PLAN.md` and proceed to Section 3.
+     - If both `plan_to_build.md` and `PLAN.md` are idle/completed:
+       - Proceed to **Section 2 (Workspace Fallback Discovery)**.
 
-### 2. File Ingest (If Target Provided or Selected)
-If the user specifies a file (e.g., `/readplan preset_system_plan`) or selects one from the picker:
-1. Locate the file on disk.
-2. Read the contents.
-3. If the selected file is NOT already `PLAN.md` at the project root, copy the contents and overwrite `PLAN.md` at the project root.
+---
 
-### 3. Briefing & Mandatory Decision Gate
-Parse the loaded `PLAN.md` for its Objective and Phase count.
-Print the summary:
+### 2. Workspace Fallback Discovery (If Mailbox is Idle)
+If no active contract is waiting in `plan_to_build.md`:
+1. Scan `docs/` for unexecuted feature plans (`docs/*_plan.md`) and check top priorities in [`docs/BACKLOG.md`](file:///c:/Dev/TheKlangSuite/docs/BACKLOG.md).
+2. Present a clean interactive picker via `ask_question`:
+   - **Question:** *"No pending dispatch in `plan_to_build.md`. Which roadmap item would you like to review or stage?"*
+   - **Options:** Formatted as direct user selections (e.g., `Load [Feature Plan] docs/some_plan.md`, `Stage top item from docs/BACKLOG.md`, `Keep idle and await New Klang City dispatch`).
+3. If an item is selected, load its contents into `PLAN.md`.
+
+---
+
+### 3. Dispatch Intake Briefing & Builder Model Gate
+Display the ingested contract summary:
+
 ```markdown
-# 📖 Plan Loaded
-**Objective:** <Objective>
-**Phases:** <N> Total Phases
+# 📬 Blueprint Ingested from Communiqué
+
+**Task:** <Task Name>  
+**Milestone:** <Milestone>  
+**Status:** IN_PROGRESS  
+
+### Strategic Objective
+<Objective Summary>
+
+### Immediate Focus: Phase 1
+- **Target Files:** <Files>
+- **Verification Target:** <Unit tests / assertions>
 ```
 
-**CRITICAL GUARDRAIL:** You must NEVER automatically start implementation. You MUST invoke the `ask_question` tool to present the user with an interactive clickable modal:
-- **Question:** *"How would you like to proceed with this plan?"*
-- **Options:**
-  - `(Recommended) Start Phase 1 pipeline: Check branch safety, bump version with feature tag, and begin automated engineering loop`
-  - `Defer to Backlog: Move plan to docs/<slug>_plan.md and record as a priority in docs/BACKLOG.md`
-  - `Review Only: Keep PLAN.md active at project root and wait for manual instructions`
+#### Smart Model Verification & Non-Modal Gate:
+1. **Self-Inspection**: Inspect active model and thinking configuration from session instructions.
+2. **If Active Model Matches/Exceeds Recommended Tier**:
+   - Output subtle verification badge:
+     `✓ Model Verified: <Model> (<Thinking Level>) matches Tier <N>`
+   - Prompt user in chat text:
+     > Ready to construct. Reply **`proceed`** or **`engage`** to launch Phase 1.
+3. **If Active Model is Below Recommended Tier**:
+   - Render the prominent Model Advisory block:
+     ```markdown
+     > 🧠 **MODEL ADVISORY: Tier <N>**
+     > - **Recommended Setting:** <Recommended Model & Thinking>
+     > - **Quota Impact:** <Impact>
+     > - **Active Model Check:** Please adjust your model dropdown in the IDE footer before proceeding!
+     ```
+   - **CRITICAL BUILDER GUARDRAIL (NO MODALS ON EXECUTION START):** Under NO circumstances invoke `ask_question` here (interactive modals freeze the IDE footer and prevent changing the model dropdown). Pause in regular chat text waiting for user to adjust model and reply `proceed`.
 
-### 4. Handoff
-- If the user selects **1**: Coordinate the Git Branch Safety Gate, the Feature Version Bump, and begin the Automated Execution Pipeline (delegating to the logic in `paste-plan` / `execute-task`).
-- If the user selects **2**: Execute the Backlog Deferment Flow.
-- If the user selects **3**: Halt execution.
+---
+
+### 4. Execution Handoff
+When the user replies `proceed`, `engage`, or `harvest & proceed`:
+- Verify current branch safety (must not be `master` or `main`).
+- Hand off execution directly to Phase 1 of the automated factory pipeline (`execute-task` / `step-verify`).

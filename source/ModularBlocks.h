@@ -283,6 +283,11 @@ struct VisualScope {
         }
     }
 
+    void clear() {
+        std::fill(buffer.begin(), buffer.end(), 0.0f);
+        writeIndex.store(0, std::memory_order_release);
+    }
+
     void readTriggered(float* outBuffer, int count, int triggerPos, float step) const {
         if (!outBuffer || count <= 0) return;
         for (int i = 0; i < count; ++i) {

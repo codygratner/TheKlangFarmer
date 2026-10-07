@@ -1,5 +1,6 @@
 #include "ParameterManager.h"
 #include "TkfAssets.h"
+#include "DevLogger.h"
 
 namespace RlyehSound {
 
@@ -14,6 +15,8 @@ ParameterManager::ParameterManager() {
             parseJsonBlob(data, dataSizeInBytes);
         }
     }
+    mergeTextIntoControls();
+    TKS_LOG_INFO("ParameterManager: initialized with " + juce::String(controls.size()) + " controls, " + juce::String(textDescriptions.size()) + " descriptions, and " + juce::String(textChoiceTooltips.size()) + " choice tooltips");
 }
 
 juce::Colour ParameterManager::getModuleColor(const juce::String& colorId, juce::Colour defaultFallback) const {
@@ -24,12 +27,29 @@ juce::Colour ParameterManager::getModuleColor(const juce::String& colorId, juce:
     return defaultFallback;
 }
 
+juce::Colour ParameterManager::getGlobalColor(const juce::String& colorId, juce::Colour defaultFallback) const {
+    auto it = globalColors.find(colorId);
+    if (it != globalColors.end()) {
+        return it->second;
+    }
+    auto itMod = moduleColors.find(colorId);
+    if (itMod != moduleColors.end()) {
+        return itMod->second;
+    }
+    return defaultFallback;
+}
+
 void ParameterManager::parseJsonBlob(const char* data, int size) {
     juce::String jsonString = juce::String::fromUTF8(data, size);
     auto var = juce::JSON::parse(jsonString);
 
     if (var.isObject()) {
         auto* obj = var.getDynamicObject();
+        if (obj->hasProperty("shared") || obj->hasProperty("farmer") || obj->hasProperty("planter")) {
+            parseStringsJson(var);
+            return;
+        }
+
         for (auto& prop : obj->getProperties()) {
             ControlDef def;
             def.id = prop.name.toString();
@@ -39,7 +59,7 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
             if (vObj == nullptr)
                 continue;
             
-            if (def.id == "ui_colors") {
+            if (def.id == "ui_colors" || def.id == "module_colors") {
                 for (auto& colorProp : vObj->getProperties()) {
                     juce::String hex = colorProp.value.toString();
                     if (hex.startsWithIgnoreCase("0x")) hex = hex.substring(2);
@@ -49,7 +69,17 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
                 continue;
             }
 
-            if (def.id == "ui_strings") {
+            if (def.id == "global_colors") {
+                for (auto& colorProp : vObj->getProperties()) {
+                    juce::String hex = colorProp.value.toString();
+                    if (hex.startsWithIgnoreCase("0x")) hex = hex.substring(2);
+                    if (hex.startsWithIgnoreCase("#")) hex = hex.substring(1);
+                    globalColors[colorProp.name.toString()] = juce::Colour::fromString(hex.length() == 6 ? "ff" + hex : hex);
+                }
+                continue;
+            }
+
+            if (def.id == "ui_strings" || def.id == "global_strings") {
                 for (auto& strProp : vObj->getProperties()) {
                     globalStrings[strProp.name.toString()] = strProp.value.toString();
                 }
@@ -126,9 +156,75 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
     }
 }
 
+void ParameterManager::parseStringsJson(const juce::var& var) {
+    if (!var.isObject()) return;
+    auto* rootObj = var.getDynamicObject();
+
+    // 1. Shared strings
+    if (rootObj->hasProperty("shared")) {
+        auto& sharedVar = rootObj->getProperty("shared");
+        if (sharedVar.isObject()) {
+            auto* sObj = sharedVar.getDynamicObject();
+            for (auto& prop : sObj->getProperties()) {
+                globalStrings[prop.name.toString()] = prop.value.toString();
+            }
+        }
+    }
+
+    // 2. Namespaced product strings (farmer, planter)
+    auto parseProductStrings = [this](const juce::var& pVar) {
+        if (!pVar.isObject()) return;
+        auto* pObj = pVar.getDynamicObject();
+        for (auto& modProp : pObj->getProperties()) {
+            if (!modProp.value.isObject()) continue;
+            auto* modObj = modProp.value.getDynamicObject();
+            for (auto& paramProp : modObj->getProperties()) {
+                juce::String paramId = paramProp.name.toString();
+                if (!paramProp.value.isObject()) continue;
+                auto* entryObj = paramProp.value.getDynamicObject();
+                if (entryObj->hasProperty("description")) {
+                    textDescriptions[paramId] = entryObj->getProperty("description").toString();
+                }
+                if (entryObj->hasProperty("choice_tooltips")) {
+                    auto& tVar = entryObj->getProperty("choice_tooltips");
+                    if (tVar.isArray()) {
+                        juce::StringArray tooltips;
+                        for (auto& item : *tVar.getArray()) {
+                            tooltips.add(item.toString());
+                        }
+                        textChoiceTooltips[paramId] = tooltips;
+                    }
+                }
+            }
+        }
+    };
+
+    if (rootObj->hasProperty("farmer"))
+        parseProductStrings(rootObj->getProperty("farmer"));
+    if (rootObj->hasProperty("planter"))
+        parseProductStrings(rootObj->getProperty("planter"));
+}
+
+void ParameterManager::mergeTextIntoControls() {
+    for (auto& [paramId, desc] : textDescriptions) {
+        auto it = controls.find(paramId);
+        if (it != controls.end()) {
+            it->second.description = desc;
+        }
+    }
+    for (auto& [paramId, tooltips] : textChoiceTooltips) {
+        auto it = controls.find(paramId);
+        if (it != controls.end()) {
+            it->second.choiceTooltips = tooltips;
+        }
+    }
+}
+
 void ParameterManager::reloadFromJson(const juce::String& jsonString) {
     auto stdString = jsonString.toStdString();
     parseJsonBlob(stdString.c_str(), static_cast<int>(stdString.size()));
+    mergeTextIntoControls();
+    TKS_LOG_INFO("ParameterManager: reloaded from JSON, total controls: " + juce::String(controls.size()));
 }
 
 } // namespace RlyehSound

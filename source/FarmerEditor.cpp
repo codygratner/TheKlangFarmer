@@ -1909,130 +1909,24 @@ void TheKlangFarmerAudioProcessorEditor::setupKnob(RotaryKnobSlider& slider, juc
     slider.getDefaultValue = [defaultVal]() { return defaultVal; };
 }
 
-static juce::String getFarmerParamDescription(const juce::String& paramId, bool& isBipolar) {
-    isBipolar = false;
-    // Carrier 1
-    if (paramId == "carrier1_pitch") return "Carrier 1 pitch transpose / frequency offset";
-    if (paramId == "carrier1_shape") return "Carrier 1 waveform shape morphing (Sine -> Triangle -> Saw -> Pulse)";
-    if (paramId == "carrier1_depth") { isBipolar = true; return "Frequency modulation depth from Modulator 1"; }
-
-    // Modulator 1
-    if (paramId == "mod1_shape") return "Modulator 1 waveform shape / symmetry";
-    if (paramId == "mod1_speed") return "Modulator 1 frequency / semitone offset / FM ratio";
-
-    // Pitch Env 1
-    if (paramId == "pitchenv1_slope") return "Pitch envelope decay curve tension from punchy exponential to linear";
-    if (paramId == "pitchenv1_depth") { isBipolar = true; return "Bipolar pitch envelope modulation depth in semitones"; }
-    if (paramId == "pitchenv1_decay") return "Pitch envelope decay duration";
-
-    // Filter 1
-    if (paramId == "filter1_cutoff") return "Filter 1 cutoff corner / center frequency (20 Hz - 24 kHz)";
-    if (paramId == "filter1_resonance") return "Filter 1 resonance / Q sharpness boost at cutoff";
-
-    // Filter Env 1
-    if (paramId == "filterenv1_slope") return "Filter envelope decay curve tension";
-    if (paramId == "filterenv1_depth") { isBipolar = true; return "Cutoff modulation depth in octaves (-10 to +10 oct)"; }
-    if (paramId == "filterenv1_decay") return "Filter envelope decay duration";
-    if (paramId == "filterenv1_postdrive") return "Pre-filter analog saturation drive gain (-6 to +24 dB)";
-
-    // Carrier 2
-    if (paramId == "carrier2_pitch") return "Carrier 2 pitch transpose / frequency offset";
-    if (paramId == "carrier2_shape") return "Carrier 2 waveform shape morphing";
-    if (paramId == "carrier2_depth") { isBipolar = true; return "Frequency modulation depth from Modulator 2"; }
-
-    // Modulator 2
-    if (paramId == "mod2_shape") return "Modulator 2 waveform shape / symmetry";
-    if (paramId == "mod2_speed") return "Modulator 2 frequency / semitone offset / FM ratio";
-
-    // Pitch Env 2
-    if (paramId == "pitchenv2_slope") return "Voice 2 pitch envelope decay curve tension";
-    if (paramId == "pitchenv2_depth") { isBipolar = true; return "Voice 2 pitch envelope modulation depth in semitones"; }
-    if (paramId == "pitchenv2_decay") return "Voice 2 pitch envelope decay duration";
-
-    // Filter 2
-    if (paramId == "filter2_cutoff") return "Filter 2 cutoff corner / center frequency";
-    if (paramId == "filter2_resonance") return "Filter 2 resonance / Q sharpness boost at cutoff";
-
-    // Filter Env 2
-    if (paramId == "filterenv2_slope") return "Filter 2 envelope decay curve tension";
-    if (paramId == "filterenv2_depth") { isBipolar = true; return "Filter 2 cutoff modulation depth in octaves"; }
-    if (paramId == "filterenv2_decay") return "Filter 2 envelope decay duration";
-    if (paramId == "filterenv2_postdrive") return "Filter 2 pre-filter saturation drive gain";
-
-    // Noise Transient
-    if (paramId == "noise_sh_rate") return "Sample-and-hold downsampling clock rate for metallic textures";
-    if (paramId == "noise_filter") return "Transient noise band-pass / center frequency color";
-    if (paramId == "noise_drive") return "Transient noise saturation drive gain";
-    if (paramId == "noise_decay") return "Transient noise burst decay time";
-
-    // Filter 3 (Transients Filter)
-    if (paramId == "filter3_cutoff") return "Filter 3 cutoff corner / center frequency";
-    if (paramId == "filter3_resonance") return "Filter 3 resonance / Q sharpness boost at cutoff";
-
-    // Filter Env 3
-    if (paramId == "filterenv3_slope") return "Filter 3 envelope decay curve tension";
-    if (paramId == "filterenv3_depth") { isBipolar = true; return "Filter 3 cutoff modulation depth in octaves"; }
-    if (paramId == "filterenv3_decay") return "Filter 3 envelope decay duration";
-    if (paramId == "filterenv3_postdrive") return "Filter 3 pre-filter saturation drive gain";
-
-    // Mixer
-    if (paramId == "mixer_carrier1_level") return "Carrier 1 voice output volume level";
-    if (paramId == "mixer_carrier2_level") return "Carrier 2 voice output volume level";
-    if (paramId == "mixer_ringmod") return "Ring modulator (Carrier 1 x Carrier 2) mix level";
-    if (paramId == "mixer_noise_level") return "Transients noise generator mix level";
-
-    // Amp
-    if (paramId == "amp_level") return "Master amplifier output volume level";
-    if (paramId == "amp_pan") { isBipolar = true; return "Stereo panorama position (Left <-> Right)"; }
-    if (paramId == "amp_drive") return "Pre-limiter analog saturation drive gain";
-
-    // Amp Env
-    if (paramId == "ampenv_claps") return "Pre-decay transient hand-clap burst count (0 to 32 bursts)";
-    if (paramId == "ampenv_clapspeed") return "Time spacing interval between clap bursts (1 to 15 ms)";
-    if (paramId == "ampenv_slope") return "Master amplitude envelope decay curve tension";
-    if (paramId == "ampenv_decay") return "Master amplitude envelope decay duration";
-
-    // Pre-Limiter
-    if (paramId == "pre_limiter_gain") return "Input boost gain into the pre-limiter";
-    if (paramId == "pre_limiter_thresh") return "Ceiling threshold for pre-limiter peak reduction";
-    if (paramId == "pre_limiter_release") return "Release recovery time for the pre-limiter";
-
-    // Post-Limiter
-    if (paramId == "post_limiter_gain") return "Input boost gain into the master post-limiter";
-    if (paramId == "post_limiter_thresh") return "Master ceiling threshold for peak limiting";
-    if (paramId == "post_limiter_release") return "Release recovery time for the master limiter";
-
-    // Velocity
-    if (paramId == "vel_slope") return "MIDI velocity dynamic response curve";
-    if (paramId == "vel_depth") { isBipolar = true; return "Velocity scaling of modulation envelope depth"; }
-    if (paramId == "vel_decay") { isBipolar = true; return "Velocity scaling of envelope decay durations"; }
-    if (paramId == "vel_volume") return "Minimum volume floor attenuation at zero velocity";
-
-    // Key Track
-    if (paramId == "key_slope") return "MIDI note keyboard tracking response curve";
-    if (paramId == "key_depth") { isBipolar = true; return "Key tracking scaling of modulation envelope depth"; }
-    if (paramId == "key_decay") { isBipolar = true; return "Key tracking scaling of envelope decay durations"; }
-    if (paramId == "key_volume") return "Key tracking scaling of voice output volume";
-
-    // Slop
-    if (paramId == "slop_freq") return "Analog frequency drift / random pitch fluctuation amount";
-    if (paramId == "slop_depth") return "Analog envelope depth fluctuation amount";
-    if (paramId == "slop_decay") return "Analog envelope decay time fluctuation amount";
-    if (paramId == "slop_pan") return "Subtle stereo position wander per note strike";
-
-    // Mod Envelopes
-    if (paramId.startsWith("modenv") && paramId.endsWith("_slope")) return "Modulation envelope decay curve tension";
-    if (paramId.startsWith("modenv") && paramId.endsWith("_depth")) { isBipolar = true; return "Bipolar modulation envelope depth to assigned target"; }
-    if (paramId.startsWith("modenv") && paramId.endsWith("_decay")) return "Modulation envelope decay duration";
-
-    return "";
-}
-
 void TheKlangFarmerAudioProcessorEditor::bindSlider(const juce::String& paramId, RotaryKnobSlider& slider) {
+    bool isBipolar = false;
+    juce::String desc = "";
+
     if (auto* param = audioProcessor.apvts.getParameter(paramId)) {
         float defVal = param->getDefaultValue();
-        slider.setDoubleClickReturnValue(true, defVal);
-        slider.getDefaultValue = [defVal]() { return defVal; };
+        const auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+        
+        if (def != nullptr) {
+            slider.setDoubleClickReturnValue(true, def->doubleClickValue);
+            slider.getDefaultValue = [v = def->doubleClickValue]() { return v; };
+            for (auto& pt : def->snapPoints) slider.snapValues.push_back(pt.value);
+            desc = def->description;
+            isBipolar = def->isBipolar;
+        } else {
+            slider.setDoubleClickReturnValue(true, defVal);
+            slider.getDefaultValue = [defVal]() { return defVal; };
+        }
     }
     slider.setParamId(paramId);
     slider.getModInfoFunc = [this](const juce::String& pid) {
@@ -2040,10 +1934,22 @@ void TheKlangFarmerAudioProcessorEditor::bindSlider(const juce::String& paramId,
     };
 
     if (!paramId.startsWith("pre_fx_") && !paramId.startsWith("post_fx_")) {
-        bool isBipolar = false;
-        juce::String desc = getFarmerParamDescription(paramId, isBipolar);
         slider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, paramId, desc, isBipolar));
     }
+
+    slider.onMouseEnter = [this, paramId](RotaryKnobSlider* s) {
+        if (!s) return;
+        auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+        juce::String name = def ? def->name : (s->getLabel().isNotEmpty() ? s->getLabel() : paramId);
+        juce::String val = s->getTextFromValue(s->getValue());
+        juce::String desc = def ? def->description : "";
+        juce::String rc = (def && !def->snapPoints.empty()) ? "Right-Click: Snap Points" : "Right-Click: Details";
+        juce::String dc = def ? ("2x-Click: Reset (" + juce::String(def->doubleClickValue, 2) + ")") : "2x-Click: Default";
+        statusBar.setHoveredControl(name, val, desc, rc, dc);
+    };
+    slider.onMouseExit = [this](RotaryKnobSlider*) {
+        statusBar.clearHoveredControl();
+    };
 
     registeredSliders.push_back(&slider);
     sliderAttachments.push_back(std::make_unique<SliderAttachment>(audioProcessor.apvts, paramId, slider));
@@ -2166,6 +2072,18 @@ void TheKlangFarmerAudioProcessorEditor::bindSelector(LedSelectorComponent& sele
             param->setValueNotifyingHost(param->convertTo0to1(static_cast<float>(idx)));
         }
     };
+
+    selector.onMouseEnter = [this, paramId](LedSelectorComponent* s) {
+        if (!s) return;
+        auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId);
+        juce::String name = def ? def->name : paramId;
+        juce::String desc = s->getTooltip();
+        juce::String val = juce::String(s->getSelectedIndex() + 1) + "/" + juce::String(s->getNumItems());
+        statusBar.setHoveredControl(name, val, desc, "", "Click: Select Mode");
+    };
+    selector.onMouseExit = [this](LedSelectorComponent*) {
+        statusBar.clearHoveredControl();
+    };
 }
 
 void TheKlangFarmerAudioProcessorEditor::setFXSlotDefaults(int slot, bool isPost, int fxType) {
@@ -2231,7 +2149,7 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
     int margin = 6;
     int topOffset = 38;
     int totalW = getWidth() - 2 * margin;
-    int totalH = getHeight() - topOffset - margin;
+    int totalH = getHeight() - topOffset - margin - 36;
     int numCols = 4;
     int numRows = 2;
     int slotW = (totalW - (numCols - 1) * margin) / numCols;
@@ -2725,6 +2643,9 @@ void TheKlangFarmerAudioProcessorEditor::resized() {
         settingsModal->setBounds(getLocalBounds());
 
     quickstartGuide.setBounds(getLocalBounds());
+
+    statusBar.setBounds(0, getHeight() - 36, getWidth(), 36);
+    statusBar.toFront(false);
 
     updatePageLayout();
 }

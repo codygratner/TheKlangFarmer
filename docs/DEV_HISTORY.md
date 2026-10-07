@@ -29,12 +29,62 @@ ew, malloc, ree, or resize dynamic containers (std::vector::push_back, juce::Ar
 
 ## Section B: Chronological Session Harvest
 
-### Session 1-13 (Pre-v0.3.0)
-- **Primary Objectives:** Built the core DSP engine, The Klang Farmer & The Klang Planter.
-- **Key Decisions:** Adopted data-driven JSON architecture for the GUI to decouple C++ recompilations from UI design iteration.
 
-### Session 14 (v0.3.0 Architecture Finalization)
-- **Primary Objectives:** The Klang Editor bug fixes, documentation overhaul, repository rename preparation.
-- **Key Decisions:** Fixed 	kf_layout.json typos mismatching with envelopes.json & global.json.
-- **Files Created/Modified:** 	kf_layout.json, docs/BACKLOG.md.
+### Session: 2026-10-06 13:04 (8fe6b97b-f027-4cc9-8cc2-d5f67ccfb0c9)
+- **Chat Role:** Implementation & Build Chat
+- **Primary Objectives:** Test the new `/refresh-context` skill and verify context clues generation.
+- **Files Modified/Created:** `CMakeLists.txt`, `PLAN.md`, `.gemini\config\skills\refresh-context\SKILL.md`, `docs/DEV_HISTORY.md`, `context_clues.md`
+- **Key Decisions:** Switched to `0.3.1-dev` branch and completed Phase 1 of the refresh-context plan.
+
+### Session: 2026-10-06 13:14 (8fe6b97b-f027-4cc9-8cc2-d5f67ccfb0c9)
+- **Chat Role:** Implementation & Build Chat
+- **Primary Objectives:** Finalize the `/refresh-context` task, fix the UI instructions, and commit the feature.
+- **Files Modified/Created:** `GEMINI.md`, `PLAN.md`, `docs/DEV_HISTORY.md`, `docs/BACKLOG.md`
+- **Key Decisions:** Replaced the hallucinated `/clear` command with "Replace with New" in all rules and documentation. Committed the completed feature to the `0.3.1-dev` branch.
+
+### Session: 2026-10-06 13:16 (172f4706-f36e-4cbe-aff3-aafefc715464)
+- **Chat Role:** Implementation & Build Chat
+- **Primary Objectives:** Realized "Replace with New" spawns a new chat window; user will delete this one.
+- **Files Modified/Created:** None
+- **Key Decisions:** Discard this session.
+
+### Session: 2026-10-06 22:10 (8fe6b97b-f027-4cc9-8cc2-d5f67ccfb0c9)
+- **Chat Role:** Implementation & Build Chat
+- **Primary Objectives:** Optimize The Klang Planter GUI rendering performance and eliminate UI thread latency.
+- **Files Modified/Created:** `source/PlanterEditor.h`, `source/PlanterEditor.cpp`, `docs/completed_plans/2026-10-06_optimize_planter_gui_rendering.md`, `docs/communique/build_to_plan.md`
+- **Key Decisions:** Made `PlanterHeaderVisualizer` opaque with solid chassis fill to eliminate parent component background repaint cascades. Reduced oscilloscope path points from 128 to 64 with smooth rounded stroking. Decreased editor timer frequency from 60 Hz to 30 Hz standard. Implemented idle throttling to skip repainting when audio is silent. Cached static header text strings and pre-computed font glyph widths in constructor.
+
+### Session: 2026-10-07 05:00 (8fe6b97b-f027-4cc9-8cc2-d5f67ccfb0c9)
+- **Chat Role:** Implementation & Build Chat
+- **Primary Objectives:** Eradicate the Release teardown crash (`0xC0000005`) in `gui_tests.exe` and recast backlog item 0.5 into an interactive parameter audit feature inside The Klang Editor.
+- **Files Modified/Created:** `source/VersionChecker.h`, `source/VersionChecker.cpp`, `test/gui_tests.cpp`, `test/PluginIntensiveTestSuite.h`, `docs/completed_plans/2026-10-06_fix_release_teardown_crash.md`, `docs/communique/build_to_plan.md`, `docs/BACKLOG.md`
+- **Key Decisions:** Inherited `juce::DeletedAtShutdown` in `VersionChecker` and added static `teardown()` before `guiContext` destruction. Isolated and resolved asynchronous modal double-free in `test/PluginIntensiveTestSuite.h` by instantiating `CallOutBox` directly via `std::make_unique`. Verified 215 / 215 GUI unit tests and 100% DSP tests with exit code 0. Recast backlog item 0.5 into an editor feature with mandatory planning discussion directive for New Klang City.
+
+### Session: 2026-10-07 05:54 (9241988e-1227-466e-a0a5-446d61a69d77)
+- **Chat Role:** Strategic Planning & Architecture (New Klang City) + Klang Industries
+- **Primary Objectives:** Enforce strict schema separation of concerns, resolve missing Master Limiter parameters in The Klang Planter tree, introduce pre-indexed Cross-Reference ("Where Used") inspector, populate top-level callout parameter controls, and cut/publish the official v0.3.1 release.
+- **Files Modified/Created:** `assets/themes/theme.json`, `assets/themes/callouts.json`, `assets/controls/*.json` (stripped `ui_colors`), `tools/editor/MainComponent.cpp`, `test/EditorTestSuite.h`, `test/ParameterSchemaAuditTest.h`, `GEMINI.md`, `docs/BACKLOG.md`
+- **Key Decisions:**
+  - Enforced strict schema separation: visual styling and palettes moved to `assets/themes/theme.json` and `callouts.json`, leaving `assets/controls/` strictly for DSP parameter contracts.
+  - Sourced Master Limiter popover parameters from `assets/themes/callouts.json` and dynamically mounted `[Callout] Master Limiter` under The Klang Planter in the tree with popover preview rendering, keeping `assets/layouts/tkp_layout.json` strictly to the physical 8-card 4x2 grid.
+  - Implemented pre-indexed bidirectional Where-Used & Associations panel in <2ms with double-click tree navigation.
+  - Enabled top-level callout parameter property population in `formEditor` (matching Cards 1–8).
+  - Codified the Strict Release Authority Gate in `GEMINI.md`, restricting `/cut-release` and release tagging strictly to New Klang City (Ivory Tower).
+  - Codified Strict Clipboard & External Link Ingestion Guardrail in `GEMINI.md`.
+  - Passed dual Debug and Release regression gauntlets (257/257 `gui_tests` and 100% `dsp_tests`).
+  - Stamped local and remote Git tag `v0.3.1` and pushed branch `0.3.1-dev` and tag `v0.3.1` to GitHub.
+
+### Session: 2026-10-07 07:59 (8fe6b97b-f027-4cc9-8cc2-d5f67ccfb0c9)
+- **Chat Role:** Implementation & Build Chat (Klang Industries)
+- **Primary Objectives:** Implement unified filterable master tree with 3-button filter bar, dedicated text schema layer (`assets/text/strings.json`), and DSP block control file renaming.
+- **Files Modified/Created:** `CMakeLists.txt`, `assets/controls/*`, `assets/text/strings.json`, `assets/themes/theme.json`, `source/ParameterManager.h`, `source/ParameterManager.cpp`, `tools/editor/MainComponent.h`, `tools/editor/MainComponent.cpp`, `test/EditorTestSuite.h`, `test/ParameterSchemaAuditTest.h`, `docs/completed_plans/2026-10-07_unified_tree_text_schema.md`
+- **Key Decisions:**
+  - Renamed plural control files (`modulator.json`, `filter.json`, `envelope.json`) to singular names for consistency.
+  - Extracted 100% of descriptions, choice tooltips, and localized UI copy out of control JSONs into `assets/text/strings.json` under modular namespaces (`"shared"`, `"farmer"`, `"planter"`).
+  - Extended `ParameterManager` to load and merge `strings.json` into `ControlDef` at startup and support dynamic reload on disk modifications.
+  - Unified `masterTree` in The Klang Editor with a 3-button filter bar (`[Controls]`, `[Layout]`, `[Theme]`) and Smart Minimum sizing.
+  - Enabled simultaneous property panel editing of DSP mathematical limits and user-facing text descriptions.
+  - Hardened dynamic JSON parsing against `0xC0000005` access violations by replacing unsafe `prop.value.isObject()` calls with `prop.value.getDynamicObject() != nullptr` checks for non-DynamicObject values.
+  - Added explicit `stopTimer()` to `MainComponent::~MainComponent()` to satisfy JUCE 9.0.3 timer hygiene.
+  - All 275 GUI unit tests and DSP tests passed; binaries deployed via `deploy.ps1`.
 

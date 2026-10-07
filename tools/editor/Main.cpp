@@ -1,5 +1,6 @@
 #include <JuceHeader.h>
 #include "MainComponent.h"
+#include "DevLogger.h"
 #include <juce_gui_basics/juce_gui_basics.h>
 
 class TheKlangEditorApplication : public juce::JUCEApplication {
@@ -11,8 +12,7 @@ public:
     bool moreThanOneInstanceAllowed() override             { return true; }
 
     void initialise(const juce::String& commandLine) override {
-        juce::FileLogger::createDefaultAppLogger("TheKlangFarmer", "Editor.log", "App Started");
-        juce::Logger::writeToLog("Initialising...");
+        TKS_LOG_INFO("Initialising The Klang Editor...");
         
         juce::String title = getApplicationName() + " v" + getApplicationVersion();
 #if defined(TKF_GIT_COMMIT_COUNT) && defined(TKF_GIT_HASH)
@@ -22,12 +22,12 @@ public:
     }
 
     void shutdown() override {
-        juce::Logger::writeToLog("Shutting down...");
+        TKS_LOG_INFO("Shutting down The Klang Editor...");
         mainWindow = nullptr;
     }
 
     void systemRequestedQuit() override {
-        juce::Logger::writeToLog("System requested quit...");
+        TKS_LOG_INFO("System requested quit...");
         quit();
     }
 
@@ -50,7 +50,7 @@ public:
            #endif
 
             setVisible(true);
-            juce::Logger::writeToLog("MainWindow visible.");
+            TKS_LOG_INFO("MainWindow visible.");
         }
 
         void closeButtonPressed() override {

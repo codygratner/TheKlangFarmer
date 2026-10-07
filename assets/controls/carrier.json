@@ -1,11 +1,7 @@
 {
-  "ui_colors": {
-    "carrier_accent": "0xffff3b30"
-  },
   "carrier1_shape": {
     "type": "float",
     "name": "Carrier 1: Shape",
-    "description": "Carrier 1 waveform shape morphing (Sine -> Triangle -> Saw -> Pulse)",
     "is_bipolar": false,
     "range": {
       "min": 0.0,
@@ -42,50 +38,64 @@
   "carrier1_tracking": {
     "type": "choice",
     "name": "Carrier 1: Tracking",
-    "description": "Dictates how Carrier 1 responds to incoming MIDI notes.",
     "choices": [
       "MIDI",
       "Freq",
       "Note"
     ],
-    "default": 0,
-    "choice_tooltips": [
-      "MIDI: Tracks incoming MIDI note pitch chromatically with transpose offset.",
-      "FREQ: Free-running continuous frequency in Hertz (20 Hz - 24 kHz).",
-      "NOTE: Quantizes base carrier frequency to discrete musical semitones."
-    ]
+    "default": 0
   },
   "carrier1_pitch": {
     "type": "float",
     "name": "Carrier 1: Pitch / Freq",
-    "description": "Carrier 1 pitch transpose / frequency offset",
-    "is_bipolar": true,
+    "is_bipolar": false,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0 st"
+    "default_label": "0 st",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "carrier1_depth": {
     "type": "float",
     "name": "Carrier 1: Modulation Depth",
-    "description": "Frequency modulation depth from Modulator 1",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0% Depth"
+    "default_label": "0% Depth",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "carrier2_pitch": {
     "type": "float",
     "name": "Carrier 2: Pitch / Freq",
-    "description": "Carrier 2 pitch transpose / frequency offset",
-    "is_bipolar": true,
+    "is_bipolar": false,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0 st"
+    "default_label": "0 st",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "carrier2_shape": {
     "type": "float",
     "name": "Carrier 2: Shape",
-    "description": "Carrier 2 waveform shape morphing",
     "is_bipolar": false,
     "default": 0.0,
     "double_click": 0.0,
@@ -111,39 +121,39 @@
         "label": "PWM"
       }
     ],
-    "format": "waveshape"
+    "format": "waveshape",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    }
   },
   "carrier2_depth": {
     "type": "float",
     "name": "Carrier 2: Modulation Depth",
-    "description": "Frequency modulation depth from Modulator 2",
     "is_bipolar": true,
     "default": 0.5,
     "double_click": 0.5,
-    "default_label": "0% Depth"
+    "default_label": "0% Depth",
+    "range": {
+      "min": 0.0,
+      "max": 1.0,
+      "step": 0.001,
+      "skew": 1.0
+    },
+    "snap_points": [],
+    "format": "bipolar"
   },
   "carrier2_tracking": {
     "type": "choice",
     "name": "Carrier 2: Tracking",
-    "description": "",
     "choices": [
       "MIDI",
       "Freq",
       "Note"
     ],
     "default": 0,
-    "double_click": 0,
-    "choice_tooltips": [
-      "MIDI: Tracks incoming MIDI note pitch chromatically with transpose offset.",
-      "FREQ: Free-running continuous frequency in Hertz (20 Hz - 24 kHz).",
-      "NOTE: Quantizes base carrier frequency to discrete musical semitones."
-    ]
-  },
-  "ui_strings": {
-    "card_carrier1_tooltip": "CARRIER 1: Primary tonal FM oscillator with morphable sine/tri/saw/pulse waveforms.",
-    "card_carrier2_tooltip": "CARRIER 2: Secondary tonal FM oscillator for layered drum bodies and sub harmonics.",
-    "carrier_pitch_desc_midi": "Pitch transpose offset in semitones",
-    "carrier_pitch_desc_freq": "Carrier base frequency in Hertz",
-    "carrier_pitch_desc_note": "Base musical note pitch"
+    "double_click": 0
   }
 }

@@ -1,5 +1,6 @@
 #include "UIComponents.h"
 #include "ParameterManager.h"
+#include "DevLogger.h"
 
 // --- SAFE PARSING & FORMATTING HELPERS ---
 
@@ -1335,7 +1336,7 @@ SliderCalloutComponent::SliderCalloutComponent(RotaryKnobSlider& ownerSlider,
     int h = 62;
 
     if (auto* def = RlyehSound::ParameterManager::getInstance().getControlDef(paramId)) {
-        juce::Logger::writeToLog("SliderCalloutComponent paramId: " + paramId + " snapPoints: " + juce::String(def->snapPoints.size()));
+        TKS_LOG_INFO("SliderCalloutComponent paramId: " + paramId + " snapPoints: " + juce::String(def->snapPoints.size()));
         for (const auto& poi : def->snapPoints) {
             auto* btn = new juce::TextButton(poi.label);
             btn->setColour(juce::TextButton::buttonColourId, juce::Colour(0xff2a3242));
@@ -1488,6 +1489,22 @@ double RotaryKnobSlider::getValueFromText(const juce::String& text) {
         return customParseText(text);
     }
     return juce::Slider::getValueFromText(text);
+}
+
+double RotaryKnobSlider::snapValue(double attemptedValue, DragMode dragMode) {
+    double snapped = juce::Slider::snapValue(attemptedValue, dragMode);
+    if (snapValues.empty()) return snapped;
+    
+    // 3% magnetism based on total range
+    double range = getMaximum() - getMinimum();
+    double threshold = range * 0.03;
+    
+    for (double sv : snapValues) {
+        if (std::abs(snapped - sv) < threshold) {
+            return sv;
+        }
+    }
+    return snapped;
 }
 
 void RotaryKnobSlider::drawDiagram(juce::Graphics& g, juce::Rectangle<float> area) {
@@ -1723,15 +1740,21 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
     g.setGradientFill(sheen);
     g.fillRoundedRectangle(innerX, innerY, innerW, sheenH, 2.5f);
 
-    // 4. Fixed Right-Aligned Value Box
-    // Statically anchored so text length variations never move or push other elements!
+    // 4. Value Box & Justification
+    // When label is empty (e.g. mini callout cards), center the value in the trough.
     g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
     auto valStr = getTextFromValue(getValue());
-    float valStrW = juce::GlyphArrangement::getStringWidth(g.getCurrentFont(), valStr);
-    float valueBoxW = std::max(78.0f, valStrW + 4.0f);
-    constexpr float rightMargin = 8.0f;
-    auto valueBox = juce::Rectangle<float>(bounds.getRight() - rightMargin - valueBoxW,
-                                           bounds.getY(), valueBoxW, bounds.getHeight());
+    auto valJustification = label.isEmpty() ? juce::Justification::centred : juce::Justification::centredRight;
+    juce::Rectangle<float> valueBox;
+    if (label.isEmpty()) {
+        valueBox = bounds.reduced(2.0f, 0.0f);
+    } else {
+        float valStrW = juce::GlyphArrangement::getStringWidth(g.getCurrentFont(), valStr);
+        float valueBoxW = std::max(78.0f, valStrW + 4.0f);
+        constexpr float rightMargin = 8.0f;
+        valueBox = juce::Rectangle<float>(bounds.getRight() - rightMargin - valueBoxW,
+                                          bounds.getY(), valueBoxW, bounds.getHeight());
+    }
 
     // 5. Embedded Mini Diagram (if applicable)
     float labelRightLimit = valueBox.getX() - 6.0f;
@@ -1755,8 +1778,8 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
     if (isLightTrough) {
         // Base pass: Crisp solid black text on the white trough
         g.setColour(juce::Colour(0xff101318));
-        g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
-        g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
+        if (label.isNotEmpty()) g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
+        g.drawText(valStr, valueBox, valJustification, false);
 
         // Clipped pass: Over the colored fill, invert text to crisp white with dark drop shadow
         if (hasFill && fillRect.getWidth() > 1.0f) {
@@ -1765,25 +1788,25 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
 
             // Shadow
             g.setColour(juce::Colour(0x90000000));
-            g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
-            g.drawText(valStr, valueBox.translated(1.0f, 1.0f), juce::Justification::centredRight, false);
+            if (label.isNotEmpty()) g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
+            g.drawText(valStr, valueBox.translated(1.0f, 1.0f), valJustification, false);
 
             // Pure white text over fill
             g.setColour(juce::Colours::white);
-            g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
-            g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
+            if (label.isNotEmpty()) g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
+            g.drawText(valStr, valueBox, valJustification, false);
 
             g.restoreState();
         }
     } else {
         // Standard dark trough text rendering
         g.setColour(juce::Colour(0xd0000000));
-        g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
-        g.drawText(valStr, valueBox.translated(1.0f, 1.0f), juce::Justification::centredRight, false);
+        if (label.isNotEmpty()) g.drawText(label.toUpperCase(), labelBox.translated(1.0f, 1.0f), juce::Justification::centredLeft, true);
+        g.drawText(valStr, valueBox.translated(1.0f, 1.0f), valJustification, false);
 
         g.setColour(juce::Colour(0xffedf2fa));
-        g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
-        g.drawText(valStr, valueBox, juce::Justification::centredRight, false);
+        if (label.isNotEmpty()) g.drawText(label.toUpperCase(), labelBox, juce::Justification::centredLeft, true);
+        g.drawText(valStr, valueBox, valJustification, false);
     }
 }
 
@@ -2100,7 +2123,8 @@ void ModuleCardComponent::updateEqParams(float freqHz, float widthOct, float gai
     oscilloscope.updateEqParams(freqHz, widthOct, gainDb, djFilter);
 }
 
-void ModuleCardComponent::mouseDown(const juce::MouseEvent& /*e*/) {
+void ModuleCardComponent::mouseDown(const juce::MouseEvent& e) {
+    if (onCardMouseDown) onCardMouseDown(e);
     if (onCardClicked) onCardClicked();
 }
 
@@ -2696,4 +2720,150 @@ void AdvancedColorPickerComponent::sliderValueChanged(juce::Slider* slider) {
 
 void AdvancedColorPickerComponent::sliderDragEnded(juce::Slider* slider) {
     if (onColorChanged) onColorChanged(currentColor); // Notify only when released
+}
+
+// ==============================================================================
+// StatusBarComponent Implementation
+// ==============================================================================
+
+StatusBarComponent::StatusBarComponent() {
+    setOpaque(true);
+}
+
+void StatusBarComponent::setHoveredControl(const juce::String& name,
+                                           const juce::String& value,
+                                           const juce::String& desc,
+                                           const juce::String& rightClickHint,
+                                           const juce::String& doubleClickHint) {
+    currentName = name;
+    currentValue = value;
+    currentDesc = desc;
+    currentRightClickHint = rightClickHint;
+    currentDoubleClickHint = doubleClickHint;
+    repaint();
+}
+
+void StatusBarComponent::clearHoveredControl() {
+    currentName.clear();
+    currentValue.clear();
+    currentDesc.clear();
+    currentRightClickHint.clear();
+    currentDoubleClickHint.clear();
+    repaint();
+}
+
+void StatusBarComponent::setTooltipsEnabled(bool enabled) {
+    if (tooltipsEnabled != enabled) {
+        tooltipsEnabled = enabled;
+        repaint();
+    }
+}
+
+void StatusBarComponent::resized() {}
+
+void StatusBarComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds();
+
+    // Background: Elevated chassis with top border
+    g.setColour(juce::Colour(0xff121622));
+    g.fillRect(bounds);
+
+    g.setColour(juce::Colour(0xff2a3449));
+    g.drawLine(0.0f, 0.75f, static_cast<float>(bounds.getWidth()), 0.75f, 1.5f);
+
+    int leftMargin = 12;
+    int rightMargin = bounds.getWidth() - 12;
+
+    // --- Line 1: Top Bar (Permanent: Name + Value + Shortcuts) ---
+    int line1Y = 4;
+    int line1H = 16;
+
+    // Badges on the right
+    int curBadgeRight = rightMargin;
+
+    auto drawBadge = [&](const juce::String& text, juce::Colour bgCol, juce::Colour textCol, juce::Colour borderCol = {}) {
+        if (text.isEmpty()) return;
+        juce::Font font(juce::FontOptions(9.5f, juce::Font::bold));
+        int textW = juce::GlyphArrangement::getStringWidthInt(font, text);
+        int badgeW = textW + 12;
+        int badgeX = curBadgeRight - badgeW;
+        juce::Rectangle<int> badgeRect(badgeX, line1Y, badgeW, line1H - 1);
+
+        g.setColour(bgCol);
+        g.fillRoundedRectangle(badgeRect.toFloat(), 3.0f);
+        g.setColour(borderCol.isOpaque() ? borderCol : bgCol.brighter(0.2f));
+        g.drawRoundedRectangle(badgeRect.toFloat(), 3.0f, 1.0f);
+
+        g.setColour(textCol);
+        g.setFont(font);
+        g.drawText(text, badgeRect, juce::Justification::centred, false);
+
+        curBadgeRight = badgeX - 6;
+    };
+
+    if (currentName.isNotEmpty()) {
+        if (currentDoubleClickHint.isNotEmpty()) {
+            drawBadge(currentDoubleClickHint, juce::Colour(0xff1a2333), juce::Colour(0xff94a3b8), juce::Colour(0xff29354d));
+        }
+        if (currentRightClickHint.isNotEmpty()) {
+            drawBadge(currentRightClickHint, juce::Colour(0xff1a2333), juce::Colour(0xff38bdf8), juce::Colour(0xff29354d));
+        }
+
+        // Name + Live Value on the left
+        int leftAvailW = curBadgeRight - leftMargin - 10;
+        if (leftAvailW > 50) {
+            juce::Font boldFont(juce::FontOptions(11.5f, juce::Font::bold));
+            juce::Font plainFont(juce::FontOptions(11.5f, juce::Font::plain));
+
+            int nameW = juce::GlyphArrangement::getStringWidthInt(boldFont, currentName);
+            g.setColour(juce::Colour(0xfff8fafc));
+            g.setFont(boldFont);
+            g.drawText(currentName, leftMargin, line1Y, nameW, line1H, juce::Justification::centredLeft, true);
+
+            if (currentValue.isNotEmpty()) {
+                g.setColour(juce::Colour(0xff38bdf8));
+                g.setFont(plainFont);
+                g.drawText("  " + currentValue, leftMargin + nameW, line1Y, leftAvailW - nameW, line1H, juce::Justification::centredLeft, true);
+            }
+        }
+    } else {
+        // Idle status on Line 1
+        // Green status LED dot
+        float ledR = 3.5f;
+        float ledCx = static_cast<float>(leftMargin) + ledR;
+        float ledCy = static_cast<float>(line1Y) + static_cast<float>(line1H) * 0.5f;
+
+        g.setColour(juce::Colour(0xff22c55e).withAlpha(0.35f));
+        g.fillEllipse(ledCx - ledR - 1.5f, ledCy - ledR - 1.5f, (ledR + 1.5f) * 2.0f, (ledR + 1.5f) * 2.0f);
+        g.setColour(juce::Colour(0xff22c55e));
+        g.fillEllipse(ledCx - ledR, ledCy - ledR, ledR * 2.0f, ledR * 2.0f);
+
+        // "SYSTEM READY" text
+        int textX = static_cast<int>(ledCx + ledR + 6.0f);
+        g.setColour(juce::Colour(0xff94a3b8));
+        g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+        g.drawText("SYSTEM READY", textX, line1Y, 120, line1H, juce::Justification::centredLeft, true);
+
+        // Subtle version badge on the right
+        drawBadge("The Klang Suite v0.3.1", juce::Colour(0xff161b26), juce::Colour(0xff64748b), juce::Colour(0xff232b3b));
+    }
+
+    // --- Line 2: Bottom Bar (Dynamic Tooltip & Guide Feed) ---
+    int line2Y = 20;
+    int line2H = 14;
+    juce::Rectangle<int> line2Rect(leftMargin, line2Y, bounds.getWidth() - leftMargin * 2, line2H);
+
+    g.setFont(juce::FontOptions(10.5f, juce::Font::plain));
+    if (tooltipsEnabled) {
+        if (currentDesc.isNotEmpty()) {
+            g.setColour(juce::Colour(0xffcbd5e1));
+            g.drawText(currentDesc, line2Rect, juce::Justification::centredLeft, true);
+        } else {
+            g.setColour(juce::Colour(0xff94a3b8));
+            g.drawText(juce::CharPointer_UTF8("\xe2\x9c\xa6 Hover any knob, button, or header meter for parameter details and shortcuts."), line2Rect, juce::Justification::centredLeft, true);
+        }
+    } else {
+        g.setColour(juce::Colour(0xff64748b));
+        g.drawText(juce::CharPointer_UTF8("TIPS DISABLED \xe2\x80\x94 Click 'TIPS: OFF' in header to activate full parameter guides."), line2Rect, juce::Justification::centredLeft, true);
+    }
 }

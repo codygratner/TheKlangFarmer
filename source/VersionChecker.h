@@ -3,7 +3,9 @@
 #include <juce_core/juce_core.h>
 #include <juce_events/juce_events.h>
 
-class VersionChecker : public juce::Thread, public juce::ChangeBroadcaster
+class VersionChecker : public juce::Thread,
+                       public juce::ChangeBroadcaster,
+                       public juce::DeletedAtShutdown
 {
 public:
     enum class Status
@@ -26,6 +28,7 @@ public:
     };
 
     static VersionChecker& getInstance();
+    static void teardown();
 
     ~VersionChecker() override;
 

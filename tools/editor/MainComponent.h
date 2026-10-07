@@ -13,10 +13,36 @@ public:
     bool mightContainSubItems() override { return getNumSubItems() > 0; }
     void paintItem(juce::Graphics& g, int width, int height) override;
     void itemSelectionChanged(bool isNowSelected) override;
+    void itemClicked(const juce::MouseEvent& e) override;
 
     MainComponent* mainComp;
     juce::String name, itemType, productId, pageId, cardId, paramId;
 };
+
+struct ReferenceItem {
+    juce::String label;
+    juce::String targetType;
+    juce::String targetId;
+    juce::String extra;
+    juce::String productId;
+    juce::String pageId;
+    juce::String cardId;
+    juce::String paramId;
+};
+
+class WhereUsedListModel : public juce::ListBoxModel {
+public:
+    WhereUsedListModel(MainComponent* owner) : mc(owner) {}
+
+    int getNumRows() override;
+    void paintListBoxItem(int rowNumber, juce::Graphics& g, int width, int height, bool rowIsSelected) override;
+    void listBoxItemDoubleClicked(int row, const juce::MouseEvent&) override;
+    void triggerDoubleClick(int row);
+
+    MainComponent* mc;
+    juce::Array<ReferenceItem> items;
+};
+
 class EditorTestSuite;
 
 class MainComponent : public juce::Component, public juce::Timer, public juce::CodeDocument::Listener {
@@ -35,23 +61,29 @@ public:
     void codeDocumentTextDeleted(int, int) override;
 
     void onTreeItemSelected(EditorTreeItem* item);
+    void buildReferencesIndex();
+    void updateWhereUsed(EditorTreeItem* item);
+    bool navigateToTreeItem(const ReferenceItem& ref);
 
 private:
     void buildTree();
     juce::String getControlFileForParam(const juce::String& paramId);
     void syncJsonToPreview(const juce::String& forcedJson = "");
 
-    class NavTabbedComponent : public juce::TabbedComponent {
-    public:
-        NavTabbedComponent(MainComponent* owner) : juce::TabbedComponent(juce::TabbedButtonBar::Orientation::TabsAtTop), mc(owner) {}
-        void currentTabChanged(int newCurrentTabIndex, const juce::String& newCurrentTabName) override;
-        MainComponent* mc;
-    };
-
-    NavTabbedComponent navigationTabs { this };
-    juce::TreeView layoutsTree;
-    juce::TreeView controlsTree;
-    void onTabChanged();
+    juce::TextButton filterControlsButton { "Controls" };
+    juce::TextButton filterLayoutButton { "Layout" };
+    juce::TextButton filterThemeButton { "Theme" };
+    bool showControls = true;
+    bool showLayout = true;
+    bool showTheme = true;
+    juce::TreeView masterTree;
+    void updateFilters(bool controls, bool layout, bool theme);
+    WhereUsedListModel whereUsedModel { this };
+    juce::Label whereUsedLabel { {}, "WHERE USED & ASSOCIATIONS" };
+    juce::ListBox whereUsedListBox { "WhereUsedList", &whereUsedModel };
+    std::map<juce::String, juce::Array<ReferenceItem>> referencesMap;
+    juce::TextButton expandAllButton { "Expand All" };
+    juce::TextButton collapseAllButton { "Collapse All" };
     juce::TextButton refreshButton { "Refresh" };
     juce::TextButton saveButton { "Save" };
     juce::TextButton toggleOriginalButton { "Show Original" };
@@ -95,6 +127,12 @@ private:
     juce::String originalLayoutJson;
     juce::String originalControlsJson;
     std::unordered_map<juce::String, juce::String> paramToFileMap;
+    void loadStringsJson();
+    void updateParamText(const juce::String& paramId, const juce::String& key, const juce::var& value);
+    juce::var stringsJsonVar;
+    juce::String originalStringsJson;
+    bool hasStringsEdits = false;
+    EditorTreeItem* currentSelectedItem = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
 };

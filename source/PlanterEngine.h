@@ -422,6 +422,28 @@ public:
         ctx.isTriggered = false;
     }
 
+    void panic() {
+        if (ampEnv) ampEnv->init(ctx);
+        if (filterEnv) filterEnv->init(ctx);
+        if (pitchEnv) pitchEnv->init(ctx);
+        if (noise) noise->init(ctx);
+        if (filter) filter->init(ctx);
+        if (amp) amp->init(ctx);
+        if (limiter) limiter->init(ctx);
+
+        masterScope.clear();
+        peakL.store(0.0f, std::memory_order_relaxed);
+        peakR.store(0.0f, std::memory_order_relaxed);
+
+        std::fill(tempFML.begin(), tempFML.end(), 0.0f);
+        std::fill(tempFMR.begin(), tempFMR.end(), 0.0f);
+        std::fill(tempNoiseL.begin(), tempNoiseL.end(), 0.0f);
+        std::fill(tempNoiseR.begin(), tempNoiseR.end(), 0.0f);
+        std::fill(tempMixL.begin(), tempMixL.end(), 0.0f);
+        std::fill(tempMixR.begin(), tempMixR.end(), 0.0f);
+        ctx.isTriggered = false;
+    }
+
     void getScopeData(float* dest, int count) const {
         masterScope.readLatest(dest, count);
     }

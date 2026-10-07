@@ -1,0 +1,18 @@
+{
+  "module_colors": {
+    "carrier_accent": "0xffff3b30",
+    "modulator_accent": "0xff00d2ff",
+    "pitch_env_accent": "0xffcfd8dc",
+    "filter_env_accent": "0xffffa000",
+    "amp_env_accent": "0xffe040fb",
+    "filter_accent": "0xff2979ff",
+    "amplifier_accent": "0xff00e676",
+    "transients_accent": "0xff263238"
+  },
+  "global_colors": {
+    "background_dark": "0xff0d0f14",
+    "header_chassis": "0xff151821",
+    "card_background": "0xff141720",
+    "card_border": "0xff252b3b"
+  }
+}

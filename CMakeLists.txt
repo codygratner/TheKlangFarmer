@@ -9,7 +9,7 @@ if (APPLE)
 endif()
 
 # 1. Project definition
-project(TheKlangSuite VERSION 0.3.0 LANGUAGES C CXX)
+project(TheKlangSuite VERSION 0.3.2 LANGUAGES C CXX)
 
 # Feature branch build tag (e.g., "-tooltips"). Stripped upon merge back to master.
 set(TKF_FEATURE_TAG "" CACHE STRING "Prerelease feature tag for development builds")
@@ -35,14 +35,18 @@ if (APPLE)
     list(APPEND TKF_FORMATS AU)
 endif()
 
-# Glob all JSON files in the controls directory
+# Glob all JSON files in the controls, themes, and text directories
 file(GLOB CONTROL_JSON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/controls/*.json")
+file(GLOB THEME_JSON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/themes/*.json")
+file(GLOB TEXT_JSON_FILES "${CMAKE_CURRENT_SOURCE_DIR}/assets/text/*.json")
 
 juce_add_binary_data(TkfAssets
     HEADER_NAME "TkfAssets.h"
     NAMESPACE TkfAssets
     SOURCES
     ${CONTROL_JSON_FILES}
+    ${THEME_JSON_FILES}
+    ${TEXT_JSON_FILES}
 )
 
 # 3. Configure the plugin target
@@ -84,6 +88,7 @@ target_sources(TheKlangFarmer PRIVATE
     source/VersionChecker.cpp
     source/SettingsModal.h
     source/SettingsModal.cpp
+    source/DevLogger.h
 )
 
 target_include_directories(TheKlangFarmer PRIVATE
@@ -162,6 +167,7 @@ target_sources(TheKlangPlanter PRIVATE
     source/VersionChecker.cpp
     source/SettingsModal.h
     source/SettingsModal.cpp
+    source/DevLogger.h
 )
 
 target_include_directories(TheKlangPlanter PRIVATE source)
@@ -256,6 +262,7 @@ target_sources(TheKlangEditor PRIVATE
     # Shared sources
     source/UIComponents.cpp
     source/ParameterManager.cpp
+    source/DevLogger.h
 )
 target_link_libraries(TheKlangEditor PRIVATE
     ${TKF_JUCE_MODULES}

@@ -1,6 +1,7 @@
 #include "FarmerProcessor.h"
 #include "FarmerEditor.h"
 #include "ParameterManager.h"
+#include "DevLogger.h"
 
 TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     : KlangCoreProcessor(BusesProperties().withInput("Input", juce::AudioChannelSet::stereo(), true).withOutput("Output", juce::AudioChannelSet::stereo(), true), "Parameters", createParameterLayout())
@@ -191,13 +192,14 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
     }
 }
 
-void TheKlangFarmerAudioProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/) {
-
-
+void TheKlangFarmerAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {
+    ::RlyehSound::DevLogger::getInstance().registerAudioThread(std::this_thread::get_id());
+    TKS_LOG_INFO("TheKlangFarmerAudioProcessor::prepareToPlay: sampleRate=" + juce::String(sampleRate) + ", samplesPerBlock=" + juce::String(samplesPerBlock));
     engine.init(static_cast<float>(sampleRate));
 }
 
 void TheKlangFarmerAudioProcessor::releaseResources() {
+    TKS_LOG_INFO("TheKlangFarmerAudioProcessor::releaseResources");
 }
 
 juce::String TheKlangFarmerAudioProcessor::getFXParamDisplayName(bool isPost, int slotIndex, int fxType, int paramIndex) {

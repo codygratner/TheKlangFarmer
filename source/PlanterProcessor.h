@@ -24,6 +24,7 @@ public:
 
 
     TbdAudio::PlanterDrumEngine& getEngine() { return engine; }
+    void panic() { engine.panic(); }
 
     float getLimiterActivity() const { return engine.getLimiterActivity(); }
 
