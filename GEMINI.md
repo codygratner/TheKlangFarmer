@@ -6,8 +6,8 @@
 - **Zero Blocking I/O**: Never call filesystem operations, network APIs, or logging/console output (`std::cout`, `printf`, `DBG()`, `juce::Logger`) on the audio thread.
 - **SIMD & Fast Math**: Prefer `TbdAudio::FastMath` over standard CRT transcendentals (`std::pow`, `std::sin`, `std::tanh`) in hot audio loops.
 
-## Strict Model Advisory Protocol (MANDATORY IN EVERY CHAT)
-- **Mandatory In-Chat Model Banner (ALWAYS AT THE VERY END OF CHAT)**: Whenever an agent presents a plan, discusses starting a new task, or prepares to execute code, the agent MUST explicitly output this prominent visual markdown block directly at the **VERY END** of its chat response (so it is directly adjacent to the IDE footer and model selector, never lost in the shuffle above):
+## Strict Model Advisory Protocol & Anti-Spam Gate
+- **Display Only on Kickoff / First Presentation**: The prominent visual Model Advisory block MUST ONLY be shown when an agent initially presents a new architectural plan or prepares to execute Phase 1 of a task before the user says "proceed". Do NOT repeat or spam the advisory banner on routine conversational turns, git status reports, or phase check-offs within the same tier.
   > 🧠 **MODEL ADVISORY: Tier [1 | 2 | 3]**
   > - **Recommended Setting**: [Gemini 3.1 Pro (Thinking: High) | Gemini 3.8 Flash (Thinking: High) | Gemini 3.8 Flash (Low/Medium)]
   > - **Quota Impact**: [⚠️ HIGH IMPACT (Heavy allowance burn — reserve for deep math/DSP/architecture) | 🟢 SUSTAINABLE (Economical — standard UI & test engineering) | ⚡ MINIMAL (Near-zero burn — rapid JSON & documentation)]
@@ -20,6 +20,21 @@
     - *Quota Impact*: `🟢 SUSTAINABLE` — Fast, highly capable, and draws very lightly against quota. The optimal daily driver for building and testing.
   - **Tier 3 (Rapid Iteration, Data & Tooling)**: Editing JSON schemas in `assets/controls/`, documentation/backlog updates, git operations, mechanical find-and-replace, CMake tweaks. -> *Setting: Gemini 3.8 Flash (Thinking: Low or Medium)*.
     - *Quota Impact*: ⚡ `MINIMAL` — Near-zero burn rate. Perfect for rapid planning check-ins, git telemetry, and schema maintenance.
+
+- **Dynamic Tier Transition Rules (Strict Quota Protection State Machine)**:
+  Once execution is underway, the Model Advisory banner re-appears ONLY when the required complexity tier changes:
+  1. **Tier UPGRADE (Moving Higher: Tier 3 ➔ 2, Tier 2 ➔ 1, Tier 3 ➔ 1)**:
+     - The agent MUST display the Model Advisory banner.
+     - **Hard Pause**: The agent MUST stop and wait for the user to explicitly reply "proceed" before executing. Never auto-proceed into a higher tier.
+  2. **Tier DOWNGRADE by 1 Level (Tier 1 ➔ 2, or Tier 2 ➔ 3)**:
+     - The agent displays the Model Advisory banner recommending the lower tier to save quota.
+     - **5-Minute Grace Timer**: The agent schedules a 5-minute timer (`schedule(DurationSeconds=300, Prompt="5-minute downgrade timer expired: proceeding on existing higher tier.")`) and pauses in chat text.
+       - If the user responds with "proceed" (or switches the model and confirms), proceed on the lower tier.
+       - If the 5-minute timer expires without user response, proceed automatically using the existing (one-level higher) tier so progress is not blocked.
+  3. **Tier DOWNGRADE by 2 Levels (Tier 1 ➔ Tier 3)**:
+     - The agent displays the Model Advisory banner.
+     - **Hard Pause Without Timer**: The agent MUST stop and wait indefinitely for the user to reply "proceed". Auto-proceeding is strictly forbidden because running Tier 3 tasks on Tier 1 Pro drains irreplaceable Pro quota ("burn time rather than allowance").
+
 - **Builder Pause Gate (Model Switch Friendly - NEVER use modal on execution start)**: Before Klang Industries calls any editing, code modification, or compilation tool on a new plan, it MUST NOT pop up an `ask_question` modal (because interactive modals freeze the IDE interface and completely prevent the user from changing the model dropdown in the IDE footer). Instead, Klang Industries MUST output the Model Advisory banner at the very end of its briefing in chat and PAUSE in regular text, explicitly waiting for the user to verify/switch their model dropdown in the IDE footer and reply "proceed" (or provide other instructions).
 - **Subagent Policy**: Always use `Model="flash"` for read-only research subagents (`invoke_subagent`), and `Model="pro"` only for heavy multi-file reasoning.
 
