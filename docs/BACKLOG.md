@@ -5,7 +5,7 @@
 > When opening the next session, review the prioritized milestones below:
 > 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit. — ✅ COMPLETED
 > 2. **v0.3.1 (Editor Quality & Data Schema)**: Standalone Tree UX, Limiter Callout, Two-Line Status Bar, pluginval Runner. — ✅ COMPLETED
-> 3. **v0.3.2 (Agent Infrastructure & Logging)**: Guardrails Audit, Unified Filterable Master Tree, Dedicated Text Schema, Developer Logging (TKS_LOG).
+> 3. **v0.3.2 (Agent Infrastructure & Logging)**: Guardrails Audit, Unified Filterable Master Tree, Dedicated Text Schema, Developer Logging (TKS_LOG). — ✅ COMPLETED
 > 4. **v0.4.0 (Interface & Experience)**: Complete Clean-Slate UX Overhaul, Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.
 > 5. **v0.5.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
 > 6. **v0.6.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
@@ -168,8 +168,8 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Idle Silence Bypass**: Added signal gate checking for zero amplitude before queuing repaints when the synthesizer is silent.
 - **Verification Metric**: 215 / 215 `gui_tests` passed successfully with 100% assertion pass rate.
 
-### 9. Schema Separation of Concerns & Cross-Reference "Where Used" Inspector
-*Detailed Plan: [`PLAN.md`](PLAN.md)*  
+### 9. Schema Separation of Concerns & Cross-Reference "Where Used" Inspector — ✅ COMPLETED
+*Archived Plan: [`.agents/pipeline/plans/completed/2026-10-07_schema_separation_and_where_used_inspector.md`](../.agents/pipeline/plans/completed/2026-10-07_schema_separation_and_where_used_inspector.md)*  
 *Goal: Enforce strict separation of concerns across JSON data layers and eliminate parameter discoverability gaps in The Klang Editor by introducing a pre-indexed Cross-Reference ("Where Used") navigation panel.*
 - **Strict Schema Separation**:
   - `assets/controls/*.json`: Strictly DSP/APVTS parameter definitions. Zero visual styling, zero colors, zero pixel dimensions.
@@ -182,6 +182,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Selecting any parameter, card, or callout displays its bidirectional associations.
   - Double-clicking any reference item automatically focuses, expands, and selects it in the tree and property form.
 - **Automated Schema Audit**: Updated `ParameterSchemaAuditTest` to hard-fail if any visual styling or color properties leak into `assets/controls/`.
+- **Verification Metric**: 223 / 223 `gui_tests` passed successfully with 100% assertion pass rate. All visual properties cleanly isolated into `assets/themes/`, and `ParameterSchemaAuditTest` hard-fails if visual keys appear in `assets/controls/`.
 
 ---
 
