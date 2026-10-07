@@ -29,7 +29,7 @@ To eliminate file contention between **Git** (which rewrites and deletes files d
 
 | Directory | Owner / Authority | Direction | Description |
 | :--- | :--- | :--- | :--- |
-| `Inbox/` | **Mobile / Obsidian** 👑 | Vault $\to$ Repo | Quick notes, preset ideas, and audio math jotted on mobile. Safely copied to `TheKlangSuite/docs/inbox/`. Never deleted or overwritten by Git. |
+| `Inbox/` | **Mobile / Obsidian** 👑 | Vault $\to$ Local Repo | Quick notes, preset ideas, and audio math jotted on mobile. Safely copied to local `TheKlangSuite/docs/inbox/` (Gitignored). Never pushed to GitHub, never deleted or overwritten by Git. |
 | `Docs/` | **Git / Repository** 👑 | Repo $\to$ Vault | Automatically mirrored from `docs/`. Read [`GLOSSARY.md`](GLOSSARY.md), [`BACKLOG.md`](BACKLOG.md), and master blueprints offline on your phone. |
 | `Telemetry/` | **Agent / Sync Script** 📊 | Script $\to$ Vault | Live status dashboards (`Dashboard.md`) and error reports (`Active_Errors.md`) parsed from `%LOCALAPPDATA%\TheKlangSuite\dev.log`. |
 | `Canvas/` | **Obsidian Canvases** 🎨 | Vault Only | Visual signal flow graphs, FM routing diagrams, and card layout mockups. |

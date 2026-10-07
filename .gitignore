@@ -30,3 +30,8 @@ runner.cs
 # Obsidian Vault & Sync Cache
 .obsidian/
 _sync_*.tmp
+
+# Local Staging Inbox (Never pushed to Git)
+docs/inbox/*
+!docs/inbox/README.md
+

@@ -257,7 +257,22 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Generates live heartbeat note (`_sync_heartbeat.md`) in the vault.
 - **Verification Metric**: End-to-end smoke test passed (61 docs mirrored in ~600ms, test note ingested from Vault Inbox to repo docs inbox in ~450ms, telemetry parsed clean).
 
-### 2. The Neo-Slate Vector Design System & Chassis Overhaul
+### 2. SQA Automation Hardening: Timeout Guardrails, Failure Snapshots & Metric Profiling
+*Origin: SQA Advisory Consultation (Tom) — Local Vault Inbox*  
+*Context Briefing: [`docs/SQA_MEETING_BRIEFING.md`](SQA_MEETING_BRIEFING.md)*  
+*Goal: Harden the automated testing infrastructure across `gui_tests` and `dsp_tests` based on senior SQA recommendations: enforce global (5m) and local (30s) timeout guardrails, capture automated offscreen UI failure screenshots to `test_screenshots/`, pull failure summaries to the top of test reports, and log granular step duration metrics.*
+- **Dual Timeout Architecture**:
+  - Global Timeout Threshold: 5-minute watchdog limit across entire test suites (`gui_tests`, `dsp_tests`), preventing hung runner processes from burning CPU or CI budgets.
+  - Local Timeout Threshold: 30-second individual test step timeouts. Fail fast, log failure state, and cleanly advance to next independent test without cascade aborts.
+- **Automated Failure Screenshots (`test_screenshots/`)**:
+  - Implement offscreen component snapshotting upon test failure or timeout in `gui_tests`: capture active window state via `juce::Component::createComponentSnapshot()` to a timestamped PNG in a dedicated `test_screenshots/` folder (keeping main screenshots clean).
+- **Failure-First Reporting & Profiling Metrics**:
+  - Elevate failed assertions and timeouts to the very top of test console output and telemetry reports.
+  - Track and report granular execution timings (step duration, suite average, slowest tests) to catch UI performance regressions early.
+- **Decoupled Test Independence**:
+  - Audit test suites to guarantee zero cross-file or cross-test state dependencies, ensuring tests can execute in any order and enabling future multi-threaded or chaos test execution.
+
+### 3. The Neo-Slate Vector Design System & Chassis Overhaul
 *Goal: Overhaul the overall plugin window chassis with a sleek, modern, non-skeuomorphic vector design inspired by Kilohearts Phase Plant, Vital, and Arturia Pigments.*
 - **Header-Integrated Navigation & Visualizer**:
   - Evict the legacy navigation card and visualizer card from the module rack grid.
@@ -268,7 +283,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Dark matte slate surfaces (`0xff121622`), crisp 1px borders (`0xff2a3449`), high-contrast typography, and vibrant neon accent highlights.
   - Zero faux-vintage screws, zero fake drop shadows, zero 3D skeuomorphism. Clean, futuristic, responsive, and distraction-free.
 
-### 3. The 4-Controls-Per-Card Clean Slate Architecture
+### 4. The 4-Controls-Per-Card Clean Slate Architecture
 *Goal: Radically simplify the synthesizer surface into focused, punchy modules with exactly 4 primary performance controls per Card, establishing 1:1 hardware synergy with 4-encoder controllers (dadamachines TBD-16).*
 - **Clean-Slate Parity Break**:
   - Cut the anchor to the legacy v0.2.0 prototype parameter sprawl.
@@ -280,20 +295,20 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **TBD-16 Hardware Synergy**:
   - The 4 sliders map directly to Encoders 1, 2, 3, 4 of a 1x4 encoder hardware controller.
 
-### 4. The Right-Click Callout Deep-Dive Layer
+### 5. The Right-Click Callout Deep-Dive Layer
 *Goal: Keep the primary playing surface uncluttered while providing instant, elegant access to secondary parameters, tuning modes, and curve configurations.*
 - **Popover Callout Architecture**:
   - Right-clicking any module card or parameter launches a sleek floating `juce::CallOutBox` mini-card.
   - Houses secondary parameters: MIDI tracking modes, snap point selections, velocity sensitivity curves, and fine-tune detents.
   - Translates cleanly to `[SHIFT]` / `[PAGE 2]` encoder views on physical hardware.
 
-### 5. Interactive Parameter & Curve Audit Tool in The Klang Editor
+### 6. Interactive Parameter & Curve Audit Tool in The Klang Editor
 *Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
 *Goal: Integrate an interactive curve calibration workspace in The Klang Editor to systematically tune the tactile response, snap points, logarithmic slider slopes, and ergonomic double-click defaults of the new curated 4-control parameter set.*
 - Live interactive slider evaluation, tactile response tuning, and real-time visualization of parameter skew factor curves.
 - Test and calibrate discrete musical snap points live within the editor before persisting to `assets/controls/*.json`.
 
-### 6. Switchable Studio Theme Engine (`Cykranosh`, `Nord`, `Dracula`, `Cyberpunk`)
+### 7. Switchable Studio Theme Engine (`Cykranosh`, `Nord`, `Dracula`, `Cyberpunk`)
 *Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
 *Goal: Provide distinctive, switchable visual flavors for different studio environments, featuring the creator's signature Cykranosh theme as the flagship look.*
 - **Curated Multi-Palette Schema (`assets/themes/theme.json`)**:
