@@ -3,14 +3,30 @@
 
 // --- PLANTER HEADER VISUALIZER ---
 
-PlanterHeaderVisualizer::PlanterHeaderVisualizer() {
-    points.resize(128, 0.0f);
+PlanterHeaderVisualizer::PlanterHeaderVisualizer()
+{
+    setOpaque(true);
+    points.resize(64, 0.0f);
+    limitText = RlyehSound::ParameterManager::getInstance().getGlobalString("badge_limit", "LIMIT");
     setTooltip("MASTER MONITOR: Real-time stereo output oscilloscope, peak level meters, and brickwall limiter activity indicator.");
 }
 
-void PlanterHeaderVisualizer::updateData(const float* scopeData, int numPoints, float peakL, float peakR, float limiterActivity) {
+void PlanterHeaderVisualizer::updateData(const float* scopeData, int numPoints, float peakL, float peakR, float limiterActivity)
+{
+    bool isSilent = (peakL < 0.001f && peakR < 0.001f && limiterActivity < 0.001f);
+    if (isSilent && livePeakL < 0.001f && livePeakR < 0.001f && liveLimiterAct < 0.001f) {
+        bool hasSignal = false;
+        for (float pt : points) {
+            if (std::abs(pt) > 0.001f) {
+                hasSignal = true;
+                break;
+            }
+        }
+        if (!hasSignal) return;
+    }
+
     if (scopeData && numPoints > 0) {
-        int targetPoints = 128;
+        int targetPoints = 64;
         if (static_cast<int>(points.size()) != targetPoints) points.resize(targetPoints);
         float step = static_cast<float>(numPoints) / static_cast<float>(targetPoints);
         for (int i = 0; i < targetPoints; ++i) {
@@ -63,10 +79,14 @@ void PlanterHeaderVisualizer::mouseDown(const juce::MouseEvent& e) {
     }
 }
 
-void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
+void PlanterHeaderVisualizer::paint(juce::Graphics& g)
+{
     auto bounds = getLocalBounds().toFloat();
 
-    // Background
+    // Chassis background fill for opaque component
+    g.fillAll(juce::Colour(0xff151821));
+
+    // Background card
     g.setColour(juce::Colour(0xff12151d));
     g.fillRoundedRectangle(bounds, 4.0f);
     g.setColour(juce::Colour(0xff252b3b));
@@ -91,7 +111,7 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
         }
 
         g.setColour(juce::Colour(0xff00e5ff));
-        g.strokePath(p, juce::PathStrokeType(1.4f, juce::PathStrokeType::curved));
+        g.strokePath(p, juce::PathStrokeType(1.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
 
     // 2. Center area: LIMIT warning indicator badge
@@ -112,7 +132,7 @@ void PlanterHeaderVisualizer::paint(juce::Graphics& g) {
         g.setColour(juce::Colour(0x558899aa));
     }
     g.setFont(juce::FontOptions(10.0f, juce::Font::bold));
-    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("badge_limit", "LIMIT"), limitArea, juce::Justification::centred, false);
+    g.drawText(limitText, limitArea, juce::Justification::centred, false);
 
     // 3. Right area: Stereo Peak Meters (L & R)
     auto meterArea = getMeterArea();
@@ -741,6 +761,21 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
     limiterThreshSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_thresh", "Master limiter brickwall ceiling peak threshold", false));
     limiterReleaseSlider.setTooltip(TooltipHelper::makeKnobTooltipFromParam(audioProcessor.apvts, "planter_limiter_release", "Master limiter gain reduction recovery release time", false));
 
+    titleText = RlyehSound::ParameterManager::getInstance().getGlobalString("tkp_title", "THE KLANG PLANTER");
+    subtitleText = RlyehSound::ParameterManager::getInstance().getGlobalString("tkp_subtitle", "COMPACT FM PERCUSSION SYNTHESIZER");
+#ifdef JucePlugin_VersionString
+    versionText = "v" JucePlugin_VersionString;
+#else
+    versionText = "v0.3.0";
+#endif
+#ifdef TKF_FEATURE_TAG
+    if (juce::String(TKF_FEATURE_TAG).isNotEmpty()) {
+        versionText += juce::String(TKF_FEATURE_TAG);
+    }
+#endif
+    juce::Font verFont(juce::FontOptions(11.0f, juce::Font::bold));
+    versionWidth = juce::GlyphArrangement::getStringWidthInt(verFont, versionText) + 8;
+
     setSize(1040, 740);
     setResizable(true, true);
     setResizeLimits(800, 560, 2400, 1600);
@@ -761,7 +796,7 @@ TheKlangPlanterAudioProcessorEditor::TheKlangPlanterAudioProcessorEditor(TheKlan
 
     updateCarrierControls();
     updateModControls();
-    startTimerHz(60);
+    startTimerHz(30);
 }
 
 TheKlangPlanterAudioProcessorEditor::~TheKlangPlanterAudioProcessorEditor() {
@@ -962,23 +997,12 @@ void TheKlangPlanterAudioProcessorEditor::paint(juce::Graphics& g) {
     // Title
     g.setFont(juce::FontOptions(17.0f, juce::Font::bold));
     g.setColour(juce::Colours::white);
-    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkp_title", "THE KLANG PLANTER"), 14, 0, 190, 36, juce::Justification::centredLeft);
+    g.drawText(titleText, 14, 0, titleWidth, 36, juce::Justification::centredLeft);
 
     // Version
     g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff4a9eff));
-#ifdef JucePlugin_VersionString
-    juce::String verStr = "v" JucePlugin_VersionString;
-#else
-    juce::String verStr = "v0.3.0";
-#endif
-#ifdef TKF_FEATURE_TAG
-    if (juce::String(TKF_FEATURE_TAG).isNotEmpty()) {
-        verStr += juce::String(TKF_FEATURE_TAG);
-    }
-#endif
-    int verWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), verStr) + 8;
-    g.drawText(verStr, 206, 0, verWidth, 36, juce::Justification::centredLeft);
+    g.drawText(versionText, 206, 0, versionWidth, 36, juce::Justification::centredLeft);
 
     int badgeOffset = 0;
     if (updateBadgeButton.isVisible()) {
@@ -986,11 +1010,11 @@ void TheKlangPlanterAudioProcessorEditor::paint(juce::Graphics& g) {
     }
 
     // Subtitle
-    int subX = 206 + verWidth + 8 + badgeOffset;
+    int subX = 206 + versionWidth + 8 + badgeOffset;
     int subtitleWidth = juce::jmax(0, getWidth() - 586 - subX);
     g.setFont(juce::FontOptions(12.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkp_subtitle", "COMPACT FM PERCUSSION SYNTHESIZER"), subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
+    g.drawText(subtitleText, subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangPlanterAudioProcessorEditor::resized() {
@@ -1017,7 +1041,7 @@ void TheKlangPlanterAudioProcessorEditor::resized() {
     initButton.setBounds(getWidth() - 246, 5, 90, 26);
     triggerButton.setBounds(getWidth() - 146, 5, 136, 26);
 
-    updateBadgeButton.setBounds(206 + 55 + 8, 7, 136, 22);
+    updateBadgeButton.setBounds(206 + versionWidth + 8, 7, 136, 22);
 
     if (settingsModal)
         settingsModal->setBounds(getLocalBounds());

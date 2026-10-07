@@ -27,6 +27,7 @@ private:
     float livePeakR = 0.0f;
     float liveLimiterAct = 0.0f;
     bool isFlashing = false;
+    juce::String limitText;
 };
 
 // Sleek mini Doepfer callout card for Master Limiter parameters
@@ -167,6 +168,12 @@ private:
     int lastFilterType = -1;
     int lastFilterSlope = -1;
     int lastLimiterEnable = -1;
+
+    juce::String titleText;
+    juce::String subtitleText;
+    juce::String versionText;
+    int versionWidth = 0;
+    int titleWidth = 190;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TheKlangPlanterAudioProcessorEditor)
 };
