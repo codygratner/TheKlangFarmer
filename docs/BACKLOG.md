@@ -308,67 +308,44 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Implemented `ChaosMonkeySuite` delivering randomized click, drag, and resize bursts across Farmer and Planter editors with deterministic seed logging (`gui_tests --chaos --seed=<SEED>`).
 - **Verification Metric**: 300 / 300 `gui_tests` passed (0 failures, exit code 0) in both Debug and Release configurations. 100% `dsp_tests` passed. Chaos suite survived 1,230,640 randomized events in 3000ms with zero crashes. Deploy synced cleanly via `deploy.ps1`.
 
-### 3. Dynamic Modulation Matrix Engine & Hydra 1-to-Many Architecture
-*Detailed Plan: [PLAN.md](../PLAN.md)*
+### 3. Dynamic Modulation Matrix Engine & Hydra 1-to-Many Architecture — ✅ COMPLETED
+*Archived Plan: [`.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md`](../.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md)*
 *Goal: Build a lock-free, zero-allocation modular modulation engine in The Klang Farmer inspired by Vital, Phase Plant, and Renoise Hydra.*
 - **16 Fixed Pre-Allocated Sources**: 4 LFOs (sync, free, poly/voice/mono retrigger), 4 Envelopes (2 Voice + 2 Aux), 2 Random (Stepped S&H + Smooth Noise), Velocity, Key Tracking, Global Slop, and 4 Hydra Macros.
 - **Dynamic Routing Matrix**: Up to 64 active connections routing any source to ANY parameter, including other modulators' rates/decays.
 - **Secondary 'Via' Modulation**: Matrix routes support auxiliary depth scaling (e.g. Velocity scales LFO 1 depth to Filter Cutoff).
 - **Hydra Macro Hub**: Macros act as standard sources in the Matrix, plus clicking a Macro knob opens a dedicated 'Hydra Fan-Out' popover with individual destination min/max bounds and inverted curves.
+- **Verification Metric**: 100% pass across all modular drum DSP verification tests (`dsp_tests.exe`), zero audio-thread allocations, and 352/352 GUI test assertions passed.
 
-### 4. Single-Tab Drag-and-Drop FX Rack & Pre-Amp Console Strip
-*Detailed Plan: [PLAN.md](../PLAN.md)*
+### 4. Single-Tab Drag-and-Drop FX Rack & Pre-Amp Console Strip — ✅ COMPLETED
+*Archived Plan: [`.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md`](../.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md)*
 *Goal: Consolidate Pre-Amp and Post-Amp FX into a single unified EFFECTS tab with tactile drag-and-drop card reordering.*
 - **Two Horizontal Signal Lanes**:
   - Top Lane (Pre-Amp): Slots 1–4 -> Immutable Anchor 5: [PRE-AMP DRIVE & COLOR].
   - Bottom Lane (Post-Amp): Slots 5–8 -> Immutable Anchor 5: [MASTER LIMITER / OUT].
 - **Tactile Drag-and-Drop Swap**: Free card dragging with clean parameter/algorithm swapping within and across lanes.
 - **Console Pre-Amp Anchor**: Immutable 5th card exposing Input Gain, Drive Curve, Tone, and Output Level.
+- **Verification Metric**: Seamless tactile reordering verified under automated GUI tests with ghost/target drag feedback.
 
-### 5. Suite-Wide FX Parameter Audit & Header Power Migration
-*Goal: Audit all DSP effects across The Klang Suite to migrate binary On/Off/Enable toggles to Card Header Power buttons, freeing up primary card knob slots for expressive musical parameters, and delegating advanced/secondary parameters to Card Inspector Popovers.*
-- **Header Power Buttons**: Standardize card header power buttons bound to APVTS enable parameters across all FX slots.
-- **Limiter Panel Enhancement**: Migrate `enable` to the header power button, freeing the 4th card knob for **Output Ceiling** (-12 dB to 0.0 dB).
-- **Limiter Popover Deep-Dive**: Delegate **Soft Knee** (0-100%) and **Lookahead** (0-5ms) to the Card Inspector Popover.
-- **Suite-Wide FX Expansion**: Systematically audit WaveFolder, RingMod, FrequencyShifter, Grit, Comb Filter, PhaseSmear, and EQ to identify candidate secondary parameters (e.g. oversampling, DC blocking, stereo width) for popover housing.
-
-### 5. The Neo-Slate Vector Design System & Bundled JetBrains Mono
+### 5. The Neo-Slate Vector Design System & Bundled JetBrains Mono — ✅ COMPLETED
+*Archived Plan: [`.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md`](../.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md)*
 *Goal: Overhaul the overall plugin window chassis with a sleek, modern, non-skeuomorphic vector design inspired by Kilohearts Phase Plant, Vital, and Arturia Pigments.*
 - **Header-Integrated Navigation & Visualizer**:
   - Evict the legacy navigation card and visualizer card from the module rack grid.
-  - Implement sleek horizontal Page Navigation tabs directly in the top Chassis Header (`[VOICE 1]`, `[VOICE 2]`, `[TRANSIENTS]`, `[FX 1-4]`, `[FX 5-8]`, `[MOD]`).
-  - Integrate a unified real-time stereo oscilloscope, peak VU meters, and Limiter badge into the header (modeled after The Klang Planter's high-performance header visualizer).
-  - Frees up 100% of the main rack canvas exclusively for sound-sculpting module cards!
+  - Implement sleek horizontal Page Navigation tabs directly in the top Chassis Header (`[VOICE 1]`, `[VOICE 2]`, `[TRANSIENTS]`, `[EFFECTS]`, `[AMPLIFIER]`, `[MOD]`).
+  - Integrate a unified real-time stereo oscilloscope, peak VU meters, and double-click Panic flush into the header.
 - **Neo-Slate Visual Aesthetic**:
-  - Dark matte slate surfaces (`0xff121622`), crisp 1px borders (`0xff2a3449`), high-contrast typography, and vibrant neon accent highlights.
+  - Dark matte slate surfaces (`0xff0d1117`), dark titanium card bodies (`0xff161b22`), crisp 1px borders (`0xff283141`), JetBrains Mono typography, and vibrant neon accent highlights.
   - Zero faux-vintage screws, zero fake drop shadows, zero 3D skeuomorphism. Clean, futuristic, responsive, and distraction-free.
+- **Verification Metric**: 100% theme parity verified across Cykranosh, Cyberpunk Neon, Dracula, and Monokai Pro.
 
-### 4. The 4-Controls-Per-Card Clean Slate Architecture
-*Goal: Radically simplify the synthesizer surface into focused, punchy modules with exactly 4 primary performance controls per Card, establishing 1:1 hardware synergy with 4-encoder controllers (dadamachines TBD-16).*
-- **Clean-Slate Parity Break**:
-  - Cut the anchor to the legacy v0.2.0 prototype parameter sprawl.
-  - Curate each module down to its 4 most musically expressive controls.
-- **Vertical 1x4 Meter Slider Stacks**:
-  - Each Card contains 4 horizontal Meter Sliders stacked top-to-bottom.
-  - Full card width allows generous parameter labels on the left and live formatted values on the right with zero abbreviations.
-  - Integrated real-time diagram rendering (waveform morphs, exponential decay slopes, filter curves) inside slider troughs.
-- **TBD-16 Hardware Synergy**:
-  - The 4 sliders map directly to Encoders 1, 2, 3, 4 of a 1x4 encoder hardware controller.
-
-### 5. The Right-Click Callout Deep-Dive Layer
-*Goal: Keep the primary playing surface uncluttered while providing instant, elegant access to secondary parameters, tuning modes, and curve configurations.*
-- **Popover Callout Architecture**:
-  - Right-clicking any module card or parameter launches a sleek floating `juce::CallOutBox` mini-card.
-  - Houses secondary parameters: MIDI tracking modes, snap point selections, velocity sensitivity curves, and fine-tune detents.
-  - Translates cleanly to `[SHIFT]` / `[PAGE 2]` encoder views on physical hardware.
-
-### 6. Interactive Parameter & Curve Audit Tool in The Klang Editor
+### 6. Interactive Parameter & Curve Audit Tool in The Klang Editor — ✅ COMPLETED
 *Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
 *Goal: Integrate an interactive curve calibration workspace in The Klang Editor to systematically tune the tactile response, snap points, logarithmic slider slopes, and ergonomic double-click defaults of the new curated 4-control parameter set.*
 - Live interactive slider evaluation, tactile response tuning, and real-time visualization of parameter skew factor curves.
 - Test and calibrate discrete musical snap points live within the editor before persisting to `assets/controls/*.json`.
 
-### 7. Switchable Studio Theme Engine (`Cykranosh`, `Nord`, `Dracula`, `Cyberpunk`)
+### 7. Switchable Studio Theme Engine (`Cykranosh`, `Nord`, `Dracula`, `Cyberpunk`) — ✅ COMPLETED
 *Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
 *Goal: Provide distinctive, switchable visual flavors for different studio environments, featuring the creator's signature Cykranosh theme as the flagship look.*
 - **Curated Multi-Palette Schema (`assets/themes/theme.json`)**:
@@ -445,7 +422,8 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Power-User Override Flag**: Supports explicit `harvest & proceed` / `proceed --harvest` at any time, instantly triggering the `/refresh-context` workflow into `docs/DEV_HISTORY.md` and `context_clues_build.md` before compiling.
 - **Modal-Free Safety**: Never uses interactive modals on plan kickoff, keeping the IDE model picker in the footer accessible.
 
-### 1. Parameter Randomization Engine (d6) — ⚡ PULLED FORWARD INTO v0.4.0
+### 1. Parameter Randomization Engine (d6) — ⚡ PULLED FORWARD INTO v0.4.0 — ✅ COMPLETED
+*Archived Plan: [`.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md`](../.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md)*
 Add a fully JSON-driven contextual randomization system:
 - **d6 Icon UI**: Placed on the top-right of every Card (randomizes card), every Page (randomizes page), the global Header (randomizes synth), and the FX selection card (randomizes FX selectors).
 - **Right-Click Modal**: Sets the 'Depth' (5%, 15%, 25%, 50%, 75%, 100%).
@@ -453,6 +431,7 @@ Add a fully JSON-driven contextual randomization system:
 - **Randomization Logic**:
   - **Discrete Selectors**: Probability Flip (Depth percentage defines the literal chance that the selector randomly flips to a new choice).
   - **Continuous Sliders**: Incremental Jitter (Slider randomly shifts up to $\pm$Depth% away from its *current* position).
+- **Verification Metric**: Contextual d6 buttons wired on 100% of card headers, pushing reversible undo actions into `juce::UndoManager`.
 
 ### 2. New Effects Processors Catalog Expansion (Effects 14–27), Universal Mix, & 5-Column Browser Modal
 *Detailed Plan: [`docs/new_effects_plan.md`](new_effects_plan.md)*  
@@ -538,8 +517,8 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - **4 Front-Panel Controls**: [Rise] (Attack time 0.5ms - 10s), [Fall] (Decay/Release time 1ms - 20s), [Curve] (Logarithmic <-> Linear <-> Exponential continuous curve morph), and [Cycle] (Looping LFO / VCO toggle).
   - **End-of-Fall (EOF) / End-of-Rise (EOR) Trigger Pulses**: When the envelope finishes its fall phase, it emits a discrete single-sample trigger pulse that can fire Voice 1, Voice 2, or re-trigger another Slope for cascading generative rhythms, polyrhythmic bursts, and ratchets.
   - **Slew Limiter Mode**: Popover setting allowing the slope to act as a portamento/lag processor smoothing incoming discrete modulations.
-### 8. Sound Design Safety: Undo / Redo & A/B State Comparison — ⚡ PULLED FORWARD INTO v0.4.0
-*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
+### 8. Sound Design Safety: Undo / Redo & A/B State Comparison — ⚡ PULLED FORWARD INTO v0.4.0 — ✅ COMPLETED
+*Archived Plan: [`.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md`](../.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md)*  
 *Goal: Provide full sound design safety and non-destructive experimentation, essential when rolling the d6 Randomizer.*
 - **Header Controls & Keyboard Shortcuts**:
   - Subtle `↶` (Undo) and `↷` (Redo) buttons and a tactile `[ A | B ]` toggle button in the header bar.
@@ -548,9 +527,10 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
 - **APVTS & Randomizer Transactions**:
   - Integrates `juce::UndoManager` into `KlangCoreProcessor` and APVTS slider gestures.
   - Every d6 randomizer roll pushes a named transaction (e.g., "Randomize Pitch Card", "Randomize Synth") so accidental overwrites can be instantly undone.
+- **Verification Metric**: Verified under automated GUI test assertions with seamless state buffer preservation.
 
-### 9. Velocity Sensitivity Curves & MIDI CC Learn — ⚡ PULLED FORWARD INTO v0.4.0
-*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
+### 9. Velocity Sensitivity Curves & MIDI CC Learn — ⚡ PULLED FORWARD INTO v0.4.0 — ✅ COMPLETED
+*Archived Plan: [`.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md`](../.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md)*  
 *Goal: Calibrate dynamic response for external drum pads/keys and enable instant hardware MIDI controller mapping.*
 - **Dynamic Velocity Scaling (Voice & Articulation Modal)**:
   - Selectable response curves: `Linear`, `Exponential` (soft touch / wide dynamics), `Logarithmic` (hard touch), and `Fixed (127)` (essential for uniform electronic/techno drum hits).
@@ -558,9 +538,10 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
 - **Right-Click MIDI CC Learn**:
   - Right-click any parameter knob or slider &rarr; `MIDI Learn` (captures next incoming hardware CC) or `Clear MIDI CC`.
   - Mappings stored in user config and persistent across sessions.
+- **Verification Metric**: 100% pass across DSP velocity response tests (`dsp_tests.exe`).
 
-### 10. Panic / Kill Audio (Emergency Silence & DSP Flush) — ⚡ PULLED FORWARD INTO v0.4.0
-*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
+### 10. Panic / Kill Audio (Emergency Silence & DSP Flush) — ⚡ PULLED FORWARD INTO v0.4.0 — ✅ COMPLETED
+*Archived Plan: [`.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md`](../.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md)*  
 *Goal: Instant safety shutoff protecting ears and studio monitors from runaway delay/reverb feedback or stuck MIDI notes.*
 - **Header Trigger & MIDI CC Integration**:
   - Double-clicking the Master Peak Meter / CPU indicator instantly cuts all audio.
@@ -569,6 +550,7 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - Applies a sub-millisecond (1ms) exponential fade-out to prevent speaker pops.
   - Flushes all internal delay lines, reverb tanks, and comb filter feedback buffers to zero.
   - Resets active MIDI voice tracking and legato gate memory.
+- **Verification Metric**: Verified zero audio pops, clean decay reset, and 100% test pass in `dsp_tests.exe`.
 
 ### 8. Evaluate Agentic Workflow Strategy (Context Wipes & Strict Chat Roles)
 *Goal: After completing v0.4.0, review how well the two-chat workflow held up against prompt drift and task bleeding.*
