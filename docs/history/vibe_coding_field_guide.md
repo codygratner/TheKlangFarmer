@@ -219,6 +219,37 @@ The **Grill Lab** (`/grilllab`, `/vlab`, `/vrill`) completely revolutionizes thi
 
 The result is a workflow where design mistakes and architectural ambiguities are caught and resolved in seconds in the web sandbox—ensuring that by the time code reaches the C++ factory floor, it is 100% pre-validated, ergonomically tested, and ready to ship.
 
+---
 
+## 5. Negative Architecture & The Strategy Graveyard (The Hybrid 1+3 Standard)
+*Adopted during v0.4.0 Knowledge Architecture BAR-B-Q&A.*
 
+Documenting what a system **does not do** is just as critical as documenting its active features. Without negative architecture, teams and AI agents fall into "idea recycling"—re-proposing rejected patterns or repeating failed experiments weeks later.
 
+The Klang Suite enforces a **Hybrid 1 + 3 Negative Architecture Standard**:
+
+### 5.1 Systemic Tombstones (The Field Guide Graveyard)
+Systemic, multi-file anti-patterns are recorded here as numbered "Tombstones" to preserve institutional memory:
+- **🪦 Tombstone 1: Monolithic Chat Traps**: Trying to plan, build, and debug in a single 60-turn chat causes context amnesia and token thrashing. Strictly separated into Ivory Tower (New Klang City) vs. Factory Floor (Klang Industries).
+- **🪦 Tombstone 2: Hardcoded C++ Parameter Contracts**: Hardcoding min/max, default values, and tooltips in C++ creates fragile divergence. All parameter contracts reside exclusively in `assets/controls/*.json` and `assets/text/strings.json`.
+- **🪦 Tombstone 3: Native OS Popup Menus in VST3**: Standard `juce::PopupMenu` windows freeze or glitch inside modern host DAWs on Windows and macOS. Replaced permanently with themed `juce::CallOutBox` popovers.
+- **🪦 Tombstone 4: UI Thread Calls from Audio Blocks**: Calling `repaint()` or `setValue()` directly from `processBlock()` causes audio dropouts and crashes. Replaced with lock-free atomics and FIFO queues.
+
+### 5.2 Milestone Non-Goals (`PLAN.md` & `BACKLOG.md`)
+Every implementation blueprint in `PLAN.md` and major milestone in `docs/BACKLOG.md` must include an explicit:
+```markdown
+### 🚫 Non-Goals & Rejected Alternatives
+- 🚫 Rejecting Pattern X: [Reasoning and why it is out of scope or unfeasible]
+- 🚫 Non-Goal Y: [Clarification on what this milestone does NOT attempt to solve]
+```
+This primes the LLM builder context immediately at the start of each task, preventing scope creep and unapproved architectural deviations.
+
+### 5.3 Targeted Inline Source Annotations (`// 🚫 REJECTED PATTERN`)
+Reserved strictly for **CLEAR PROBLEMS TO AVOID** directly at the C++ code level. Rather than cluttering every file, inline rejections are used selectively for high-risk hazards (audio thread invariants, thread synchronization traps, or compiler-specific crashes):
+```cpp
+// 🚫 REJECTED PATTERN (v0.3.3):
+// Do NOT use std::mutex or critical sections in triggerAudition().
+// Audio thread invariant #2 forbids locking; use lock-free atomics only.
+void triggerAudition(float velocity, int noteNumber);
+```
+When an agent or human analyzes that specific function, the warning is impossible to miss.
