@@ -19,7 +19,22 @@
 
 ---
 
-## 🚀 Milestone: v0.3.0 "The Architecture Update"
+---
+
+## ?? Index
+- [v0.3.0 "The Architecture Update"](#-milestone-v030-the-architecture-update) (Completed)
+- [v0.3.1 "Editor Quality & Data Schema"](#-milestone-v031-editor-quality--data-schema) (Completed)
+- [v0.3.2 "Agent Infrastructure & Guardrails Audit"](#-milestone-v032-agent-infrastructure--guardrails-audit) (Completed)
+- [v0.3.3 "The Hardening Gauntlet"](#-milestone-v033-the-hardening-gauntlet) (Completed)
+- [v0.4.0 "The Interface & Experience Update"](#-milestone-v040-the-interface--experience-update) (Active)
+- [v0.5.0 "The Sound & Chaos Update"](#-milestone-v050-the-sound--chaos-update)
+- [v0.6.0 "The Pro Workflow Update"](#-milestone-v060-the-pro-workflow-update)
+- [v0.7.0 "The Visual Polish & UI Mastery Update"](#-milestone-v070-the-visual-polish--ui-mastery-update)
+- [v1.0.0 "The General Availability Launch"](#-milestone-v100-the-general-availability-launch)
+- [v1.1.0 "The Klang Box Hardware Universe (Post-1.0)"](#-milestone-v110-the-klang-box-hardware-universe-post-10)
+- [Spin-Off Products & Explorations](#-spin-off-products--explorations)
+
+---
 *Focus: Tooling, Data-Driven Architecture, and 1:1 Legacy Parity.*
 
 ### 1. Automated GUI Test Harness (Guardrail) — ✅ COMPLETED
@@ -293,7 +308,31 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Implemented `ChaosMonkeySuite` delivering randomized click, drag, and resize bursts across Farmer and Planter editors with deterministic seed logging (`gui_tests --chaos --seed=<SEED>`).
 - **Verification Metric**: 300 / 300 `gui_tests` passed (0 failures, exit code 0) in both Debug and Release configurations. 100% `dsp_tests` passed. Chaos suite survived 1,230,640 randomized events in 3000ms with zero crashes. Deploy synced cleanly via `deploy.ps1`.
 
-### 3. The Neo-Slate Vector Design System & Chassis Overhaul
+### 3. Dynamic Modulation Matrix Engine & Hydra 1-to-Many Architecture
+*Detailed Plan: [PLAN.md](../PLAN.md)*
+*Goal: Build a lock-free, zero-allocation modular modulation engine in The Klang Farmer inspired by Vital, Phase Plant, and Renoise Hydra.*
+- **16 Fixed Pre-Allocated Sources**: 4 LFOs (sync, free, poly/voice/mono retrigger), 4 Envelopes (2 Voice + 2 Aux), 2 Random (Stepped S&H + Smooth Noise), Velocity, Key Tracking, Global Slop, and 4 Hydra Macros.
+- **Dynamic Routing Matrix**: Up to 64 active connections routing any source to ANY parameter, including other modulators' rates/decays.
+- **Secondary 'Via' Modulation**: Matrix routes support auxiliary depth scaling (e.g. Velocity scales LFO 1 depth to Filter Cutoff).
+- **Hydra Macro Hub**: Macros act as standard sources in the Matrix, plus clicking a Macro knob opens a dedicated 'Hydra Fan-Out' popover with individual destination min/max bounds and inverted curves.
+
+### 4. Single-Tab Drag-and-Drop FX Rack & Pre-Amp Console Strip
+*Detailed Plan: [PLAN.md](../PLAN.md)*
+*Goal: Consolidate Pre-Amp and Post-Amp FX into a single unified EFFECTS tab with tactile drag-and-drop card reordering.*
+- **Two Horizontal Signal Lanes**:
+  - Top Lane (Pre-Amp): Slots 1–4 -> Immutable Anchor 5: [PRE-AMP DRIVE & COLOR].
+  - Bottom Lane (Post-Amp): Slots 5–8 -> Immutable Anchor 5: [MASTER LIMITER / OUT].
+- **Tactile Drag-and-Drop Swap**: Free card dragging with clean parameter/algorithm swapping within and across lanes.
+- **Console Pre-Amp Anchor**: Immutable 5th card exposing Input Gain, Drive Curve, Tone, and Output Level.
+
+### 5. Suite-Wide FX Parameter Audit & Header Power Migration
+*Goal: Audit all DSP effects across The Klang Suite to migrate binary On/Off/Enable toggles to Card Header Power buttons, freeing up primary card knob slots for expressive musical parameters, and delegating advanced/secondary parameters to Card Inspector Popovers.*
+- **Header Power Buttons**: Standardize card header power buttons bound to APVTS enable parameters across all FX slots.
+- **Limiter Panel Enhancement**: Migrate `enable` to the header power button, freeing the 4th card knob for **Output Ceiling** (-12 dB to 0.0 dB).
+- **Limiter Popover Deep-Dive**: Delegate **Soft Knee** (0-100%) and **Lookahead** (0-5ms) to the Card Inspector Popover.
+- **Suite-Wide FX Expansion**: Systematically audit WaveFolder, RingMod, FrequencyShifter, Grit, Comb Filter, PhaseSmear, and EQ to identify candidate secondary parameters (e.g. oversampling, DC blocking, stereo width) for popover housing.
+
+### 5. The Neo-Slate Vector Design System & Bundled JetBrains Mono
 *Goal: Overhaul the overall plugin window chassis with a sleek, modern, non-skeuomorphic vector design inspired by Kilohearts Phase Plant, Vital, and Arturia Pigments.*
 - **Header-Integrated Navigation & Visualizer**:
   - Evict the legacy navigation card and visualizer card from the module rack grid.
@@ -340,6 +379,9 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Live Non-Destructive Theme Switching**:
   - Live theme switcher dropdown in both the Settings & About modal and The Klang Editor.
   - Instantly re-skins the UI without restarting the DAW and persists in user properties.
+- **Zen Mode (Visual Ergonomics & Anti-Fatigue)**:
+  - User preference in Settings & About modal (SettingsModal.h) toggling between [Fluid & Dynamic] and [Zen Mode (Minimal)].
+  - Dims non-essential visual eye candy, freezes decorative scope wobbles, disables flashing modulation halos, and converts meters into steady, functional informational displays for fatigue-free marathon sessions.
 
 ---
 
@@ -403,7 +445,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Power-User Override Flag**: Supports explicit `harvest & proceed` / `proceed --harvest` at any time, instantly triggering the `/refresh-context` workflow into `docs/DEV_HISTORY.md` and `context_clues_build.md` before compiling.
 - **Modal-Free Safety**: Never uses interactive modals on plan kickoff, keeping the IDE model picker in the footer accessible.
 
-### 1. Parameter Randomization Engine (d6)
+### 1. Parameter Randomization Engine (d6) — ⚡ PULLED FORWARD INTO v0.4.0
 Add a fully JSON-driven contextual randomization system:
 - **d6 Icon UI**: Placed on the top-right of every Card (randomizes card), every Page (randomizes page), the global Header (randomizes synth), and the FX selection card (randomizes FX selectors).
 - **Right-Click Modal**: Sets the 'Depth' (5%, 15%, 25%, 50%, 75%, 100%).
@@ -412,9 +454,11 @@ Add a fully JSON-driven contextual randomization system:
   - **Discrete Selectors**: Probability Flip (Depth percentage defines the literal chance that the selector randomly flips to a new choice).
   - **Continuous Sliders**: Incremental Jitter (Slider randomly shifts up to $\pm$Depth% away from its *current* position).
 
-### 2. New Effects Processors Catalog Expansion (Effects 14–26), Universal Mix, & 5-Column Browser Modal
+### 2. New Effects Processors Catalog Expansion (Effects 14–27), Universal Mix, & 5-Column Browser Modal
 *Detailed Plan: [`docs/new_effects_plan.md`](new_effects_plan.md)*  
-Expand the FX catalog from 13 to 26 algorithms (appended as indices 14–26 for 100% backward preset compatibility) and bundle the Kilohearts-style 5-column categorized modal browser:
+  Expand the FX catalog from 13 to 27 algorithms (including Algorithm 15: The Thresher transfer-function waveshaper and Algorithm 27: The Baler 3-band upward/downward compressor) and bundle the Kilohearts-style 5-column categorized modal browser:
+    - **Zero-Trademark Acoustic Descriptions**: Never use third-party trademark names (e.g. Geiger, OTT, Snap Heap) in user-facing UI labels, pickers, or tooltips. Use pure functional acoustic terminology: THRESHER (Polynomial & Transfer Function Waveshaper), BALER (3-Band Upward/Downward Dynamics), IRRIGATOR (1-to-8 Modulation Manifold), KLANG MILL (Nested Multi-FX Sub-Rack).
+    - **Algorithm 28: The Klang Mill Container**: Embeds an entire 6-slot Klang Mill pedalboard inside an FX slot with 4 front-panel macros and floating window editing ('Mill-ception').
 - **Phase 1: Universal Dual-Mode Mix Helper & Core Enums**:
   - Implement shared `computeDualModeMix(float normParam, float& dryGain, float& wetGain)` in `source/DSPBlock.h` (-100% wet crossfade $\to$ 0% pure dry $\to$ +100% parallel additive blend).
   - Update `createFXBlock()` factory and `BlockType` enum with: TransientShaper (14), CustomWaveshaper (15), ChannelMixer (16), StereoEnhancer (17), HaasDelay (18), GatedReverb (19), JunoChorus (20), WaveguideResonator (21), SubGenerator (22), TapeWarmth (23), DynamicFilter (24), PitchTransposer (25), and StutterGate (26).
@@ -430,15 +474,21 @@ Expand the FX catalog from 13 to 26 algorithms (appended as indices 14–26 for 
   - *True Zero-DSP Bypass*: Ensure Amount set to 0 strictly bypasses all allpass stages (`if (apfStages == 0) return;`).
   - *Order Switch Replacement*: Retire the subtle 2nd vs 4th order toggle in favor of a post-dispersion **Bipolar Drive** knob (`-100%` hard diode clip $\leftrightarrow$ `0%` clean $\leftrightarrow$ `+100%` warm saturating $\tanh$ drive) with automated gain compensation, turning Phase Smear into a lethal bass and transient sculpting tool.
 
-### 3. Dual Sample Players for Noise Transient Page (Plugin Only)
-- Add two dedicated sample player modules to the Transients page (desktop plugin specific).
-- **Controls per Player**:
-  1. **File Picker**: File browser / drag-and-drop audio file loader.
-  2. **Play Speed**: Bipolar playback speed with reverse: -400% $\to$ 0% $\to$ +400%.
-  3. **Decay Time**: Percussive sample amplitude decay envelope.
-  4. **Level**: Output gain level.
-- **Choke / Split Modal**: Modal dialog to configure split/choke groups (e.g. allowing one player to be an open hi-hat and the other a closed hi-hat that chokes the open sound).
+### 3. Modular 3-Slot Transient Engine (Noise, Sample Players & Impulse Clicks) with Sub-Mixer
+  *Goal: Transform the static noise page into a fully modular 3-slot transient layering powerhouse with dedicated sub-mixing before the Pre-Amp Console.*
+  - **3 Swappable Modular Slots**: Each slot can independently load one of three transient engines:
+    1. **Analog Noise Generator**: White, Pink, Metallic, Velvet, and Vinyl Crackle with dedicated tilt filter and decay envelope.
+    2. **Sample One-Shot Player**: Drag-and-drop .wav sample playback with reverse, pitch transposition (-24 to +24 st), and decay.
+    3. **Synthetic Impulse / Click**: Ultra-short Dirac delta acoustic click generator (Plastic, Wood, Metal, Glass) with tuning for sharp percussive punch.
+  - **Dedicated Transient Sub-Mixer**: Each slot has Level, Pan, and Filter controls, summing into a dedicated Transient bus before hitting the main Voice 1 & 2 mixer.
+  - **Choke Groups**: Configurable choking between transient slots (e.g., open vs closed hi-hats or muting clicks).
 
+### 3.5. Custom Wavetable Oscillator Engine & CyDrums Topologies [EVALUATION]
+  *Goal: Explore augmenting or replacing the mathematical crossfading oscillators in Voice 1 & 2 with a multi-frame / single-cycle wavetable engine and CyDrums-style sound structures.*
+  - **CyDrums Sound Structures**: Pre-configured synthesis topologies on Voice 1 & 2 ([2-Op FM], [Wavetable FM], [Ring Mod], [Hard Sync], [Wavetable Morph]) keeping the 4 front knobs invariant.
+  - **Popover Option**: Right-click Carrier/Modulator card popover reveals Oscillator Mode: [ Algorithmic Morph (Default) | Custom Wavetable (.wav) ].
+  - **Serum/Vital Standard**: Support drag-and-drop loading of standard 2048-sample single-cycle or 256-frame .wav wavetables directly onto the card.
+  - **Bandlimited Anti-Aliasing**: High-performance mip-mapped wavetable tables in memory to eliminate aliasing at high octaves.
 ### 4. Advanced Typography Engine (JUCE 9)
 *Detailed Plan: [`docs/typography_engine_plan.md`](typography_engine_plan.md)*
 Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's advanced text rendering pipeline.
@@ -470,6 +520,9 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - **Glide Time / Sync**: Free milliseconds (`5.0 ms` to `2000.0 ms`) vs Tempo Sync (`1/64` to `1/2 bar`).
   - **Glide Slope**: Slew curve control: `Exponential (0.0)` (analog RC curve) &rarr; `Linear (0.5)` &rarr; `Logarithmic (1.0)`.
   - **Legato Retrigger**: `Off (Continuous)` for fluid acid slides vs `On (Punchy)` for modern trap 808 re-striking slides.
+- **Smart Defaults + Envelope Popover Overrides (Noise Engineering Gate-Hold)**:
+  - 1-click header switch defaults to musical bass behavior: Amp Envelope automatically holds on key gate (decay acts as release tail on note-off); Pitch Envelopes decay immediately (preserving punchy 808 transient click).
+  - Deep per-envelope overrides inside right-click Inspector Popovers: `Gate Behavior: [ Auto (Default) | Always Decay | Force Sustain ]`.
 - **Planter Voice Modes & Dual-Oscillator Hard Sync Engine**:
   - **Mode Selector**: `[Percussion]` (traditional 2-op FM with fast percussive pitch envelopes) $\to$ `[Bass FM]` (dedicated FM bass engine with sustain, glide, and tighter keyboard tracking) $\to$ `[Dual Osc Sync]` (Carrier and Modulator act as twin free-running oscillators with classic hard-sync phase resets from Osc 1 to Osc 2, detune, and harmonic richness).
   - Integrates with the Bipolar Drive on Phase Smear and gated releases for lethal, heavy analog and FM bass synthesis.
@@ -478,7 +531,14 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - Exponential amplitude release ramp via `TbdAudio::FastMath::fastExp`.
   - Zero heap allocations, zero mutexes, and zero DC pops on the audio thread.
 
-### 8. Sound Design Safety: Undo / Redo & A/B State Comparison
+
+### 7.5. [SLOPE 1..4] Make Noise Maths-Style Looping Function Generators
+  *Goal: Integrate Eurorack Make Noise Maths / Serge DUSG-style dual slope function generators into the modulation engine.*
+  - **Dedicated Modulator Category**: Adds [SLOPE 1..4] alongside LFOs, Envelopes, and Irrigators.
+  - **4 Front-Panel Controls**: [Rise] (Attack time 0.5ms - 10s), [Fall] (Decay/Release time 1ms - 20s), [Curve] (Logarithmic <-> Linear <-> Exponential continuous curve morph), and [Cycle] (Looping LFO / VCO toggle).
+  - **End-of-Fall (EOF) / End-of-Rise (EOR) Trigger Pulses**: When the envelope finishes its fall phase, it emits a discrete single-sample trigger pulse that can fire Voice 1, Voice 2, or re-trigger another Slope for cascading generative rhythms, polyrhythmic bursts, and ratchets.
+  - **Slew Limiter Mode**: Popover setting allowing the slope to act as a portamento/lag processor smoothing incoming discrete modulations.
+### 8. Sound Design Safety: Undo / Redo & A/B State Comparison — ⚡ PULLED FORWARD INTO v0.4.0
 *Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
 *Goal: Provide full sound design safety and non-destructive experimentation, essential when rolling the d6 Randomizer.*
 - **Header Controls & Keyboard Shortcuts**:
@@ -489,7 +549,7 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - Integrates `juce::UndoManager` into `KlangCoreProcessor` and APVTS slider gestures.
   - Every d6 randomizer roll pushes a named transaction (e.g., "Randomize Pitch Card", "Randomize Synth") so accidental overwrites can be instantly undone.
 
-### 9. Velocity Sensitivity Curves & MIDI CC Learn
+### 9. Velocity Sensitivity Curves & MIDI CC Learn — ⚡ PULLED FORWARD INTO v0.4.0
 *Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
 *Goal: Calibrate dynamic response for external drum pads/keys and enable instant hardware MIDI controller mapping.*
 - **Dynamic Velocity Scaling (Voice & Articulation Modal)**:
@@ -499,7 +559,7 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - Right-click any parameter knob or slider &rarr; `MIDI Learn` (captures next incoming hardware CC) or `Clear MIDI CC`.
   - Mappings stored in user config and persistent across sessions.
 
-### 10. Panic / Kill Audio (Emergency Silence & DSP Flush)
+### 10. Panic / Kill Audio (Emergency Silence & DSP Flush) — ⚡ PULLED FORWARD INTO v0.4.0
 *Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
 *Goal: Instant safety shutoff protecting ears and studio monitors from runaway delay/reverb feedback or stuck MIDI notes.*
 - **Header Trigger & MIDI CC Integration**:
@@ -575,7 +635,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
   - `juce::dsp::Oversampling<float>` wraps the core voice and non-linear effects path in `processBlock()`.
   - Zero allocation audio-thread invariant strictly preserved by pre-allocating oversamplers in `prepareToPlay()`.
 
-### 7. 4 Performance Macro Knobs (TBD-16 Hardware Aligned)
+### 7. 4 Performance Macro Knobs (TBD-16 Hardware Aligned) — ⚡ PULLED FORWARD INTO v0.4.0
 *Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
 *Goal: Instant front-panel performance tweaking mapped 1:1 to Page 1 of the dadamachines TBD-16 hardware.*
 - **Global Front-Panel Access**:
@@ -769,6 +829,16 @@ Port the battle-tested, data-driven architecture from *The Klang Farmer* over to
 - **All-in-One Console UI (Zero Tabs)**:
   - 7 vertical mixer-style voice strips with `Pitch`, `Decay`, `Mod Type`, `Mod Speed`, `Mod Depth`, `Pan`, `Level`, and `[DELAY SEND]`.
   - Master section featuring classic ER-1 **Low Boost** sub-punch knob, host-synced **Tempo Delay**, and **Ring Mod** cross-modulation (`Voice 1 × Voice 2`).
+
+---
+
+### 5. The Klang Cultivator (TKC) — Standalone MIDI CC / CV / MPE Modulation Generator Rack
+  *Goal: Extract our decoupled C++ ModulationEngine into a dedicated MIDI effect plugin that hosts our full 16-source modulation suite to control external DAW tracks and hardware synths.*
+  - **Universal MIDI CC / CV Dispatch**: Assign any modulator (LFO, Env, Irrigator, Slope, Random, Slop) to an outgoing MIDI CC number, Channel Aftertouch, Pitch Bend, or high-resolution MPE pressure/slide.
+  - **Eurorack CV Output**: Compatible with DC-coupled audio interfaces (sending low-frequency control voltages directly into Eurorack modular gear).
+  - **8-Macro "Meta-Modulator" Parity**: The standalone plugin will feature 8 Top-Level Macros to ensure 1:1 preset compatibility when its patches are loaded as a nested "Cultivator Mod Block" inside The Klang Farmer's Mod Matrix.
+  - **Architectural Guardrails**: Employs the "Macro Firewall" pattern. APVTS only sees the 8 Macros; internal Mod routing is serialized privately to JSON. Max nesting depth is strictly 1 to prevent infinite graph recursion and test-suite failures.
+  - **Shared Codebase Heritage**: Inherits 100% of its DSP routing, modulation math, and 2x8 card UI directly from The Klang Suite core.
 
 ---
 

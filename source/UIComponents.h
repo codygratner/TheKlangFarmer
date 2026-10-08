@@ -27,7 +27,29 @@ struct ParamModulationInfo {
     std::vector<ModSourceDetail> sources;
 };
 
+// --- TYPOGRAPHY (JETBRAINS MONO & MONOSPACE FALLBACK) ---
+namespace TkfTypography {
+    inline juce::FontOptions getFontOptions(float size, int styleFlags = juce::Font::plain) {
+        return juce::FontOptions("JetBrains Mono", size, styleFlags);
+    }
+    inline juce::Font getFont(float size, int styleFlags = juce::Font::plain) {
+        juce::Font f(getFontOptions(size, styleFlags));
+        if (f.getTypefaceName() != "JetBrains Mono") {
+            return juce::Font(juce::FontOptions(juce::Font::getDefaultMonospacedFontName(), size, styleFlags));
+        }
+        return f;
+    }
+}
+
 // --- SAFE PARSING & FORMATTING HELPERS ---
+
+class SmartValueParser {
+public:
+    static bool parseNoteToHz(const juce::String& text, double& outHz);
+    static bool parseDecibelsToGain(const juce::String& text, double& outGain);
+    static bool parseTimeToMs(const juce::String& text, double bpm, double& outMs);
+    static double parse(const juce::String& text, double minVal = 0.0, double maxVal = 1.0, double bpm = 120.0);
+};
 
 double parseNumberSafe(const juce::String& text, double fallback);
 juce::String getMidiNoteName(int noteNumber);
@@ -205,6 +227,10 @@ public:
     void updateFilterParams(int type, int slope, float cutoffHz, float resonance);
     void updateEqParams(float freqHz, float widthOct, float gainDb, float djFilter);
     void paint(juce::Graphics& g) override;
+    void mouseDoubleClick(const juce::MouseEvent&) override {
+        if (onDoubleClicked) onDoubleClicked();
+    }
+    std::function<void()> onDoubleClicked;
 
 private:
     juce::Colour traceCol;
@@ -222,8 +248,8 @@ private:
     float eqDJ = 0.5f;
 };
 
-// Arcade HP Meter Slider with dual-axis dragging, embedded label, static right value, and waveform/slope diagram support
-class RotaryKnobSlider : public juce::Slider {
+class RotaryKnobSlider : public juce::Slider,
+                         public juce::DragAndDropTarget {
 public:
     enum class DiagramType {
         None,
@@ -239,6 +265,20 @@ public:
     void mouseUp(const juce::MouseEvent& e) override;
     void mouseDoubleClick(const juce::MouseEvent& e) override;
     void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override;
+
+    // DragAndDropTarget implementation
+    bool isInterestedInDragSource(const SourceDetails& dragSourceDetails) override;
+    void itemDragEnter(const SourceDetails& dragSourceDetails) override;
+    void itemDragExit(const SourceDetails& dragSourceDetails) override;
+    void itemDropped(const SourceDetails& dragSourceDetails) override;
+
+    void showContextMenu();
+    std::function<void(const juce::String& sourceName)> onModulationAssigned;
+    std::function<void()> onModulationCleared;
+    bool isMidiLearning = false;
+    int midiCC = -1;
+    bool isDragOver = false;
+
     std::function<void(RotaryKnobSlider*)> onMouseEnter;
     std::function<void(RotaryKnobSlider*)> onMouseExit;
     void mouseEnter(const juce::MouseEvent&) override { repaint(); if (onMouseEnter) onMouseEnter(this); }
@@ -356,7 +396,7 @@ public:
         std::optional<juce::Colour> textColour      = std::nullopt;
     };
 
-    explicit LedSelectorComponent(juce::Colour activeAccent);
+    explicit LedSelectorComponent(juce::Colour activeAccent = juce::Colour(0xff00d2ff));
 
     void setItems(const juce::StringArray& newItems, int numColumns = 2);
     void setSelectedIndex(int newIndex, juce::NotificationType notification = juce::sendNotificationAsync);
@@ -436,13 +476,21 @@ public:
     void mouseDown(const juce::MouseEvent& e) override;
     std::function<void()> onCardClicked;
     std::function<void(const juce::MouseEvent&)> onCardMouseDown;
+    std::function<void()> onRandomizeClicked;
+    juce::TextButton& getDiceButton() { return diceButton; }
+    RotaryKnobSlider* getKnob(int idx) { return (idx >= 0 && idx < 4) ? knobs[idx] : nullptr; }
+    float getD6Depth() const { return d6Depth; }
+    void setD6Depth(float depth) { d6Depth = depth; }
+    void rollDice();
 
 private:
+    float d6Depth = 0.25f;
     juce::String moduleTitle;
     juce::Colour accent;
     juce::Colour panelTintBaseColour;
     PanelStyle panelStyle = PanelStyle::StandardDark;
     MiniOscilloscopeComponent oscilloscope;
+    juce::TextButton diceButton { "d6" };
 
     LedSelectorComponent* ledSelector = nullptr;
     LedSelectorComponent* secondLedSelector = nullptr;
@@ -453,6 +501,147 @@ private:
     juce::Label labels[4];
     RotaryKnobSlider* knobs[4] = {};
     int numActiveKnobs = 4;
+};
+
+// Stereo peak meter / mini scope widget with double-click Panic flush
+class HeaderMeterComponent : public juce::Component,
+                             public juce::SettableTooltipClient {
+public:
+    HeaderMeterComponent();
+    void paint(juce::Graphics& g) override;
+    void mouseDoubleClick(const juce::MouseEvent& e) override;
+    void setLevels(float left, float right);
+
+    std::function<void()> onPanicTriggered;
+
+private:
+    float leftLevel = 0.0f;
+    float rightLevel = 0.0f;
+};
+
+// Compact tile representing an individual modulator in the lower strip
+class ModulatorTileComponent : public juce::Component,
+                               public juce::SettableTooltipClient {
+public:
+    ModulatorTileComponent(int tileIdx, const juce::String& tileName, juce::Colour tileAccent, const juce::String& tooltipText);
+    ~ModulatorTileComponent() override = default;
+
+    void paint(juce::Graphics& g) override;
+    void mouseDown(const juce::MouseEvent& e) override;
+    void mouseDrag(const juce::MouseEvent& e) override;
+
+    void setSelected(bool sel) { isSelected = sel; repaint(); }
+    void setAnimPhase(float phase) { animPhase = phase; repaint(); }
+    const juce::String& getName() const { return name; }
+    juce::Colour getAccent() const { return accent; }
+    int getIndex() const { return index; }
+
+    std::function<void(int idx, const juce::String& name)> onClicked;
+    std::function<void(int idx, const juce::String& name, const juce::MouseEvent& e)> onRightClicked;
+
+private:
+    int index;
+    juce::String name;
+    juce::Colour accent;
+    bool isSelected = false;
+    float animPhase = 0.0f;
+    juce::Point<int> dragStartPos;
+    bool isDragging = false;
+};
+
+// Horizontal strip displaying animated tiles for all modulators
+class LowerModulatorStripComponent : public juce::Component,
+                                     public juce::SettableTooltipClient,
+                                     private juce::Timer {
+public:
+    LowerModulatorStripComponent();
+    ~LowerModulatorStripComponent() override;
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void timerCallback() override;
+
+    struct TileInfo {
+        juce::String name;
+        juce::Colour accent;
+        juce::String tip;
+        float currentVal = 0.0f;
+    };
+
+    void setSelectedTile(int index);
+    int getSelectedTile() const { return selectedTile; }
+    int getNumTiles() const { return static_cast<int>(tiles.size()); }
+    juce::Rectangle<int> getTileScreenBounds(int index) const;
+    juce::Point<float> getTileScreenCentre(int index) const;
+    juce::Colour getTileAccent(int index) const;
+    const juce::String& getTileName(int index) const;
+
+    std::function<void(int tileIdx, const juce::String& name)> onTileClicked;
+    std::function<void(int tileIdx, const juce::String& name, const juce::MouseEvent& e)> onTileRightClicked;
+
+private:
+    std::vector<TileInfo> tiles;
+    std::vector<std::unique_ptr<ModulatorTileComponent>> tileComps;
+    int selectedTile = -1;
+    float animPhase = 0.0f;
+};
+
+// Pass-through Bézier glow overlay component for visual modulation tracer cables
+class ModulationTracerOverlay : public juce::Component {
+public:
+    ModulationTracerOverlay();
+    ~ModulationTracerOverlay() override = default;
+
+    struct Cable {
+        juce::Point<float> startPos;
+        juce::Point<float> endPos;
+        juce::Colour colour;
+        float alpha = 1.0f;
+    };
+
+    void paint(juce::Graphics& g) override;
+    void setCables(const std::vector<Cable>& newCables);
+    void clearCables();
+    bool hasActiveCables() const { return !cables.empty(); }
+
+private:
+    std::vector<Cable> cables;
+};
+
+// Spacious Inspector Popover (380x280 px) with 4 Eurorack patch jack sockets
+class ModulationInspectorPopover : public juce::Component {
+public:
+    ModulationInspectorPopover(int sourceIndex, const juce::String& sourceName, juce::Colour sourceAccent);
+    ~ModulationInspectorPopover() override = default;
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    juce::Point<float> getSocketScreenPos(int socketIndex) const;
+
+    std::function<void()> onClose;
+    std::function<void(float depth, float minR, float maxR, int curve)> onParametersChanged;
+
+    void setValues(float depth, float minR, float maxR, int curve);
+    void setSocketActive(int socketIndex, bool active);
+
+private:
+    int srcIndex = 0;
+    juce::String srcName;
+    juce::Colour accent;
+
+    juce::TextButton closeButton { "✕" };
+    RotaryKnobSlider depthSlider;
+    RotaryKnobSlider rangeMinSlider;
+    RotaryKnobSlider rangeMaxSlider;
+    LedSelectorComponent curveSelector;
+
+    bool socketsActive[4] = { false, false, false, false };
+    juce::Colour socketColours[4] = {
+        juce::Colour(0xff38bdf8), // Cyan (Knob 1)
+        juce::Colour(0xfff59e0b), // Amber (Knob 2)
+        juce::Colour(0xff10b981), // Emerald (Knob 3)
+        juce::Colour(0xffc084fc)  // Amethyst (Knob 4)
+    };
 };
 
 // Sleek two-line permanent bottom status bar and contextual mouse shortcut badge bar

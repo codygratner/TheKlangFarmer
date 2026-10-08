@@ -141,8 +141,12 @@
 
 ## Strict Inter-Chat Communique Protocol & "Job's Done" Handshake
 - **Mailbox Protocol (`.agents/pipeline/communique/`)**:
-  - `plan_to_build.md`: Authored strictly by New Klang City. Declares state machine: `STATUS: DRAFTING` ➔ `STATUS: READY_FOR_EXECUTION` ➔ `STATUS: IN_PROGRESS` ➔ `STATUS: COMPLETED`.
-  - `build_to_plan.md`: Authored strictly by Klang Industries. Contains live execution status, test results, and completion reports.
+  - `plan_to_build.md`: Authored strictly by New Klang City. Declares dispatch state machine:
+    `STATUS: DRAFTING` ➔ `STATUS: READY_FOR_EXECUTION` ➔ `STATUS: IN_PROGRESS` ➔ `STATUS: PLAN_AMENDED ⚠️` ➔ `STATUS: COMPLETED ✅`.
+    *(When New Klang City injects mid-flight additions, it sets `STATUS: PLAN_AMENDED ⚠️` with a brief changelog so the factory re-ingests the plan at its next `step-verify` checkpoint).*
+  - `build_to_plan.md`: Authored strictly by Klang Industries. Declares factory execution state machine:
+    `STATUS: IDLE 💤` ➔ `STATUS: BUILDING 🔨 (Phase <N>: <Name>)` ➔ `STATUS: COMPLETE ✅`.
+    *(Klang Industries updates `build_to_plan.md` to `STATUS: BUILDING 🔨` immediately upon `/read-plan` intake and at each `/step-verify` progression, giving the Ivory Tower real-time factory telemetry).*
 - **Zero-Polling Discipline**: No terminal status loops waiting for the other chat. Handoffs are event-driven.
 - **The "Job's Done" Chime & Dual Mailbox Closure**: When Klang Industries finishes compilation, test passes, and artifact deployment, it MUST update BOTH `build_to_plan.md` (to `Status: COMPLETE ✅`) and `plan_to_build.md` (to `Status: COMPLETED ✅`), archive `PLAN.md` to `.agents/pipeline/plans/completed/`, and conclude its turn with this prominent handoff chime:
   > 🔔 **JOB'S DONE!** `<Task Name>` is fully built, tested, and deployed. Switch to New Klang City to review and advance!

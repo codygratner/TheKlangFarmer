@@ -179,7 +179,66 @@
       ]
     }
   },
-  "PRE-AMP FX": {
+  "EFFECTS": {
+    "Pre Limiter": {
+      "color": "0xFFFF1744",
+      "style": "DoepferSilver",
+      "tooltip": "PRE LIMITER: Pre-saturation brickwall safety limiter and gain booster.",
+      "parameters": [
+        "pre_limiter_enable",
+        "pre_limiter_gain",
+        "pre_limiter_thresh",
+        "pre_limiter_release"
+      ]
+    },
+    "Post Limiter": {
+      "color": "0xFFFF1744",
+      "style": "DoepferSilver",
+      "tooltip": "POST LIMITER: Master output brickwall peak limiter with auto soft-knee release.",
+      "parameters": [
+        "post_limiter_enable",
+        "post_limiter_gain",
+        "post_limiter_thresh",
+        "post_limiter_release"
+      ]
+    }
+  },
+  "AMPLIFIER": {
+    "Amp Envelope": {
+      "color": "0xFF00D2FF",
+      "style": "StandardDark",
+      "tooltip": "AMP ENVELOPE: Master amplitude decay envelope with integrated multi-burst clap generator.",
+      "parameters": [
+        "ampenv_claps",
+        "ampenv_clapspeed",
+        "ampenv_slope",
+        "ampenv_decay"
+      ]
+    },
+    "Amplifier": {
+      "color": "0xFF00D2FF",
+      "style": "StandardDark",
+      "tooltip": "AMPLIFIER: Master output gain stage with stereo panning and pre-limiter saturation drive.",
+      "parameters": [
+        "amp_limiter",
+        "amp_level",
+        "amp_pan",
+        "amp_drive"
+      ]
+    },
+    "Mixer": {
+      "color": "0xFFFF1744",
+      "style": "DoepferSilver",
+      "tooltip": "MIXER: 4-channel analog summing mixer blending Carrier 1, Carrier 2, Ring Mod, and Noise.",
+      "parameters": [
+        "mixer_carrier1_level",
+        "mixer_carrier2_level",
+        "mixer_ringmod",
+        "mixer_noise_level"
+      ]
+    }
+  },
+  "MODULATIONS": {
     "Mod Env 1": {
       "color": "0xFFFFB300",
       "style": "StandardDark",
@@ -241,63 +300,6 @@
         "slop_depth",
         "slop_decay",
         "slop_pan"
-      ]
-    },
-    "Mixer": {
-      "color": "0xFFFF1744",
-      "style": "DoepferSilver",
-      "tooltip": "MIXER: 4-channel analog summing mixer blending Carrier 1, Carrier 2, Ring Mod, and Noise.",
-      "parameters": [
-        "mixer_carrier1_level",
-        "mixer_carrier2_level",
-        "mixer_ringmod",
-        "mixer_noise_level"
-      ]
-    }
-  },
-  "AMPLIFIER": {
-    "Pre Limiter": {
-      "color": "0xFFFF1744",
-      "style": "DoepferSilver",
-      "tooltip": "PRE LIMITER: Pre-saturation brickwall safety limiter and gain booster.",
-      "parameters": [
-        "pre_limiter_enable",
-        "pre_limiter_gain",
-        "pre_limiter_thresh",
-        "pre_limiter_release"
-      ]
-    },
-    "Post Limiter": {
-      "color": "0xFFFF1744",
-      "style": "DoepferSilver",
-      "tooltip": "POST LIMITER: Master output brickwall peak limiter with auto soft-knee release.",
-      "parameters": [
-        "post_limiter_enable",
-        "post_limiter_gain",
-        "post_limiter_thresh",
-        "post_limiter_release"
-      ]
-    },
-    "Amp Envelope": {
-      "color": "0xFF00D2FF",
-      "style": "StandardDark",
-      "tooltip": "AMP ENVELOPE: Master amplitude decay envelope with integrated multi-burst clap generator.",
-      "parameters": [
-        "ampenv_claps",
-        "ampenv_clapspeed",
-        "ampenv_slope",
-        "ampenv_decay"
-      ]
-    },
-    "Amplifier": {
-      "color": "0xFF00D2FF",
-      "style": "StandardDark",
-      "tooltip": "AMPLIFIER: Master output gain stage with stereo panning and pre-limiter saturation drive.",
-      "parameters": [
-        "amp_limiter",
-        "amp_level",
-        "amp_pan",
-        "amp_drive"
       ]
     }
   }

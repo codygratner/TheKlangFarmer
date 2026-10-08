@@ -36,11 +36,17 @@ And standardize **Universal Dual-Mode Mix** (Knob 4: `-100%` Wet Crossfade ↔ `
     - Knob 1: **Pump** (0% to 100%, default 0% / 0.0): dynamic ducking and post-transient upward expansion.
     - Knob 2: **Sustain** (bipolar -100% to +100%, default 0% / 0.5): body/tail amplification via slow envelope leveler.
     - Knob 3: **Speed** (1 ms to 50 ms, default 10 ms / 0.3): detection tracking time coefficient.
-  - [ ] **1.2: `CustomWaveshaperBlock : public DSPBlock` (Algorithm 15):**
-    - Dynamic waveshaping transfer function using the synthesizer's morphing waveform equations (Sine → Triangle → Saw → Square → PWM).
+  - [ ] **1.2: `ThresherBlock : public DSPBlock` (Algorithm 15 — "The Thresher" Transfer Function Waveshaper):**
+    - Clean-room mathematical transfer curve shaper built with zero third-party ROMs or code.
     - Pre-gain input drive via `fastDbToGain(-12 dB to +36 dB)`.
-    - Integrated bipolar pre/post DJ-style tilt filter.
+    - **64+ Curated Mathematical Transfer Curves (LUT Tables)**:
+      - *Bank 0 (Synthesizer Oscillator Morph)*: Leverages the core FM engine's morphing waveform equations (Sine → Triangle → Saw → Square → PWM) as dynamic transfer curves.
+      - *Bank 1 (Harmonic & Fold)*: Chebyshev polynomials ($T_2$ through $T_8$ harmonic multipliers), West Coast sine wavefolders, and soft-rectifiers.
+      - *Bank 2 (Bit-Crunch & Logic)*: Bitwise boolean masking (`x ^ (x >> mask)`), staircase stepped quantizers (2-bit to 8-bit dynamic reduction), and crossover distortion dead-bands.
+      - *Bank 3 (Mechanical Dirt & Chaos)*: Magnetic tape hysteresis curves, asymmetric tanh cliffs, and randomized smooth-spline steps.
+    - Sample-rate reduction jitter and pre/post DJ-style tilt filter.
     - Universal Dual-Mode Mix on Knob 4: `-100%` (pure wet) ↔ `0%` (dry) ↔ `+100%` (parallel blend).
+    - Optional **DOOM Brickwall Mode**: Pushes signal into 0 dBFS ceiling with aggressive soft-saturation curve.
   - [ ] **1.3: `ChannelMixerBlock : public DSPBlock` (Algorithm 16):**
     - Matrix mixer processing:
       - $L_\text{out} = L_\text{in} \cdot (L \to L) + R_\text{in} \cdot (R \to L)$
@@ -69,8 +75,32 @@ And standardize **Universal Dual-Mode Mix** (Knob 4: `-100%` Wet Crossfade ↔ `
     - Integrated bipolar DJ tilt filter for vintage dark vs crispy metallic reflection coloring.
     - BPM-synchronized gate envelope cutoff timer (1/64, 1/32, 1/16, 1/8, 1/4 notes) tied to `ctx.bpm` and `ctx.isTriggered`.
     - Universal Dual-Mode Mix on Knob 4.
-  - [ ] **1.7: Engine Factory Registry:**
-    - Update `ModularDrumEngine::createFXBlock(int type)` to instantiate cases 14..26.
+  - [ ] **1.7: `BalerBlock : public DSPBlock` (Algorithm 27 — "The Baler" / Working Title: "OTT Multiband Dynamics"):**
+    - 3-Band Upward/Downward dynamics processor inspired by Ableton Live Multiband Dynamics & Xfer OTT.
+    - Crossover network: 4th-order Linkwitz-Riley (LR4, 24 dB/oct) filters at 250 Hz and 2.5 kHz.
+    - Front-Panel 4-Knob Layout (Option A):
+      - Knob 0: **Depth** (0% to 100%, default 100% / 1.0): scales both upward and downward compression ratios simultaneously.
+      - Knob 1: **Time** (10% to 500%, default 100% / 0.5): scales attack (fast 5ms - 50ms) and release (20ms - 400ms) times across all 3 bands.
+      - Knob 2: **Tone** (bipolar -100% to +100%, default 0% / 0.5): 3-band tilt EQ balancing sub-bass punch vs high-end sizzle.
+      - Knob 3: **Mix** (Universal Dual-Mode: -100% wet crossfade ↔ 0% dry ↔ +100% parallel blend).
+    - Front-Panel Card Visuals: 3 mini vertical LED meters in card header displaying real-time downward gain reduction (cyan) and upward expansion (amber) for Low, Mid, and High bands.
+    - Right-Click Inspector Popover Deep Dive:
+      - **Profiles**: `[ Classic OTT (Default) | Analog Farm Iron (Warm) | Dark & Heavy (Sub/808) ]`.
+      - **Independent Dynamics**: Separate Upward Comp % and Downward Comp % unlinked sliders.
+      - **Crossover Tuning**: Adjustable Low-Mid (100 Hz - 500 Hz) and Mid-High (1.5 kHz - 6.0 kHz) crossover frequencies.
+      - **Noise Floor Gate**: Silence threshold (Off, -60 dB, -48 dB) preventing analog noise amplification during note decays.
+      - **DOOM Push Switch**: +12 dB input drive clamped into a 0 dBFS soft-clipping saturation ceiling.
+  - [ ] **1.8: `TheKlangMillBlock : public DSPBlock` (Algorithm 28 — "The Klang Mill" Nested Multi-FX Sub-Rack Container):**
+    - Recursive multi-effect container allowing an entire 6-slot Klang Mill pedalboard chain to be embedded inside a single FX card slot ("Mill-ception").
+    - Front-Panel 4-Knob Layout:
+      - Knob 0: **Macro 1** (Assignable sub-macro mapped to internal parameters).
+      - Knob 1: **Macro 2** (Assignable sub-macro).
+      - Knob 2: **Macro 3** (Assignable sub-macro).
+      - Knob 3: **Macro 4 / Mix** (Assignable macro or Universal Dual-Mode Mix).
+    - Popover Inspector: Clicking the card's edit button opens a spacious floating window rendering the full 6-slot pedalboard rack where sub-effects can be inserted, reordered, and macro-mapped.
+    - Nesting Architecture: Follows the Kilohearts Snap Heap model—arbitrary nesting depth constrained only by host CPU performance, with recursion guardrails to prevent circular feedback locks.
+  - [ ] **1.9: Engine Factory Registry:**
+    - Update `ModularDrumEngine::createFXBlock(int type)` to instantiate cases 14..28.
 - **Verification Condition:** Code compiles cleanly with zero warnings under Clang/MSVC, all static buffers pre-allocated, zero memory allocations in process callbacks.
 
 ---

@@ -93,6 +93,7 @@ target_sources(TheKlangFarmer PRIVATE
     source/FastMath.h
     source/DSPBlock.h
     source/ModularBlocks.h
+    source/ModulationEngine.h
     source/ParameterManager.h
     source/ParameterManager.cpp
     source/UIComponents.h
@@ -222,6 +223,7 @@ add_executable(dsp_tests
     source/FastMath.h
     source/DSPBlock.h
     source/ModularBlocks.h
+    source/ModulationEngine.h
     source/PlanterEngine.h
 )
 target_include_directories(dsp_tests PRIVATE source)

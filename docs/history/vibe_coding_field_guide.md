@@ -169,3 +169,23 @@ To prevent this, we codified the **Pre-Flight Capstone Rule**.
 - .0 Minor releases (the "Tick") are strictly for breaking UI/feature changes.
 - .Z Patch releases (the "Tock") are strictly for backend CI lockdowns, sanitizer (ASan/TSan) integrations, and DSP safety nets (NaN/Inf failsafes).
 Before CMakeLists.txt is ever bumped to an X.Y.0-dev branch, the AI pipeline must execute a final Z hardening patch to mathematically prove the foundation is bulletproof. You cannot build a new house on an unhardened foundation.
+
+### 4.8 CI/CD Remote Matrix Gating (The Final Defense)
+*Implemented during v0.3.3 Hardening Gauntlet.*
+Because we develop exclusively on Windows, we are blind to how Clang (macOS) and GCC (Linux) compilers handle our C++ changes until we push. We strengthened the /cut-release agent skill by injecting **Phase 4.5: CI/CD Remote Matrix Verification**. The agent now queries the GitHub API (gh run list) post-push and monitors the remote build farm. If a remote OS triggers a strict -Werror failure, the agent halts the deployment and fetches the logs automatically. This guarantees cross-platform stability before a release is ever made public.
+
+### 4.9 Mid-Flight Plan Amendments & Live Factory Telemetry
+*Implemented during v0.4.0 UI & Modulation Overhaul.*
+In a decoupled multi-agent architecture (Planner in Ivory Tower, Builder on Factory Floor), a subtle blindspot exists: if the Builder is actively working through an implementation phase, and the Planner or user refines requirements or adds polish mid-flight, a silent edit to `PLAN.md` leaves the Builder operating on stale assumptions.
+We solved this by establishing a two-way reactive state machine across the Communique Mailbox:
+1. **`STATUS: PLAN_AMENDED ⚠️`**: When New Klang City modifies requirements mid-build, it sets this status in `plan_to_build.md` alongside an explicit bulleted changelog. We upgraded the `/step-verify` skill to intercept this: when the Builder completes a phase, it reads the mailbox, detects the amendment, re-syncs `PLAN.md`, resets the mailbox to `IN_PROGRESS`, and adapts dynamically.
+2. **`STATUS: BUILDING 🔨 (Phase <N>)`**: Rather than remaining silent until final completion, the `/read-plan` and `/step-verify` skills were upgraded to publish active factory telemetry directly into `build_to_plan.md` the moment a job is ingested and at every phase transition. This gives the entire pipeline live visibility into exactly what code is being forged.
+
+### 4.10 The Universal Documentation Sync Skill & Defense-in-Depth (`/update-docs`)
+*Implemented during v0.4.0 UI & Modulation Overhaul.*
+As a codebase expands across multiple milestones, documentation drift becomes an acute risk: design specs fall out of alignment with C++ realities, completed tasks linger unchecked in the backlog, and LLM context windows waste valuable tokens parsing sprawling 500-line Markdown documents.
+We established a strict three-tier "Defense in Depth" documentation protocol:
+1. **The System Map (`docs/SYSTEM_MAP.md`)**: A lightweight "Yellow Pages" root node that immediately orients fresh agent sessions with direct links to active specs, core rulebooks, and communication mailboxes.
+2. **Table of Contents (ToC) Indexing**: Fast anchor links injected into the head of major documentation files (`docs/BACKLOG.md`) allowing agents to leap directly to relevant milestone headers without reading hundreds of lines of legacy context.
+3. **The `/update-docs` Skill**: An automated synchronization skill executed exclusively by New Klang City. It reconciles completed factory tasks against `BACKLOG.md`, synchronizes technical specifications in `docs/specs/`, captures institutional memory in `DEV_HISTORY.md`, and validates cross-link integrity in a single non-destructive pass.
+

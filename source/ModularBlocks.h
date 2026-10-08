@@ -1,6 +1,7 @@
 #pragma once
 #include "DSPBlock.h"
 #include "FastMath.h"
+#include "ModulationEngine.h"
 #include <cmath>
 #include <vector>
 #include <memory>
@@ -107,6 +108,56 @@ inline float unwarpBipolarExp(float y) {
     float u = std::pow(mag, BIPOLAR_EXP_INV);
     return std::clamp(0.5f + sign * u * 0.5f, 0.0f, 1.0f);
 }
+
+// --- VELOCITY RESPONSE CURVES ---
+enum class VelocityCurve : int {
+    Linear = 0,
+    Exponential,
+    Logarithmic,
+    Fixed127
+};
+
+inline const char* getVelocityCurveName(VelocityCurve curve) {
+    switch (curve) {
+        case VelocityCurve::Linear:      return "Linear";
+        case VelocityCurve::Exponential: return "Exponential";
+        case VelocityCurve::Logarithmic: return "Logarithmic";
+        case VelocityCurve::Fixed127:    return "Fixed 127";
+        default:                         return "Linear";
+    }
+}
+
+inline float evaluateVelocityCurve(float v, VelocityCurve curve) {
+    v = std::clamp(v, 0.0f, 1.0f);
+    switch (curve) {
+        case VelocityCurve::Linear:
+            return v;
+        case VelocityCurve::Exponential:
+            return warpUnipolarExp(v);
+        case VelocityCurve::Logarithmic:
+            return std::sqrt(v);
+        case VelocityCurve::Fixed127:
+            return 1.0f;
+        default:
+            return v;
+    }
+}
+
+struct VelocityTracker {
+    VelocityCurve curveType { VelocityCurve::Linear };
+    float lastRawVelocity { 1.0f };
+    float lastCurvedVelocity { 1.0f };
+
+    float evaluate(float rawVelocity) {
+        rawVelocity = std::clamp(rawVelocity, 0.0f, 1.0f);
+        lastRawVelocity = rawVelocity;
+        lastCurvedVelocity = evaluateVelocityCurve(rawVelocity, curveType);
+        return lastCurvedVelocity;
+    }
+
+    void setCurve(VelocityCurve curve) { curveType = curve; }
+    VelocityCurve getCurve() const { return curveType; }
+};
 
 // Drive mapping: -6dB to +24dB (0dB at 0.2, +6dB at 0.4)
 inline float normToDriveDb(float norm) {
@@ -319,6 +370,10 @@ public:
         phase = 0.0f;
     }
 
+    void reset() override {
+        phase = 0.0f;
+    }
+
     float getBasePitch(const BlockContext& ctx) const {
         int style = std::clamp(static_cast<int>(std::round(params[0] * 2.0f)), 0, 2);
         float slop = (voiceIndex == 1) ? ctx.slopCarrier1Pitch : ctx.slopCarrier2Pitch;
@@ -398,6 +453,13 @@ public:
     void trigger(float) override {
         phase = 0.0f;
         noisePhase = 0.0f;
+    }
+
+    void reset() override {
+        phase = 0.0f;
+        noisePhase = 0.0f;
+        noiseVal = 0.0f;
+        djFilter.reset();
     }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
@@ -516,6 +578,11 @@ public:
         currentVal = applyEnvelopeSlope(1.0f, slope) * baseDepth;
     }
 
+    void reset() override {
+        timeSinceTrigger = 1000.0f;
+        currentVal = 0.0f;
+    }
+
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
     }
@@ -568,6 +635,10 @@ class DriveBlock : public DSPBlock {
 public:
     void init(const BlockContext& ctx) override {
         sampleRate = ctx.sampleRate;
+        djFilter.reset();
+    }
+
+    void reset() override {
         djFilter.reset();
     }
 
@@ -635,6 +706,13 @@ public:
     void trigger(float) override {
         timeSinceTrigger = 0.0f;
         shPhase = 0.0f;
+    }
+
+    void reset() override {
+        timeSinceTrigger = 1000.0f;
+        shPhase = 0.0f;
+        shVal = 0.0f;
+        djFilter.reset();
     }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
@@ -756,6 +834,13 @@ public:
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
         sampleRate = ctx.sampleRate;
+        for (int s = 0; s < 4; ++s) {
+            s1L[s] = s2L[s] = s1R[s] = s2R[s] = 0.0f;
+        }
+        rc1L = rc1R = 0.0f;
+    }
+
+    void reset() override {
         for (int s = 0; s < 4; ++s) {
             s1L[s] = s2L[s] = s1R[s] = s2R[s] = 0.0f;
         }
@@ -917,6 +1002,13 @@ public:
         combDampL = combDampR = 0.0f;
     }
 
+    void reset() override {
+        std::fill(combBufferL.begin(), combBufferL.end(), 0.0f);
+        std::fill(combBufferR.begin(), combBufferR.end(), 0.0f);
+        combWriteIdx = 0;
+        combDampL = combDampR = 0.0f;
+    }
+
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
     }
@@ -995,6 +1087,13 @@ public:
     }
 
     void trigger(float) override {}
+
+    void reset() override {
+        for (int i = 0; i < 32; ++i) {
+            apfS1L[i] = apfS2L[i] = apf2S1L[i] = apf2S2L[i] = 0.0f;
+            apfS1R[i] = apfS2R[i] = apf2S1R[i] = apf2S2R[i] = 0.0f;
+        }
+    }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
@@ -1114,6 +1213,11 @@ public:
 
     void trigger(float) override {}
 
+    void reset() override {
+        s1L = s2L = s1R = s2R = 0.0f;
+        djFilter.reset();
+    }
+
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
     }
@@ -1203,6 +1307,13 @@ public:
         lfoPhase = 0.0f;
     }
 
+    void reset() override {
+        std::fill(bufL.begin(), bufL.end(), 0.0f);
+        std::fill(bufR.begin(), bufR.end(), 0.0f);
+        writeIdx = 0;
+        lfoPhase = 0.0f;
+    }
+
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
     }
@@ -1274,6 +1385,17 @@ public:
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
         sampleRate = ctx.sampleRate;
+        for (int ch = 0; ch < 2; ++ch) {
+            for (int s = 0; s < 6; ++s) {
+                apfX[ch][s] = 0.0f;
+                apfY[ch][s] = 0.0f;
+            }
+            lastFb[ch] = 0.0f;
+        }
+        lfoPhase = 0.0f;
+    }
+
+    void reset() override {
         for (int ch = 0; ch < 2; ++ch) {
             for (int s = 0; s < 6; ++s) {
                 apfX[ch][s] = 0.0f;
@@ -1374,6 +1496,13 @@ public:
         lfoPhase = 0.0f;
     }
 
+    void reset() override {
+        std::fill(bufL.begin(), bufL.end(), 0.0f);
+        std::fill(bufR.begin(), bufR.end(), 0.0f);
+        writeIdx = 0;
+        lfoPhase = 0.0f;
+    }
+
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
     }
@@ -1448,6 +1577,14 @@ public:
         maxDelay = static_cast<int>(sampleRate * 4.0f) + 16;
         bufL.assign(maxDelay, 0.0f);
         bufR.assign(maxDelay, 0.0f);
+        writeIdx = 0;
+        currentDelayL = currentDelayR = 0.25f * sampleRate;
+        dampL = dampR = 0.0f;
+    }
+
+    void reset() override {
+        std::fill(bufL.begin(), bufL.end(), 0.0f);
+        std::fill(bufR.begin(), bufR.end(), 0.0f);
         writeIdx = 0;
         currentDelayL = currentDelayR = 0.25f * sampleRate;
         dampL = dampR = 0.0f;
@@ -1542,6 +1679,11 @@ public:
         currentVal = applyEnvelopeSlope(1.0f, slope) * baseDepth;
     }
 
+    void reset() override {
+        timeSinceTrigger = 1000.0f;
+        currentVal = 0.0f;
+    }
+
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
     }
@@ -1603,6 +1745,10 @@ public:
         djFilter.reset();
     }
 
+    void reset() override {
+        djFilter.reset();
+    }
+
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
     }
@@ -1647,6 +1793,10 @@ class RingModBlock : public DSPBlock {
 public:
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
+        phase = 0.0f;
+    }
+
+    void reset() override {
         phase = 0.0f;
     }
 
@@ -1701,6 +1851,15 @@ class FrequencyShifterBlock : public DSPBlock {
 public:
     void init(const BlockContext& ctx) override {
         invSr = ctx.invSr;
+        phaseL = phaseR = 0.0f;
+        dL = dR = 0.0f;
+        for (int k = 0; k < 4; ++k) {
+            s1_1L[k] = s2_1L[k] = s1_2L[k] = s2_2L[k] = 0.0f;
+            s1_1R[k] = s2_1R[k] = s1_2R[k] = s2_2R[k] = 0.0f;
+        }
+    }
+
+    void reset() override {
         phaseL = phaseR = 0.0f;
         dL = dR = 0.0f;
         for (int k = 0; k < 4; ++k) {
@@ -1824,6 +1983,13 @@ public:
     void init(const BlockContext& ctx) override {
         sampleRate = ctx.sampleRate;
         invSr = ctx.invSr;
+        holdL = holdR = 0.0f;
+        acc = 0.0f;
+        lowS1L = lowS2L = lowS1R = lowS2R = 0.0f;
+        highS1L = highS2L = highS1R = highS2R = 0.0f;
+    }
+
+    void reset() override {
         holdL = holdR = 0.0f;
         acc = 0.0f;
         lowS1L = lowS2L = lowS1R = lowS2R = 0.0f;
@@ -1958,6 +2124,10 @@ public:
         vel = velocity;
     }
 
+    void reset() override {
+        vel = 1.0f;
+    }
+
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
     }
@@ -2018,6 +2188,10 @@ public:
 
     void trigger(float) override {
         timeSinceTrigger = 0.0f;
+    }
+
+    void reset() override {
+        timeSinceTrigger = 1000.0f;
     }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
@@ -2082,6 +2256,14 @@ public:
         lastVelocity = velocity;
     }
 
+    void reset() override {
+        lastVelocity = 1.0f;
+        std::fill(std::begin(scopeData), std::end(scopeData), 0.0f);
+    }
+
+    void setCurve(VelocityCurve curve) { velocityTracker.setCurve(curve); }
+    VelocityCurve getCurve() const { return velocityTracker.getCurve(); }
+
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
     }
@@ -2096,7 +2278,8 @@ public:
         float slope = params[0];
         for (int i = 0; i < 128; ++i) {
             float t = static_cast<float>(i) / 127.0f;
-            float y = applyEnvelopeSlope(t, slope);
+            float curved = velocityTracker.evaluate(t);
+            float y = (velocityTracker.getCurve() == VelocityCurve::Fixed127) ? 1.0f : applyEnvelopeSlope(curved, slope);
             // Highlight current velocity hit with a subtle blip marker
             if (std::abs(t - ctx.curvedVelocity) < 0.045f) {
                 y = std::clamp(y + 0.3f, 0.0f, 1.0f);
@@ -2117,6 +2300,7 @@ private:
     float invSr = 1.0f / 44100.0f;
     float lastVelocity = 1.0f;
     float scopeData[128] = { 0.0f };
+    VelocityTracker velocityTracker;
 };
 
 // --- KEY TRACKING (Slope, Depth, Decay, Volume) ---
@@ -2129,6 +2313,10 @@ public:
     }
 
     void trigger(float /*velocity*/) override {}
+
+    void reset() override {
+        std::fill(std::begin(scopeData), std::end(scopeData), 0.0f);
+    }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
@@ -2188,6 +2376,11 @@ public:
         currentVal = applyEnvelopeSlope(1.0f, slope) * depth;
     }
 
+    void reset() override {
+        timeSinceTrigger = 1000.0f;
+        currentVal = 0.0f;
+    }
+
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
     }
@@ -2238,6 +2431,10 @@ public:
     }
 
     void trigger(float /*velocity*/) override {}
+
+    void reset() override {
+        std::fill(std::begin(scopeData), std::end(scopeData), 0.0f);
+    }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
         processStereo(buffer, nullptr, numSamples, ctx);
@@ -2301,6 +2498,12 @@ public:
 
     void trigger(float) override {
         // Continuous dynamics tracking
+    }
+
+    void reset() override {
+        envelopeL = 0.0f;
+        envelopeR = 0.0f;
+        activity.store(0.0f, std::memory_order_relaxed);
     }
 
     void process(float* buffer, int numSamples, BlockContext& ctx) override {
@@ -2654,6 +2857,19 @@ public:
         }
     }
 
+    void setVelocityCurve(VelocityCurve curve) {
+        velocityTracker.setCurve(curve);
+        if (allBlocks[BLK_VELOCITY]) {
+            if (auto* vb = dynamic_cast<VelocityBlock*>(allBlocks[BLK_VELOCITY].get())) {
+                vb->setCurve(curve);
+            }
+        }
+    }
+
+    VelocityCurve getVelocityCurve() const {
+        return velocityTracker.getCurve();
+    }
+
     void trigger(float velocity = 1.0f) {
         velocity = std::clamp(velocity, 0.0f, 1.0f);
         ctx.triggerVelocity = velocity;
@@ -2664,7 +2880,10 @@ public:
         float velDecay  = allBlocks[BLK_VELOCITY] ? warpBipolarExp(allBlocks[BLK_VELOCITY]->getParam(2)) : 0.0f; // -1 to +1
         float velVolume = allBlocks[BLK_VELOCITY] ? warpUnipolarExp(allBlocks[BLK_VELOCITY]->getParam(3)) : 0.0f; // 0 to 1
 
-        float curvedVel = applyEnvelopeSlope(velocity, velSlope);
+        float curvedVel = velocityTracker.evaluate(velocity);
+        if (velocityTracker.getCurve() != VelocityCurve::Fixed127) {
+            curvedVel = applyEnvelopeSlope(curvedVel, velSlope);
+        }
         ctx.curvedVelocity = curvedVel;
 
         // Minimum output volume at lowest velocity: (1.0 - velVolume), up to 1.0 at max velocity
@@ -2757,6 +2976,24 @@ public:
         }
         if (block < NUM_BLOCKS && allBlocks[block]) {
             allBlocks[block]->setParam(knobIndex, value);
+        }
+    }
+
+    void setPageParameterModulation(BlockID block, int knobIndex, float offset) {
+        if (block >= BLK_PRE_FX_1 && block <= BLK_PRE_FX_4) {
+            if (preFXBlocks[block - BLK_PRE_FX_1]) {
+                preFXBlocks[block - BLK_PRE_FX_1]->setParamModulation(knobIndex, offset);
+            }
+            return;
+        }
+        if (block >= BLK_POST_FX_1 && block <= BLK_POST_FX_4) {
+            if (postFXBlocks[block - BLK_POST_FX_1]) {
+                postFXBlocks[block - BLK_POST_FX_1]->setParamModulation(knobIndex, offset);
+            }
+            return;
+        }
+        if (block < NUM_BLOCKS && allBlocks[block]) {
+            allBlocks[block]->setParamModulation(knobIndex, offset);
         }
     }
 
@@ -3134,6 +3371,84 @@ public:
         return 0.0f;
     }
 
+    void flushBuffers() {
+        for (auto& b : allBlocks) {
+            if (b) b->reset();
+        }
+        for (int s = 0; s < 4; ++s) {
+            if (preFXBlocks[s]) preFXBlocks[s]->reset();
+            if (postFXBlocks[s]) postFXBlocks[s]->reset();
+        }
+        std::fill(tempNoiseL.begin(), tempNoiseL.end(), 0.0f);
+        std::fill(tempNoiseR.begin(), tempNoiseR.end(), 0.0f);
+        std::fill(tempCarrier1L.begin(), tempCarrier1L.end(), 0.0f);
+        std::fill(tempCarrier1R.begin(), tempCarrier1R.end(), 0.0f);
+        std::fill(tempCarrier2L.begin(), tempCarrier2L.end(), 0.0f);
+        std::fill(tempCarrier2R.begin(), tempCarrier2R.end(), 0.0f);
+
+        std::fill(ctx.mod1Signal.begin(), ctx.mod1Signal.end(), 0.0f);
+        std::fill(ctx.mod2Signal.begin(), ctx.mod2Signal.end(), 0.0f);
+        std::fill(ctx.pitchEnv1Signal.begin(), ctx.pitchEnv1Signal.end(), 0.0f);
+        std::fill(ctx.pitchEnv2Signal.begin(), ctx.pitchEnv2Signal.end(), 0.0f);
+        std::fill(ctx.filterEnv1Signal.begin(), ctx.filterEnv1Signal.end(), 0.0f);
+        std::fill(ctx.filterEnv2Signal.begin(), ctx.filterEnv2Signal.end(), 0.0f);
+        std::fill(ctx.filterEnv3Signal.begin(), ctx.filterEnv3Signal.end(), 0.0f);
+        std::fill(ctx.ampEnvSignal.begin(), ctx.ampEnvSignal.end(), 0.0f);
+        std::fill(ctx.modEnv1Signal.begin(), ctx.modEnv1Signal.end(), 0.0f);
+        std::fill(ctx.modEnv2Signal.begin(), ctx.modEnv2Signal.end(), 0.0f);
+        std::fill(ctx.modEnv3Signal.begin(), ctx.modEnv3Signal.end(), 0.0f);
+
+        ctx.isTriggered = false;
+        ctx.curvedVelocity = 1.0f;
+        ctx.velDecayMod = 0.0f;
+        ctx.velDepthMod = 0.0f;
+        ctx.velVolumeGain = 1.0f;
+        ctx.curvedKeyNote = 0.5f;
+        ctx.keyDecayMod = 0.0f;
+        ctx.keyDepthMod = 0.0f;
+        ctx.keyVolumeGain = 1.0f;
+
+        for (auto& s : scopes) {
+            s.clear();
+        }
+        for (auto& s : preFXScopes) {
+            s.clear();
+        }
+        for (auto& s : postFXScopes) {
+            s.clear();
+        }
+    }
+
+    // Master Audio Panic: Applies a 1ms fast exponential fade-out to current buffer,
+    // flushes all delay lines and internal buffers, and guarantees pop-free silence.
+    void triggerPanic(float* left, float* right, int numSamples, float sr = 44100.0f) {
+        if (numSamples > 0 && (left || right)) {
+            int fadeSamples = std::clamp(static_cast<int>(0.001f * sr), 1, numSamples);
+            float invFade = 1.0f / static_cast<float>(fadeSamples);
+            for (int i = 0; i < fadeSamples; ++i) {
+                // Fast exponential decay: drops to ~1% (-40dB) at end of 1ms
+                float fade = std::exp(-4.605f * (static_cast<float>(i) * invFade));
+                if (left)  left[i]  *= fade;
+                if (right) right[i] *= fade;
+            }
+            for (int i = fadeSamples; i < numSamples; ++i) {
+                if (left)  left[i]  = 0.0f;
+                if (right) right[i] = 0.0f;
+            }
+        }
+        flushBuffers();
+    }
+
+    float getAudioRateSourceSample(HydraInputSource src) const {
+        switch(src) {
+            case HydraInputSource::OscCarrier1: return tempCarrier1L.empty() ? 0.0f : tempCarrier1L[0];
+            case HydraInputSource::OscModulator1: return ctx.mod1Signal.empty() ? 0.0f : ctx.mod1Signal[0];
+            case HydraInputSource::OscCarrier2: return tempCarrier2L.empty() ? 0.0f : tempCarrier2L[0];
+            case HydraInputSource::OscModulator2: return ctx.mod2Signal.empty() ? 0.0f : ctx.mod2Signal[0];
+            default: return 0.0f;
+        }
+    }
+
 private:
     BlockContext ctx;
     std::vector<std::unique_ptr<DSPBlock>> allBlocks;
@@ -3157,6 +3472,7 @@ private:
     std::vector<float> tempCarrier2L;
     std::vector<float> tempCarrier2R;
     uint32_t slopRngState = 0x13579bdf;
+    VelocityTracker velocityTracker;
 };
 
 } // namespace TbdAudio

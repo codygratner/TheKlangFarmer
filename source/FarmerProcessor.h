@@ -1,10 +1,17 @@
 #pragma once
 #include "KlangCoreProcessor.h"
 #include "ModularBlocks.h"
+#include "ModulationEngine.h"
 #include "UIComponents.h"
+
+class TheKlangFarmerAudioProcessorEditor;
+class ModulationMatrixTableComponent;
 
 class TheKlangFarmerAudioProcessor : public KlangCoreProcessor {
 public:
+    friend class TheKlangFarmerAudioProcessorEditor;
+    friend class ModulationMatrixTableComponent;
+
     TheKlangFarmerAudioProcessor();
     ~TheKlangFarmerAudioProcessor() override = default;
 
@@ -20,16 +27,17 @@ public:
 
     const juce::String getName() const override;
 
-
-
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 
-
-
     TbdAudio::ModularDrumEngine& getEngine() { return engine; }
+    void triggerPanic();
+    TbdAudio::ModulationMatrix& getModMatrix() { return modMatrix; }
+    const TbdAudio::ModulationMatrix& getModMatrix() const { return modMatrix; }
 
 private:
     TbdAudio::ModularDrumEngine engine;
+    std::atomic<bool> panicRequested { false };
+    TbdAudio::ModulationMatrix modMatrix;
 
     // Direct parameter pointers for fast, thread-safe access
     // 1. Carrier 1
@@ -203,9 +211,12 @@ private:
     juce::AudioParameterFloat* preFXParam[4][4]  = { {nullptr} };
     juce::AudioParameterFloat* postFXParam[4][4] = { {nullptr} };
 
+    // 26. Performance Macros
+    juce::AudioParameterFloat* macroParams[4] = { nullptr };
+
     std::vector<juce::AudioParameterFloat*> continuousParams;
     void applyBaseParameters();
-    void applyModulationTargets(int target1, int target2, int target3);
+    void applyModulationTargets();
 
 public:
     enum class ModTargetType {

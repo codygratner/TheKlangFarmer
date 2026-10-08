@@ -93,3 +93,39 @@ With **Milestone v0.4.0**, we execute a **Total Clean-Slate Parity Break**:
 - Update `test/PluginIntensiveTestSuite.h`, `test/ParameterSchemaAuditTest.h`, and `test/EditorTestSuite.h` to validate the new curated parameter reflection, 4-control slot limits, header navigation, and theme palette switching.
 - 100% assertion pass across `dsp_tests.exe` and `gui_tests.exe`.
 - Compile Release binaries and deploy via `deploy.ps1`.
+
+---
+
+## 4. Finalized Architectural Additions (Session Consensus)
+
+1. **Agrarian Modulation Taxonomy (The Sower / The Irrigator)**:
+   - To honor Renoise while avoiding trademark collision and leaning into our agrarian IDM aesthetic, the 1-to-many meta-routing hubs (`Hydra 1..4`) are christened **`[SOWER 1..4]`** (or **`[IRRIGATOR 1..4]`**).
+   - *Metaphor*: Drawing from 1 control or audio source and spraying/broadcasting modulation across up to 8 field rows (destinations) with individual depth, min/max bounds, and curves.
+2. **The 3-Tier Vertical Layout**:
+   - **Chassis Header**: Horizontal nav tabs, Master Oscilloscope/VU (double-click Panic flush), 4 Performance Macros (`M1..M4`), Undo/Redo (`↶`/`↷`), A/B comparison, and Global `[d6]`.
+   - **Center Workspace**: Tabbed card pages (`[VOICE 1]`, `[VOICE 2]`, `[TRANSIENTS]`, `[EFFECTS]`, `[MOD]`).
+   - **Persistent Lower Modulator Strip**: Permanently visible bottom lane containing animated "drag-from" tiles for all LFOs, Envelopes, and Sowers. Dragging a tile directly maps modulation onto any center workspace knob.
+   - **Permanent Status Bar**: Un-toggleable bottom line displaying rich contextual tooltips and mouse shortcuts.
+3. **Visual Modulation Tracer Cables (Eurorack Edge Sockets)**:
+   - Renders glowing anti-aliased Bézier splines from driving source tiles up to modulated target knobs.
+   - **Card Inspector Popover Docking**: In the expanded 4-knob inspector popover, cables terminate cleanly into 4 colored jack sockets on the bottom perimeter bezel of the window, preventing text/slider occlusion while preserving immediate visual patch awareness.
+4. **Drag-and-Drop FX Rack with Console Anchors**:
+   - Single unified `EFFECTS` page with two 5-slot horizontal lanes (Pre-Amp Top, Post-Amp Bottom).
+   - Draggable slots 1–4 with full intra-lane, cross-lane, and empty-slot swapping.
+   - Immutable Anchor 5 cards: `[PRE-AMP DRIVE & COLOR]` and `[MASTER LIMITER / OUT]`.
+   - Optional Mick Gordon parallel routing split mode and **DOOM** brickwall saturation profile.
+5. **Compact Modulator Cards on the `[MOD]` Page (2x4 Grid)**:
+   - Replaces sprawling vertical lists with a tight 2x4 grid displaying 8 modulators simultaneously without scrolling.
+   - Half-height compact cards feature a miniature animated vector waveform trough + 2 essential performance knobs (`Rate`/`Speed` and `Depth`), with right-click popovers exposing curves, clock sync, and destination tables.
+   - **The Cultivator Block (Meta-Modulator)**: A special nested modulator type (`[TKC]`) that "eats" two adjacent horizontal slots in the grid (creating a double-width card).
+     - Retains the vector waveform display but expands the front panel to house **8 Macro Knobs** (`M1`..`M8`).
+     - Clicking the gear icon opens a full TKC interface popover for routing internal LFOs/Envelopes to those 8 Macros, achieving deep "modulations-inside-modulations".
+     - **Architectural Guardrails (Macro Firewall)**: To prevent infinite APVTS parameter recursion, the DAW is only exposed to the 8 Macro Knobs. All internal routing inside the TKC popover is serialized privately to JSON. Max nesting depth is hardcoded to 1 (you cannot load a TKC block inside another TKC block).
+6. **Modular 3-Slot Transient Architecture (`[TRANSIENTS]`)**:
+   - Replaces the static noise page with 3 swappable slots: each slot independently selects `[Analog Noise Generator]`, `[Sample One-Shot Player]`, or `[Synthetic Impulse Click]`.
+   - Features a dedicated Transient Sub-Mixer with individual Level, Pan, and Filter before routing to the main synth mixer.
+7. **Maths-Style Dual Slope Function Generators (`[SLOPE 1..4]`)**:
+   - Inspired by the legendary Make Noise Maths / Serge DUSG, introduces 4 dedicated looping slope generators.
+   - Front panel: `[Rise]`, `[Fall]`, continuous `[Curve]` morph (Log <-> Lin <-> Exp), and `[Cycle]` (Looping LFO / VCO).
+   - Generative Trigger Pulses: Emits discrete single-sample End-of-Fall (EOF) / End-of-Rise (EOR) trigger pulses upon cycle completion to re-trigger other Slopes or fire drum voices for cascading rhythms, polyrhythmic bursts, and ratchets.
+

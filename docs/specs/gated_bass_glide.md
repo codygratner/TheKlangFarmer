@@ -90,6 +90,16 @@ Styled with the project's signature tactile dark industrial chassis, recessed bo
    - `Off (Continuous)`: When gliding between overlapping notes, pitch glides smoothly while envelopes continue their natural decay (ideal for acid basslines and fluid synth leads).
    - `On (Punchy)`: Re-strikes Attack and transient envelopes on every note while pitch glides (ideal for punchy modern 808 slides).
 
+### 1.3 Envelope Gate-Hold Behavior & Smart Acoustic Defaults
+To resolve the acoustic trap where global sustain freezes pitch envelopes at peak transient spikes, the engine implements **Smart Musical Defaults + Popover Overrides**:
+- **1-Click Header Voice Switch**:
+  - `[ ONE-SHOT ]` (Default Drum Mode): All envelopes ignore note-offs and decay naturally.
+  - `[ GATED BASS ]` (Bass & Drone Mode): Automatically engages **Noise Engineering Gate-Hold** on the Amp Envelope while keeping Pitch Envelopes in immediate-decay mode. Releasing the key triggers the existing `Decay` knob as the release tail.
+- **Per-Envelope Popover Override**:
+  - Inside each Envelope's right-click **Inspector Popover**, sound designers can override the default:
+    `Gate Behavior: [ ● Auto (Follow Voice) | ○ Always Decay | ○ Force Sustain ]`
+  - Allows deep experimental sound design (e.g. holding a filter envelope open or creating rising pitch drones) without complicating standard percussion workflows.
+
 ---
 
 ## 2. Parameter Architecture (Data-Driven JSON)

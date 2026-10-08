@@ -60,13 +60,13 @@ namespace VersionCheckerTestSuite {
             auto* badgeBtn = ComponentFinder::findByType<UpdateBadgeButton>(editor.get());
             reporter.expect(badgeBtn != nullptr, "Farmer has UpdateBadgeButton in header");
 
-            // Mock an update available: v0.4.0
-            VersionChecker::getInstance().setMockRelease("v0.4.0", "https://github.com/codygratner/TheKlangSuite/releases/tag/v0.4.0");
+            // Mock an update available: v9.0.0
+            VersionChecker::getInstance().setMockRelease("v9.0.0", "https://github.com/codygratner/TheKlangSuite/releases/tag/v9.0.0");
             pumpMessageLoop();
 
             if (badgeBtn) {
                 reporter.expect(badgeBtn->isVisible(), "UpdateBadgeButton is visible when newer version is found");
-                reporter.expect(badgeBtn->getButtonText().contains("v0.4.0"), "Update badge displays candidate tag v0.4.0");
+                reporter.expect(badgeBtn->getButtonText().contains("v9.0.0"), "Update badge displays candidate tag v9.0.0");
             }
 
             // Mock up to date

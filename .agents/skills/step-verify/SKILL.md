@@ -15,7 +15,12 @@ Audit changes made during the active phase of an implementation plan against its
 
 ## Workflow
 
-### 1. Identify Active Phase in `PLAN.md`
+### 1. Inspect Communiqué Mailbox for Mid-Flight Amendments
+1. Open `.agents/pipeline/communique/plan_to_build.md`.
+2. Check if `STATUS:` is `PLAN_AMENDED ⚠️`.
+3. If amended: read the amendment changelog carefully, reset `plan_to_build.md` back to `STATUS: IN_PROGRESS` to acknowledge receipt, and ensure the updated `PLAN.md` is strictly followed.
+
+### 2. Identify Active Phase in `PLAN.md`
 1. Open and parse `PLAN.md` at the project root.
 2. Locate the first phase containing unchecked boxes (`- [ ]`).
 3. Extract:
@@ -74,7 +79,12 @@ Output a structured progression report to the user:
 *Ready to proceed to Phase <N+1>? Say "proceed" or provide any adjustments.*
 ```
 
-### 7. Tier Transition Advisory Protocol
+### 7. Update Factory Telemetry (`build_to_plan.md`)
+1. Open `.agents/pipeline/communique/build_to_plan.md`.
+2. Update the status line to: `## Status: BUILDING 🔨 (Phase <N+1>: <Next Phase Name>)`
+3. Update the `Current Factory Telemetry` block briefly listing the upcoming work.
+
+### 8. Tier Transition Advisory Protocol
 Before advancing to Phase <N+1>, evaluate whether Phase <N+1> requires a different complexity tier than Phase <N>:
 - **Same Tier**: Do NOT display the Model Advisory banner. Simply pause for user to reply "proceed".
 - **Tier UPGRADE (e.g. Tier 3 ➔ 2, Tier 2 ➔ 1, Tier 3 ➔ 1)**:

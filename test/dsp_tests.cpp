@@ -6,6 +6,7 @@
 #include <cassert>
 #include "FastMath.h"
 #include "ModularBlocks.h"
+#include "ModulationEngine.h"
 #include "PlanterEngine.h"
 
 int main() {
@@ -1089,6 +1090,240 @@ int main() {
         std::cout << "PASS: Monitor Saver Protocol (FTZ/DAZ & SIMD sanitizeBuffer) verified." << std::endl;
 
         std::cout << "PASS: FastMath core accuracy, bounds, and PhaseAccumulator32 verified." << std::endl;
+    }
+
+    // 24. Test Dynamic Velocity Response Curves
+    {
+        TbdAudio::VelocityTracker tracker;
+        
+        // Linear
+        tracker.setCurve(TbdAudio::VelocityCurve::Linear);
+        assert(std::abs(tracker.evaluate(0.0f) - 0.0f) < 1e-5f);
+        assert(std::abs(tracker.evaluate(0.5f) - 0.5f) < 1e-5f);
+        assert(std::abs(tracker.evaluate(1.0f) - 1.0f) < 1e-5f);
+
+        // Exponential (warpUnipolarExp: power ~3.32)
+        tracker.setCurve(TbdAudio::VelocityCurve::Exponential);
+        assert(std::abs(tracker.evaluate(0.0f) - 0.0f) < 1e-5f);
+        assert(std::abs(tracker.evaluate(1.0f) - 1.0f) < 1e-5f);
+        float expMid = tracker.evaluate(0.5f);
+        assert(expMid > 0.08f && expMid < 0.12f); // ~0.10 at midpoint (log2(10) curve)
+
+        // Logarithmic (sqrt curve)
+        tracker.setCurve(TbdAudio::VelocityCurve::Logarithmic);
+        assert(std::abs(tracker.evaluate(0.0f) - 0.0f) < 1e-5f);
+        assert(std::abs(tracker.evaluate(1.0f) - 1.0f) < 1e-5f);
+        float logMid = tracker.evaluate(0.5f);
+        assert(logMid > 0.70f && logMid < 0.72f); // sqrt(0.5) ≈ 0.7071f
+
+        // Fixed 127 (always 1.0f)
+        tracker.setCurve(TbdAudio::VelocityCurve::Fixed127);
+        assert(std::abs(tracker.evaluate(0.0f) - 1.0f) < 1e-5f);
+        assert(std::abs(tracker.evaluate(0.25f) - 1.0f) < 1e-5f);
+        assert(std::abs(tracker.evaluate(0.75f) - 1.0f) < 1e-5f);
+        assert(std::abs(tracker.evaluate(1.0f) - 1.0f) < 1e-5f);
+
+        // Runtime engine velocity curve switching
+        TbdAudio::ModularDrumEngine velCurveEngine;
+        velCurveEngine.init(44100.0f);
+        velCurveEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 0, 0.75f); // linear slope
+        velCurveEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_VELOCITY, 3, 1.0f);  // 100% volume sensitivity
+
+        // Under Fixed127, low velocity hit produces full volume
+        velCurveEngine.setVelocityCurve(TbdAudio::VelocityCurve::Fixed127);
+        assert(velCurveEngine.getVelocityCurve() == TbdAudio::VelocityCurve::Fixed127);
+        velCurveEngine.trigger(0.05f);
+        std::vector<float> fixedL(512, 0.0f), fixedR(512, 0.0f);
+        velCurveEngine.processStereo(fixedL.data(), fixedR.data(), 512);
+        float fixedPeak = 0.0f;
+        for (float s : fixedL) fixedPeak = std::max(fixedPeak, std::abs(s));
+        assert(fixedPeak > 0.05f); // full level despite 0.05 velocity hit
+
+        std::cout << "PASS: Dynamic Velocity Response Curves (Linear, Exponential, Logarithmic, Fixed 127) verified." << std::endl;
+    }
+
+    // 25. Test Master Audio Panic DSP Flush
+    {
+        TbdAudio::ModularDrumEngine panicEngine;
+        panicEngine.init(44100.0f);
+
+        // Enable Tempo Delay in Post FX with 85% feedback so it rings out indefinitely
+        panicEngine.setPostFXType(0, 12); // Delay
+        panicEngine.setPostFXParam(0, 0, 0.5f); // 1/4 note
+        panicEngine.setPostFXParam(0, 1, 0.85f); // 85% feedback
+        panicEngine.setPostFXParam(0, 2, 0.5f);
+        panicEngine.setPostFXParam(0, 3, 0.8f);  // 80% mix
+
+        // Enable Comb Filter in Post FX with resonance
+        panicEngine.setPostFXType(1, 3); // Comb Filter
+        panicEngine.setPostFXParam(1, 2, 0.8f); // 80% resonance
+        panicEngine.setPostFXParam(1, 3, 0.75f);
+
+        // Trigger synth and process several blocks to charge delay and comb feedback loops
+        panicEngine.trigger(1.0f);
+        std::vector<float> pL(512, 0.0f), pR(512, 0.0f);
+        for (int b = 0; b < 20; ++b) {
+            panicEngine.processStereo(pL.data(), pR.data(), 512);
+        }
+
+        // Verify delay line is ringing out with loud energy
+        float ringOutEnergy = 0.0f;
+        for (float s : pL) ringOutEnergy += std::abs(s);
+        assert(ringOutEnergy > 0.05f);
+
+        // Execute Master Panic Flush
+        panicEngine.triggerPanic(pL.data(), pR.data(), 512, 44100.0f);
+
+        // Verify that buffer tail was zeroed by panic
+        for (int i = 100; i < 512; ++i) {
+            assert(pL[i] == 0.0f && pR[i] == 0.0f);
+        }
+
+        // Verify subsequent process block produces absolute mathematical silence (zero ring-out)
+        std::vector<float> postL(512, 0.0f), postR(512, 0.0f);
+        panicEngine.processStereo(postL.data(), postR.data(), 512);
+        for (int i = 0; i < 512; ++i) {
+            assert(postL[i] == 0.0f);
+            assert(postR[i] == 0.0f);
+        }
+
+        std::cout << "PASS: Master Audio Panic DSP Flush (pop-free fade & zero buffer ring-out) verified." << std::endl;
+    }
+
+    // 26. Test Modulation Engine Core, Via Modulation & Hydra Meta-Routing
+    {
+        TbdAudio::ModulationMatrix matrix;
+
+        // Verify 21 sources
+        assert(static_cast<int>(TbdAudio::ModSource::Count) == 21);
+        assert(std::string(TbdAudio::getModSourceName(TbdAudio::ModSource::LFO1)) == "LFO 1");
+        assert(std::string(TbdAudio::getModSourceName(TbdAudio::ModSource::Velocity)) == "Velocity");
+        assert(std::string(TbdAudio::getModSourceName(TbdAudio::ModSource::Hydra4)) == "Hydra 4");
+
+        // Verify Macro mapping to sources
+        matrix.setMacro(0, 0.75f);
+        assert(std::abs(matrix.getMacro(0) - 0.75f) < 1e-5f);
+        assert(std::abs(matrix.getSourceValue(TbdAudio::ModSource::Macro1) - 0.75f) < 1e-5f);
+
+        // Verify basic route evaluation (dest += source * depth)
+        TbdAudio::ModRoute route0;
+        route0.sourceId = static_cast<int>(TbdAudio::ModSource::LFO1);
+        route0.targetParamId = 5;
+        route0.depth = 0.5f;
+        route0.isBipolar = true;
+        route0.curve = TbdAudio::ModCurve::Linear;
+        route0.active = true;
+        matrix.setRoute(0, route0);
+
+        matrix.setSourceValue(TbdAudio::ModSource::LFO1, 0.8f);
+        float rVal = matrix.evaluateRoute(0);
+        assert(std::abs(rVal - 0.4f) < 1e-5f); // 0.8 * 0.5 = 0.4
+
+        // Verify secondary "Via" modulation: effectiveDepth = depth * (viaVal * viaDepth)
+        TbdAudio::ModRoute route1;
+        route1.sourceId = static_cast<int>(TbdAudio::ModSource::LFO1);
+        route1.targetParamId = 6;
+        route1.depth = 0.6f;
+        route1.isBipolar = true;
+        route1.viaSourceId = static_cast<int>(TbdAudio::ModSource::Velocity);
+        route1.viaDepth = 0.5f; // via depth factor
+        route1.active = true;
+        matrix.setRoute(1, route1);
+
+        matrix.setSourceValue(TbdAudio::ModSource::Velocity, 0.5f); // via value
+        float rValVia = matrix.evaluateRoute(1);
+        // effectiveDepth = 0.6 * (0.5 * 0.5) = 0.6 * 0.25 = 0.15. sourceVal = 0.8 -> 0.8 * 0.15 = 0.12
+        assert(std::abs(rValVia - 0.12f) < 1e-5f);
+
+        // Verify block accumulation
+        float accumulators[10] = { 0.0f };
+        matrix.evaluateBlockModulations(accumulators, 10);
+        assert(std::abs(accumulators[5] - 0.4f) < 1e-5f);
+        assert(std::abs(accumulators[6] - 0.12f) < 1e-5f);
+
+        // Verify Hydra Meta-Modulator Hub
+        auto& hydra1 = matrix.getHydra(0);
+        hydra1.inputSource = TbdAudio::HydraInputSource::Macro1;
+        assert(!hydra1.isAudioRate());
+
+        // Set up destinations: Dest 0 maps 0..1 to 100..500
+        hydra1.setDestination(0, 2, 100.0f, 500.0f, TbdAudio::ModCurve::Linear);
+        // Dest 1 maps 0..1 to 0..-50 (inverted)
+        hydra1.setDestination(1, 3, 0.0f, -50.0f, TbdAudio::ModCurve::Linear);
+
+        hydra1.currentOutputValue = 0.5f;
+        assert(std::abs(hydra1.destinations[0].mapValue(0.5f) - 300.0f) < 1e-5f);
+        assert(std::abs(hydra1.destinations[1].mapValue(0.5f) - (-25.0f)) < 1e-5f);
+
+        // Verify audio-rate classification for oscillators
+        hydra1.inputSource = TbdAudio::HydraInputSource::OscCarrier1;
+        assert(hydra1.isAudioRate());
+        hydra1.inputSource = TbdAudio::HydraInputSource::OscModulator1;
+        assert(hydra1.isAudioRate());
+        hydra1.inputSource = TbdAudio::HydraInputSource::OscCarrier2;
+        assert(hydra1.isAudioRate());
+        hydra1.inputSource = TbdAudio::HydraInputSource::OscModulator2;
+        assert(hydra1.isAudioRate());
+
+        // Reset clears matrix
+        matrix.reset();
+        assert(matrix.getSourceValue(TbdAudio::ModSource::Macro1) == 0.0f);
+        assert(matrix.getSourceValue(TbdAudio::ModSource::LFO1) == 0.0f);
+
+        std::cout << "PASS: Modulation Engine Core, Via Modulation & Hydra Meta-Routing verified." << std::endl;
+    }
+
+    // 30. Test Audio-Rate FM Hydra Routing (Hybrid Rate Simulation)
+    {
+        TbdAudio::ModularDrumEngine fmEngine;
+        fmEngine.init(44100.0f);
+        TbdAudio::ModulationMatrix matrix;
+
+        // Set up Carrier 1 to 55 Hz
+        fmEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 0, 0.5f); // Freq mode
+        float norm55 = std::log(55.0f / 20.0f) / std::log(24000.0f / 20.0f);
+        fmEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_CARRIER1, 1, norm55);
+
+        // Set up Filter 1 at 0% base cutoff (closed)
+        fmEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 0, 0.0f); // LPF
+        fmEngine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_FILTER1, 2, 0.0f); // Cutoff 0
+
+        // Hydra 1 routes Carrier 1 output to Filter 1 Cutoff
+        auto& hydra = matrix.getHydra(0);
+        hydra.inputSource = TbdAudio::HydraInputSource::OscCarrier1;
+        // Map normalized input (0..1) to cutoff (0..1)
+        hydra.setDestination(0, TbdAudio::ModularDrumEngine::BLK_FILTER1 * 4 + 2, 0.0f, 1.0f); 
+
+        fmEngine.trigger(1.0f);
+
+        // Simulate FarmerProcessor audio-rate loop
+        constexpr int TEST_SAMPLES = 256;
+        std::vector<float> fmOut(TEST_SAMPLES, 0.0f);
+        
+        bool cutoffWasModulated = false;
+
+        for (int i = 0; i < TEST_SAMPLES; ++i) {
+            // Read previous 1-sample feedback
+            float inVal = fmEngine.getAudioRateSourceSample(TbdAudio::HydraInputSource::OscCarrier1);
+            float normIn = std::clamp((inVal * 0.5f) + 0.5f, 0.0f, 1.0f);
+
+            // Calculate modulation offset for Filter 1 Cutoff
+            float offset = hydra.destinations[0].mapValue(normIn);
+            if (offset > 0.01f) cutoffWasModulated = true;
+
+            // Apply parameter modulation
+            fmEngine.setPageParameterModulation(TbdAudio::ModularDrumEngine::BLK_FILTER1, 2, offset);
+
+            // Process 1 sample
+            float l = 0.0f;
+            float r = 0.0f;
+            fmEngine.processStereo(&l, &r, 1);
+            fmOut[i] = l;
+        }
+
+        assert(cutoffWasModulated && "Audio-rate Hydra did not modulate the target parameter!");
+
+        std::cout << "PASS: Audio-rate Hydra FM routing loop verified." << std::endl;
     }
 
     std::cout << "\n>>> ALL MODULAR DRUM DSP VERIFICATION TESTS PASSED SUCCESSFULLY! <<<" << std::endl;

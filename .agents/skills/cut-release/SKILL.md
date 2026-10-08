@@ -129,6 +129,17 @@ Safely and deterministically cut an official Git release tag for **The Klang Sui
 3. **Remote Push Execution**:
    - If selected, execute the appropriate `git push` command and confirm remote publication on GitHub.
 
+
+---
+
+### Phase 4.5: CI/CD Remote Matrix Verification
+1. **GitHub Actions Monitor**:
+   - Following the push, schedule a 10m background watchdog timer or use gh run list --limit 1 to locate the newly triggered CI workflow.
+   - Use gh run watch <run-id> or periodically query the API.
+2. **Matrix Validation**:
+   - Verify that the MacOS Clang, Linux GCC, and Windows MSVC builds all compile cleanly.
+   - If a remote build fails (e.g. strict -Werror triggers a GCC-specific warning we didn't see locally), halt the release process, fetch the remote failure logs (gh run view <run-id> --log-failed), and alert the user.
+
 ---
 
 ### Phase 5: Clean Slate & Knowledge Harvester
@@ -143,4 +154,5 @@ Safely and deterministically cut an official Git release tag for **The Klang Sui
    - Append distilled summary of this release to `docs/history/DEV_HISTORY.md`.
    - Overwrite `context_clues_build.md` and `context_clues_plan.md` with clean slate message pointing to the next milestone in `docs/BACKLOG.md`.
    - Notify user that context is wiped and ready for a fresh start!
+
 

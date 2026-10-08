@@ -2,6 +2,164 @@
 #include "ParameterManager.h"
 #include "DevLogger.h"
 
+// --- SMART VALUE PARSER IMPLEMENTATION ---
+
+bool SmartValueParser::parseNoteToHz(const juce::String& text, double& outHz) {
+    juce::String t = text.trim();
+    if (t.isEmpty()) return false;
+
+    int i = 0;
+    char noteLetter = static_cast<char>(std::toupper(t[i]));
+    if (noteLetter < 'A' || noteLetter > 'G') return false;
+    ++i;
+
+    int semitone = 0;
+    switch (noteLetter) {
+        case 'C': semitone = 0; break;
+        case 'D': semitone = 2; break;
+        case 'E': semitone = 4; break;
+        case 'F': semitone = 5; break;
+        case 'G': semitone = 7; break;
+        case 'A': semitone = 9; break;
+        case 'B': semitone = 11; break;
+        default: return false;
+    }
+
+    if (i < t.length()) {
+        if (t[i] == '#') {
+            semitone += 1;
+            ++i;
+        } else if (t[i] == 'b' || t[i] == 'B') {
+            if (i + 1 < t.length() && (std::isdigit(t[i + 1]) || t[i + 1] == '-' || t[i + 1] == '+')) {
+                semitone -= 1;
+                ++i;
+            }
+        }
+    }
+
+    if (i >= t.length()) return false;
+    bool negOctave = false;
+    if (t[i] == '-') {
+        negOctave = true;
+        ++i;
+    }
+    if (i >= t.length() || !std::isdigit(t[i])) return false;
+
+    int octave = 0;
+    while (i < t.length() && std::isdigit(t[i])) {
+        octave = octave * 10 + (t[i] - '0');
+        ++i;
+    }
+    if (negOctave) octave = -octave;
+
+    double cents = 0.0;
+    if (i < t.length() && (t[i] == '+' || t[i] == '-')) {
+        char sign = t[i];
+        ++i;
+        double cVal = 0.0;
+        bool hasDot = false;
+        double div = 10.0;
+        while (i < t.length() && (std::isdigit(t[i]) || t[i] == '.')) {
+            if (t[i] == '.') {
+                hasDot = true;
+            } else if (!hasDot) {
+                cVal = cVal * 10.0 + (t[i] - '0');
+            } else {
+                cVal += (t[i] - '0') / div;
+                div *= 10.0;
+            }
+            ++i;
+        }
+        cents = (sign == '-') ? -cVal : cVal;
+    }
+
+    int midiNote = (octave + 1) * 12 + semitone;
+    outHz = 440.0 * std::pow(2.0, (static_cast<double>(midiNote) - 69.0 + cents / 100.0) / 12.0);
+    return true;
+}
+
+bool SmartValueParser::parseDecibelsToGain(const juce::String& text, double& outGain) {
+    juce::String t = text.trim();
+    if (!t.containsIgnoreCase("db")) return false;
+
+    juce::String clean = t.replace("db", "", true).trim();
+    double db = clean.getDoubleValue();
+    outGain = std::pow(10.0, db / 20.0);
+    return true;
+}
+
+bool SmartValueParser::parseTimeToMs(const juce::String& text, double bpm, double& outMs) {
+    juce::String t = text.trim();
+    if (t.isEmpty()) return false;
+
+    if (bpm <= 10.0) bpm = 120.0;
+    double quarterMs = 60000.0 / bpm;
+
+    if (t.containsChar('/')) {
+        int slashIdx = t.indexOfChar('/');
+        juce::String numStr = t.substring(0, slashIdx).trim();
+        juce::String denStr = t.substring(slashIdx + 1).trim();
+
+        double num = numStr.getDoubleValue();
+        if (num <= 0.0) num = 1.0;
+
+        double mult = 1.0;
+        if (denStr.endsWithIgnoreCase("d")) {
+            mult = 1.5;
+            denStr = denStr.dropLastCharacters(1).trim();
+        } else if (denStr.endsWithIgnoreCase("t")) {
+            mult = 2.0 / 3.0;
+            denStr = denStr.dropLastCharacters(1).trim();
+        }
+
+        double den = denStr.getDoubleValue();
+        if (den <= 0.0) den = 4.0;
+
+        outMs = (4.0 * num / den) * quarterMs * mult;
+        return true;
+    }
+
+    if (t.endsWithIgnoreCase("ms")) {
+        outMs = t.dropLastCharacters(2).trim().getDoubleValue();
+        return true;
+    }
+
+    if (t.endsWithIgnoreCase("s") && !t.endsWithIgnoreCase("ms")) {
+        outMs = t.dropLastCharacters(1).trim().getDoubleValue() * 1000.0;
+        return true;
+    }
+
+    return false;
+}
+
+double SmartValueParser::parse(const juce::String& text, double minVal, double maxVal, double bpm) {
+    juce::String t = text.trim();
+    if (t.isEmpty()) return minVal;
+
+    double hz = 0.0;
+    if (parseNoteToHz(t, hz)) {
+        return std::clamp(hz, minVal, maxVal);
+    }
+
+    double gain = 0.0;
+    if (parseDecibelsToGain(t, gain)) {
+        return std::clamp(gain, minVal, maxVal);
+    }
+
+    double ms = 0.0;
+    if (parseTimeToMs(t, bpm, ms)) {
+        return std::clamp(ms, minVal, maxVal);
+    }
+
+    if (t.endsWith("%")) {
+        double p = t.dropLastCharacters(1).trim().getDoubleValue() / 100.0;
+        return std::clamp(minVal + p * (maxVal - minVal), minVal, maxVal);
+    }
+
+    double val = parseNumberSafe(t, minVal);
+    return std::clamp(val, minVal, maxVal);
+}
+
 // --- SAFE PARSING & FORMATTING HELPERS ---
 
 double parseNumberSafe(const juce::String& text, double fallback) {
@@ -290,8 +448,13 @@ juce::String formatTimeMs(double val) {
     return juce::String(static_cast<int>(std::round(ms))) + " ms";
 }
 double parseTimeMs(const juce::String& text) {
-    double ms = parseNumberSafe(text, 333.0);
-    if (text.containsIgnoreCase("s") && !text.containsIgnoreCase("ms")) ms *= 1000.0;
+    double ms = 0.0;
+    if (SmartValueParser::parseTimeToMs(text, 120.0, ms)) {
+        // Parsed tempo division or ms/s
+    } else {
+        ms = parseNumberSafe(text, 333.0);
+        if (text.containsIgnoreCase("s") && !text.containsIgnoreCase("ms")) ms *= 1000.0;
+    }
     ms = std::clamp(ms, 5.0, 60000.0);
     return std::log(ms / 5.0) / std::log(60000.0 / 5.0);
 }
@@ -302,8 +465,13 @@ juce::String formatNoiseTimeMs(double val) {
     return juce::String(static_cast<int>(std::round(ms))) + " ms";
 }
 double parseNoiseTimeMs(const juce::String& text) {
-    double ms = parseNumberSafe(text, 100.0);
-    if (text.containsIgnoreCase("s") && !text.containsIgnoreCase("ms")) ms *= 1000.0;
+    double ms = 0.0;
+    if (SmartValueParser::parseTimeToMs(text, 120.0, ms)) {
+        // Parsed tempo division or ms/s
+    } else {
+        ms = parseNumberSafe(text, 100.0);
+        if (text.containsIgnoreCase("s") && !text.containsIgnoreCase("ms")) ms *= 1000.0;
+    }
     ms = std::clamp(ms, 1.0, 60000.0);
     return std::log(ms / 1.0) / std::log(60000.0 / 1.0);
 }
@@ -315,7 +483,12 @@ juce::String formatFreqHz(double val) {
     return juce::String(hz, 2) + " Hz";
 }
 double parseFreqHz(const juce::String& text) {
-    double hz = parseNumberSafe(text, 1000.0);
+    double hz = 0.0;
+    if (SmartValueParser::parseNoteToHz(text, hz)) {
+        // Parsed musical note + cents
+    } else {
+        hz = parseNumberSafe(text, 1000.0);
+    }
     hz = std::clamp(hz, 0.1, 24000.0);
     return std::log(hz / 0.1) / std::log(24000.0 / 0.1);
 }
@@ -326,7 +499,12 @@ juce::String formatEqFreqHz(double val) {
     return juce::String(static_cast<int>(std::round(hz))) + " Hz";
 }
 double parseEqFreqHz(const juce::String& text) {
-    double hz = parseNumberSafe(text, 1000.0);
+    double hz = 0.0;
+    if (SmartValueParser::parseNoteToHz(text, hz)) {
+        // Parsed musical note + cents
+    } else {
+        hz = parseNumberSafe(text, 1000.0);
+    }
     hz = std::clamp(hz, 20.0, 24000.0);
     return std::log(hz / 20.0) / std::log(24000.0 / 20.0);
 }
@@ -336,6 +514,11 @@ juce::String formatDb(double val) {
     return (db > 0 ? "+" : "") + juce::String(db, 1) + " dB";
 }
 double parseDb(const juce::String& text) {
+    double gain = 0.0;
+    if (SmartValueParser::parseDecibelsToGain(text, gain)) {
+        double db = (gain > 0.0) ? 20.0 * std::log10(gain) : -6.0;
+        return std::clamp((db + 6.0) / 30.0, 0.0, 1.0);
+    }
     double db = parseNumberSafe(text, 0.0);
     return std::clamp((db + 6.0) / 30.0, 0.0, 1.0);
 }
@@ -816,17 +999,39 @@ void RotaryKnobLookAndFeel::drawRotarySlider(juce::Graphics& g, int x, int y, in
                 g.strokePath(valueArc, juce::PathStrokeType(lineW, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
             }
         }
+
+        // Draw Animated Modulation Ring (arc + realtime dot)
+        if (auto* rks = dynamic_cast<RotaryKnobSlider*>(&slider)) {
+            if (rks->modulation.isModulated) {
+                float minA = rotaryStartAngle + std::clamp(rks->modulation.rangeMinNorm, 0.0f, 1.0f) * (rotaryEndAngle - rotaryStartAngle);
+                float maxA = rotaryStartAngle + std::clamp(rks->modulation.rangeMaxNorm, 0.0f, 1.0f) * (rotaryEndAngle - rotaryStartAngle);
+                if (maxA > minA + 0.01f) {
+                    juce::Path modArc;
+                    modArc.addCentredArc(centre.x, centre.y, arcRadius, arcRadius, 0.0f, minA, maxA, true);
+                    g.setColour(juce::Colour(0xff38bdf8).withAlpha(0.75f));
+                    g.strokePath(modArc, juce::PathStrokeType(lineW * 0.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+                }
+
+                // Instantaneous value dot
+                float curA = rotaryStartAngle + std::clamp(rks->modulation.currentNorm, 0.0f, 1.0f) * (rotaryEndAngle - rotaryStartAngle);
+                float dotX = centre.x + arcRadius * std::sin(curA);
+                float dotY = centre.y - arcRadius * std::cos(curA);
+                g.setColour(juce::Colours::white);
+                g.fillEllipse(dotX - 2.5f, dotY - 2.5f, 5.0f, 5.0f);
+                g.setColour(juce::Colour(0xff38bdf8));
+                g.drawEllipse(dotX - 2.5f, dotY - 2.5f, 5.0f, 5.0f, 1.2f);
+            }
+        }
     }
 
     auto innerRadius = arcRadius - lineW * 0.85f;
     if (innerRadius > 3.0f) {
         auto knobBounds = juce::Rectangle<float>(centre.x - innerRadius, centre.y - innerRadius,
                                                  innerRadius * 2.0f, innerRadius * 2.0f);
-        juce::ColourGradient grad(juce::Colour(0xff2a2f3d), centre.x, centre.y - innerRadius,
-                                  juce::Colour(0xff14161c), centre.x, centre.y + innerRadius, false);
-        g.setGradientFill(grad);
+        // Flat vector precision aluminum feel
+        g.setColour(juce::Colour(0xff181c24));
         g.fillEllipse(knobBounds);
-        g.setColour(juce::Colour(0xff3b4354));
+        g.setColour(juce::Colour(0xff2d3444));
         g.drawEllipse(knobBounds, 1.0f);
 
         if (slider.isMouseOverOrDragging()) {
@@ -1246,8 +1451,17 @@ void RotaryKnobSlider::mouseDown(const juce::MouseEvent& e) {
         }
     }
 
+    if (e.mods.isAltDown()) {
+        if (getDefaultValue) {
+            setValue(getDefaultValue(), juce::sendNotificationSync);
+        } else {
+            setValue(getDoubleClickReturnValue(), juce::sendNotificationSync);
+        }
+        return;
+    }
+
     if (e.mods.isRightButtonDown() || e.mods.isPopupMenu()) {
-        openHoveringEditor();
+        showContextMenu();
         return;
     }
     dragStartPos = e.getPosition();
@@ -1256,7 +1470,7 @@ void RotaryKnobSlider::mouseDown(const juce::MouseEvent& e) {
 }
 
 void RotaryKnobSlider::mouseDrag(const juce::MouseEvent& e) {
-    if (e.mods.isRightButtonDown() || e.mods.isPopupMenu()) return;
+    if (e.mods.isRightButtonDown() || e.mods.isPopupMenu() || e.mods.isAltDown()) return;
 
     if (auto* top = getTopLevelComponent()) {
         for (int i = 0; i < top->getNumChildComponents(); ++i) {
@@ -1284,10 +1498,79 @@ void RotaryKnobSlider::mouseUp(const juce::MouseEvent&) {
 
 void RotaryKnobSlider::mouseDoubleClick(const juce::MouseEvent&) {
     if (getDefaultValue) {
-        setValue(getDefaultValue(), juce::sendNotificationAsync);
+        setValue(getDefaultValue(), juce::sendNotificationSync);
     } else {
-        setValue(getDoubleClickReturnValue(), juce::sendNotificationAsync);
+        setValue(getDoubleClickReturnValue(), juce::sendNotificationSync);
     }
+    openHoveringEditor();
+}
+
+void RotaryKnobSlider::showContextMenu() {
+    juce::PopupMenu menu;
+    menu.addItem(1, "Enter Value (Double-Click)...");
+    menu.addItem(2, "Reset to Default (Alt+Click)");
+    menu.addSeparator();
+
+    juce::PopupMenu modMenu;
+    const juce::StringArray modSources {
+        "LFO 1", "LFO 2", "LFO 3", "LFO 4",
+        "ENV 1", "ENV 2", "ENV 3", "ENV 4",
+        "HYDRA 1", "HYDRA 2", "HYDRA 3", "HYDRA 4",
+        "VEL", "KEY", "SLOP",
+        "Macro 1", "Macro 2", "Macro 3", "Macro 4"
+    };
+    for (int i = 0; i < modSources.size(); ++i) {
+        modMenu.addItem(100 + i, modSources[i]);
+    }
+    menu.addSubMenu("Assign Modulation", modMenu);
+    menu.addItem(3, "Unmap All Modulations");
+    menu.addSeparator();
+    menu.addItem(4, "MIDI CC Learn...");
+    menu.addItem(5, "Clear MIDI CC Mapping");
+
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(this),
+        [this, modSources](int result) {
+            if (result == 1) {
+                openHoveringEditor();
+            } else if (result == 2) {
+                if (getDefaultValue) setValue(getDefaultValue(), juce::sendNotificationSync);
+                else setValue(getDoubleClickReturnValue(), juce::sendNotificationSync);
+            } else if (result >= 100 && result < 100 + modSources.size()) {
+                if (onModulationAssigned) onModulationAssigned(modSources[result - 100]);
+            } else if (result == 3) {
+                if (onModulationCleared) onModulationCleared();
+            } else if (result == 4) {
+                isMidiLearning = true;
+                repaint();
+            } else if (result == 5) {
+                midiCC = -1;
+                isMidiLearning = false;
+                repaint();
+            }
+        });
+}
+
+bool RotaryKnobSlider::isInterestedInDragSource(const SourceDetails& dragSourceDetails) {
+    return dragSourceDetails.description.toString().startsWith("MOD_SOURCE:");
+}
+
+void RotaryKnobSlider::itemDragEnter(const SourceDetails&) {
+    isDragOver = true;
+    repaint();
+}
+
+void RotaryKnobSlider::itemDragExit(const SourceDetails&) {
+    isDragOver = false;
+    repaint();
+}
+
+void RotaryKnobSlider::itemDropped(const SourceDetails& dragSourceDetails) {
+    isDragOver = false;
+    juce::String src = dragSourceDetails.description.toString().fromFirstOccurrenceOf("MOD_SOURCE:", false, false);
+    if (onModulationAssigned && src.isNotEmpty()) {
+        onModulationAssigned(src);
+    }
+    repaint();
 }
 
 void RotaryKnobSlider::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) {
@@ -1488,7 +1771,7 @@ double RotaryKnobSlider::getValueFromText(const juce::String& text) {
     if (customParseText) {
         return customParseText(text);
     }
-    return juce::Slider::getValueFromText(text);
+    return SmartValueParser::parse(text, getMinimum(), getMaximum());
 }
 
 double RotaryKnobSlider::snapValue(double attemptedValue, DragMode dragMode) {
@@ -1623,6 +1906,14 @@ void RotaryKnobSlider::paint(juce::Graphics& g) {
         bool isHot = isMouseOverOrDragging();
         g.setColour(isHot ? accentColour.withAlpha(0.65f) : juce::Colour(0xff1e2535));
         g.drawRoundedRectangle(bounds, cornerRadius, 1.2f);
+    }
+
+    if (isDragOver) {
+        g.setColour(juce::Colour(0xff38bdf8));
+        g.drawRoundedRectangle(bounds, cornerRadius, 2.0f);
+    } else if (isMidiLearning) {
+        g.setColour(juce::Colour(0xfff59e0b));
+        g.drawRoundedRectangle(bounds, cornerRadius, 2.0f);
     }
 
     float pad = 1.5f;
@@ -2027,11 +2318,45 @@ ModuleCardComponent::ModuleCardComponent(const juce::String& title, juce::Colour
 {
     addAndMakeVisible(oscilloscope);
 
+    diceButton.setButtonText("d6");
+    diceButton.setTooltip("RANDOMIZE: Jitter parameters in " + moduleTitle + ".");
+    diceButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0x00000000));
+    diceButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff718096));
+    diceButton.onClick = [this]() {
+        rollDice();
+        if (onRandomizeClicked) onRandomizeClicked();
+    };
+    addAndMakeVisible(diceButton);
+
     for (int i = 0; i < 4; ++i) {
         labels[i].setFont(juce::FontOptions(13.0f, juce::Font::bold));
         labels[i].setColour(juce::Label::textColourId, juce::Colour(0xffc5d0e0));
         labels[i].setJustificationType(juce::Justification::centredLeft);
         addAndMakeVisible(labels[i]);
+    }
+}
+
+void ModuleCardComponent::rollDice() {
+    juce::Random& rng = juce::Random::getSystemRandom();
+    for (int i = 0; i < 4; ++i) {
+        if (knobs[i] && knobs[i]->isVisible()) {
+            double current = knobs[i]->getValue();
+            double range = knobs[i]->getMaximum() - knobs[i]->getMinimum();
+            double jitter = (rng.nextDouble() - 0.5) * 2.0 * d6Depth * range;
+            knobs[i]->setValue(std::clamp(current + jitter, knobs[i]->getMinimum(), knobs[i]->getMaximum()), juce::sendNotificationSync);
+        }
+    }
+    if (ledSelector && ledSelector->isVisible() && ledSelector->getNumItems() > 1) {
+        if (rng.nextDouble() < d6Depth) {
+            int newIdx = rng.nextInt(ledSelector->getNumItems());
+            ledSelector->setSelectedIndex(newIdx, juce::sendNotificationSync);
+        }
+    }
+    if (secondLedSelector && secondLedSelector->isVisible() && secondLedSelector->getNumItems() > 1) {
+        if (rng.nextDouble() < d6Depth) {
+            int newIdx = rng.nextInt(secondLedSelector->getNumItems());
+            secondLedSelector->setSelectedIndex(newIdx, juce::sendNotificationSync);
+        }
     }
 }
 
@@ -2188,8 +2513,12 @@ void ModuleCardComponent::paint(juce::Graphics& g) {
     }
 
     auto compColour = panelTintBaseColour.isTransparent() ? accent.withRotatedHue(0.5f) : panelTintBaseColour;
-    auto panelBg = juce::Colour(0xff13161f).interpolatedWith(compColour, 0.16f);
-    auto panelBorder = juce::Colour(0xff222736).interpolatedWith(compColour, 0.20f);
+    auto panelBg = juce::Colour(0xff161b22).interpolatedWith(compColour, 0.08f);
+    auto panelBorder = juce::Colour(0xff283141);
+
+    // Subtle 2px card drop shadow
+    g.setColour(juce::Colour(0x30000000));
+    g.fillRoundedRectangle(bounds.translated(0.0f, 2.0f), 6.0f);
 
     g.setColour(panelBg);
     g.fillRoundedRectangle(bounds, 6.0f);
@@ -2200,12 +2529,13 @@ void ModuleCardComponent::paint(juce::Graphics& g) {
     g.setColour(accent);
     g.fillRoundedRectangle(headerStrip, 2.0f);
 
-    g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
+    g.setFont(TkfTypography::getFont(14.0f, juce::Font::bold));
     g.setColour(accent);
-    g.drawText(moduleTitle.toUpperCase(), 10, 4, getWidth() - 20, 18, juce::Justification::left, true);
+    g.drawText(moduleTitle.toUpperCase(), 10, 4, getWidth() - 44, 18, juce::Justification::left, true);
 }
 
 void ModuleCardComponent::resized() {
+    diceButton.setBounds(getWidth() - 32, 4, 26, 16);
     oscilloscope.setVisible(false); // Visualization is hosted in Slot 5
     for (int i = 0; i < 4; ++i) {
         labels[i].setVisible(false);
@@ -2720,6 +3050,482 @@ void AdvancedColorPickerComponent::sliderValueChanged(juce::Slider* slider) {
 
 void AdvancedColorPickerComponent::sliderDragEnded(juce::Slider* slider) {
     if (onColorChanged) onColorChanged(currentColor); // Notify only when released
+}
+
+// ==============================================================================
+// HeaderMeterComponent Implementation
+// ==============================================================================
+
+HeaderMeterComponent::HeaderMeterComponent() {
+    setTooltip("STEREO PEAK METER: Output headroom monitoring. Double-click to trigger Panic silence flush.");
+}
+
+void HeaderMeterComponent::setLevels(float left, float right) {
+    leftLevel = std::clamp(left, 0.0f, 1.5f);
+    rightLevel = std::clamp(right, 0.0f, 1.5f);
+    repaint();
+}
+
+void HeaderMeterComponent::mouseDoubleClick(const juce::MouseEvent&) {
+    if (onPanicTriggered) onPanicTriggered();
+}
+
+void HeaderMeterComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+    g.setColour(juce::Colour(0xff0d1117));
+    g.fillRoundedRectangle(bounds, 3.0f);
+    g.setColour(juce::Colour(0xff283141));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 3.0f, 1.0f);
+
+    auto barArea = bounds.reduced(4.0f, 3.0f);
+    float barH = (barArea.getHeight() - 2.0f) * 0.5f;
+
+    auto drawMeterBar = [&](float y, float level) {
+        auto r = juce::Rectangle<float>(barArea.getX(), y, barArea.getWidth(), barH);
+        g.setColour(juce::Colour(0xff161b22));
+        g.fillRect(r);
+
+        float fillW = r.getWidth() * std::clamp(level, 0.0f, 1.0f);
+        if (fillW > 0.0f) {
+            auto fillR = r.withWidth(fillW);
+            juce::Colour fillCol = (level > 0.95f) ? juce::Colour(0xffff3b5c)
+                                 : (level > 0.80f) ? juce::Colour(0xffffb300)
+                                                   : juce::Colour(0xff00d2ff);
+            g.setColour(fillCol);
+            g.fillRect(fillR);
+        }
+    };
+
+    drawMeterBar(barArea.getY(), leftLevel);
+    drawMeterBar(barArea.getY() + barH + 2.0f, rightLevel);
+}
+
+// ==============================================================================
+// ModulatorTileComponent Implementation
+// ==============================================================================
+
+ModulatorTileComponent::ModulatorTileComponent(int tileIdx, const juce::String& tileName, juce::Colour tileAccent, const juce::String& tooltipText)
+    : index(tileIdx), name(tileName), accent(tileAccent)
+{
+    setTooltip(tooltipText);
+}
+
+void ModulatorTileComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat().reduced(0.5f);
+    g.setColour(isSelected ? accent.withAlpha(0.25f) : juce::Colour(0xff161b22));
+    g.fillRoundedRectangle(bounds, 3.0f);
+    g.setColour(isSelected ? accent : juce::Colour(0xff283141));
+    g.drawRoundedRectangle(bounds, 3.0f, isSelected ? 1.4f : 1.0f);
+
+    // Accent top hairline
+    g.setColour(accent);
+    g.drawHorizontalLine(static_cast<int>(bounds.getY() + 1.0f), bounds.getX() + 2.0f, bounds.getRight() - 2.0f);
+
+    // Modulator name
+    g.setFont(TkfTypography::getFont(10.0f, juce::Font::bold));
+    g.setColour(isSelected ? accent : juce::Colour(0xffd1d5db));
+    g.drawText(name, bounds.removeFromTop(15.0f), juce::Justification::centred, false);
+
+    // Animated waveform / playhead indicator in lower half
+    auto waveArea = bounds.reduced(3.0f, 2.0f);
+    float midY = waveArea.getCentreY();
+    juce::Path wave;
+    int pts = static_cast<int>(waveArea.getWidth());
+    if (pts > 4) {
+        wave.startNewSubPath(waveArea.getX(), midY);
+        for (int x = 0; x < pts; ++x) {
+            float frac = static_cast<float>(x) / static_cast<float>(pts);
+            float yOffset = 0.0f;
+            if (name.startsWith("LFO")) {
+                yOffset = std::sin(frac * juce::MathConstants<float>::twoPi + animPhase) * (waveArea.getHeight() * 0.38f);
+            } else if (name.startsWith("ENV")) {
+                float envT = std::fmod(frac + animPhase * 0.2f, 1.0f);
+                yOffset = (std::exp(-envT * 3.5f) - 0.5f) * (waveArea.getHeight() * 0.75f);
+            } else if (name.startsWith("HYDRA")) {
+                yOffset = (std::sin(frac * 4.0f * juce::MathConstants<float>::pi + animPhase * 1.5f) *
+                           std::cos(frac * 2.0f * juce::MathConstants<float>::pi + animPhase * 0.7f)) * (waveArea.getHeight() * 0.42f);
+            } else {
+                yOffset = (std::sin(frac * juce::MathConstants<float>::pi + animPhase * 0.5f) - 0.5f) * (waveArea.getHeight() * 0.38f);
+            }
+            wave.lineTo(waveArea.getX() + static_cast<float>(x), midY - yOffset);
+        }
+        g.setColour(accent.withAlpha(0.75f));
+        g.strokePath(wave, juce::PathStrokeType(1.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    }
+}
+
+void ModulatorTileComponent::mouseDown(const juce::MouseEvent& e) {
+    dragStartPos = e.getPosition();
+    isDragging = false;
+    if (e.mods.isRightButtonDown() || e.mods.isPopupMenu()) {
+        if (onRightClicked) onRightClicked(index, name, e);
+        return;
+    }
+    if (onClicked) onClicked(index, name);
+}
+
+void ModulatorTileComponent::mouseDrag(const juce::MouseEvent& e) {
+    if (e.mods.isRightButtonDown() || e.mods.isPopupMenu()) return;
+    if (!isDragging && (e.getDistanceFromDragStart() > 4 || e.getPosition().y - dragStartPos.y < -3)) {
+        isDragging = true;
+        if (auto* container = juce::DragAndDropContainer::findParentDragContainerFor(this)) {
+            container->startDragging("MOD_SOURCE:" + name, this);
+        }
+    }
+}
+
+// ==============================================================================
+// LowerModulatorStripComponent Implementation
+// ==============================================================================
+
+LowerModulatorStripComponent::LowerModulatorStripComponent() {
+    setTooltip("MODULATOR STRIP: Real-time active modulation sources. Click to inspect; drag to assign.");
+
+    tiles = {
+        { "LFO 1",   juce::Colour(0xff00d2ff), "LFO 1: Primary low-frequency sine/tri/saw/pulse oscillator." },
+        { "LFO 2",   juce::Colour(0xff00d2ff), "LFO 2: Secondary multi-wave modulation oscillator." },
+        { "LFO 3",   juce::Colour(0xff00d2ff), "LFO 3: Complex morphing LFO source." },
+        { "LFO 4",   juce::Colour(0xff00d2ff), "LFO 4: High-speed audio-rate modulation generator." },
+        { "ENV 1",   juce::Colour(0xffffb300), "ENV 1: Pitch envelope 1 (exponential punch)." },
+        { "ENV 2",   juce::Colour(0xffffb300), "ENV 2: Pitch envelope 2 (body / thump contour)." },
+        { "ENV 3",   juce::Colour(0xffffb300), "ENV 3: Filter envelope 1 (resonant sweep)." },
+        { "ENV 4",   juce::Colour(0xffffb300), "ENV 4: Filter envelope 2 (dynamic tone control)." },
+        { "HYDRA 1", juce::Colour(0xffec4899), "HYDRA 1: Non-linear macro/micro cross-mod hub." },
+        { "HYDRA 2", juce::Colour(0xffec4899), "HYDRA 2: Dual-source warp and folding matrix." },
+        { "HYDRA 3", juce::Colour(0xffec4899), "HYDRA 3: Audio-rate FM texture generator." },
+        { "HYDRA 4", juce::Colour(0xffec4899), "HYDRA 4: Chaos and poly-rhythmic slop processor." },
+        { "VEL",     juce::Colour(0xff10b981), "VELOCITY: Dynamic strike velocity response curve." },
+        { "KEY",     juce::Colour(0xff10b981), "KEY TRACK: Keyboard pitch tracking follow generator." },
+        { "SLOP",    juce::Colour(0xff10b981), "SLOP: Analog pitch drift, thermal flutter and component variance." }
+    };
+
+    for (size_t i = 0; i < tiles.size(); ++i) {
+        int idx = static_cast<int>(i);
+        auto tile = std::make_unique<ModulatorTileComponent>(idx, tiles[i].name, tiles[i].accent, tiles[i].tip);
+        tile->onClicked = [this](int tIdx, const juce::String& name) {
+            setSelectedTile(tIdx);
+            if (onTileClicked) onTileClicked(tIdx, name);
+        };
+        tile->onRightClicked = [this](int tIdx, const juce::String& name, const juce::MouseEvent& e) {
+            setSelectedTile(tIdx);
+            if (onTileRightClicked) onTileRightClicked(tIdx, name, e);
+        };
+        addAndMakeVisible(tile.get());
+        tileComps.push_back(std::move(tile));
+    }
+
+    startTimerHz(30);
+}
+
+LowerModulatorStripComponent::~LowerModulatorStripComponent() {
+    stopTimer();
+}
+
+void LowerModulatorStripComponent::setSelectedTile(int index) {
+    selectedTile = index;
+    for (size_t i = 0; i < tileComps.size(); ++i) {
+        tileComps[i]->setSelected(static_cast<int>(i) == selectedTile);
+    }
+    repaint();
+}
+
+juce::Rectangle<int> LowerModulatorStripComponent::getTileScreenBounds(int index) const {
+    if (index >= 0 && index < static_cast<int>(tileComps.size())) {
+        return tileComps[index]->getScreenBounds();
+    }
+    return {};
+}
+
+juce::Point<float> LowerModulatorStripComponent::getTileScreenCentre(int index) const {
+    if (index >= 0 && index < static_cast<int>(tileComps.size())) {
+        return tileComps[index]->getScreenBounds().toFloat().getCentre();
+    }
+    return {};
+}
+
+juce::Colour LowerModulatorStripComponent::getTileAccent(int index) const {
+    if (index >= 0 && index < static_cast<int>(tiles.size())) {
+        return tiles[index].accent;
+    }
+    return juce::Colour(0xff00d2ff);
+}
+
+const juce::String& LowerModulatorStripComponent::getTileName(int index) const {
+    static const juce::String empty;
+    if (index >= 0 && index < static_cast<int>(tiles.size())) {
+        return tiles[index].name;
+    }
+    return empty;
+}
+
+void LowerModulatorStripComponent::timerCallback() {
+    animPhase += 0.05f;
+    if (animPhase > juce::MathConstants<float>::twoPi)
+        animPhase -= juce::MathConstants<float>::twoPi;
+    for (auto& t : tileComps) {
+        t->setAnimPhase(animPhase);
+    }
+}
+
+void LowerModulatorStripComponent::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+    // Neo-Slate chassis strip
+    g.setColour(juce::Colour(0xff0d1117));
+    g.fillRect(bounds);
+    g.setColour(juce::Colour(0xff283141));
+    g.drawHorizontalLine(0, bounds.getX(), bounds.getRight());
+
+    // Left label: "MOD"
+    g.setFont(TkfTypography::getFont(10.5f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff55657d));
+    g.drawText("MOD", 6, 0, 32, getHeight(), juce::Justification::centredLeft);
+}
+
+void LowerModulatorStripComponent::resized() {
+    auto area = getLocalBounds().reduced(4, 4);
+    area.removeFromLeft(38); // Space for "MOD" badge
+
+    int n = static_cast<int>(tileComps.size());
+    if (n == 0) return;
+    int gap = 3;
+    int tileW = (area.getWidth() - (n - 1) * gap) / n;
+
+    for (int i = 0; i < n; ++i) {
+        auto r = area.removeFromLeft(tileW);
+        tileComps[i]->setBounds(r);
+        area.removeFromLeft(gap);
+    }
+}
+
+// ==============================================================================
+// ModulationTracerOverlay Implementation
+// ==============================================================================
+
+ModulationTracerOverlay::ModulationTracerOverlay() {
+    setInterceptsMouseClicks(false, false);
+}
+
+void ModulationTracerOverlay::setCables(const std::vector<Cable>& newCables) {
+    cables = newCables;
+    repaint();
+}
+
+void ModulationTracerOverlay::clearCables() {
+    if (!cables.empty()) {
+        cables.clear();
+        repaint();
+    }
+}
+
+void ModulationTracerOverlay::paint(juce::Graphics& g) {
+    if (cables.empty()) return;
+
+    for (const auto& c : cables) {
+        float dy = std::abs(c.endPos.y - c.startPos.y);
+        float p1y = c.startPos.y - dy * 0.45f;
+        float p2y = c.endPos.y + dy * 0.45f;
+
+        juce::Path p;
+        p.startNewSubPath(c.startPos);
+        p.cubicTo(c.startPos.x, p1y, c.endPos.x, p2y, c.endPos.x, c.endPos.y);
+
+        // 1. Soft Outer Drop Glow
+        g.setColour(c.colour.withAlpha(0.20f * c.alpha));
+        g.strokePath(p, juce::PathStrokeType(6.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+        // 2. Mid Glow
+        g.setColour(c.colour.withAlpha(0.50f * c.alpha));
+        g.strokePath(p, juce::PathStrokeType(3.2f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+        // 3. Sharp Core Spline
+        g.setColour(c.colour.brighter(0.4f).withAlpha(0.95f * c.alpha));
+        g.strokePath(p, juce::PathStrokeType(1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+
+        // 4. Jack Socket Plugs
+        auto drawPlug = [&](juce::Point<float> pt, juce::Colour col) {
+            g.setColour(juce::Colour(0xff12151c));
+            g.fillEllipse(pt.x - 4.5f, pt.y - 4.5f, 9.0f, 9.0f);
+            g.setColour(juce::Colour(0xffb0bac9));
+            g.drawEllipse(pt.x - 4.5f, pt.y - 4.5f, 9.0f, 9.0f, 1.2f);
+            g.setColour(col);
+            g.fillEllipse(pt.x - 2.0f, pt.y - 2.0f, 4.0f, 4.0f);
+        };
+        drawPlug(c.startPos, c.colour);
+        drawPlug(c.endPos, c.colour);
+    }
+}
+
+// ==============================================================================
+// ModulationInspectorPopover Implementation
+// ==============================================================================
+
+ModulationInspectorPopover::ModulationInspectorPopover(int sourceIndex, const juce::String& sourceName, juce::Colour sourceAccent)
+    : srcIndex(sourceIndex), srcName(sourceName), accent(sourceAccent), curveSelector(sourceAccent)
+{
+    setSize(380, 280);
+
+    closeButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0x00000000));
+    closeButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff8892a4));
+    closeButton.onClick = [this]() {
+        if (onClose) onClose();
+        if (auto* callout = findParentComponentOfClass<juce::CallOutBox>()) {
+            callout->dismiss();
+        }
+    };
+    addAndMakeVisible(closeButton);
+
+    depthSlider.setLabel("Depth");
+    depthSlider.setAccentColour(accent);
+    depthSlider.setBipolar(true);
+    depthSlider.setRange(-1.0, 1.0, 0.01);
+    depthSlider.setValue(0.5);
+    depthSlider.onValueChange = [this]() {
+        if (onParametersChanged) {
+            onParametersChanged(static_cast<float>(depthSlider.getValue()),
+                                static_cast<float>(rangeMinSlider.getValue()),
+                                static_cast<float>(rangeMaxSlider.getValue()),
+                                curveSelector.getSelectedIndex());
+        }
+    };
+    addAndMakeVisible(depthSlider);
+
+    rangeMinSlider.setLabel("Min Range");
+    rangeMinSlider.setAccentColour(accent.darker(0.2f));
+    rangeMinSlider.setRange(0.0, 1.0, 0.01);
+    rangeMinSlider.setValue(0.0);
+    rangeMinSlider.onValueChange = [this]() {
+        if (onParametersChanged) {
+            onParametersChanged(static_cast<float>(depthSlider.getValue()),
+                                static_cast<float>(rangeMinSlider.getValue()),
+                                static_cast<float>(rangeMaxSlider.getValue()),
+                                curveSelector.getSelectedIndex());
+        }
+    };
+    addAndMakeVisible(rangeMinSlider);
+
+    rangeMaxSlider.setLabel("Max Range");
+    rangeMaxSlider.setAccentColour(accent.brighter(0.2f));
+    rangeMaxSlider.setRange(0.0, 1.0, 0.01);
+    rangeMaxSlider.setValue(1.0);
+    rangeMaxSlider.onValueChange = [this]() {
+        if (onParametersChanged) {
+            onParametersChanged(static_cast<float>(depthSlider.getValue()),
+                                static_cast<float>(rangeMinSlider.getValue()),
+                                static_cast<float>(rangeMaxSlider.getValue()),
+                                curveSelector.getSelectedIndex());
+        }
+    };
+    addAndMakeVisible(rangeMaxSlider);
+
+    curveSelector.setAccent(accent);
+    curveSelector.setItems({ "LIN", "EXP", "LOG", "S-CRV" }, 4);
+    curveSelector.setSelectedIndex(0, juce::dontSendNotification);
+    curveSelector.onChange = [this](int newIdx) {
+        if (onParametersChanged) {
+            onParametersChanged(static_cast<float>(depthSlider.getValue()),
+                                static_cast<float>(rangeMinSlider.getValue()),
+                                static_cast<float>(rangeMaxSlider.getValue()),
+                                newIdx);
+        }
+    };
+    addAndMakeVisible(curveSelector);
+}
+
+void ModulationInspectorPopover::paint(juce::Graphics& g) {
+    auto bounds = getLocalBounds().toFloat();
+    // Chassis body
+    g.setColour(juce::Colour(0xff0d1117));
+    g.fillRoundedRectangle(bounds, 6.0f);
+    g.setColour(juce::Colour(0xff283141));
+    g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.2f);
+
+    // Accent header strip
+    auto headerStrip = bounds.removeFromTop(3.0f);
+    g.setColour(accent);
+    g.fillRoundedRectangle(headerStrip, 2.0f);
+
+    // Title
+    g.setFont(TkfTypography::getFont(13.5f, juce::Font::bold));
+    g.setColour(accent);
+    g.drawText((srcName + " MODULATOR INSPECTOR").toUpperCase(), 14, 6, getWidth() - 50, 20, juce::Justification::centredLeft, true);
+
+    // Section subheaders
+    g.setFont(TkfTypography::getFont(10.5f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff75849b));
+    g.drawText("RESPONSE CURVE", 14, 155, getWidth() - 28, 16, juce::Justification::centredLeft);
+
+    // Bottom perimeter bezel for Eurorack patch jacks
+    auto bezelRect = juce::Rectangle<float>(0.0f, getHeight() - 44.0f, static_cast<float>(getWidth()), 44.0f);
+    g.setColour(juce::Colour(0xff161b22));
+    g.fillRect(bezelRect);
+    g.setColour(juce::Colour(0xff283141));
+    g.drawHorizontalLine(static_cast<int>(bezelRect.getY()), 0.0f, static_cast<float>(getWidth()));
+
+    // Draw 4 Eurorack 3.5mm jack sockets along bezel
+    float segW = static_cast<float>(getWidth()) / 4.0f;
+    for (int i = 0; i < 4; ++i) {
+        float cx = segW * (static_cast<float>(i) + 0.5f);
+        float cy = bezelRect.getCentreY();
+        juce::Colour col = socketColours[i];
+
+        // Metallic collar
+        g.setColour(juce::Colour(0xff3a4354));
+        g.fillEllipse(cx - 10.0f, cy - 10.0f, 20.0f, 20.0f);
+        g.setColour(juce::Colour(0xff94a3b8));
+        g.drawEllipse(cx - 10.0f, cy - 10.0f, 20.0f, 20.0f, 1.4f);
+
+        // Black 3.5mm jack hole
+        g.setColour(juce::Colour(0xff090c12));
+        g.fillEllipse(cx - 5.0f, cy - 5.0f, 10.0f, 10.0f);
+
+        // LED Indicator dot inside window (above collar)
+        float ledY = cy - 14.0f;
+        bool act = socketsActive[i];
+        g.setColour(act ? col : col.withAlpha(0.20f));
+        g.fillEllipse(cx - 2.5f, ledY - 2.5f, 5.0f, 5.0f);
+        if (act) {
+            g.setColour(juce::Colours::white);
+            g.fillEllipse(cx - 1.0f, ledY - 1.0f, 2.0f, 2.0f);
+        }
+
+        // Socket number label
+        g.setFont(TkfTypography::getFont(9.0f, juce::Font::bold));
+        g.setColour(col);
+        g.drawText("K" + juce::String(i + 1), cx - 12.0f, cy + 9.0f, 24.0f, 12.0f, juce::Justification::centred, false);
+    }
+}
+
+void ModulationInspectorPopover::resized() {
+    closeButton.setBounds(getWidth() - 28, 4, 24, 24);
+
+    int startY = 34;
+    depthSlider.setBounds(14, startY, getWidth() - 28, 36);
+    rangeMinSlider.setBounds(14, startY + 40, getWidth() - 28, 36);
+    rangeMaxSlider.setBounds(14, startY + 80, getWidth() - 28, 36);
+
+    curveSelector.setBounds(14, 175, getWidth() - 28, 26);
+}
+
+juce::Point<float> ModulationInspectorPopover::getSocketScreenPos(int socketIndex) const {
+    if (socketIndex < 0 || socketIndex >= 4) return {};
+    float segW = static_cast<float>(getWidth()) / 4.0f;
+    float cx = segW * (static_cast<float>(socketIndex) + 0.5f);
+    float cy = static_cast<float>(getHeight()) - 22.0f;
+    return localPointToGlobal(juce::Point<float>(cx, cy));
+}
+
+void ModulationInspectorPopover::setValues(float depth, float minR, float maxR, int curve) {
+    depthSlider.setValue(depth, juce::dontSendNotification);
+    rangeMinSlider.setValue(minR, juce::dontSendNotification);
+    rangeMaxSlider.setValue(maxR, juce::dontSendNotification);
+    curveSelector.setSelectedIndex(curve, juce::dontSendNotification);
+}
+
+void ModulationInspectorPopover::setSocketActive(int socketIndex, bool active) {
+    if (socketIndex >= 0 && socketIndex < 4) {
+        socketsActive[socketIndex] = active;
+        repaint();
+    }
 }
 
 // ==============================================================================

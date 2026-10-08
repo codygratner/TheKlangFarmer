@@ -15,11 +15,14 @@ Ingest architectural blueprints and signed dispatch contracts published by New K
 ### 1. Inspect Communiqué Mailbox (`.agents/pipeline/communique/plan_to_build.md`)
 1. Open and parse `.agents/pipeline/communique/plan_to_build.md` at project root.
 2. Check the `Status:` field:
-   - **Case A: `STATUS: READY_FOR_EXECUTION` (Active Signed Contract)**:
+   - **Case A: `STATUS: READY_FOR_EXECUTION` or `STATUS: PLAN_AMENDED` (Active or Amended Contract)**:
      - Extract **Task Name**, **Active Milestone**, **Recommended Model Tier**, **Strategic Objective**, and **Directives**.
+     - If `STATUS: PLAN_AMENDED`, highlight the amendment changelog prominently in the terminal.
      - Verify that [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) at root matches this task. If `PLAN.md` is empty or holds an older blueprint, synchronize the directives into `PLAN.md`.
      - Update `.agents/pipeline/communique/plan_to_build.md` setting:
        `Status: IN_PROGRESS` (with timestamp).
+     - Update `.agents/pipeline/communique/build_to_plan.md` setting:
+       `## Status: BUILDING 🔨 (Phase 1: <Phase Name>)` (ensuring New Klang City has real-time factory telemetry).
      - Proceed directly to **Section 3 (Briefing & Model Gate)**.
    - **Case B: `STATUS: COMPLETED` or `STATUS: DRAFTING` (No Pending Dispatch)**:
      - Check [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md) on disk.

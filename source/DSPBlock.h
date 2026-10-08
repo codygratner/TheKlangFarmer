@@ -99,13 +99,26 @@ public:
     virtual ~DSPBlock() = default;
     virtual void init(const BlockContext& ctx) = 0;
     virtual void trigger(float /*velocity*/) {}
+    virtual void reset() {}
     
     // Set parameter 0..3 (normalized 0.0 to 1.0)
     virtual void setParam(int index, float value) {
-        if (index >= 0 && index < 4) params[index] = std::clamp(value, 0.0f, 1.0f);
+        if (index >= 0 && index < 4) {
+            baseParams[index] = value;
+            params[index] = std::clamp(baseParams[index] + modParams[index], 0.0f, 1.0f);
+        }
     }
+
+    // Set modulation offset 0..3 (bipolar)
+    virtual void setParamModulation(int index, float offset) {
+        if (index >= 0 && index < 4) {
+            modParams[index] = offset;
+            params[index] = std::clamp(baseParams[index] + modParams[index], 0.0f, 1.0f);
+        }
+    }
+
     virtual float getParam(int index) const {
-        return (index >= 0 && index < 4) ? params[index] : 0.0f;
+        return (index >= 0 && index < 4) ? baseParams[index] : 0.0f;
     }
 
     // Process mono buffer in-place
@@ -120,6 +133,8 @@ public:
     }
 
 protected:
+    float baseParams[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+    float modParams[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     float params[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 };
 

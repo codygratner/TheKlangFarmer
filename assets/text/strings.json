@@ -604,6 +604,18 @@
       },
       "drive_bias": {
         "description": ""
+      },
+      "macro_1": {
+        "description": "Performance Macro 1 master control"
+      },
+      "macro_2": {
+        "description": "Performance Macro 2 master control"
+      },
+      "macro_3": {
+        "description": "Performance Macro 3 master control"
+      },
+      "macro_4": {
+        "description": "Performance Macro 4 master control"
       }
     },
     "mixer": {

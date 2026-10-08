@@ -57,3 +57,23 @@
 
 > [!TIP]
 > **The "Silent Git Tag" Policy**: When a milestone consists strictly of internal architectural cleanup, developer tooling, or schema refactors with zero user-facing sound/UI changes (e.g. `v0.3.2`), we stamp and push an annotated Git Tag (`git tag -a vX.Y.Z`) and merge to `main`, but do not publish a public GitHub Release entry. This preserves clean SemVer and reproducible builds while preventing spurious "Update Available" notifications in end-user DAWs.
+
+---
+
+## 5. Ecosystem Product Acronym Registry & Collision Guardrails
+
+To prevent identity collisions across codebases, logging tags (`TKS_LOG`), asset files, and user documentation, every software plugin, standalone app, and hardware spin-off in The Klang Suite is assigned a strict, immutable 3-letter acronym (`TK<X>`):
+
+| Acronym | Product Name | Category | Scope / Role |
+| :--- | :--- | :--- | :--- |
+| **`TKS`** | **The Klang Suite** | **Umbrella / Suite** | Master project repository, shared utility libraries, and developer logging (`TKS_LOG`). *RESERVED EXCLUSIVELY FOR THE SUITE.* |
+| **`TKF`** | **The Klang Farmer** | Instrument Plugin | Dual-FM percussion and bass synthesizer. |
+| **`TKP`** | **The Klang Planter** | Instrument Plugin | Multi-layer percussive sound machine. |
+| **`TKM`** | **The Klang Mill** | FX Plugin / Sub-Rack | 1x6 modular multi-effects pedalboard rack. |
+| **`TKE`** | **The Klang Editor** | Standalone Desktop App | JSON schema, theme calibration, and curve inspection workstation. |
+| **`TKB`** | **The Klang Box** | Embedded Hardware | Standalone hardware synthesizer (Daisy Seed / Teensy 4.1 / dadamachines TBD-16). |
+| **`TKR`** | **The Klang R1** | Instrument Plugin | 7-voice Electribe ER-1 tribute rhythm synthesizer. |
+| **`TKC`** | **The Klang Cultivator** | Utility Plugin | Standalone MIDI CC / CV / MPE modulation generator rack. |
+
+> [!WARNING]
+> **Acronym Collision Guardrail**: No new plugin or spin-off product may adopt an acronym that collides with registered letters (`S`, `F`, `P`, `M`, `E`, `B`, `R`, `C`). `TKS` is strictly forbidden for individual plugins.

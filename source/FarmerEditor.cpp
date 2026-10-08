@@ -13,6 +13,32 @@ FXSlotCardComponent::FXSlotCardComponent(int slot, bool isPostRack)
     addChildComponent(&selector1);
     addChildComponent(&selector2);
 
+    const juce::StringArray fxChoices = {
+        "(Bypass / Empty)",
+        "Bell EQ",
+        "Chorus",
+        "Comb Filter",
+        "Drive (Analog)",
+        "Filter (State Variable)",
+        "Flanger",
+        "Freq Shifter",
+        "Grit (Bitcrush/Decim)",
+        "Phaser",
+        "Ring Modulator",
+        "Stereo Smear",
+        "Tempo Delay",
+        "Wave Folder"
+    };
+    typeSelector.addItemList(fxChoices, 1);
+    typeSelector.setSelectedId(1, juce::dontSendNotification);
+    typeSelector.onChange = [this]() {
+        int choice = typeSelector.getSelectedId() - 1;
+        if (choice >= 0 && onTypeChanged) {
+            onTypeChanged(choice);
+        }
+    };
+    addAndMakeVisible(typeSelector);
+
     for (int i = 0; i < 4; ++i) {
         labels[i].setFont(juce::FontOptions(13.0f, juce::Font::bold));
         labels[i].setColour(juce::Label::textColourId, juce::Colour(0xffc5d0e0));
@@ -31,8 +57,80 @@ void FXSlotCardComponent::mouseDown(const juce::MouseEvent& /*e*/) {
     if (onCardClicked) onCardClicked();
 }
 
+void FXSlotCardComponent::mouseDrag(const juce::MouseEvent& e) {
+    if (currentType > 0 && e.getDistanceFromDragStart() > 6) {
+        if (auto* container = juce::DragAndDropContainer::findParentDragContainerFor(this)) {
+            if (!container->isDragAndDropActive()) {
+                juce::var desc = juce::String(isPost ? "POST:" : "PRE:") + juce::String(slotIndex);
+                juce::Image ghost = createComponentSnapshot(getLocalBounds());
+                container->startDragging(desc, this, juce::ScaledImage(ghost), true);
+            }
+        }
+    }
+}
+
+bool FXSlotCardComponent::isInterestedInDragSource(const SourceDetails& dragSourceDetails) {
+    juce::String desc = dragSourceDetails.description.toString();
+    return desc.startsWith("PRE:") || desc.startsWith("POST:");
+}
+
+void FXSlotCardComponent::itemDragEnter(const SourceDetails& /*dragSourceDetails*/) {
+    isDragOver = true;
+    repaint();
+}
+
+void FXSlotCardComponent::itemDragMove(const SourceDetails& /*dragSourceDetails*/) {
+}
+
+void FXSlotCardComponent::itemDragExit(const SourceDetails& /*dragSourceDetails*/) {
+    isDragOver = false;
+    repaint();
+}
+
+void FXSlotCardComponent::itemDropped(const SourceDetails& dragSourceDetails) {
+    isDragOver = false;
+    repaint();
+
+    juce::String desc = dragSourceDetails.description.toString();
+    bool srcIsPost = desc.startsWith("POST:");
+    int srcSlot = desc.fromFirstOccurrenceOf(":", false, false).getIntValue();
+
+    if (onSwapRequested) {
+        onSwapRequested(srcIsPost, srcSlot, isPost, slotIndex);
+    }
+}
+
 void FXSlotCardComponent::paint(juce::Graphics& g) {
     auto bounds = getLocalBounds().toFloat();
+
+    if (currentType == 0) {
+        g.setColour(juce::Colour(0xff12151c));
+        g.fillRoundedRectangle(bounds, 6.0f);
+
+        g.setColour(isDragOver ? juce::Colour(0xff00d2ff) : juce::Colour(0xff222736));
+        g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
+
+        auto headerStrip = bounds.removeFromTop(3.0f);
+        g.setColour(juce::Colour(0xff222736));
+        g.fillRoundedRectangle(headerStrip, 2.0f);
+
+        g.setFont(juce::FontOptions(13.0f, juce::Font::bold));
+        g.setColour(juce::Colour(0xff556075));
+        juce::String headerText = (isPost ? "POST " : "PRE ") + juce::String(slotIndex + 1);
+        g.drawText(headerText, 10, 4, getWidth() - 115, 18, juce::Justification::left, true);
+
+        if (isDragOver) {
+            g.setColour(juce::Colour(0xff00d2ff).withAlpha(0.18f));
+            g.fillRoundedRectangle(bounds, 6.0f);
+            g.setColour(juce::Colour(0xff00d2ff));
+            g.drawRoundedRectangle(bounds.reduced(1.0f), 6.0f, 2.0f);
+        } else {
+            g.setFont(juce::FontOptions(11.0f, juce::Font::plain));
+            g.setColour(juce::Colour(0xff4a5568));
+            g.drawText("+ DRAG OR SELECT EFFECT", getLocalBounds().reduced(10), juce::Justification::centred, true);
+        }
+        return;
+    }
 
     auto compColour = accent.withRotatedHue(0.5f);
     auto panelBg = juce::Colour(0xff151821).interpolatedWith(compColour, 0.12f);
@@ -47,16 +145,27 @@ void FXSlotCardComponent::paint(juce::Graphics& g) {
     g.setColour(accent);
     g.fillRoundedRectangle(headerStrip, 2.0f);
 
-    g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
+    g.setFont(juce::FontOptions(14.0f, juce::Font::bold));
     g.setColour(accent);
     juce::String headerText = (isPost ? "POST " : "PRE ") + juce::String(slotIndex + 1) + ": " + title.toUpperCase();
-    g.drawText(headerText, 10, 4, getWidth() - 20, 18, juce::Justification::left, true);
+    g.drawText(headerText, 8, 4, getWidth() - 115, 18, juce::Justification::left, true);
+
+    if (isDragOver) {
+        g.setColour(juce::Colour(0xff00d2ff).withAlpha(0.2f));
+        g.fillRoundedRectangle(bounds, 6.0f);
+        g.setColour(juce::Colour(0xff00d2ff));
+        g.drawRoundedRectangle(bounds.reduced(1.0f), 6.0f, 2.0f);
+    }
 }
 
 void FXSlotCardComponent::resized() {
+    typeSelector.setBounds(getWidth() - 105, 4, 100, 18);
+
     for (int i = 0; i < 4; ++i) {
         labels[i].setVisible(false);
     }
+
+    if (currentType == 0) return;
 
     auto area = getLocalBounds().reduced(8);
     area.removeFromTop(24); // Title header
@@ -96,6 +205,7 @@ void FXSlotCardComponent::configureForType(int fxType) {
     currentType = fxType;
     lastSel1 = -1;
     lastSel2 = -1;
+    typeSelector.setSelectedId(fxType + 1, juce::dontSendNotification);
 
     for (int i = 0; i < 4; ++i) {
         knobs[i].diagramType = RotaryKnobSlider::DiagramType::None;
@@ -106,6 +216,13 @@ void FXSlotCardComponent::configureForType(int fxType) {
     }
     selector1.setVisible(false);
     selector2.setVisible(false);
+
+    if (fxType == 0) {
+        title = "EMPTY";
+        accent = juce::Colour(0xff4a5568);
+        repaint();
+        return;
+    }
 
     auto setupK = [this, fxType](int kIdx, const juce::String& name, bool bipolar,
                          std::function<juce::String(double)> fmt,
@@ -379,19 +496,18 @@ void BlankPlateComponent::paint(juce::Graphics& g) {
 // --- NAVIGATION CARD COMPONENT ---
 
 NavigationCardComponent::NavigationCardComponent() {
-    const juce::String pageTips[7] = {
+    const juce::String pageTips[6] = {
         "PAGE 1: VOICE 1 — Carrier 1, Modulator 1, Pitch Envelope 1, Filter 1, and Filter Envelope 1.",
         "PAGE 2: VOICE 2 — Carrier 2, Modulator 2, Pitch Envelope 2, Filter 2, and Filter Envelope 2.",
         "PAGE 3: TRANSIENTS — Sample-and-Hold Noise Generator, Filter 3, and Transient Envelopes.",
-        "PAGE 4: PRE-AMP FX — Modular FX Slots 1–4 inserted before the Master Amplifier.",
+        "PAGE 4: EFFECTS — Drag-and-Drop 10-Slot Modular FX Rack with Pre-Amp and Post-Amp Lanes.",
         "PAGE 5: AMPLIFIER — Master Saturation Drive, Stereo Pan, Master Level, Voice Mixer, and Clap Generator.",
-        "PAGE 6: POST-AMP FX — Modular FX Slots 1–4 inserted after the Master Amplifier.",
-        "PAGE 7: MODULATIONS — Modulation Matrix, Analog Slop / Drift, and Multi-Wave LFO."
+        "PAGE 6: MODULATIONS — Modulation Matrix, Analog Slop / Drift, and Multi-Wave LFO."
     };
     for (int i = 0; i < pageNames.size(); ++i) {
         auto btn = std::make_unique<juce::TextButton>(pageNames[i]);
         btn->setClickingTogglesState(false);
-        if (i < 7) btn->setTooltip(pageTips[i]);
+        if (i < 6) btn->setTooltip(pageTips[i]);
         int pageIdx = i;
         btn->onClick = [this, pageIdx]() {
             setSelectedPage(pageIdx);
@@ -400,7 +516,7 @@ NavigationCardComponent::NavigationCardComponent() {
         addAndMakeVisible(btn.get());
         buttons.push_back(std::move(btn));
     }
-    setTooltip("NAVIGATION: Select active rack page (Pages 1 to 7) to access modules.");
+    setTooltip("NAVIGATION: Select active rack page (Pages 1 to 6) to access modules.");
     setSelectedPage(0);
 }
 
@@ -425,28 +541,38 @@ void NavigationCardComponent::paint(juce::Graphics& g) {
     g.setColour(juce::Colour(0xff222736));
     g.drawRoundedRectangle(bounds.reduced(0.5f), 6.0f, 1.0f);
 
-    auto headerStrip = bounds.removeFromTop(3.0f);
-    g.setColour(juce::Colour(0xff00d2ff));
-    g.fillRoundedRectangle(headerStrip, 2.0f);
+    if (getWidth() <= getHeight() * 2) {
+        auto headerStrip = bounds.removeFromTop(3.0f);
+        g.setColour(juce::Colour(0xff00d2ff));
+        g.fillRoundedRectangle(headerStrip, 2.0f);
 
-    g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
-    g.setColour(juce::Colour(0xff00d2ff));
-    g.drawText("PAGES", 10, 4, getWidth() - 20, 18, juce::Justification::left, true);
+        g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
+        g.setColour(juce::Colour(0xff00d2ff));
+        g.drawText("PAGES", 10, 4, getWidth() - 20, 18, juce::Justification::left, true);
+    }
 }
 
 void NavigationCardComponent::resized() {
-    auto area = getLocalBounds().reduced(8);
-    area.removeFromTop(22);
-    area.removeFromTop(6);
-
+    auto area = getLocalBounds().reduced(6);
     int n = static_cast<int>(buttons.size());
     if (n == 0) return;
-    int gap = 6;
-    int btnH = (area.getHeight() - (n - 1) * gap) / n;
+    int gap = 4;
 
-    for (int i = 0; i < n; ++i) {
-        buttons[i]->setBounds(area.removeFromTop(btnH));
-        area.removeFromTop(gap);
+    if (getWidth() > getHeight() * 2) {
+        // Horizontal bar layout (for EFFECTS page header)
+        int btnW = (area.getWidth() - (n - 1) * gap) / n;
+        for (int i = 0; i < n; ++i) {
+            buttons[i]->setBounds(area.removeFromLeft(btnW));
+            area.removeFromLeft(gap);
+        }
+    } else {
+        // Vertical card layout (for Slot 0 on other pages)
+        area.removeFromTop(20);
+        int btnH = (area.getHeight() - (n - 1) * gap) / n;
+        for (int i = 0; i < n; ++i) {
+            buttons[i]->setBounds(area.removeFromTop(btnH));
+            area.removeFromTop(gap);
+        }
     }
 }
 
@@ -507,6 +633,13 @@ VisualizationCardComponent::VisualizationCardComponent(juce::Colour accentColour
     : accent(accentColour), oscilloscope(accentColour)
 {
     addAndMakeVisible(oscilloscope);
+    oscilloscope.onDoubleClicked = [this]() {
+        if (onPanicTriggered) onPanicTriggered();
+    };
+}
+
+void VisualizationCardComponent::mouseDoubleClick(const juce::MouseEvent& /*e*/) {
+    if (onPanicTriggered) onPanicTriggered();
 }
 
 juce::Rectangle<int> VisualizationCardComponent::getLockBounds() const {
@@ -817,6 +950,126 @@ void QuickstartGuideModalComponent::paint(juce::Graphics& g) {
 }
 
 
+// --- MODULATION MATRIX TABLE COMPONENT ---
+
+ModulationMatrixTableComponent::ModulationMatrixTableComponent(TheKlangFarmerAudioProcessor& proc)
+    : processor(proc)
+{
+    table.setModel(this);
+    table.getHeader().addColumn("Source", 1, 95, 60, 140);
+    table.getHeader().addColumn("Target", 2, 120, 80, 180);
+    table.getHeader().addColumn("Depth", 3, 65, 50, 90);
+    table.getHeader().addColumn("Via Source", 4, 90, 60, 130);
+    table.getHeader().addColumn("Via Depth", 5, 65, 50, 90);
+    table.setColour(juce::TableListBox::backgroundColourId, juce::Colour(0xff12161f));
+    table.setColour(juce::TableListBox::outlineColourId, juce::Colour(0xff222736));
+    addAndMakeVisible(table);
+    refresh();
+}
+
+void ModulationMatrixTableComponent::paint(juce::Graphics& g)
+{
+    g.fillAll(juce::Colour(0xff12161f));
+    g.setColour(juce::Colour(0xff222736));
+    g.drawRoundedRectangle(getLocalBounds().toFloat().reduced(0.5f), 4.0f, 1.0f);
+}
+
+void ModulationMatrixTableComponent::resized()
+{
+    table.setBounds(getLocalBounds().reduced(4));
+}
+
+int ModulationMatrixTableComponent::getNumRows()
+{
+    return static_cast<int>(activeRoutes.size());
+}
+
+void ModulationMatrixTableComponent::paintRowBackground(juce::Graphics& g, int /*rowNumber*/, int /*width*/, int /*height*/, bool rowIsSelected)
+{
+    if (rowIsSelected)
+        g.fillAll(juce::Colour(0xff1f2937));
+    else
+        g.fillAll(juce::Colour(0xff12161f));
+}
+
+void ModulationMatrixTableComponent::paintCell(juce::Graphics& g, int rowNumber, int columnId, int width, int height, bool /*rowIsSelected*/)
+{
+    if (rowNumber < 0 || rowNumber >= static_cast<int>(activeRoutes.size()))
+        return;
+
+    const auto& r = activeRoutes[static_cast<size_t>(rowNumber)];
+    g.setFont(TkfTypography::getFont(11.0f, juce::Font::plain));
+    g.setColour(juce::Colour(0xffe2e8f0));
+
+    juce::String text;
+    switch (columnId) {
+        case 1: text = r.source; break;
+        case 2: text = r.target; break;
+        case 3: text = juce::String(static_cast<int>(std::round(r.depth * 100.0f))) + "%"; break;
+        case 4: text = r.viaSource.isNotEmpty() ? r.viaSource : "-"; break;
+        case 5: text = r.viaSource.isNotEmpty() ? (juce::String(static_cast<int>(std::round(r.viaDepth * 100.0f))) + "%") : "-"; break;
+        default: break;
+    }
+    g.drawText(text, 4, 0, width - 8, height, juce::Justification::centredLeft, true);
+}
+
+void ModulationMatrixTableComponent::refresh()
+{
+    activeRoutes.clear();
+    const char* envNames[3] = { "Mod Env 1", "Mod Env 2", "Mod Env 3" };
+    juce::AudioParameterFloat* envDepths[3] = { processor.modEnv1DepthParam, processor.modEnv2DepthParam, processor.modEnv3DepthParam };
+    juce::AudioParameterChoice* envTargets[3] = { processor.modEnv1TargetParam, processor.modEnv2TargetParam, processor.modEnv3TargetParam };
+
+    for (int i = 0; i < 3; ++i) {
+        if (envTargets[i] && envTargets[i]->getIndex() > 0 && envDepths[i]) {
+            RouteDisplay rd;
+            rd.source = envNames[i];
+            rd.target = envTargets[i]->getCurrentChoiceName();
+            rd.depth = envDepths[i]->get();
+            rd.viaSource = "";
+            rd.viaDepth = 0.0f;
+            activeRoutes.push_back(rd);
+        }
+    }
+
+    if (processor.velDepthParam && std::abs(processor.velDepthParam->get()) > 0.001f) {
+        RouteDisplay rd;
+        rd.source = "Velocity";
+        rd.target = "Amp / Pitch";
+        rd.depth = processor.velDepthParam->get();
+        activeRoutes.push_back(rd);
+    }
+
+    if (processor.keyDepthParam && std::abs(processor.keyDepthParam->get()) > 0.001f) {
+        RouteDisplay rd;
+        rd.source = "Key Track";
+        rd.target = "Cutoff / Decay";
+        rd.depth = processor.keyDepthParam->get();
+        activeRoutes.push_back(rd);
+    }
+
+    if (processor.slopDepthParam && std::abs(processor.slopDepthParam->get()) > 0.001f) {
+        RouteDisplay rd;
+        rd.source = "Slop (Drift)";
+        rd.target = "Pitch / Pan";
+        rd.depth = processor.slopDepthParam->get();
+        activeRoutes.push_back(rd);
+    }
+
+    for (int m = 0; m < 4; ++m) {
+        if (processor.macroParams[m] && std::abs(processor.macroParams[m]->get()) > 0.001f) {
+            RouteDisplay rd;
+            rd.source = "Macro " + juce::String(m + 1);
+            rd.target = "Assigned";
+            rd.depth = processor.macroParams[m]->get();
+            activeRoutes.push_back(rd);
+        }
+    }
+
+    table.updateContent();
+    repaint();
+}
+
 // --- THE KLANG FARMER AUDIO PROCESSOR EDITOR CONSTRUCTOR ---
 
 TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangFarmerAudioProcessor& p)
@@ -897,6 +1150,112 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         audioProcessor.getEngine().trigger(1.0f);
     };
     addAndMakeVisible(triggerButton);
+
+    // Setup Header Undo / Redo / AB / Global Dice / Meter
+    undoButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff161b22));
+    undoButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff8b99a6));
+    undoButton.setTooltip("UNDO — Revert last parameter change (Ctrl+Z).");
+    undoButton.onClick = [this]() {
+        audioProcessor.getUndoManager().undo();
+        statusBar.setHoveredControl("UNDO", "REVERT", "Reverted parameter change (Ctrl+Z).");
+    };
+    addAndMakeVisible(undoButton);
+
+    redoButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff161b22));
+    redoButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff8b99a6));
+    redoButton.setTooltip("REDO — Reapply undone parameter change (Ctrl+Y).");
+    redoButton.onClick = [this]() {
+        audioProcessor.getUndoManager().redo();
+        statusBar.setHoveredControl("REDO", "REAPPLY", "Reapplied parameter change (Ctrl+Y).");
+    };
+    addAndMakeVisible(redoButton);
+
+    abButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff161b22));
+    abButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff00d2ff));
+    abButton.setTooltip("A/B COMPARISON — Toggle between current state buffer A and snapshot buffer B (Right-click to Copy).");
+    abButton.onClick = [this]() {
+        audioProcessor.toggleAB();
+        abButton.setButtonText(audioProcessor.isBufferBActive() ? "B" : "A");
+        statusBar.setHoveredControl("A/B COMPARE", audioProcessor.isBufferBActive() ? "BUFFER B" : "BUFFER A", "Toggled between comparison state buffers.");
+    };
+    abButton.addMouseListener(this, false);
+    addAndMakeVisible(abButton);
+
+    globalDiceButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff161b22));
+    globalDiceButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff00d2ff));
+    globalDiceButton.setTooltip("GLOBAL RANDOMIZE — Roll d6 across active synth voice parameters (Right-click for depth).");
+    globalDiceButton.onClick = [this]() {
+        rollGlobalDice();
+    };
+    globalDiceButton.addMouseListener(this, false);
+    addAndMakeVisible(globalDiceButton);
+
+    headerMeter.onPanicTriggered = [this]() {
+        audioProcessor.triggerPanic();
+        statusBar.setHoveredControl("PANIC", "EMERGENCY FLUSH", "Zeroed all voice audio buffers and envelope states.");
+    };
+    addAndMakeVisible(headerMeter);
+
+    // Setup Header Performance Macro Knobs (M1..M4)
+    const char* macroIds[4] = { "macro_1", "macro_2", "macro_3", "macro_4" };
+    const char* macroLabels[4] = { "M1", "M2", "M3", "M4" };
+    for (int i = 0; i < 4; ++i) {
+        macroKnobs[i].setParamId(macroIds[i]);
+        macroKnobs[i].setLabel(macroLabels[i]);
+        macroKnobs[i].setAccentColour(juce::Colour(0xff38bdf8));
+        macroKnobs[i].setBipolar(false);
+        macroKnobs[i].setRange(0.0, 1.0, 0.001);
+        if (auto* param = audioProcessor.apvts.getParameter(macroIds[i])) {
+            macroKnobs[i].setValue(param->getValue(), juce::dontSendNotification);
+        }
+        int macroIdx = i;
+        macroKnobs[i].onValueChange = [this, macroIdx, macroId = macroIds[i]]() {
+            if (auto* param = audioProcessor.apvts.getParameter(macroId)) {
+                param->setValueNotifyingHost(static_cast<float>(macroKnobs[macroIdx].getValue()));
+            }
+        };
+        macroKnobs[i].setTooltip("PERFORMANCE MACRO " + juce::String(i + 1) + ": Freely mappable performance macro knob.");
+        macroKnobs[i].onMouseEnter = [this, macroId = macroIds[i]](RotaryKnobSlider* s) {
+            if (!s) return;
+            statusBar.setHoveredControl(s->getLabel(), s->getTextFromValue(s->getValue()), "Performance Macro " + s->getLabel(), "Right-Click: MIDI Learn", "2x-Click: Reset (0.00)");
+            updateTracerForFocusedKnob(s);
+        };
+        macroKnobs[i].onMouseExit = [this](RotaryKnobSlider*) {
+            statusBar.clearHoveredControl();
+            updateTracerForFocusedKnob(nullptr);
+        };
+        macroKnobs[i].onModulationAssigned = [this, i](const juce::String& sourceName) {
+            macroKnobs[i].modulation.isModulated = true;
+            updateTracerForFocusedKnob(&macroKnobs[i]);
+            if (modMatrixTable) modMatrixTable->refresh();
+            statusBar.setHoveredControl("MODULATION", sourceName, "Assigned " + sourceName + " to Macro " + juce::String(i + 1));
+        };
+        macroKnobs[i].onModulationCleared = [this, i]() {
+            macroKnobs[i].modulation.isModulated = false;
+            updateTracerForFocusedKnob(nullptr);
+            if (modMatrixTable) modMatrixTable->refresh();
+            statusBar.setHoveredControl("MODULATION", "CLEARED", "Cleared modulation for Macro " + juce::String(i + 1));
+        };
+        addAndMakeVisible(macroKnobs[i]);
+        registeredSliders.push_back(&macroKnobs[i]);
+    }
+
+    // Modulation Tracer Overlay
+    addAndMakeVisible(tracerOverlay);
+    tracerOverlay.setInterceptsMouseClicks(false, false);
+
+    // Setup Lower Modulator Strip
+    modStrip.onTileClicked = [this](int /*idx*/, const juce::String& name) {
+        statusBar.setHoveredControl("MODULATOR", name, "Selected " + name + " in Modulator Strip. Drag up onto knobs to assign.");
+    };
+    modStrip.onTileRightClicked = [this](int tileIdx, const juce::String& /*name*/, const juce::MouseEvent& /*e*/) {
+        openInspectorForSource(tileIdx);
+    };
+    addAndMakeVisible(modStrip);
+
+    // Modulation Matrix Table
+    modMatrixTable = std::make_unique<ModulationMatrixTableComponent>(audioProcessor);
+    addChildComponent(modMatrixTable.get());
 
     // Permanent Slot 1 and Slot 8
     navCard.setTooltip("NAVIGATION — Select rack page 1 through 7 to view and edit synthesizer modules.");
@@ -1860,6 +2219,21 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
                                                "PRE " + juce::String(s + 1) + ": " + preFXCards[s]->getTitle());
                 }
             };
+            preFXCards[s]->onSwapRequested = [this](bool srcIsPost, int srcSlot, bool dstIsPost, int dstSlot) {
+                handleFXSwap(srcIsPost, srcSlot, dstIsPost, dstSlot);
+            };
+            preFXCards[s]->onTypeChanged = [this, s](int newType) {
+                setFXSlotDefaults(s, false, newType);
+                audioProcessor.getEngine().setPreFXType(s, newType);
+                juce::String paramId = "pre_fx_" + juce::String(s + 1) + "_type";
+                if (auto* param = audioProcessor.apvts.getParameter(paramId)) {
+                    param->setValueNotifyingHost(param->convertTo0to1(static_cast<float>(newType)));
+                }
+                preFXCards[s]->configureForType(newType);
+                updateDynamicControls();
+                updatePageLayout();
+                updateModTargetBoxItems();
+            };
         }
         if (postFXCards[s]) {
             postFXCards[s]->addMouseListener(this, true);
@@ -1869,8 +2243,65 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
                                                "POST " + juce::String(s + 1) + ": " + postFXCards[s]->getTitle());
                 }
             };
+            postFXCards[s]->onSwapRequested = [this](bool srcIsPost, int srcSlot, bool dstIsPost, int dstSlot) {
+                handleFXSwap(srcIsPost, srcSlot, dstIsPost, dstSlot);
+            };
+            postFXCards[s]->onTypeChanged = [this, s](int newType) {
+                setFXSlotDefaults(s, true, newType);
+                audioProcessor.getEngine().setPostFXType(s, newType);
+                juce::String paramId = "post_fx_" + juce::String(s + 1) + "_type";
+                if (auto* param = audioProcessor.apvts.getParameter(paramId)) {
+                    param->setValueNotifyingHost(param->convertTo0to1(static_cast<float>(newType)));
+                }
+                postFXCards[s]->configureForType(newType);
+                updateDynamicControls();
+                updatePageLayout();
+                updateModTargetBoxItems();
+            };
         }
     }
+
+    // Wire contextual [d6] dice randomizer for each module card
+    auto wireCardDice = [this](ModuleCardComponent* card, std::initializer_list<RotaryKnobSlider*> sliders) {
+        if (!card) return;
+        std::vector<RotaryKnobSlider*> sList(sliders);
+        card->onRandomizeClicked = [this, card, sList]() {
+            juce::Random& rng = juce::Random::getSystemRandom();
+            for (auto* s : sList) {
+                if (s) {
+                    double cur = s->getValue();
+                    double jitter = (rng.nextDouble() - 0.5) * 0.25;
+                    s->setValue(std::clamp(cur + jitter, 0.0, 1.0), juce::sendNotification);
+                }
+            }
+            statusBar.setHoveredControl("RANDOMIZE", card->getTitle(), "Jittered parameters for " + card->getTitle());
+        };
+    };
+
+    wireCardDice(cardCarrier1.get(), { &carrier1PitchSlider, &carrier1ShapeSlider, &carrier1DepthSlider });
+    wireCardDice(cardMod1.get(), { &mod1ShapeSlider, &mod1SpeedSlider });
+    wireCardDice(cardPitchEnv1.get(), { &pitchEnv1SlopeSlider, &pitchEnv1DepthSlider, &pitchEnv1DecaySlider });
+    wireCardDice(cardFilter1.get(), { &filter1CutoffSlider, &filter1ResonanceSlider });
+    wireCardDice(cardFilterEnv1.get(), { &filterEnv1SlopeSlider, &filterEnv1DepthSlider, &filterEnv1DecaySlider, &filterEnv1PostDriveSlider });
+    wireCardDice(cardCarrier2.get(), { &carrier2PitchSlider, &carrier2ShapeSlider, &carrier2DepthSlider });
+    wireCardDice(cardMod2.get(), { &mod2ShapeSlider, &mod2SpeedSlider });
+    wireCardDice(cardPitchEnv2.get(), { &pitchEnv2SlopeSlider, &pitchEnv2DepthSlider, &pitchEnv2DecaySlider });
+    wireCardDice(cardFilter2.get(), { &filter2CutoffSlider, &filter2ResonanceSlider });
+    wireCardDice(cardFilterEnv2.get(), { &filterEnv2SlopeSlider, &filterEnv2DepthSlider, &filterEnv2DecaySlider, &filterEnv2PostDriveSlider });
+    wireCardDice(cardNoise.get(), { &noiseShRateSlider, &noiseFilterSlider, &noiseDriveSlider, &noiseDecaySlider });
+    wireCardDice(cardFilter3.get(), { &filter3CutoffSlider, &filter3ResonanceSlider });
+    wireCardDice(cardFilterEnv3.get(), { &filterEnv3SlopeSlider, &filterEnv3DepthSlider, &filterEnv3DecaySlider, &filterEnv3PostDriveSlider });
+    wireCardDice(cardMixer.get(), { &mixerCarrier1LevelSlider, &mixerCarrier2LevelSlider, &mixerRingModSlider, &mixerNoiseLevelSlider });
+    wireCardDice(cardAmp.get(), { &ampPanSlider, &ampLevelSlider, &ampDriveSlider });
+    wireCardDice(cardAmpEnv.get(), { &ampEnvClapsSlider, &ampEnvClapSpeedSlider, &ampEnvSlopeSlider, &ampEnvDecaySlider });
+    wireCardDice(cardPreLimiter.get(), { &preLimiterGainSlider, &preLimiterThreshSlider, &preLimiterReleaseSlider });
+    wireCardDice(cardPostLimiter.get(), { &postLimiterGainSlider, &postLimiterThreshSlider, &postLimiterReleaseSlider });
+    wireCardDice(cardVelocity.get(), { &velSlopeSlider, &velDepthSlider, &velDecaySlider, &velVolumeSlider });
+    wireCardDice(cardKeyTrack.get(), { &keySlopeSlider, &keyDepthSlider, &keyDecaySlider, &keyVolumeSlider });
+    wireCardDice(cardSlop.get(), { &slopFreqSlider, &slopDepthSlider, &slopDecaySlider, &slopPanSlider });
+    wireCardDice(cardModEnv1.get(), { &modEnv1SlopeSlider, &modEnv1DepthSlider, &modEnv1DecaySlider });
+    wireCardDice(cardModEnv2.get(), { &modEnv2SlopeSlider, &modEnv2DepthSlider, &modEnv2DecaySlider });
+    wireCardDice(cardModEnv3.get(), { &modEnv3SlopeSlider, &modEnv3DepthSlider, &modEnv3DecaySlider });
 
     scopeBuffer.resize(128, 0.0f);
     updateDynamicControls();
@@ -1946,9 +2377,24 @@ void TheKlangFarmerAudioProcessorEditor::bindSlider(const juce::String& paramId,
         juce::String rc = (def && !def->snapPoints.empty()) ? "Right-Click: Snap Points" : "Right-Click: Details";
         juce::String dc = def ? ("2x-Click: Reset (" + juce::String(def->doubleClickValue, 2) + ")") : "2x-Click: Default";
         statusBar.setHoveredControl(name, val, desc, rc, dc);
+        updateTracerForFocusedKnob(s);
     };
     slider.onMouseExit = [this](RotaryKnobSlider*) {
         statusBar.clearHoveredControl();
+        updateTracerForFocusedKnob(nullptr);
+    };
+
+    slider.onModulationAssigned = [this, &slider](const juce::String& sourceName) {
+        slider.modulation.isModulated = true;
+        updateTracerForFocusedKnob(&slider);
+        if (modMatrixTable) modMatrixTable->refresh();
+        statusBar.setHoveredControl("MODULATION", sourceName, "Assigned " + sourceName + " to " + slider.getLabel());
+    };
+    slider.onModulationCleared = [this, &slider]() {
+        slider.modulation.isModulated = false;
+        updateTracerForFocusedKnob(nullptr);
+        if (modMatrixTable) modMatrixTable->refresh();
+        statusBar.setHoveredControl("MODULATION", "CLEARED", "Cleared modulation for " + slider.getLabel());
     };
 
     registeredSliders.push_back(&slider);
@@ -2114,10 +2560,83 @@ void TheKlangFarmerAudioProcessorEditor::setFXSlotDefaults(int slot, bool isPost
 }
 
 void TheKlangFarmerAudioProcessorEditor::setPage(int pageIndex) {
-    if (pageIndex < 0 || pageIndex > 6) return;
+    if (pageIndex < 0 || pageIndex > 5) return;
     currentPage = pageIndex;
     navCard.setSelectedPage(currentPage);
     updatePageLayout();
+    repaint();
+}
+
+void TheKlangFarmerAudioProcessorEditor::handleFXSwap(bool srcIsPost, int srcSlot, bool dstIsPost, int dstSlot) {
+    if (srcIsPost == dstIsPost && srcSlot == dstSlot) return;
+    if (srcSlot < 0 || srcSlot >= 4 || dstSlot < 0 || dstSlot >= 4) return;
+
+    auto& engine = audioProcessor.getEngine();
+
+    // 1. Fetch source settings
+    int srcType = srcIsPost ? engine.getPostFXType(srcSlot) : engine.getPreFXType(srcSlot);
+    float srcParams[4];
+    for (int p = 0; p < 4; ++p) {
+        srcParams[p] = srcIsPost ? engine.getPostFXParam(srcSlot, p) : engine.getPreFXParam(srcSlot, p);
+    }
+
+    // 2. Fetch destination settings
+    int dstType = dstIsPost ? engine.getPostFXType(dstSlot) : engine.getPreFXType(dstSlot);
+    float dstParams[4];
+    for (int p = 0; p < 4; ++p) {
+        dstParams[p] = dstIsPost ? engine.getPostFXParam(dstSlot, p) : engine.getPreFXParam(dstSlot, p);
+    }
+
+    // 3. Apply source settings to destination
+    if (dstIsPost) engine.setPostFXType(dstSlot, srcType);
+    else          engine.setPreFXType(dstSlot, srcType);
+
+    for (int p = 0; p < 4; ++p) {
+        if (dstIsPost) engine.setPostFXParam(dstSlot, p, srcParams[p]);
+        else          engine.setPreFXParam(dstSlot, p, srcParams[p]);
+    }
+
+    juce::String dstTypeParamId = (dstIsPost ? "post_fx_" : "pre_fx_") + juce::String(dstSlot + 1) + "_type";
+    if (auto* param = audioProcessor.apvts.getParameter(dstTypeParamId)) {
+        param->setValueNotifyingHost(param->convertTo0to1(static_cast<float>(srcType)));
+    }
+    for (int p = 0; p < 4; ++p) {
+        juce::String dstPParamId = (dstIsPost ? "post_fx_" : "pre_fx_") + juce::String(dstSlot + 1) + "_p" + juce::String(p + 1);
+        if (auto* param = audioProcessor.apvts.getParameter(dstPParamId)) {
+            param->setValueNotifyingHost(srcParams[p]);
+        }
+    }
+
+    // 4. Apply destination settings to source
+    if (srcIsPost) engine.setPostFXType(srcSlot, dstType);
+    else          engine.setPreFXType(srcSlot, dstType);
+
+    for (int p = 0; p < 4; ++p) {
+        if (srcIsPost) engine.setPostFXParam(srcSlot, p, dstParams[p]);
+        else          engine.setPreFXParam(srcSlot, p, dstParams[p]);
+    }
+
+    juce::String srcTypeParamId = (srcIsPost ? "post_fx_" : "pre_fx_") + juce::String(srcSlot + 1) + "_type";
+    if (auto* param = audioProcessor.apvts.getParameter(srcTypeParamId)) {
+        param->setValueNotifyingHost(param->convertTo0to1(static_cast<float>(dstType)));
+    }
+    for (int p = 0; p < 4; ++p) {
+        juce::String srcPParamId = (srcIsPost ? "post_fx_" : "pre_fx_") + juce::String(srcSlot + 1) + "_p" + juce::String(p + 1);
+        if (auto* param = audioProcessor.apvts.getParameter(srcPParamId)) {
+            param->setValueNotifyingHost(dstParams[p]);
+        }
+    }
+
+    // 5. Reconfigure cards & update UI
+    if (srcIsPost) postFXCards[srcSlot]->configureForType(dstType);
+    else          preFXCards[srcSlot]->configureForType(dstType);
+
+    if (dstIsPost) postFXCards[dstSlot]->configureForType(srcType);
+    else          preFXCards[dstSlot]->configureForType(srcType);
+
+    updateDynamicControls();
+    updatePageLayout();
+    updateModTargetBoxItems();
     repaint();
 }
 
@@ -2140,6 +2659,7 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
     hideCard(cardPreLimiter); hideCard(cardPostLimiter);
     hideCard(cardVelocity); hideCard(cardKeyTrack); hideCard(cardSlop);
     hideCard(cardModEnv1); hideCard(cardModEnv2); hideCard(cardModEnv3);
+    if (modMatrixTable) modMatrixTable->setVisible(false);
 
     for (int s = 0; s < 4; ++s) {
         if (preFXCards[s]) preFXCards[s]->setVisible(false);
@@ -2148,25 +2668,76 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
 
     int margin = 6;
     int topOffset = 38;
+    int statusBarH = 36;
+    int modStripH = 44;
     int totalW = getWidth() - 2 * margin;
-    int totalH = getHeight() - topOffset - margin - 36;
+    int totalH = getHeight() - topOffset - margin - statusBarH - modStripH;
+
+    int navH = 28;
+    navCard.setBounds(margin, topOffset, totalW, navH);
+    navCard.setVisible(true);
+
+    int rackTop = topOffset + navH + margin;
+    int rackH = totalH - navH - margin;
+
+    if (currentPage == 3) {
+        // Unified 10-Slot Drag-and-Drop FX Rack with 2 Lanes:
+        // Top Lane: Pre-FX 1..4 -> Anchor 5: Pre-Amp Limiter / Console
+        // Bottom Lane: Post-FX 1..4 -> Anchor 5: Master Limiter
+        int laneH = (rackH - margin) / 2;
+        int slotColW = (totalW - 4 * margin) / 5;
+
+        // Top Lane (Pre-Amp): Slots 1..4 -> Anchor 5: Pre-Amp Limiter
+        for (int s = 0; s < 4; ++s) {
+            int x = margin + s * (slotColW + margin);
+            preFXCards[s]->setBounds(x, rackTop, slotColW, laneH);
+            preFXCards[s]->setVisible(true);
+        }
+        int anchorX = margin + 4 * (slotColW + margin);
+        cardPreLimiter->setBounds(anchorX, rackTop, slotColW, laneH);
+        cardPreLimiter->setVisible(true);
+
+        // Bottom Lane (Post-Amp): Slots 5..8 -> Anchor 5: Master Limiter
+        int bottomLaneY = rackTop + laneH + margin;
+        for (int s = 0; s < 4; ++s) {
+            int x = margin + s * (slotColW + margin);
+            postFXCards[s]->setBounds(x, bottomLaneY, slotColW, laneH);
+            postFXCards[s]->setVisible(true);
+        }
+        cardPostLimiter->setBounds(anchorX, bottomLaneY, slotColW, laneH);
+        cardPostLimiter->setVisible(true);
+
+        vizCard.setVisible(false);
+
+        if (!vizCard.getIsLocked()) {
+            int blk = TbdAudio::ModularDrumEngine::BLK_PRE_LIMITER;
+            juce::String name = "PRE LIMITER";
+            for (int s = 0; s < 4; ++s) {
+                if (audioProcessor.getEngine().getPreFXType(s) > 0) {
+                    blk = TbdAudio::ModularDrumEngine::BLK_PRE_FX_1 + s;
+                    name = "PRE " + juce::String(s + 1) + ": " + preFXCards[s]->getTitle();
+                    break;
+                }
+            }
+            vizCard.setVisualizedBlock(blk, name);
+        }
+        return;
+    }
+
     int numCols = 4;
     int numRows = 2;
     int slotW = (totalW - (numCols - 1) * margin) / numCols;
-    int slotH = (totalH - (numRows - 1) * margin) / numRows;
+    int slotH = (rackH - (numRows - 1) * margin) / numRows;
 
-    auto getSlotBounds = [margin, topOffset, slotW, slotH](int slotIndex) {
+    auto getSlotBounds = [margin, rackTop, slotW, slotH](int slotIndex) {
         int r = slotIndex / 4;
         int c = slotIndex % 4;
         int x = margin + c * (slotW + margin);
-        int y = topOffset + r * (slotH + margin);
+        int y = rackTop + r * (slotH + margin);
         return juce::Rectangle<int>(x, y, slotW, slotH);
     };
 
-    navCard.setBounds(getSlotBounds(0));
-    navCard.setVisible(true);
-
-    juce::Component* slotComponents[6] = { nullptr };
+    juce::Component* slotComponents[7] = { nullptr };
 
     switch (currentPage) {
         case 0: // VOICE 1
@@ -2176,6 +2747,7 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
             slotComponents[3] = cardFilter1.get();
             slotComponents[4] = cardFilterEnv1.get();
             slotComponents[5] = cardMixer.get();
+            slotComponents[6] = &blankPlates[0];
             break;
 
         case 1: // VOICE 2
@@ -2185,75 +2757,47 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
             slotComponents[3] = cardFilter2.get();
             slotComponents[4] = cardFilterEnv2.get();
             slotComponents[5] = cardMixer.get();
+            slotComponents[6] = &blankPlates[0];
             break;
 
         case 2: // TRANSIENTS
             slotComponents[0] = cardNoise.get();
-            slotComponents[1] = &blankPlates[0];
-            slotComponents[2] = &blankPlates[1];
-            slotComponents[3] = cardFilter3.get();
-            slotComponents[4] = cardFilterEnv3.get();
-            slotComponents[5] = cardMixer.get();
-            break;
-
-        case 3: // PRE-AMP FX
-            slotComponents[0] = preFXPickerCard.get();
-            for (int s = 0; s < 4; ++s) {
-                int t = audioProcessor.getEngine().getPreFXType(s);
-                if (t > 0) {
-                    slotComponents[1 + s] = preFXCards[s].get();
-                } else {
-                    slotComponents[1 + s] = &blankPlates[s];
-                }
-            }
-            slotComponents[5] = cardPreLimiter.get();
+            slotComponents[1] = cardFilter3.get();
+            slotComponents[2] = cardFilterEnv3.get();
+            slotComponents[3] = cardMixer.get();
+            slotComponents[4] = &blankPlates[0];
+            slotComponents[5] = &blankPlates[1];
+            slotComponents[6] = &blankPlates[2];
             break;
 
         case 4: // AMPLIFIER
             slotComponents[0] = cardAmp.get();
             slotComponents[1] = cardAmpEnv.get();
-            slotComponents[2] = &blankPlates[0];
-            slotComponents[3] = &blankPlates[1];
-            slotComponents[4] = cardPostLimiter.get();
-            slotComponents[5] = cardMixer.get();
+            slotComponents[2] = cardMixer.get();
+            slotComponents[3] = cardPostLimiter.get();
+            slotComponents[4] = &blankPlates[0];
+            slotComponents[5] = &blankPlates[1];
+            slotComponents[6] = &blankPlates[2];
             break;
 
-        case 5: // POST-AMP FX
-            slotComponents[0] = postFXPickerCard.get();
-            for (int s = 0; s < 4; ++s) {
-                int t = audioProcessor.getEngine().getPostFXType(s);
-                if (t > 0) {
-                    slotComponents[1 + s] = postFXCards[s].get();
-                } else {
-                    slotComponents[1 + s] = &blankPlates[s];
-                }
-            }
-            slotComponents[5] = cardPostLimiter.get();
-            break;
-
-        case 6: // MODULATIONS
+        case 5: // MODULATIONS
             slotComponents[0] = cardModEnv1.get();
             slotComponents[1] = cardModEnv2.get();
             slotComponents[2] = cardModEnv3.get();
             slotComponents[3] = cardVelocity.get();
             slotComponents[4] = cardKeyTrack.get();
             slotComponents[5] = cardSlop.get();
+            slotComponents[6] = modMatrixTable.get();
+            if (modMatrixTable) modMatrixTable->refresh();
             break;
     }
 
-    vizCard.setBounds(getSlotBounds(4));
+    vizCard.setBounds(getSlotBounds(7));
     vizCard.setVisible(true);
 
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 7; ++i) {
         if (slotComponents[i]) {
-            slotComponents[i]->setBounds(getSlotBounds(i + 1));
-            slotComponents[i]->setVisible(true);
-        }
-    }
-
-    for (int i = 3; i < 6; ++i) {
-        if (slotComponents[i]) {
-            slotComponents[i]->setBounds(getSlotBounds(i + 2));
+            slotComponents[i]->setBounds(getSlotBounds(i));
             slotComponents[i]->setVisible(true);
         }
     }
@@ -2263,34 +2807,8 @@ void TheKlangFarmerAudioProcessorEditor::updatePageLayout() {
             case 0: vizCard.setVisualizedBlock(TbdAudio::ModularDrumEngine::BLK_CARRIER1, "CARRIER 1"); break;
             case 1: vizCard.setVisualizedBlock(TbdAudio::ModularDrumEngine::BLK_CARRIER2, "CARRIER 2"); break;
             case 2: vizCard.setVisualizedBlock(TbdAudio::ModularDrumEngine::BLK_NOISE, "NOISE"); break;
-            case 3: {
-                int blk = TbdAudio::ModularDrumEngine::BLK_PRE_LIMITER;
-                juce::String name = "PRE LIMITER";
-                for (int s = 0; s < 4; ++s) {
-                    if (audioProcessor.getEngine().getPreFXType(s) > 0) {
-                        blk = TbdAudio::ModularDrumEngine::BLK_PRE_FX_1 + s;
-                        name = "PRE " + juce::String(s + 1) + ": " + preFXCards[s]->getTitle();
-                        break;
-                    }
-                }
-                vizCard.setVisualizedBlock(blk, name);
-                break;
-            }
             case 4: vizCard.setVisualizedBlock(TbdAudio::ModularDrumEngine::BLK_AMP, "AMPLIFIER"); break;
-            case 5: {
-                int blk = TbdAudio::ModularDrumEngine::BLK_POST_LIMITER;
-                juce::String name = "MASTER LIMITER";
-                for (int s = 0; s < 4; ++s) {
-                    if (audioProcessor.getEngine().getPostFXType(s) > 0) {
-                        blk = TbdAudio::ModularDrumEngine::BLK_POST_FX_1 + s;
-                        name = "POST " + juce::String(s + 1) + ": " + postFXCards[s]->getTitle();
-                        break;
-                    }
-                }
-                vizCard.setVisualizedBlock(blk, name);
-                break;
-            }
-            case 6: vizCard.setVisualizedBlock(TbdAudio::ModularDrumEngine::BLK_MODENV1, "MOD ENV 1"); break;
+            case 5: vizCard.setVisualizedBlock(TbdAudio::ModularDrumEngine::BLK_MODENV1, "MOD ENV 1"); break;
         }
     }
 }
@@ -2485,6 +3003,14 @@ void TheKlangFarmerAudioProcessorEditor::updateDynamicControls() {
 void TheKlangFarmerAudioProcessorEditor::timerCallback() {
     updateDynamicControls();
 
+    for (int m = 0; m < 4; ++m) {
+        if (auto* p = audioProcessor.macroParams[m]) {
+            if (!macroKnobs[m].isMouseButtonDown()) {
+                macroKnobs[m].setValue(p->get(), juce::dontSendNotification);
+            }
+        }
+    }
+
     for (auto* s : registeredSliders) {
         if (!s || s->getParamId().isEmpty()) continue;
         if (!s->isVisible()) continue;
@@ -2580,31 +3106,37 @@ void TheKlangFarmerAudioProcessorEditor::timerCallback() {
             audioProcessor.getEngine().getScopeData(activeBlock, scopeBuffer.data(), static_cast<int>(scopeBuffer.size()));
             vizCard.getOscilloscope().updateData(scopeBuffer.data(), static_cast<int>(scopeBuffer.size()));
         }
-    } else {
         vizCard.getOscilloscope().setPlotMode(MiniOscilloscopeComponent::PlotMode::Oscilloscope);
         audioProcessor.getEngine().getScopeData(activeBlock, scopeBuffer.data(), static_cast<int>(scopeBuffer.size()));
         vizCard.getOscilloscope().updateData(scopeBuffer.data(), static_cast<int>(scopeBuffer.size()));
     }
+
+    float maxPeak = 0.0f;
+    for (float val : scopeBuffer) {
+        float a = std::abs(val);
+        if (a > maxPeak) maxPeak = a;
+    }
+    headerMeter.setLevels(maxPeak, maxPeak);
 }
 
 void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
-    juce::ColourGradient bgGrad(juce::Colour(0xff12141a), 0, 0,
-                                juce::Colour(0xff0a0b0e), 0, static_cast<float>(getHeight()), false);
-    g.setGradientFill(bgGrad);
+    // Neo-Slate matte chassis
+    g.setColour(juce::Colour(0xff0a0d12));
     g.fillAll();
 
-    g.setColour(juce::Colour(0xff171a22));
+    // Top header chassis bar
+    g.setColour(juce::Colour(0xff0d1117));
     g.fillRect(0, 0, getWidth(), 36);
 
-    g.setColour(juce::Colour(0xff222736));
+    g.setColour(juce::Colour(0xff283141));
     g.drawHorizontalLine(36, 0.0f, static_cast<float>(getWidth()));
 
-    g.setFont(juce::FontOptions(17.0f, juce::Font::bold));
+    g.setFont(TkfTypography::getFont(16.0f, juce::Font::bold));
     g.setColour(juce::Colours::white);
     g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkf_title", "THE KLANG FARMER"), 14, 0, 180, 36, juce::Justification::centredLeft);
 
-    g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
-    g.setColour(juce::Colour(0xff4a9eff));
+    g.setFont(TkfTypography::getFont(11.0f, juce::Font::bold));
+    g.setColour(juce::Colour(0xff00d2ff));
 #ifdef JucePlugin_VersionString
     juce::String verStr = "v" JucePlugin_VersionString;
 #else
@@ -2624,18 +3156,39 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
     }
 
     int subX = 196 + verWidth + 8 + badgeOffset;
-    int subtitleWidth = juce::jmax(0, getWidth() - 464 - subX);
-    g.setFont(juce::FontOptions(12.5f, juce::Font::bold));
+    int subtitleWidth = juce::jmax(0, getWidth() - 710 - subX);
+    g.setFont(TkfTypography::getFont(11.0f, juce::Font::bold));
     g.setColour(juce::Colour(0xff75849b));
     g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkf_subtitle", "PAGED MODULAR DUAL FM SYNTHESIS DRUM VOICE"), subX, 0, subtitleWidth, 36, juce::Justification::centredLeft);
 }
 
 void TheKlangFarmerAudioProcessorEditor::resized() {
-    settingsButton.setBounds(getWidth() - 456, 5, 26, 26);
-    tooltipsButton.setBounds(getWidth() - 424, 5, 72, 26);
-    guideButton.setBounds(getWidth() - 346, 5, 90, 26);
-    initButton.setBounds(getWidth() - 246, 5, 90, 26);
-    triggerButton.setBounds(getWidth() - 146, 5, 136, 26);
+    int topBtnH = 26;
+    int topY = 5;
+
+    // Header buttons (from right to left):
+    triggerButton.setBounds(getWidth() - 110, topY, 100, topBtnH);
+    initButton.setBounds(getWidth() - 176, topY, 62, topBtnH);
+    guideButton.setBounds(getWidth() - 242, topY, 62, topBtnH);
+    tooltipsButton.setBounds(getWidth() - 312, topY, 66, topBtnH);
+    settingsButton.setBounds(getWidth() - 344, topY, 26, topBtnH);
+
+    headerMeter.setBounds(getWidth() - 410, topY, 60, topBtnH);
+    globalDiceButton.setBounds(getWidth() - 444, topY, 30, topBtnH);
+    abButton.setBounds(getWidth() - 494, topY, 46, topBtnH);
+    redoButton.setBounds(getWidth() - 524, topY, 26, topBtnH);
+    undoButton.setBounds(getWidth() - 554, topY, 26, topBtnH);
+
+    int macroW = 28;
+    int macroGap = 4;
+    int totalMacrosW = 4 * macroW + 3 * macroGap; // 124
+    int macroStartX = getWidth() - 554 - 8 - totalMacrosW;
+    for (int i = 0; i < 4; ++i) {
+        macroKnobs[i].setBounds(macroStartX + i * (macroW + macroGap), topY - 1, macroW, 28);
+    }
+
+    tracerOverlay.setBounds(getLocalBounds());
+    tracerOverlay.toFront(false);
 
     updateBadgeButton.setBounds(196 + 55 + 8, 7, 136, 22);
 
@@ -2644,8 +3197,13 @@ void TheKlangFarmerAudioProcessorEditor::resized() {
 
     quickstartGuide.setBounds(getLocalBounds());
 
-    statusBar.setBounds(0, getHeight() - 36, getWidth(), 36);
+    int statusBarH = 36;
+    int modStripH = 44;
+    statusBar.setBounds(0, getHeight() - statusBarH, getWidth(), statusBarH);
     statusBar.toFront(false);
+
+    modStrip.setBounds(0, getHeight() - statusBarH - modStripH, getWidth(), modStripH);
+    modStrip.toFront(false);
 
     updatePageLayout();
 }
@@ -2728,6 +3286,43 @@ void TheKlangFarmerAudioProcessorEditor::handleCardInteraction(juce::Component* 
 }
 
 void TheKlangFarmerAudioProcessorEditor::mouseDown(const juce::MouseEvent& e) {
+    if (e.eventComponent == &abButton && e.mods.isPopupMenu()) {
+        juce::PopupMenu m;
+        m.addItem(1, "Copy A to B");
+        m.addItem(2, "Copy B to A");
+        m.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&abButton), [this](int result) {
+            if (result == 1) {
+                audioProcessor.copyAToB();
+                statusBar.setHoveredControl("A/B COMPARE", "COPIED A -> B", "Copied Buffer A state to Buffer B.");
+            } else if (result == 2) {
+                audioProcessor.copyBToA();
+                statusBar.setHoveredControl("A/B COMPARE", "COPIED B -> A", "Copied Buffer B state to Buffer A.");
+            }
+        });
+        return;
+    }
+    if (e.eventComponent == &globalDiceButton && e.mods.isPopupMenu()) {
+        juce::PopupMenu m;
+        m.addItem(1, "5% (Subtle Humanize)", true, std::abs(globalD6Depth - 0.05f) < 0.01f);
+        m.addItem(2, "15% (Light Variation)", true, std::abs(globalD6Depth - 0.15f) < 0.01f);
+        m.addItem(3, "25% (Standard d6)", true, std::abs(globalD6Depth - 0.25f) < 0.01f);
+        m.addItem(4, "50% (Wide Mutation)", true, std::abs(globalD6Depth - 0.50f) < 0.01f);
+        m.addItem(5, "75% (Wild Experiment)", true, std::abs(globalD6Depth - 0.75f) < 0.01f);
+        m.addItem(6, "100% (Complete Chaos)", true, std::abs(globalD6Depth - 1.00f) < 0.01f);
+        m.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&globalDiceButton), [this](int result) {
+            if (result == 1) globalD6Depth = 0.05f;
+            else if (result == 2) globalD6Depth = 0.15f;
+            else if (result == 3) globalD6Depth = 0.25f;
+            else if (result == 4) globalD6Depth = 0.50f;
+            else if (result == 5) globalD6Depth = 0.75f;
+            else if (result == 6) globalD6Depth = 1.00f;
+            if (result > 0) {
+                statusBar.setHoveredControl("RANDOMIZE", "DEPTH SET",
+                                           "Global d6 depth set to " + juce::String(static_cast<int>(globalD6Depth * 100.0f)) + "%");
+            }
+        });
+        return;
+    }
     handleCardInteraction(e.eventComponent);
 }
 
@@ -2737,6 +3332,157 @@ void TheKlangFarmerAudioProcessorEditor::mouseDrag(const juce::MouseEvent& e) {
 
 void TheKlangFarmerAudioProcessorEditor::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& /*d*/) {
     handleCardInteraction(e.eventComponent);
+}
+
+void TheKlangFarmerAudioProcessorEditor::rollGlobalDice() {
+    juce::Random& rng = juce::Random::getSystemRandom();
+    for (auto* s : registeredSliders) {
+        if (s && s->isVisible()) {
+            double current = s->getValue();
+            double jitter = (rng.nextDouble() - 0.5) * 2.0 * static_cast<double>(globalD6Depth);
+            s->setValue(std::clamp(current + jitter, 0.0, 1.0), juce::sendNotification);
+        }
+    }
+    statusBar.setHoveredControl("RANDOMIZE", "GLOBAL SYNTH",
+                               "Rolled d6 (" + juce::String(static_cast<int>(globalD6Depth * 100.0f)) + "% depth) across active voice parameters.");
+}
+
+void TheKlangFarmerAudioProcessorEditor::openInspectorForSource(int sourceIndex) {
+    if (sourceIndex < 0 || sourceIndex >= modStrip.getNumTiles()) {
+        inspectorPopover.reset();
+        tracerOverlay.clearCables();
+        return;
+    }
+    auto name = modStrip.getTileName(sourceIndex);
+    auto accent = modStrip.getTileAccent(sourceIndex);
+    inspectorPopover = std::make_unique<ModulationInspectorPopover>(sourceIndex, name, accent);
+    inspectorPopover->onClose = [this]() {
+        inspectorPopover.reset();
+        tracerOverlay.clearCables();
+    };
+    inspectorPopover->onParametersChanged = [this, sourceIndex](float depth, float /*minR*/, float /*maxR*/, int /*curve*/) {
+        if (sourceIndex == 0 && audioProcessor.modEnv1DepthParam)
+            audioProcessor.modEnv1DepthParam->setValueNotifyingHost(depth);
+        else if (sourceIndex == 1 && audioProcessor.modEnv2DepthParam)
+            audioProcessor.modEnv2DepthParam->setValueNotifyingHost(depth);
+        else if (sourceIndex == 2 && audioProcessor.modEnv3DepthParam)
+            audioProcessor.modEnv3DepthParam->setValueNotifyingHost(depth);
+        else if (sourceIndex == 3 && audioProcessor.velDepthParam)
+            audioProcessor.velDepthParam->setValueNotifyingHost(depth);
+        else if (sourceIndex == 4 && audioProcessor.keyDepthParam)
+            audioProcessor.keyDepthParam->setValueNotifyingHost(depth);
+        else if (sourceIndex == 5 && audioProcessor.slopDepthParam)
+            audioProcessor.slopDepthParam->setValueNotifyingHost(depth);
+        if (modMatrixTable) modMatrixTable->refresh();
+    };
+
+    float initialDepth = 0.5f;
+    if (sourceIndex == 0 && audioProcessor.modEnv1DepthParam) initialDepth = audioProcessor.modEnv1DepthParam->get();
+    else if (sourceIndex == 1 && audioProcessor.modEnv2DepthParam) initialDepth = audioProcessor.modEnv2DepthParam->get();
+    else if (sourceIndex == 2 && audioProcessor.modEnv3DepthParam) initialDepth = audioProcessor.modEnv3DepthParam->get();
+    else if (sourceIndex == 3 && audioProcessor.velDepthParam) initialDepth = audioProcessor.velDepthParam->get();
+    else if (sourceIndex == 4 && audioProcessor.keyDepthParam) initialDepth = audioProcessor.keyDepthParam->get();
+    else if (sourceIndex == 5 && audioProcessor.slopDepthParam) initialDepth = audioProcessor.slopDepthParam->get();
+    inspectorPopover->setValues(initialDepth, 0.0f, 1.0f, 0);
+
+    int popW = 380;
+    int popH = 280;
+    int popX = (getWidth() - popW) / 2;
+    int popY = getHeight() - 36 - 44 - popH - 10;
+    inspectorPopover->setBounds(popX, popY, popW, popH);
+    addAndMakeVisible(inspectorPopover.get());
+    inspectorPopover->toFront(true);
+
+    updateTracerForInspector(sourceIndex);
+}
+
+void TheKlangFarmerAudioProcessorEditor::updateTracerForFocusedKnob(RotaryKnobSlider* knob) {
+    if (!knob) {
+        if (!inspectorPopover) tracerOverlay.clearCables();
+        return;
+    }
+    std::vector<ModulationTracerOverlay::Cable> cables;
+    if (knob->modulation.isModulated) {
+        auto paramId = knob->getParamId();
+        auto info = audioProcessor.getParamModulationInfo(paramId);
+        for (const auto& src : info.sources) {
+            int tileIdx = -1;
+            if (src.name.containsIgnoreCase("Env 1")) tileIdx = 0;
+            else if (src.name.containsIgnoreCase("Env 2")) tileIdx = 1;
+            else if (src.name.containsIgnoreCase("Env 3")) tileIdx = 2;
+            else if (src.name.containsIgnoreCase("Velocity")) tileIdx = 3;
+            else if (src.name.containsIgnoreCase("Key")) tileIdx = 4;
+            else if (src.name.containsIgnoreCase("Slop")) tileIdx = 5;
+
+            if (tileIdx >= 0 && tileIdx < modStrip.getNumTiles()) {
+                auto tilePt = modStrip.getTileScreenCentre(tileIdx);
+                auto knobPt = knob->getScreenBounds().getCentre().toFloat();
+                auto localTile = getLocalPoint(nullptr, tilePt);
+                auto localKnob = getLocalPoint(nullptr, knobPt);
+
+                ModulationTracerOverlay::Cable c;
+                c.startPos = localTile;
+                c.endPos = localKnob;
+                c.colour = modStrip.getTileAccent(tileIdx);
+                c.alpha = 0.9f;
+                cables.push_back(c);
+            }
+        }
+    }
+    tracerOverlay.setCables(cables);
+}
+
+void TheKlangFarmerAudioProcessorEditor::updateTracerForInspector(int sourceIndex) {
+    if (!inspectorPopover || sourceIndex < 0 || sourceIndex >= modStrip.getNumTiles()) {
+        return;
+    }
+    std::vector<ModulationTracerOverlay::Cable> cables;
+    auto tilePt = modStrip.getTileScreenCentre(sourceIndex);
+    auto localTile = getLocalPoint(nullptr, tilePt);
+
+    for (int i = 0; i < 4; ++i) {
+        auto sockPt = inspectorPopover->getSocketScreenPos(i);
+        auto localSock = getLocalPoint(nullptr, sockPt);
+
+        ModulationTracerOverlay::Cable c;
+        c.startPos = localTile;
+        c.endPos = localSock;
+        c.colour = modStrip.getTileAccent(sourceIndex);
+        c.alpha = 0.85f;
+        cables.push_back(c);
+    }
+    tracerOverlay.setCables(cables);
+}
+
+bool TheKlangFarmerAudioProcessorEditor::keyPressed(const juce::KeyPress& key) {
+    if (quickstartGuide.isVisible()) {
+        return quickstartGuide.keyPressed(key);
+    }
+    if (key.isKeyCode(juce::KeyPress::escapeKey)) {
+        if (inspectorPopover) {
+            inspectorPopover.reset();
+            tracerOverlay.clearCables();
+            return true;
+        }
+    }
+    if (key.getModifiers().isCommandDown() || key.getModifiers().isCtrlDown()) {
+        if (key.getKeyCode() == 'Z' || key.getKeyCode() == 'z') {
+            if (key.getModifiers().isShiftDown()) {
+                audioProcessor.getUndoManager().redo();
+                statusBar.setHoveredControl("REDO", "REAPPLY", "Reapplied parameter change (Ctrl+Shift+Z).");
+            } else {
+                audioProcessor.getUndoManager().undo();
+                statusBar.setHoveredControl("UNDO", "REVERT", "Reverted parameter change (Ctrl+Z).");
+            }
+            return true;
+        }
+        if (key.getKeyCode() == 'Y' || key.getKeyCode() == 'y') {
+            audioProcessor.getUndoManager().redo();
+            statusBar.setHoveredControl("REDO", "REAPPLY", "Reapplied parameter change (Ctrl+Y).");
+            return true;
+        }
+    }
+    return KlangCoreEditor::keyPressed(key);
 }
 
 

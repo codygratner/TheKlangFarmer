@@ -181,18 +181,37 @@ namespace GuiTestHelpers {
         
         static void simulateClick(juce::Component* comp) {
             if (!comp) return;
+            juce::Component::SafePointer<juce::Component> safeComp(comp);
+            auto* btn = dynamic_cast<juce::Button*>(comp);
+
             juce::MouseEvent e(juce::Desktop::getInstance().getMainMouseSource(), comp->getLocalBounds().getCentre().toFloat(), juce::ModifierKeys::leftButtonModifier, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, comp, comp, juce::Time::getCurrentTime(), comp->getLocalBounds().getCentre().toFloat(), juce::Time::getCurrentTime(), 1, false);
 
             comp->mouseDown(e);
+            if (safeComp == nullptr) return;
+
             juce::MouseEvent eUp(juce::Desktop::getInstance().getMainMouseSource(), comp->getLocalBounds().getCentre().toFloat(), juce::ModifierKeys(), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, comp, comp, juce::Time::getCurrentTime(), comp->getLocalBounds().getCentre().toFloat(), juce::Time::getCurrentTime(), 1, false);
             comp->mouseUp(eUp);
+
+            if (safeComp != nullptr && btn != nullptr) {
+                if (btn->getClickingTogglesState()) {
+                    btn->setToggleState(!btn->getToggleState(), juce::sendNotificationSync);
+                }
+                if (btn->onClick) {
+                    btn->onClick();
+                } else {
+                    btn->triggerClick();
+                }
+            }
         }
         
         static void simulateRightClick(juce::Component* comp) {
             if (!comp) return;
+            juce::Component::SafePointer<juce::Component> safeComp(comp);
             juce::MouseEvent e(juce::Desktop::getInstance().getMainMouseSource(), comp->getLocalBounds().getCentre().toFloat(), juce::ModifierKeys::rightButtonModifier, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, comp, comp, juce::Time::getCurrentTime(), comp->getLocalBounds().getCentre().toFloat(), juce::Time::getCurrentTime(), 1, false);
 
             comp->mouseDown(e);
+            if (safeComp == nullptr) return;
+
             juce::MouseEvent eUp(juce::Desktop::getInstance().getMainMouseSource(), comp->getLocalBounds().getCentre().toFloat(), juce::ModifierKeys(), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, comp, comp, juce::Time::getCurrentTime(), comp->getLocalBounds().getCentre().toFloat(), juce::Time::getCurrentTime(), 1, false);
             comp->mouseUp(eUp);
         }
@@ -430,5 +449,36 @@ namespace GuiTestHelpers {
         }
         return nullptr;
     }
+
+    // ==============================================================================
+    // 9. Font Bounds Helper
+    // ==============================================================================
+    struct FontBoundsHelper {
+        static bool isTextTruncated(const juce::String& text, const juce::Font& font, int availableWidth) {
+            if (text.isEmpty() || availableWidth <= 0) return false;
+            int textWidth = juce::GlyphArrangement::getStringWidthInt(font, text);
+            return textWidth > availableWidth;
+        }
+
+        static bool isLabelTruncated(juce::Label* label) {
+            if (!label || !label->isVisible()) return false;
+            if (dynamic_cast<juce::ComboBox*>(label->getParentComponent()) != nullptr) return false;
+            auto text = label->getText();
+            if (text.isEmpty()) return false;
+            auto font = label->getFont();
+            auto border = label->getBorderSize();
+            int availW = label->getWidth() - border.getLeftAndRight();
+            return isTextTruncated(text, font, availW);
+        }
+
+        static bool isButtonTruncated(juce::TextButton* button) {
+            if (!button || !button->isVisible()) return false;
+            auto text = button->getButtonText();
+            if (text.isEmpty() || text.length() <= 2 || button->getWidth() <= 30) return false;
+            juce::Font font(juce::FontOptions(13.0f));
+            int availW = button->getWidth() - 8;
+            return isTextTruncated(text, font, availW);
+        }
+    };
 
 } // namespace GuiTestHelpers

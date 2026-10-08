@@ -24,7 +24,30 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
+    // Undo/Redo Manager
+    juce::UndoManager& getUndoManager() { return undoManager; }
+
+    // A/B State comparison buffers
+    void saveToBufferA();
+    void saveToBufferB();
+    bool toggleAB();
+    bool isViewingB() const { return isViewingBufferB; }
+    bool isBufferBActive() const { return isViewingBufferB; }
+    void copyAToB();
+    void copyBToA();
+
+protected:
+    juce::UndoManager undoManager;
+
+public:
     // The APVTS (Shared across all derivatives)
     juce::AudioProcessorValueTreeState apvts;
+
+private:
+    juce::MemoryBlock stateBufferA;
+    juce::MemoryBlock stateBufferB;
+    bool hasBufferA = false;
+    bool hasBufferB = false;
+    bool isViewingBufferB = false;
 };
 

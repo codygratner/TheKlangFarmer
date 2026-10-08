@@ -186,10 +186,17 @@ TheKlangFarmerAudioProcessor::TheKlangFarmerAudioProcessor()
         }
     }
 
+    for (int i = 0; i < 4; ++i) {
+        macroParams[i] = dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter("macro_" + juce::String(i + 1)));
+    }
+
     continuousParams.clear();
-    continuousParams.reserve(getModDestinations().size());
+    continuousParams.reserve(getModDestinations().size() + 4);
     for (const auto& d : getModDestinations()) {
         continuousParams.push_back(dynamic_cast<juce::AudioParameterFloat*>(apvts.getParameter(d.id)));
+    }
+    for (int i = 0; i < 4; ++i) {
+        if (macroParams[i]) continuousParams.push_back(macroParams[i]);
     }
 }
 
@@ -575,57 +582,89 @@ void TheKlangFarmerAudioProcessor::applyBaseParameters() {
     if (modEnv3DepthParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV3, 1, getNorm(modEnv3DepthParam));
     if (modEnv3DecayParam)    engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV3, 2, getNorm(modEnv3DecayParam));
     if (modEnv3TargetParam)   engine.setPageParameter(TbdAudio::ModularDrumEngine::BLK_MODENV3, 3, static_cast<float>(modEnv3TargetParam->getIndex()));
+
+    // Performance Macros
+    for (int i = 0; i < 4; ++i) {
+        if (macroParams[i]) {
+            modMatrix.setMacro(i, getNorm(macroParams[i]));
+        }
+    }
 }
 
-void TheKlangFarmerAudioProcessor::applyModulationTargets(int target1, int target2, int target3) {
+void TheKlangFarmerAudioProcessor::applyModulationTargets() {
     const auto& destinations = getModDestinations();
     int numDests = static_cast<int>(destinations.size());
+    if (numDests <= 0) return;
 
-    float me1Val = engine.getModEnvValue(0);
-    float me2Val = engine.getModEnvValue(1);
-    float me3Val = engine.getModEnvValue(2);
+    // We need to zero out the modulation offsets first
+    // Since some parameters might not be actively modulated anymore, we must reset all
+    // Or we can just zero all active modulation destinations.
+    // To be perfectly safe, we clear all active modulation offsets by calling setPageParameterModulation to 0.0f
+    // But it's faster to just apply 0 to all destinations!
+    // We can maintain a static array of accumulators
+    float accumulators[512] = {0.0f};
 
-    auto applySingleTarget = [&](int targetIdx, float offset) {
-        if (targetIdx <= 0 || targetIdx > numDests) return;
-        int dIdx = targetIdx - 1;
-        if (dIdx >= static_cast<int>(continuousParams.size())) return;
-        auto* p = continuousParams[dIdx];
-        if (!p) return;
+    // Evaluate block-rate modulations
+    modMatrix.evaluateBlockModulations(accumulators, numDests);
 
-        float baseNorm = p->range.convertTo0to1(p->get());
-        float moddedVal = std::clamp(baseNorm + offset, 0.0f, 1.0f);
-        const auto& d = destinations[dIdx];
-
-        if (d.type == ModTargetType::PageBlock) {
-            engine.setPageParameter(static_cast<TbdAudio::ModularDrumEngine::BlockID>(d.blockOrSlot), d.paramIndex, moddedVal);
-        } else if (d.type == ModTargetType::PreFX) {
-            engine.setPreFXParam(d.blockOrSlot, d.paramIndex, moddedVal);
-        } else if (d.type == ModTargetType::PostFX) {
-            engine.setPostFXParam(d.blockOrSlot, d.paramIndex, moddedVal);
+    // Evaluate audio-rate Hydras
+    for (int h = 0; h < 4; ++h) {
+        auto& hub = modMatrix.getHydra(h);
+        if (hub.isAudioRate()) {
+            float inVal = engine.getAudioRateSourceSample(hub.inputSource);
+            // Convert bipolar oscillator output (-1 to 1) to unipolar (0 to 1) for the curve mapping
+            float normIn = std::clamp((inVal * 0.5f) + 0.5f, 0.0f, 1.0f);
+            
+            for (int d = 0; d < 8; ++d) {
+                const auto& dest = hub.destinations[d];
+                if (dest.active && dest.targetParamId >= 0 && dest.targetParamId < numDests) {
+                    accumulators[dest.targetParamId] += dest.mapValue(normIn);
+                }
+            }
         }
-    };
-
-    if (target1 > 0 && target2 == target1 && target3 == target1) {
-        applySingleTarget(target1, me1Val + me2Val + me3Val);
-    } else if (target1 > 0 && target2 == target1) {
-        applySingleTarget(target1, me1Val + me2Val);
-        if (target3 > 0) applySingleTarget(target3, me3Val);
-    } else if (target1 > 0 && target3 == target1) {
-        applySingleTarget(target1, me1Val + me3Val);
-        if (target2 > 0) applySingleTarget(target2, me2Val);
-    } else if (target2 > 0 && target3 == target2) {
-        if (target1 > 0) applySingleTarget(target1, me1Val);
-        applySingleTarget(target2, me2Val + me3Val);
-    } else {
-        if (target1 > 0) applySingleTarget(target1, me1Val);
-        if (target2 > 0) applySingleTarget(target2, me2Val);
-        if (target3 > 0) applySingleTarget(target3, me3Val);
     }
+
+    // Apply all modulation offsets (even 0.0f to reset unused ones)
+    for (int i = 0; i < numDests; ++i) {
+        const auto& d = destinations[i];
+        if (d.type == ModTargetType::PageBlock) {
+            engine.setPageParameterModulation(static_cast<TbdAudio::ModularDrumEngine::BlockID>(d.blockOrSlot), d.paramIndex, accumulators[i]);
+        } else if (d.type == ModTargetType::PreFX) {
+            if (auto* fx = engine.getPreFXBlock(d.blockOrSlot)) {
+                fx->setParamModulation(d.paramIndex, accumulators[i]);
+            }
+        } else if (d.type == ModTargetType::PostFX) {
+            if (auto* fx = engine.getPostFXBlock(d.blockOrSlot)) {
+                fx->setParamModulation(d.paramIndex, accumulators[i]);
+            }
+        }
+    }
+}
+
+void TheKlangFarmerAudioProcessor::triggerPanic() {
+    panicRequested.store(true, std::memory_order_release);
 }
 
 void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
     juce::ScopedNoDenormals noDenormals;
     TbdAudio::FastMath::enableFTZDAZ();
+
+    // Check for CC 120 (All Sound Off) or CC 123 (All Notes Off)
+    for (const auto metadata : midiMessages) {
+        auto msg = metadata.getMessage();
+        if (msg.isController() && (msg.getControllerNumber() == 120 || msg.getControllerNumber() == 123)) {
+            panicRequested.store(true, std::memory_order_release);
+        }
+    }
+
+    if (panicRequested.exchange(false, std::memory_order_acq_rel)) {
+        float* left = buffer.getNumChannels() > 0 ? buffer.getWritePointer(0) : nullptr;
+        float* right = buffer.getNumChannels() > 1 ? buffer.getWritePointer(1) : left;
+        engine.triggerPanic(left, right, buffer.getNumSamples(), static_cast<float>(getSampleRate()));
+        modMatrix.reset();
+        midiMessages.clear();
+        return;
+    }
 
     if (auto* playHead = getPlayHead()) {
         if (auto posOpt = playHead->getPosition()) {
@@ -637,10 +676,23 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
 
     applyBaseParameters();
 
-    int target1 = modEnv1TargetParam ? modEnv1TargetParam->getIndex() : 0;
-    int target2 = modEnv2TargetParam ? modEnv2TargetParam->getIndex() : 0;
-    int target3 = modEnv3TargetParam ? modEnv3TargetParam->getIndex() : 0;
-    bool hasModTargets = (target1 > 0 || target2 > 0 || target3 > 0);
+    bool hasModTargets = (modMatrix.getNumActiveRoutes() > 0);
+    bool requiresAudioRate = false;
+    for (int h = 0; h < 4; ++h) {
+        bool hasActiveDest = false;
+        for (int d = 0; d < 8; ++d) {
+            if (modMatrix.getHydra(h).destinations[d].active) {
+                hasActiveDest = true;
+                break;
+            }
+        }
+        if (hasActiveDest) {
+            hasModTargets = true;
+            if (modMatrix.getHydra(h).isAudioRate()) {
+                requiresAudioRate = true;
+            }
+        }
+    }
 
     int numSamples = buffer.getNumSamples();
     float* left = buffer.getNumChannels() > 0 ? buffer.getWritePointer(0) : nullptr;
@@ -657,13 +709,22 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
         }
 
         constexpr int SUB_CHUNK = 32;
+        int chunk = requiresAudioRate ? 1 : SUB_CHUNK;
         int slicePos = 0;
+        
         while (slicePos < numSliceSamples) {
-            int curChunk = std::min(SUB_CHUNK, numSliceSamples - slicePos);
+            int curChunk = std::min(chunk, numSliceSamples - slicePos);
             float* l = left ? left + startSample + slicePos : nullptr;
             float* r = right ? right + startSample + slicePos : nullptr;
 
-            applyModulationTargets(target1, target2, target3);
+            // Update modulation matrix sources (block-rate sources)
+            modMatrix.setSourceValue(TbdAudio::ModSource::Env1, engine.getModEnvValue(0));
+            modMatrix.setSourceValue(TbdAudio::ModSource::Env2, engine.getModEnvValue(1));
+            modMatrix.setSourceValue(TbdAudio::ModSource::Env3, engine.getModEnvValue(2));
+            modMatrix.setSourceValue(TbdAudio::ModSource::Velocity, engine.getContext().curvedVelocity);
+            modMatrix.setSourceValue(TbdAudio::ModSource::KeyTrack, engine.getContext().curvedKeyNote);
+
+            applyModulationTargets();
             engine.processStereo(l, r, curChunk);
             slicePos += curChunk;
         }
@@ -687,7 +748,7 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
             engine.setMidiPitch(msg.getNoteNumber());
             engine.trigger(msg.getFloatVelocity());
             if (hasModTargets) {
-                applyModulationTargets(target1, target2, target3);
+                applyModulationTargets();
             }
         }
     }
@@ -945,6 +1006,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout TheKlangFarmerAudioProcessor
     layout.add(makeFloatParam("modenv3_depth", "ModEnv 3: Depth", 0.5f));        // 0% (bipolar center)
     layout.add(makeFloatParam("modenv3_decay", "ModEnv 3: Decay", 0.3806f));     // 333 ms
     layout.add(makeChoiceParam("modenv3_target", "ModEnv 3: Destination", modChoices, 0));
+
+    // --- 27. PERFORMANCE MACROS ---
+    layout.add(makeFloatParam("macro_1", "Macro 1", 0.0f));
+    layout.add(makeFloatParam("macro_2", "Macro 2", 0.0f));
+    layout.add(makeFloatParam("macro_3", "Macro 3", 0.0f));
+    layout.add(makeFloatParam("macro_4", "Macro 4", 0.0f));
 
     return layout;
 }

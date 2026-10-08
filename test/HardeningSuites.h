@@ -195,5 +195,59 @@ namespace HardeningSuites {
             auto* testDef = pm.getControlDef("carrier1_pitch");
             reporter.expect(testDef != nullptr, "PoisonPillSchemaSuite: Core control definitions preserved after poison pill attack");
         }
+
+        // --- Text Truncation Audit Suite ---
+        {
+            TheKlangFarmerAudioProcessor pF;
+            auto eF = std::unique_ptr<juce::AudioProcessorEditor>(pF.createEditor());
+
+            struct WinSize { int w; int h; };
+            WinSize testSizes[] = { { 800, 600 }, { 1040, 740 }, { 1400, 900 } };
+            float scales[] = { 1.0f, 1.25f, 1.5f, 2.0f };
+
+            int totalTextElementsChecked = 0;
+            int totalTruncations = 0;
+
+            auto isEffectivelyVisible = [](juce::Component* comp, juce::Component* root) -> bool {
+                if (!comp || !comp->isVisible()) return false;
+                for (auto* c = comp->getParentComponent(); c != nullptr; c = c->getParentComponent()) {
+                    if (!c->isVisible()) return false;
+                    if (c == root) return true;
+                }
+                return comp == root;
+            };
+
+            for (const auto& sz : testSizes) {
+                eF->setSize(sz.w, sz.h);
+                for (float s : scales) {
+                    eF->setTransform(juce::AffineTransform::scale(s));
+                    pumpMessageLoop(2, 5);
+
+                    auto labels = ComponentFinder::findAllByType<juce::Label>(eF.get());
+                    for (auto* lbl : labels) {
+                        if (lbl && isEffectivelyVisible(lbl, eF.get())) {
+                            totalTextElementsChecked++;
+                            if (FontBoundsHelper::isLabelTruncated(lbl)) {
+                                totalTruncations++;
+                            }
+                        }
+                    }
+
+                    auto buttons = ComponentFinder::findAllByType<juce::TextButton>(eF.get());
+                    for (auto* btn : buttons) {
+                        if (btn && isEffectivelyVisible(btn, eF.get())) {
+                            totalTextElementsChecked++;
+                            if (FontBoundsHelper::isButtonTruncated(btn)) {
+                                totalTruncations++;
+                            }
+                        }
+                    }
+                }
+            }
+
+            reporter.expect(totalTruncations == 0,
+                "TextTruncationAuditSuite: Audited " + juce::String(totalTextElementsChecked) +
+                " visible text elements across 3 window sizes and 4 DPI scales (" + juce::String(totalTruncations) + " truncations detected)");
+        }
     }
 }

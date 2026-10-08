@@ -1,18 +1,22 @@
 {
   "module_colors": {
-    "carrier_accent": "0xffff3b30",
-    "modulator_accent": "0xff00d2ff",
-    "pitch_env_accent": "0xffcfd8dc",
-    "filter_env_accent": "0xffffa000",
-    "amp_env_accent": "0xffe040fb",
-    "filter_accent": "0xff2979ff",
-    "amplifier_accent": "0xff00e676",
-    "transients_accent": "0xff263238"
+    "carrier_accent": "0xff38bdf8",
+    "modulator_accent": "0xff38bdf8",
+    "pitch_env_accent": "0xfff59e0b",
+    "filter_env_accent": "0xfff59e0b",
+    "amp_env_accent": "0xffec4899",
+    "filter_accent": "0xff10b981",
+    "amplifier_accent": "0xff10b981",
+    "transients_accent": "0xff38bdf8"
   },
   "global_colors": {
-    "background_dark": "0xff0d0f14",
-    "header_chassis": "0xff151821",
-    "card_background": "0xff141720",
-    "card_border": "0xff252b3b"
+    "background_dark": "0xff0a0d12",
+    "header_chassis": "0xff0d1117",
+    "card_background": "0xff161b22",
+    "card_border": "0xff283141",
+    "accent_cyan": "0xff38bdf8",
+    "accent_amber": "0xfff59e0b",
+    "accent_lime": "0xff10b981",
+    "accent_magenta": "0xffec4899"
   }
 }

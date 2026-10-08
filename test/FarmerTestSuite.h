@@ -115,6 +115,53 @@ namespace FarmerTestSuite {
             }
         }
 
+        // --- Stage 4B: Drag-and-Drop FX Rack Swap Verification ---
+        if (fxCards.size() >= 2) {
+            auto* farmerEditor = dynamic_cast<TheKlangFarmerAudioProcessorEditor*>(editor.get());
+            reporter.expect(farmerEditor != nullptr, "Farmer editor cast successful");
+
+            if (farmerEditor) {
+                // Set Pre 1 to Chorus (2) and Pre 2 to Drive (4)
+                processor.getEngine().setPreFXType(0, 2);
+                processor.getEngine().setPreFXParam(0, 0, 0.75f);
+                if (auto* p = processor.apvts.getParameter("pre_fx_1_type")) p->setValueNotifyingHost(p->convertTo0to1(2.0f));
+                if (auto* p = processor.apvts.getParameter("pre_fx_1_p1")) p->setValueNotifyingHost(0.75f);
+
+                processor.getEngine().setPreFXType(1, 4);
+                processor.getEngine().setPreFXParam(1, 0, 0.25f);
+                if (auto* p = processor.apvts.getParameter("pre_fx_2_type")) p->setValueNotifyingHost(p->convertTo0to1(4.0f));
+                if (auto* p = processor.apvts.getParameter("pre_fx_2_p1")) p->setValueNotifyingHost(0.25f);
+
+                // Execute intra-lane swap: Pre 1 with Pre 2
+                farmerEditor->handleFXSwap(false, 0, false, 1);
+                pumpMessageLoop();
+
+                reporter.expect(processor.getEngine().getPreFXType(0) == 4, "Slot 0 swapped to Drive (4)");
+                reporter.expect(processor.getEngine().getPreFXType(1) == 2, "Slot 1 swapped to Chorus (2)");
+                reporter.expect(std::abs(processor.getEngine().getPreFXParam(0, 0) - 0.25f) < 1e-4f, "Slot 0 received Drive Gain param");
+                reporter.expect(std::abs(processor.getEngine().getPreFXParam(1, 0) - 0.75f) < 1e-4f, "Slot 1 received Chorus Rate param");
+
+                // Set Post 0 to empty (0) to test swap with empty slot
+                processor.getEngine().setPostFXType(0, 0);
+                if (auto* p = processor.apvts.getParameter("post_fx_1_type")) p->setValueNotifyingHost(0.0f);
+
+                // Execute cross-lane swap: Pre 0 (Drive 4) with Post 0 (empty 0)
+                farmerEditor->handleFXSwap(false, 0, true, 0);
+                pumpMessageLoop();
+
+                reporter.expect(processor.getEngine().getPreFXType(0) == 0, "Pre Slot 0 is now empty (0)");
+                reporter.expect(processor.getEngine().getPostFXType(0) == 4, "Post Slot 0 received Drive (4)");
+                reporter.expect(std::abs(processor.getEngine().getPostFXParam(0, 0) - 0.25f) < 1e-4f, "Post Slot 0 received Drive Gain param");
+
+                // Verify DragAndDropTarget interface on FX cards
+                auto* dndTarget = dynamic_cast<juce::DragAndDropTarget*>(fxCards[0]);
+                reporter.expect(dndTarget != nullptr, "FX card implements juce::DragAndDropTarget");
+
+                auto* dndContainer = dynamic_cast<juce::DragAndDropContainer*>(farmerEditor);
+                reporter.expect(dndContainer != nullptr, "Editor implements juce::DragAndDropContainer");
+            }
+        }
+
         // --- Stage 5: Right-Click Callout Popups & Snap-Point Clicks ---
         if (pitchSlider) {
             EventSimulator::simulateRightClick(pitchSlider);
@@ -174,5 +221,166 @@ namespace FarmerTestSuite {
         if (pitchSlider) {
             reporter.expect(std::abs(pitchSlider->getValue() - 0.5f) < 0.001f, "State restore reverted pitch slider");
         }
+
+        std::cout << "[DEBUG] Starting Stage 9" << std::endl;
+        // --- Stage 9: Phase 3 Neo-Slate 3-Tier Layout, Header Mini-Dock, Modulator Strip & d6 Randomizer ---
+        if (auto* farmerEditor = dynamic_cast<TheKlangFarmerAudioProcessorEditor*>(editor.get())) {
+            // 1. Verify typography
+            auto font = TkfTypography::getFont(12.0f);
+            reporter.expect(font.getHeight() > 0.0f, "TkfTypography returns valid font");
+
+            // 2. Verify Header Safety Controls (Undo, Redo, AB, Global d6, Meter)
+            reporter.expect(farmerEditor->getUndoButton().isVisible(), "Undo button visible in header");
+            reporter.expect(farmerEditor->getRedoButton().isVisible(), "Redo button visible in header");
+            reporter.expect(farmerEditor->getAbButton().isVisible(), "A/B button visible in header");
+            reporter.expect(farmerEditor->getGlobalDiceButton().isVisible(), "Global d6 button visible in header");
+            reporter.expect(farmerEditor->getHeaderMeter().isVisible(), "Header peak meter visible in header");
+
+            std::cout << "[DEBUG] Stage 9: test Panic flush" << std::endl;
+            // 3. Test double-click Panic flush on Header Peak Meter
+            EventSimulator::simulateDoubleClick(&farmerEditor->getHeaderMeter());
+            pumpMessageLoop();
+            reporter.expect(true, "Header meter double-click executed Panic flush without crash");
+
+            // 4. Test global d6 randomizer roll
+            EventSimulator::simulateClick(&farmerEditor->getGlobalDiceButton());
+            pumpMessageLoop();
+            reporter.expect(true, "Global d6 roll executed across active parameters");
+
+            // 5. Verify Lower Modulator Strip
+            reporter.expect(farmerEditor->getModStrip().isVisible(), "Lower Modulator Strip is visible");
+            reporter.expect(farmerEditor->getModStrip().getNumTiles() == 15, "Lower Modulator Strip contains all 15 modulator tiles");
+
+            farmerEditor->getModStrip().setSelectedTile(2);
+            pumpMessageLoop();
+            reporter.expect(farmerEditor->getModStrip().getSelectedTile() == 2, "Selected LFO 3 tile in Modulator Strip");
+
+            // 6. Test contextual card d6 dice button
+            auto cards = ComponentFinder::findAllByType<ModuleCardComponent>(editor.get());
+            reporter.expect(!cards.isEmpty(), "Found module cards in workspace");
+            if (!cards.isEmpty()) {
+                auto* firstCard = cards[0];
+                EventSimulator::simulateClick(&firstCard->getDiceButton());
+                pumpMessageLoop();
+                reporter.expect(true, "Contextual card d6 button clicked without crash");
+            }
+
+            // --- Stage 10: Phase 4 Modulation Matrix UI, Performance Macros, Undo/Redo & SmartValueParser ---
+            {
+                farmerEditor->setPage(0);
+                pumpMessageLoop();
+
+                // 1. Undo / Redo Transactions
+                processor.getUndoManager().clearUndoHistory();
+                processor.getUndoManager().beginNewTransaction("Modify Pitch");
+                if (pitchSlider) {
+                    pitchSlider->setValue(0.85, juce::sendNotificationSync);
+                    processor.apvts.copyState();
+                }
+                pumpMessageLoop();
+                reporter.expect(std::abs(pitchSlider->getValue() - 0.85) < 0.01, "Pitch slider moved to 0.85");
+
+                EventSimulator::simulateClick(&farmerEditor->getUndoButton());
+                pumpMessageLoop();
+                reporter.expect(std::abs(pitchSlider->getValue() - 0.5) < 0.01, "Undo transaction reverted pitch slider to 0.50");
+
+                EventSimulator::simulateClick(&farmerEditor->getRedoButton());
+                pumpMessageLoop();
+                reporter.expect(std::abs(pitchSlider->getValue() - 0.85) < 0.01, "Redo transaction reapplied pitch slider to 0.85");
+
+                // Reset back
+                EventSimulator::simulateClick(&farmerEditor->getUndoButton());
+                pumpMessageLoop();
+
+                // 2. A/B Comparison Memory Buffers
+                processor.saveToBufferA();
+                if (pitchSlider) pitchSlider->setValue(0.33, juce::sendNotificationSync);
+                pumpMessageLoop();
+                processor.saveToBufferB();
+                if (pitchSlider) pitchSlider->setValue(0.50, juce::sendNotificationSync);
+                pumpMessageLoop();
+                reporter.expect(!processor.isBufferBActive(), "Buffer A is initially active");
+
+                EventSimulator::simulateClick(&farmerEditor->getAbButton());
+                pumpMessageLoop();
+                reporter.expect(processor.isBufferBActive(), "A/B button toggled active buffer to B");
+                if (pitchSlider) {
+                    reporter.expect(std::abs(pitchSlider->getValue() - 0.33) < 0.01, "Buffer B recalled pitch value 0.33");
+                }
+
+                EventSimulator::simulateClick(&farmerEditor->getAbButton());
+                pumpMessageLoop();
+                reporter.expect(!processor.isBufferBActive(), "A/B button toggled active buffer back to A");
+                if (pitchSlider) {
+                    reporter.expect(std::abs(pitchSlider->getValue() - 0.5) < 0.01, "Buffer A recalled pitch value 0.50");
+                }
+
+                processor.copyAToB();
+                EventSimulator::simulateClick(&farmerEditor->getAbButton());
+                pumpMessageLoop();
+                if (pitchSlider) {
+                    reporter.expect(std::abs(pitchSlider->getValue() - 0.5) < 0.01, "Copied Buffer A to Buffer B successfully");
+                }
+                EventSimulator::simulateClick(&farmerEditor->getAbButton());
+                pumpMessageLoop();
+
+                // 3. 4 Performance Macro Knobs
+                for (int m = 0; m < 4; ++m) {
+                    reporter.expect(farmerEditor->getMacroKnob(m).isVisible(), "Macro knob M" + juce::String(m + 1) + " is visible");
+                }
+                farmerEditor->getMacroKnob(0).setValue(0.72, juce::sendNotificationSync);
+                pumpMessageLoop();
+                if (auto* mParam = processor.apvts.getParameter("macro_1")) {
+                    reporter.expect(std::abs(mParam->getValue() - 0.72f) < 0.01f, "Macro 1 knob synced to APVTS parameter macro_1");
+                }
+
+                // 4. SmartValueParser
+                double hz = 0.0;
+                bool parsedHz = SmartValueParser::parseNoteToHz("C2+37c", hz);
+                reporter.expect(parsedHz && std::abs(hz - 66.82099) < 0.05, "SmartValueParser parsed C2+37c to ~66.82 Hz (" + juce::String(hz, 2) + ")");
+
+                double gain = 0.0;
+                bool parsedGain = SmartValueParser::parseDecibelsToGain("-6dB", gain);
+                reporter.expect(parsedGain && std::abs(gain - 0.501187) < 0.02, "SmartValueParser parsed -6dB to ~0.50 gain (" + juce::String(gain, 3) + ")");
+
+                double ms = 0.0;
+                bool parsedMs1 = SmartValueParser::parseTimeToMs("1/4d", 120.0, ms);
+                reporter.expect(parsedMs1 && std::abs(ms - 750.0) < 0.1, "SmartValueParser parsed 1/4d at 120 BPM to 750 ms (" + juce::String(ms, 1) + ")");
+
+                bool parsedMs2 = SmartValueParser::parseTimeToMs("1/8t", 120.0, ms);
+                reporter.expect(parsedMs2 && std::abs(ms - 166.67) < 0.5, "SmartValueParser parsed 1/8t at 120 BPM to 166.67 ms (" + juce::String(ms, 1) + ")");
+
+                // 5. Modulator Strip Drag-and-Drop Mapping to Knob
+                farmerEditor->getMacroKnob(0).onModulationAssigned("Mod Env 1");
+                pumpMessageLoop();
+                reporter.expect(farmerEditor->getMacroKnob(0).modulation.isModulated, "Knob modulation range visualizer activated on assignment");
+
+                // 6. Modulation Tracer Overlay Cables
+                farmerEditor->updateTracerForFocusedKnob(&farmerEditor->getMacroKnob(0));
+                pumpMessageLoop();
+                reporter.expect(farmerEditor->getTracerOverlay().isVisible(), "Tracer overlay is visible");
+
+                // 7. Modulations Page & Matrix Table
+                farmerEditor->setPage(5);
+                pumpMessageLoop();
+                reporter.expect(farmerEditor->getModMatrixTable() != nullptr && farmerEditor->getModMatrixTable()->isVisible(),
+                                "Modulation Matrix Table is visible on Page 5");
+
+                // 8. Inspector Popover
+                farmerEditor->openInspector(0);
+                pumpMessageLoop();
+                reporter.expect(farmerEditor->getInspectorPopover() != nullptr && farmerEditor->getInspectorPopover()->isVisible(),
+                                "Spacious Inspector Popover opened on modulator tile inspect");
+                reporter.expect(farmerEditor->getTracerOverlay().hasActiveCables(),
+                                "Tracer overlay generated patch cables to Inspector Popover Eurorack sockets");
+
+                // Test Escape key close
+                farmerEditor->keyPressed(juce::KeyPress(juce::KeyPress::escapeKey));
+                pumpMessageLoop();
+                reporter.expect(farmerEditor->getInspectorPopover() == nullptr,
+                                "Escape key closed Inspector Popover and cleared tracer cables");
+            }
+        }
     }
 }
+

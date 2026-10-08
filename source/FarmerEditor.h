@@ -9,7 +9,8 @@
 
 // Dynamic Card component representing an independent FX slot
 class FXSlotCardComponent : public juce::Component,
-                            public juce::SettableTooltipClient {
+                            public juce::SettableTooltipClient,
+                            public juce::DragAndDropTarget {
 public:
     FXSlotCardComponent(int slotIndex, bool isPostRack);
     void paint(juce::Graphics& g) override;
@@ -22,11 +23,23 @@ public:
     RotaryKnobSlider& getKnob(int index) { return knobs[index]; }
     LedSelectorComponent& getSelector1() { return selector1; }
     LedSelectorComponent& getSelector2() { return selector2; }
+    juce::ComboBox& getTypeSelector() { return typeSelector; }
 
     void updateDynamicControls();
 
     void mouseDown(const juce::MouseEvent& e) override;
+    void mouseDrag(const juce::MouseEvent& e) override;
+
+    // Drag and Drop Target implementation
+    bool isInterestedInDragSource(const SourceDetails& dragSourceDetails) override;
+    void itemDragEnter(const SourceDetails& dragSourceDetails) override;
+    void itemDragMove(const SourceDetails& dragSourceDetails) override;
+    void itemDragExit(const SourceDetails& dragSourceDetails) override;
+    void itemDropped(const SourceDetails& dragSourceDetails) override;
+
     std::function<void()> onCardClicked;
+    std::function<void(bool srcIsPost, int srcSlot, bool dstIsPost, int dstSlot)> onSwapRequested;
+    std::function<void(int newType)> onTypeChanged;
 
 private:
     int slotIndex = 0;
@@ -34,7 +47,9 @@ private:
     int currentType = 0;
     juce::String title;
     juce::Colour accent;
+    bool isDragOver = false;
 
+    juce::ComboBox typeSelector;
     juce::Label labels[4];
     RotaryKnobSlider knobs[4];
     LedSelectorComponent selector1;
@@ -68,9 +83,8 @@ private:
         "VOICE 1",
         "VOICE 2",
         "TRANSIENTS",
-        "PRE-AMP FX",
+        "EFFECTS",
         "AMPLIFIER",
-        "POST-AMP FX",
         "MODULATIONS"
     };
     std::vector<std::unique_ptr<juce::TextButton>> buttons;
@@ -114,11 +128,14 @@ public:
     MiniOscilloscopeComponent& getOscilloscope() { return oscilloscope; }
 
     void mouseDown(const juce::MouseEvent& e) override;
+    void mouseDoubleClick(const juce::MouseEvent& e) override;
     void mouseMove(const juce::MouseEvent& e) override;
     void mouseExit(const juce::MouseEvent& e) override;
 
     juce::Rectangle<int> getLockBounds() const;
     juce::Rectangle<int> getOffBounds() const;
+
+    std::function<void()> onPanicTriggered;
 
 private:
     juce::Colour accent;
@@ -147,7 +164,38 @@ private:
     juce::TextButton closeButton { "✕" };
 };
 
-class TheKlangFarmerAudioProcessorEditor : public KlangCoreEditor, private juce::Timer {
+// Table component listing active modulation routes on Page 5
+class ModulationMatrixTableComponent : public juce::Component,
+                                       public juce::TableListBoxModel {
+public:
+    explicit ModulationMatrixTableComponent(TheKlangFarmerAudioProcessor& proc);
+    ~ModulationMatrixTableComponent() override { table.setModel(nullptr); }
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+
+    int getNumRows() override;
+    void paintRowBackground(juce::Graphics& g, int rowNumber, int width, int height, bool rowIsSelected) override;
+    void paintCell(juce::Graphics& g, int rowNumber, int columnId, int width, int height, bool rowIsSelected) override;
+
+    void refresh();
+
+private:
+    TheKlangFarmerAudioProcessor& processor;
+    juce::TableListBox table;
+    struct RouteDisplay {
+        juce::String source;
+        juce::String target;
+        float depth = 0.0f;
+        juce::String viaSource;
+        float viaDepth = 0.0f;
+    };
+    std::vector<RouteDisplay> activeRoutes;
+};
+
+class TheKlangFarmerAudioProcessorEditor : public KlangCoreEditor,
+                                           public juce::DragAndDropContainer,
+                                           private juce::Timer {
 public:
     explicit TheKlangFarmerAudioProcessorEditor(TheKlangFarmerAudioProcessor&);
     ~TheKlangFarmerAudioProcessorEditor() override;
@@ -161,15 +209,54 @@ public:
 
     void setPage(int pageIndex);
     void updatePageLayout();
+    void handleFXSwap(bool srcIsPost, int srcSlot, bool dstIsPost, int dstSlot);
 
     void mouseDown(const juce::MouseEvent& e) override;
     void mouseDrag(const juce::MouseEvent& e) override;
     void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& d) override;
+    bool keyPressed(const juce::KeyPress& key) override;
     void handleCardInteraction(juce::Component* comp);
     void resetToDefaults(bool cleanFX = false);
 
+    void rollGlobalDice();
+    void openInspectorForSource(int sourceIndex);
+    void updateTracerForFocusedKnob(RotaryKnobSlider* knob);
+    void updateTracerForInspector(int sourceIndex);
+
+    // Header & Modulator Strip accessors
+    juce::TextButton& getUndoButton() { return undoButton; }
+    juce::TextButton& getRedoButton() { return redoButton; }
+    juce::TextButton& getAbButton() { return abButton; }
+    juce::TextButton& getGlobalDiceButton() { return globalDiceButton; }
+    HeaderMeterComponent& getHeaderMeter() { return headerMeter; }
+    LowerModulatorStripComponent& getModStrip() { return modStrip; }
+    RotaryKnobSlider& getMacroKnob(int idx) { return macroKnobs[idx]; }
+    ModulationTracerOverlay& getTracerOverlay() { return tracerOverlay; }
+    void openInspector(int sourceIndex) { openInspectorForSource(sourceIndex); }
+    ModulationInspectorPopover* getInspectorPopover() { return inspectorPopover.get(); }
+    ModulationMatrixTableComponent* getModMatrixTable() { return modMatrixTable.get(); }
+
 private:
     TheKlangFarmerAudioProcessor& audioProcessor;
+
+    // Header controls
+    juce::TextButton undoButton { juce::CharPointer_UTF8("\xe2\x86\xb6") }; // ↶
+    juce::TextButton redoButton { juce::CharPointer_UTF8("\xe2\x86\xb7") }; // ↷
+    juce::TextButton abButton { "A | B" };
+    juce::TextButton globalDiceButton { "d6" };
+    HeaderMeterComponent headerMeter;
+
+    // Header Performance Macro Knobs
+    RotaryKnobSlider macroKnobs[4];
+    float globalD6Depth = 0.25f;
+
+    // Modulation Tracer Overlay & Inspector Popover
+    ModulationTracerOverlay tracerOverlay;
+    std::unique_ptr<ModulationInspectorPopover> inspectorPopover;
+    std::unique_ptr<ModulationMatrixTableComponent> modMatrixTable;
+
+    // Lower Modulator Strip
+    LowerModulatorStripComponent modStrip;
 
     // Quickstart Guide overlay
     QuickstartGuideModalComponent quickstartGuide;
