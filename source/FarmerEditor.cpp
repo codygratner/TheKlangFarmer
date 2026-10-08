@@ -1113,7 +1113,6 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
         quickstartGuide.grabKeyboardFocus();
     };
     initButton.onClick = [this] { resetToDefaults(); };
-    triggerButton.onClick = [this] { audioProcessor.getEngine().trigger(); };
     addAndMakeVisible(guideButton);
 
     addChildComponent(quickstartGuide);
@@ -1147,7 +1146,7 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     triggerButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff0f1115));
     triggerButton.setTooltip("AUDITION HIT — Fire a manual audition drum hit at full velocity.");
     triggerButton.onClick = [this]() {
-        audioProcessor.getEngine().trigger(1.0f);
+        audioProcessor.triggerAudition(1.0f, 36);
     };
     addAndMakeVisible(triggerButton);
 
@@ -1181,8 +1180,8 @@ TheKlangFarmerAudioProcessorEditor::TheKlangFarmerAudioProcessorEditor(TheKlangF
     abButton.addMouseListener(this, false);
     addAndMakeVisible(abButton);
 
-    globalDiceButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff161b22));
-    globalDiceButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff00d2ff));
+    globalDiceButton.setAccentColour(juce::Colour(0xff00d2ff));
+    globalDiceButton.setBodyColour(juce::Colour(0xff161b22));
     globalDiceButton.setTooltip("GLOBAL RANDOMIZE — Roll d6 across active synth voice parameters (Right-click for depth).");
     globalDiceButton.onClick = [this]() {
         rollGlobalDice();
@@ -3120,15 +3119,15 @@ void TheKlangFarmerAudioProcessorEditor::timerCallback() {
 }
 
 void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
-    // Neo-Slate matte chassis
-    g.setColour(juce::Colour(0xff0a0d12));
+    // Dynamic theme matte chassis
+    g.setColour(RlyehSound::ParameterManager::getInstance().getGlobalColor("background_dark", juce::Colour(0xff0a0d12)));
     g.fillAll();
 
     // Top header chassis bar
-    g.setColour(juce::Colour(0xff0d1117));
+    g.setColour(RlyehSound::ParameterManager::getInstance().getGlobalColor("header_chassis", juce::Colour(0xff0d1117)));
     g.fillRect(0, 0, getWidth(), 36);
 
-    g.setColour(juce::Colour(0xff283141));
+    g.setColour(RlyehSound::ParameterManager::getInstance().getGlobalColor("card_border", juce::Colour(0xff283141)));
     g.drawHorizontalLine(36, 0.0f, static_cast<float>(getWidth()));
 
     g.setFont(TkfTypography::getFont(16.0f, juce::Font::bold));
@@ -3136,7 +3135,7 @@ void TheKlangFarmerAudioProcessorEditor::paint(juce::Graphics& g) {
     g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("tkf_title", "THE KLANG FARMER"), 14, 0, 180, 36, juce::Justification::centredLeft);
 
     g.setFont(TkfTypography::getFont(11.0f, juce::Font::bold));
-    g.setColour(juce::Colour(0xff00d2ff));
+    g.setColour(RlyehSound::ParameterManager::getInstance().getGlobalColor("accent_cyan", juce::Colour(0xff00d2ff)));
 #ifdef JucePlugin_VersionString
     juce::String verStr = "v" JucePlugin_VersionString;
 #else

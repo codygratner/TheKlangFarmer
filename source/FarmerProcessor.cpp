@@ -208,6 +208,7 @@ void TheKlangFarmerAudioProcessor::prepareToPlay(double sampleRate, int samplesP
 
 void TheKlangFarmerAudioProcessor::releaseResources() {
     TKS_LOG_INFO("TheKlangFarmerAudioProcessor::releaseResources");
+    ::RlyehSound::DevLogger::getInstance().registerAudioThread(std::thread::id());
 }
 
 juce::String TheKlangFarmerAudioProcessor::getFXParamDisplayName(bool isPost, int slotIndex, int fxType, int paramIndex) {
@@ -645,6 +646,12 @@ void TheKlangFarmerAudioProcessor::triggerPanic() {
     panicRequested.store(true, std::memory_order_release);
 }
 
+void TheKlangFarmerAudioProcessor::triggerAudition(float velocity, int midiNote) {
+    auditionVelocity.store(velocity, std::memory_order_relaxed);
+    auditionNote.store(midiNote, std::memory_order_relaxed);
+    auditionTriggerRequested.store(true, std::memory_order_release);
+}
+
 void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages) {
     juce::ScopedNoDenormals noDenormals;
     TbdAudio::FastMath::enableFTZDAZ();
@@ -731,6 +738,14 @@ void TheKlangFarmerAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer
     };
 
     int currentSample = 0;
+
+    if (auditionTriggerRequested.exchange(false, std::memory_order_acq_rel)) {
+        engine.setMidiPitch(auditionNote.load(std::memory_order_relaxed));
+        engine.trigger(auditionVelocity.load(std::memory_order_relaxed));
+        if (hasModTargets) {
+            applyModulationTargets();
+        }
+    }
 
     for (const auto metadata : midiMessages) {
         auto msg = metadata.getMessage();

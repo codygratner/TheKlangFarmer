@@ -199,7 +199,9 @@ namespace HardeningSuites {
         // --- Text Truncation Audit Suite ---
         {
             TheKlangFarmerAudioProcessor pF;
+            TheKlangPlanterAudioProcessor pP;
             auto eF = std::unique_ptr<juce::AudioProcessorEditor>(pF.createEditor());
+            auto eP = std::unique_ptr<juce::AudioProcessorEditor>(pP.createEditor());
 
             struct WinSize { int w; int h; };
             WinSize testSizes[] = { { 800, 600 }, { 1040, 740 }, { 1400, 900 } };
@@ -217,33 +219,58 @@ namespace HardeningSuites {
                 return comp == root;
             };
 
-            for (const auto& sz : testSizes) {
-                eF->setSize(sz.w, sz.h);
-                for (float s : scales) {
-                    eF->setTransform(juce::AffineTransform::scale(s));
-                    pumpMessageLoop(2, 5);
+            auto auditEditor = [&](juce::AudioProcessorEditor* editor) {
+                for (const auto& sz : testSizes) {
+                    editor->setSize(sz.w, sz.h);
+                    for (float s : scales) {
+                        editor->setTransform(juce::AffineTransform::scale(s));
+                        pumpMessageLoop(2, 5);
 
-                    auto labels = ComponentFinder::findAllByType<juce::Label>(eF.get());
-                    for (auto* lbl : labels) {
-                        if (lbl && isEffectivelyVisible(lbl, eF.get())) {
-                            totalTextElementsChecked++;
-                            if (FontBoundsHelper::isLabelTruncated(lbl)) {
-                                totalTruncations++;
+                        auto labels = ComponentFinder::findAllByType<juce::Label>(editor);
+                        for (auto* lbl : labels) {
+                            if (lbl && isEffectivelyVisible(lbl, editor)) {
+                                totalTextElementsChecked++;
+                                if (FontBoundsHelper::isLabelTruncated(lbl)) {
+                                    totalTruncations++;
+                                }
                             }
                         }
-                    }
 
-                    auto buttons = ComponentFinder::findAllByType<juce::TextButton>(eF.get());
-                    for (auto* btn : buttons) {
-                        if (btn && isEffectivelyVisible(btn, eF.get())) {
-                            totalTextElementsChecked++;
-                            if (FontBoundsHelper::isButtonTruncated(btn)) {
-                                totalTruncations++;
+                        auto buttons = ComponentFinder::findAllByType<juce::TextButton>(editor);
+                        for (auto* btn : buttons) {
+                            if (btn && isEffectivelyVisible(btn, editor)) {
+                                totalTextElementsChecked++;
+                                if (FontBoundsHelper::isButtonTruncated(btn)) {
+                                    totalTruncations++;
+                                }
+                            }
+                        }
+
+                        auto sliders = ComponentFinder::findAllByType<RotaryKnobSlider>(editor);
+                        for (auto* sl : sliders) {
+                            if (sl && isEffectivelyVisible(sl, editor)) {
+                                totalTextElementsChecked++;
+                                if (FontBoundsHelper::isSliderTextTruncated(sl)) {
+                                    totalTruncations++;
+                                }
+                            }
+                        }
+
+                        auto cards = ComponentFinder::findAllByType<ModuleCardComponent>(editor);
+                        for (auto* cd : cards) {
+                            if (cd && isEffectivelyVisible(cd, editor)) {
+                                totalTextElementsChecked++;
+                                if (FontBoundsHelper::isCardTitleTruncated(cd)) {
+                                    totalTruncations++;
+                                }
                             }
                         }
                     }
                 }
-            }
+            };
+
+            auditEditor(eF.get());
+            auditEditor(eP.get());
 
             reporter.expect(totalTruncations == 0,
                 "TextTruncationAuditSuite: Audited " + juce::String(totalTextElementsChecked) +

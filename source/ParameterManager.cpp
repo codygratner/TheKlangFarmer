@@ -96,6 +96,36 @@ void ParameterManager::parseJsonBlob(const char* data, int size) {
                 continue;
             }
 
+            if (def.id == "themes") {
+                for (auto& tProp : vObj->getProperties()) {
+                    if (auto* tObj = tProp.value.getDynamicObject()) {
+                        ThemeDef tDef;
+                        tDef.id = tProp.name.toString();
+                        tDef.name = tObj->getProperty("name").toString();
+                        if (tDef.name.isEmpty()) tDef.name = tDef.id;
+
+                        if (auto* gColors = tObj->getProperty("global_colors").getDynamicObject()) {
+                            for (auto& cProp : gColors->getProperties()) {
+                                juce::String hex = cProp.value.toString();
+                                if (hex.startsWithIgnoreCase("0x")) hex = hex.substring(2);
+                                if (hex.startsWithIgnoreCase("#")) hex = hex.substring(1);
+                                tDef.globalColors[cProp.name.toString()] = juce::Colour::fromString(hex.length() == 6 ? "ff" + hex : hex);
+                            }
+                        }
+                        if (auto* mColors = tObj->getProperty("module_colors").getDynamicObject()) {
+                            for (auto& cProp : mColors->getProperties()) {
+                                juce::String hex = cProp.value.toString();
+                                if (hex.startsWithIgnoreCase("0x")) hex = hex.substring(2);
+                                if (hex.startsWithIgnoreCase("#")) hex = hex.substring(1);
+                                tDef.moduleColors[cProp.name.toString()] = juce::Colour::fromString(hex.length() == 6 ? "ff" + hex : hex);
+                            }
+                        }
+                        themes[tDef.id] = tDef;
+                    }
+                }
+                continue;
+            }
+
             if (def.id == "ui_strings" || def.id == "global_strings") {
                 for (auto& strProp : vObj->getProperties()) {
                     globalStrings[strProp.name.toString()] = strProp.value.toString();
@@ -245,6 +275,56 @@ void ParameterManager::reloadFromJson(const juce::String& jsonString) {
     parseJsonBlob(stdString.c_str(), static_cast<int>(stdString.size()));
     mergeTextIntoControls();
     TKS_LOG_INFO("ParameterManager: reloaded from JSON, total controls: " + juce::String(controls.size()));
+}
+
+void ParameterManager::loadTheme(const juce::String& themeId) {
+    auto it = themes.find(themeId);
+    if (it != themes.end()) {
+        activeThemeId = themeId;
+        for (const auto& [k, v] : it->second.globalColors) {
+            globalColors[k] = v;
+        }
+        for (const auto& [k, v] : it->second.moduleColors) {
+            moduleColors[k] = v;
+        }
+        TKS_LOG_INFO("ParameterManager::loadTheme: Switched to theme " + themeId);
+        if (onThemeChanged) onThemeChanged();
+    }
+}
+
+void ParameterManager::applyCustomTint(juce::Colour bg, juce::Colour accent) {
+    if (!bg.isTransparent()) {
+        globalColors["background_dark"] = bg;
+        globalColors["header_chassis"] = bg.brighter(0.05f);
+        globalColors["card_background"] = bg.brighter(0.10f);
+        globalColors["card_border"] = bg.brighter(0.20f);
+    }
+    if (!accent.isTransparent()) {
+        globalColors["accent_cyan"] = accent;
+        moduleColors["carrier_accent"] = accent;
+        moduleColors["transients_accent"] = accent;
+    }
+    TKS_LOG_INFO("ParameterManager::applyCustomTint: Applied custom bg/accent tint");
+    if (onThemeChanged) onThemeChanged();
+}
+
+std::vector<ParameterManager::ThemeDef> ParameterManager::getAvailableThemes() const {
+    std::vector<ThemeDef> list;
+    const char* orderedIds[] = { "cyberpunk", "cykranosh", "dexciyan", "boring", "matrix_green", "amber_crt", "tracker_ft2" };
+    for (const char* tid : orderedIds) {
+        auto it = themes.find(tid);
+        if (it != themes.end()) {
+            list.push_back(it->second);
+        }
+    }
+    for (const auto& [id, def] : themes) {
+        bool alreadyIn = false;
+        for (const char* tid : orderedIds) {
+            if (id == tid) { alreadyIn = true; break; }
+        }
+        if (!alreadyIn) list.push_back(def);
+    }
+    return list;
 }
 
 } // namespace RlyehSound

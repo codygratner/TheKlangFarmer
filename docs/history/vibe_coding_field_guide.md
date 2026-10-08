@@ -189,3 +189,31 @@ We established a strict three-tier "Defense in Depth" documentation protocol:
 2. **Table of Contents (ToC) Indexing**: Fast anchor links injected into the head of major documentation files (`docs/BACKLOG.md`) allowing agents to leap directly to relevant milestone headers without reading hundreds of lines of legacy context.
 3. **The `/update-docs` Skill**: An automated synchronization skill executed exclusively by New Klang City. It reconciles completed factory tasks against `BACKLOG.md`, synchronizes technical specifications in `docs/specs/`, captures institutional memory in `DEV_HISTORY.md`, and validates cross-link integrity in a single non-destructive pass.
 
+### 4.11 The Dual-Chat Synergy & The "Grill Lab" (Live Sidecar Visual Sandboxing)
+*Implemented during v0.4.0 UI & Theming Expansion.*
+
+#### 1. The Dual-Chat Division of Labor (Ivory Tower vs. Factory Floor)
+The greatest workflow revelation in our Antigravity pair-programming setup is the strict bifurcation between two dedicated chat sessions:
+- **New Klang City (Planner / Architect / Ivory Tower)**: Operates at the 30,000-foot view. Read-only for C++ source files. Sits in Gemini 3.8 Flash High for rapid brainstorming, with brief 1-turn targeted escalations to Gemini 3.1 Pro High for deep mathematical sanity audits and complex system architecture. Manages `BACKLOG.md`, authors `PLAN.md`, and runs visual interviews.
+- **Klang Industries (Builder / Factory Floor)**: Operates with boots on the ground. Strictly read-only for overarching architecture. Executes implementation phases, edits C++ files, runs `audiothread-guard`, builds with CMake, executes `gui_tests` and `dsp_tests`, and deploys binaries via `deploy.ps1`.
+- **Why It Solves Context Amnesia**: By completely insulating the planning chat from thousands of lines of compiler logs, and insulating the factory chat from rambling design debates, both context windows remain razor-sharp for 40+ turns without degradation or hallucination.
+
+#### 2. The "Grill Lab" (Visual Grill-Me) Breakthrough
+Abstract text interviews (`/grill-me`) are invaluable for backend data logic, but they break down completely when designing visual user interfaces, layout proportions, and color palettes. A developer cannot evaluate whether an "Arcade Meter Fader" feels better than a "Rotary Arc Knob" purely from markdown text.
+
+Furthermore, in native C++ audio development, compiling and linking a full JUCE/VST3 binary takes 30 to 90 seconds. Trying out three visual layouts in C++ means 15 minutes of slow rebuilds.
+
+The **Grill Lab** (`/grilllab`, `/vlab`, `/vrill`) completely revolutionizes this loop:
+1. **Instant Interactive Feedback (<200ms)**: The agent creates a living, self-contained HTML+CSS sidecar artifact (`visual_grill_me_preview.html`) displayed side-by-side in Antigravity's artifact panel.
+2. **Live-Sync Architecture (Flicker-Free Web Worker)**: To bypass `file:///` CORS restrictions and prevent annoying browser reload flickers, the preview spins up an inline Blob Web Worker (`new Worker(URL.createObjectURL(blob))`) that polls a lightweight companion state file (`visual_grill_me_state.json`). When the agent bumps the version key, the preview hot-reloads DOM fragments instantly without full page reloads.
+3. **The Multi-Sensory Sandbox**:
+   - **Tactile UI Controls**: Draggable sliders, animated popover menus, and live theme switchers let the user *feel* the interaction before any C++ is written.
+   - **Built-in Web Audio & Canvas Scope**: An integrated Web Audio synth engine morphs tones as you drag UI mockups, coupled to a 60fps phosphor oscilloscope, creating a true hardware-testing vibe.
+   - **1-Click Code Generation**: Exporters convert approved visual styles into drop-in JUCE `paint()` C++ blocks and APVTS JSON schema definitions.
+4. **Structured Decision Forging (`ask_question`)**: The agent asks focused, single-concept design questions via interactive chat modals while simultaneously rendering candidate options side-by-side in the Grill Lab artifact.
+5. **Zero Pro Quota Burn**: Running visual mockups, drafting CSS, and conducting the interview runs sustainably on Tier 2 (Flash High), reserving Tier 1 (Pro High) strictly for deep DSP math and thread safety audits.
+
+The result is a workflow where design mistakes are caught and resolved in seconds in the web sandbox—ensuring that by the time code reaches the C++ factory floor, it is 100% pre-validated, ergonomically tested, and ready to ship.
+
+
+

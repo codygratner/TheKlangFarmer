@@ -223,6 +223,18 @@ namespace GuiTestHelpers {
             comp->mouseDoubleClick(e);
         }
 
+        static void simulateAltClick(juce::Component* comp) {
+            if (!comp) return;
+            juce::Component::SafePointer<juce::Component> safeComp(comp);
+            juce::MouseEvent e(juce::Desktop::getInstance().getMainMouseSource(), comp->getLocalBounds().getCentre().toFloat(), juce::ModifierKeys::altModifier, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, comp, comp, juce::Time::getCurrentTime(), comp->getLocalBounds().getCentre().toFloat(), juce::Time::getCurrentTime(), 1, false);
+
+            comp->mouseDown(e);
+            if (safeComp == nullptr) return;
+
+            juce::MouseEvent eUp(juce::Desktop::getInstance().getMainMouseSource(), comp->getLocalBounds().getCentre().toFloat(), juce::ModifierKeys(), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, comp, comp, juce::Time::getCurrentTime(), comp->getLocalBounds().getCentre().toFloat(), juce::Time::getCurrentTime(), 1, false);
+            comp->mouseUp(eUp);
+        }
+
         static void simulateDrag(juce::Component* comp, float distanceY = -50.0f) {
             if (!comp) return;
             
@@ -478,6 +490,32 @@ namespace GuiTestHelpers {
             juce::Font font(juce::FontOptions(13.0f));
             int availW = button->getWidth() - 8;
             return isTextTruncated(text, font, availW);
+        }
+
+        static bool isSliderTextTruncated(RotaryKnobSlider* slider) {
+            if (!slider || !slider->isVisible() || slider->getWidth() <= 20) return false;
+            auto valStr = slider->getTextFromValue(slider->getValue());
+            juce::Font font(juce::FontOptions(13.0f, juce::Font::bold));
+            int valW = juce::GlyphArrangement::getStringWidthInt(font, valStr);
+            if (valW > slider->getWidth() - 10) return true;
+
+            auto label = slider->getLabel();
+            if (label.isNotEmpty()) {
+                int labelW = juce::GlyphArrangement::getStringWidthInt(font, label.toUpperCase());
+                int availLabelW = slider->getWidth() - std::max(78, valW + 4) - 24;
+                if (labelW > availLabelW && availLabelW > 20) return true;
+            }
+            return false;
+        }
+
+        static bool isCardTitleTruncated(ModuleCardComponent* card) {
+            if (!card || !card->isVisible() || card->getWidth() <= 20) return false;
+            auto title = card->getTitle();
+            if (title.isEmpty()) return false;
+            juce::Font font(juce::FontOptions(14.0f, juce::Font::bold));
+            int titleW = juce::GlyphArrangement::getStringWidthInt(font, title.toUpperCase());
+            int availW = card->getWidth() - 52;
+            return titleW > availW;
         }
     };
 

@@ -106,6 +106,21 @@ public:
     juce::Colour getModuleColor(const juce::String& colorId, juce::Colour defaultFallback = juce::Colours::transparentBlack) const;
     juce::Colour getGlobalColor(const juce::String& colorId, juce::Colour defaultFallback = juce::Colours::transparentBlack) const;
     void reloadFromJson(const juce::String& jsonString);
+
+    struct ThemeDef {
+        juce::String id;
+        juce::String name;
+        std::unordered_map<juce::String, juce::Colour> globalColors;
+        std::unordered_map<juce::String, juce::Colour> moduleColors;
+    };
+
+    void loadTheme(const juce::String& themeId);
+    void applyCustomTint(juce::Colour bg, juce::Colour accent);
+    juce::String getActiveTheme() const { return activeThemeId; }
+    std::vector<ThemeDef> getAvailableThemes() const;
+
+    std::function<void()> onThemeChanged;
+
 private:
     ParameterManager();
     ~ParameterManager() = default;
@@ -113,6 +128,8 @@ private:
     ParameterManager(const ParameterManager&) = delete;
     ParameterManager& operator=(const ParameterManager&) = delete;
 
+    juce::String activeThemeId { "cyberpunk" };
+    std::unordered_map<juce::String, ThemeDef> themes;
     std::unordered_map<juce::String, juce::Colour> moduleColors;
     std::unordered_map<juce::String, juce::Colour> globalColors;
     std::unordered_map<juce::String, ControlDef> controls;

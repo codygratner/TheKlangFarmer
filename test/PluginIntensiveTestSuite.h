@@ -338,14 +338,19 @@ namespace PluginIntensiveTestSuite {
                 auto* apvtsParam = processor.apvts.getParameter("carrier1_pitch");
                 reporter.expect(apvtsParam != nullptr && apvtsParam->getValue() > 0.51f, "APVTS parameter updated via coordinate drag");
 
-                // Double-click reset to doubleClickValue
+                // Double-click opens text entry without resetting value
+                double valBeforeDbl = pitchSlider->getValue();
                 EventSimulator::simulateDoubleClick(pitchSlider);
-                pitchSlider->setValue(pitchSlider->getValue(), juce::sendNotificationSync);
+                pumpMessageLoop();
+                reporter.expect(std::abs(pitchSlider->getValue() - valBeforeDbl) < 0.001, "Double-click preserves slider value without resetting");
+
+                // Alt-click reset to doubleClickValue
+                EventSimulator::simulateAltClick(pitchSlider);
                 pumpMessageLoop();
 
                 auto* def = RlyehSound::ParameterManager::getInstance().getControlDef("carrier1_pitch");
                 double expectedReset = (def != nullptr) ? def->doubleClickValue : 0.5;
-                reporter.expect(std::abs(pitchSlider->getValue() - expectedReset) < 0.001, "Double-click resets slider to exact doubleClickValue (" + juce::String(expectedReset) + ")");
+                reporter.expect(std::abs(pitchSlider->getValue() - expectedReset) < 0.01, "Alt-click resets slider to exact doubleClickValue (" + juce::String(expectedReset) + ")");
             }
         }
 
@@ -369,13 +374,19 @@ namespace PluginIntensiveTestSuite {
                 auto* apvtsParam = processor.apvts.getParameter("planter_carrier_pitch");
                 reporter.expect(apvtsParam != nullptr && apvtsParam->getValue() > initialVal, "Planter: APVTS parameter updated via coordinate drag");
 
+                // Double-click opens text entry without resetting value
+                double planterValBeforeDbl = pitchSlider->getValue();
                 EventSimulator::simulateDoubleClick(pitchSlider);
-                pitchSlider->setValue(pitchSlider->getValue(), juce::sendNotificationSync);
+                pumpMessageLoop();
+                reporter.expect(std::abs(pitchSlider->getValue() - planterValBeforeDbl) < 0.001, "Planter: Double-click preserves slider value without resetting");
+
+                // Alt-click reset to doubleClickValue
+                EventSimulator::simulateAltClick(pitchSlider);
                 pumpMessageLoop();
 
                 auto* def = RlyehSound::ParameterManager::getInstance().getControlDef("planter_carrier_pitch");
                 double expectedReset = (def != nullptr) ? def->doubleClickValue : 0.8;
-                reporter.expect(std::abs(pitchSlider->getValue() - expectedReset) < 0.001, "Planter: Double-click resets slider to exact doubleClickValue (" + juce::String(expectedReset) + ")");
+                reporter.expect(std::abs(pitchSlider->getValue() - expectedReset) < 0.01, "Planter: Alt-click resets slider to exact doubleClickValue (" + juce::String(expectedReset) + ")");
             }
         }
     }

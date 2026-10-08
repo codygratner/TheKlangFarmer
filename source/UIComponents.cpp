@@ -1425,8 +1425,8 @@ void DiagramSliderLabel::mouseUp(const juce::MouseEvent& e) {
     juce::Label::mouseUp(e);
 }
 
-void DiagramSliderLabel::mouseDoubleClick(const juce::MouseEvent& e) {
-    slider.mouseDoubleClick(e);
+void DiagramSliderLabel::mouseDoubleClick(const juce::MouseEvent&) {
+    slider.openHoveringEditor();
 }
 
 void DiagramSliderLabel::mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) {
@@ -1461,7 +1461,7 @@ void RotaryKnobSlider::mouseDown(const juce::MouseEvent& e) {
     }
 
     if (e.mods.isRightButtonDown() || e.mods.isPopupMenu()) {
-        showContextMenu();
+        openHoveringEditor();
         return;
     }
     dragStartPos = e.getPosition();
@@ -1497,11 +1497,6 @@ void RotaryKnobSlider::mouseUp(const juce::MouseEvent&) {
 }
 
 void RotaryKnobSlider::mouseDoubleClick(const juce::MouseEvent&) {
-    if (getDefaultValue) {
-        setValue(getDefaultValue(), juce::sendNotificationSync);
-    } else {
-        setValue(getDoubleClickReturnValue(), juce::sendNotificationSync);
-    }
     openHoveringEditor();
 }
 
@@ -2311,17 +2306,113 @@ juce::String LedSelectorComponent::getTooltip() {
     return juce::SettableTooltipClient::getTooltip();
 }
 
+// --- DICE BUTTON ---
+
+DiceButton::DiceButton(const juce::String& name)
+    : juce::Button(name)
+{
+}
+
+void DiceButton::rollPipFace() {
+    int next = juce::Random::getSystemRandom().nextInt(juce::Range<int>(1, 7));
+    if (next == pipCount) {
+        next = (next % 6) + 1;
+    }
+    pipCount = next;
+    repaint();
+}
+
+void DiceButton::clicked() {
+    rollPipFace();
+    juce::Button::clicked();
+}
+
+void DiceButton::paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) {
+    auto bounds = getLocalBounds().toFloat();
+    if (bounds.isEmpty()) return;
+
+    if (shouldDrawButtonAsDown) {
+        bounds.translate(0.0f, 1.0f);
+    }
+
+    float dieSize = std::min(bounds.getWidth(), bounds.getHeight()) - 2.0f;
+    if (dieSize <= 2.0f) return;
+
+    auto dieRect = juce::Rectangle<float>(bounds.getCentreX() - dieSize * 0.5f,
+                                          bounds.getCentreY() - dieSize * 0.5f,
+                                          dieSize, dieSize);
+
+    float cornerRadius = dieSize * 0.22f;
+
+    juce::Colour fillCol = shouldDrawButtonAsHighlighted ? bodyColour.brighter(0.12f) : bodyColour;
+    g.setColour(fillCol);
+    g.fillRoundedRectangle(dieRect, cornerRadius);
+
+    juce::Colour borderCol = shouldDrawButtonAsHighlighted ? accentColour.withAlpha(0.9f) : outlineColour;
+    g.setColour(borderCol);
+    g.drawRoundedRectangle(dieRect.reduced(0.5f), cornerRadius, 1.0f);
+
+    juce::Colour pipCol = shouldDrawButtonAsHighlighted ? accentColour.brighter(0.2f) : accentColour;
+    g.setColour(pipCol);
+
+    float cx = dieRect.getCentreX();
+    float cy = dieRect.getCentreY();
+    float offset = dieSize * 0.26f;
+    float pipRadius = std::max(1.2f, dieSize * 0.085f);
+    float pipDiam = pipRadius * 2.0f;
+
+    auto drawPip = [&](float x, float y) {
+        g.fillEllipse(x - pipRadius, y - pipRadius, pipDiam, pipDiam);
+    };
+
+    switch (pipCount) {
+        case 1:
+            drawPip(cx, cy);
+            break;
+        case 2:
+            drawPip(cx - offset, cy - offset);
+            drawPip(cx + offset, cy + offset);
+            break;
+        case 3:
+            drawPip(cx - offset, cy - offset);
+            drawPip(cx, cy);
+            drawPip(cx + offset, cy + offset);
+            break;
+        case 4:
+            drawPip(cx - offset, cy - offset);
+            drawPip(cx + offset, cy - offset);
+            drawPip(cx - offset, cy + offset);
+            drawPip(cx + offset, cy + offset);
+            break;
+        case 6:
+            drawPip(cx - offset, cy - offset);
+            drawPip(cx + offset, cy - offset);
+            drawPip(cx - offset, cy);
+            drawPip(cx + offset, cy);
+            drawPip(cx - offset, cy + offset);
+            drawPip(cx + offset, cy + offset);
+            break;
+        case 5:
+        default:
+            drawPip(cx - offset, cy - offset);
+            drawPip(cx + offset, cy - offset);
+            drawPip(cx, cy);
+            drawPip(cx - offset, cy + offset);
+            drawPip(cx + offset, cy + offset);
+            break;
+    }
+}
+
 // --- MODULE CARD COMPONENT ---
 
 ModuleCardComponent::ModuleCardComponent(const juce::String& title, juce::Colour accentColour, PanelStyle style)
     : moduleTitle(title), accent(accentColour), panelStyle(style), oscilloscope(accentColour)
 {
+    oscilloscope.setInterceptsMouseClicks(false, false);
     addAndMakeVisible(oscilloscope);
 
-    diceButton.setButtonText("d6");
+    diceButton.setAccentColour(accentColour);
     diceButton.setTooltip("RANDOMIZE: Jitter parameters in " + moduleTitle + ".");
-    diceButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0x00000000));
-    diceButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff718096));
     diceButton.onClick = [this]() {
         rollDice();
         if (onRandomizeClicked) onRandomizeClicked();
@@ -2451,6 +2542,17 @@ void ModuleCardComponent::updateEqParams(float freqHz, float widthOct, float gai
 void ModuleCardComponent::mouseDown(const juce::MouseEvent& e) {
     if (onCardMouseDown) onCardMouseDown(e);
     if (onCardClicked) onCardClicked();
+
+    if (e.mods.isRightButtonDown() || e.mods.isPopupMenu()) {
+        if (!onCardMouseDown) {
+            launchCardInspector();
+        }
+    }
+}
+
+void ModuleCardComponent::launchCardInspector() {
+    auto popover = std::make_unique<CardInspectorPopover>(*this);
+    juce::CallOutBox::launchAsynchronously(std::move(popover), getScreenBounds(), nullptr);
 }
 
 void ModuleCardComponent::paint(juce::Graphics& g) {
@@ -2502,9 +2604,9 @@ void ModuleCardComponent::paint(juce::Graphics& g) {
         // 4. Solid black / dark screenprinted title with light relief shadow
         g.setFont(juce::FontOptions(15.0f, juce::Font::bold));
         g.setColour(juce::Colour(0x35ffffff));
-        g.drawText(moduleTitle.toUpperCase(), 18, 5, getWidth() - 36, 18, juce::Justification::left, true);
+        g.drawText(moduleTitle.toUpperCase(), 18, 5, getWidth() - 60, 18, juce::Justification::left, true);
         g.setColour(juce::Colour(0xff0e1116));
-        g.drawText(moduleTitle.toUpperCase(), 18, 4, getWidth() - 36, 18, juce::Justification::left, true);
+        g.drawText(moduleTitle.toUpperCase(), 18, 4, getWidth() - 60, 18, juce::Justification::left, true);
         // Thin screenprint divider under header
         g.setColour(juce::Colour(0xff14171e));
         g.drawHorizontalLine(24, bounds.getX() + 14.0f, bounds.getRight() - 14.0f);
@@ -2513,8 +2615,9 @@ void ModuleCardComponent::paint(juce::Graphics& g) {
     }
 
     auto compColour = panelTintBaseColour.isTransparent() ? accent.withRotatedHue(0.5f) : panelTintBaseColour;
-    auto panelBg = juce::Colour(0xff161b22).interpolatedWith(compColour, 0.08f);
-    auto panelBorder = juce::Colour(0xff283141);
+    auto baseBg = RlyehSound::ParameterManager::getInstance().getGlobalColor("card_background", juce::Colour(0xff161b22));
+    auto panelBg = baseBg.interpolatedWith(compColour, 0.08f);
+    auto panelBorder = RlyehSound::ParameterManager::getInstance().getGlobalColor("card_border", juce::Colour(0xff283141));
 
     // Subtle 2px card drop shadow
     g.setColour(juce::Colour(0x30000000));
@@ -2531,11 +2634,11 @@ void ModuleCardComponent::paint(juce::Graphics& g) {
 
     g.setFont(TkfTypography::getFont(14.0f, juce::Font::bold));
     g.setColour(accent);
-    g.drawText(moduleTitle.toUpperCase(), 10, 4, getWidth() - 44, 18, juce::Justification::left, true);
+    g.drawText(moduleTitle.toUpperCase(), 10, 4, getWidth() - 52, 18, juce::Justification::left, true);
 }
 
 void ModuleCardComponent::resized() {
-    diceButton.setBounds(getWidth() - 32, 4, 26, 16);
+    diceButton.setBounds(getWidth() - 32, 3, 24, 18);
     oscilloscope.setVisible(false); // Visualization is hosted in Slot 5
     for (int i = 0; i < 4; ++i) {
         labels[i].setVisible(false);
@@ -2605,6 +2708,151 @@ void ModuleCardComponent::resized() {
             knobs[i]->setVisible(true);
             knobs[i]->setBounds(row.withSizeKeepingCentre(row.getWidth(), std::min(row.getHeight() - 4, sliderH)));
         }
+    }
+}
+
+// --- CARD INSPECTOR POPOVER ---
+
+CardInspectorPopover::CardInspectorPopover(ModuleCardComponent& ownerCard)
+    : card(ownerCard)
+{
+    auto accent = card.getAccentColour();
+
+    titleLabel.setText(card.getTitle().toUpperCase() + " INSPECTOR", juce::dontSendNotification);
+    titleLabel.setFont(TkfTypography::getFont(12.0f, juce::Font::bold));
+    titleLabel.setColour(juce::Label::textColourId, accent);
+    titleLabel.setJustificationType(juce::Justification::centredLeft);
+    addAndMakeVisible(titleLabel);
+
+    rollDiceBtn.setAccentColour(accent);
+    rollDiceBtn.onClick = [this]() {
+        card.rollDice();
+        if (card.onRandomizeClicked) card.onRandomizeClicked();
+        updateValues();
+    };
+    addAndMakeVisible(rollDiceBtn);
+
+    rollButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff222a36));
+    rollButton.setColour(juce::TextButton::textColourOffId, accent);
+    rollButton.onClick = [this]() {
+        card.rollDice();
+        if (card.onRandomizeClicked) card.onRandomizeClicked();
+        updateValues();
+    };
+    addAndMakeVisible(rollButton);
+
+    resetDefaultsButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff222a36));
+    resetDefaultsButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff94a3b8));
+    resetDefaultsButton.onClick = [this]() {
+        for (int i = 0; i < 4; ++i) {
+            if (auto* k = card.getKnob(i)) {
+                if (k->getDefaultValue) k->setValue(k->getDefaultValue(), juce::sendNotificationSync);
+                else k->setValue(k->getDoubleClickReturnValue(), juce::sendNotificationSync);
+            }
+        }
+        updateValues();
+    };
+    addAndMakeVisible(resetDefaultsButton);
+
+    depthLabel.setText("Jitter Depth", juce::dontSendNotification);
+    depthLabel.setFont(TkfTypography::getFont(10.0f, juce::Font::plain));
+    depthLabel.setColour(juce::Label::textColourId, juce::Colour(0xff94a3b8));
+    addAndMakeVisible(depthLabel);
+
+    depthSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    depthSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 42, 18);
+    depthSlider.setColour(juce::Slider::thumbColourId, accent);
+    depthSlider.setColour(juce::Slider::trackColourId, accent.withAlpha(0.4f));
+    depthSlider.setColour(juce::Slider::backgroundColourId, juce::Colour(0xff12161f));
+    depthSlider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(0xffe2e8f0));
+    depthSlider.setColour(juce::Slider::textBoxOutlineColourId, juce::Colour(0x00000000));
+    depthSlider.setRange(0.05, 1.0, 0.05);
+    depthSlider.setValue(card.getD6Depth(), juce::dontSendNotification);
+    depthSlider.onValueChange = [this]() {
+        card.setD6Depth(static_cast<float>(depthSlider.getValue()));
+    };
+    addAndMakeVisible(depthSlider);
+
+    int activeCount = 0;
+    for (int i = 0; i < 4; ++i) {
+        if (auto* k = card.getKnob(i)) {
+            if (k->isVisible()) {
+                auto row = std::make_unique<KnobRow>();
+                juce::String name = k->getLabel();
+                if (name.isEmpty()) name = "Knob " + juce::String(i + 1);
+                row->nameLabel.setText(name, juce::dontSendNotification);
+                row->nameLabel.setFont(TkfTypography::getFont(11.0f, juce::Font::plain));
+                row->nameLabel.setColour(juce::Label::textColourId, juce::Colour(0xffcbd5e1));
+                addAndMakeVisible(row->nameLabel);
+
+                row->valueLabel.setText(k->getTextFromValue(k->getValue()), juce::dontSendNotification);
+                row->valueLabel.setFont(TkfTypography::getFont(11.0f, juce::Font::bold));
+                row->valueLabel.setColour(juce::Label::textColourId, accent);
+                row->valueLabel.setJustificationType(juce::Justification::centredRight);
+                addAndMakeVisible(row->valueLabel);
+
+                row->resetBtn.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff1e2530));
+                row->resetBtn.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff94a3b8));
+                row->resetBtn.setTooltip("Reset " + name + " to default");
+                row->resetBtn.onClick = [this, k]() {
+                    if (k->getDefaultValue) k->setValue(k->getDefaultValue(), juce::sendNotificationSync);
+                    else k->setValue(k->getDoubleClickReturnValue(), juce::sendNotificationSync);
+                    updateValues();
+                };
+                addAndMakeVisible(row->resetBtn);
+
+                knobRows.push_back(std::move(row));
+                activeCount++;
+            }
+        }
+    }
+
+    int baseHeight = 110;
+    int h = baseHeight + activeCount * 24 + 10;
+    setSize(260, std::max(160, h));
+}
+
+void CardInspectorPopover::updateValues() {
+    int rowIdx = 0;
+    for (int i = 0; i < 4; ++i) {
+        if (auto* k = card.getKnob(i)) {
+            if (k->isVisible() && rowIdx < static_cast<int>(knobRows.size())) {
+                knobRows[rowIdx]->valueLabel.setText(k->getTextFromValue(k->getValue()), juce::dontSendNotification);
+                rowIdx++;
+            }
+        }
+    }
+}
+
+void CardInspectorPopover::paint(juce::Graphics& g) {
+    g.fillAll(juce::Colour(0xff12161f));
+
+    g.setColour(card.getAccentColour().withAlpha(0.35f));
+    g.drawHorizontalLine(30, 8.0f, static_cast<float>(getWidth()) - 8.0f);
+
+    if (!knobRows.empty()) {
+        g.setColour(juce::Colour(0xff283141));
+        g.drawHorizontalLine(104, 8.0f, static_cast<float>(getWidth()) - 8.0f);
+    }
+}
+
+void CardInspectorPopover::resized() {
+    int w = getWidth();
+    titleLabel.setBounds(10, 6, w - 46, 20);
+    rollDiceBtn.setBounds(w - 32, 6, 22, 20);
+
+    rollButton.setBounds(10, 36, 115, 24);
+    resetDefaultsButton.setBounds(135, 36, 115, 24);
+
+    depthLabel.setBounds(10, 68, 75, 20);
+    depthSlider.setBounds(85, 68, w - 95, 20);
+
+    int y = 112;
+    for (auto& row : knobRows) {
+        row->nameLabel.setBounds(10, y, 100, 20);
+        row->valueLabel.setBounds(112, y, 108, 20);
+        row->resetBtn.setBounds(w - 30, y + 1, 20, 18);
+        y += 24;
     }
 }
 

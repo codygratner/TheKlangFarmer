@@ -161,6 +161,88 @@ SettingsModalComponent::SettingsModalComponent(const juce::String& name)
     closeButton.onClick = [this] { setVisible(false); };
     addAndMakeVisible(closeButton);
 
+    // Theme Engine Section
+    themeLabel.setText("Active Theme:", juce::dontSendNotification);
+    themeLabel.setFont(juce::FontOptions(11.5f, juce::Font::bold));
+    themeLabel.setColour(juce::Label::textColourId, juce::Colour(0xffc5d1e0));
+    addAndMakeVisible(themeLabel);
+
+    themeBox.setColour(juce::ComboBox::backgroundColourId, juce::Colour(0xff161b22));
+    themeBox.setColour(juce::ComboBox::textColourId, juce::Colour(0xffffffff));
+    themeBox.setColour(juce::ComboBox::outlineColourId, juce::Colour(0xff283141));
+
+    const auto availableThemes = RlyehSound::ParameterManager::getInstance().getAvailableThemes();
+    int selectedThemeId = 1;
+    for (size_t i = 0; i < availableThemes.size(); ++i) {
+        int id = static_cast<int>(i) + 1;
+        themeBox.addItem(availableThemes[i].name, id);
+        if (availableThemes[i].id == RlyehSound::ParameterManager::getInstance().getActiveTheme()) {
+            selectedThemeId = id;
+        }
+    }
+    themeBox.setSelectedId(selectedThemeId, juce::dontSendNotification);
+    themeBox.onChange = [this] {
+        const auto themes = RlyehSound::ParameterManager::getInstance().getAvailableThemes();
+        int selIdx = themeBox.getSelectedId() - 1;
+        if (selIdx >= 0 && selIdx < static_cast<int>(themes.size())) {
+            RlyehSound::ParameterManager::getInstance().loadTheme(themes[selIdx].id);
+            if (auto* p = getTopLevelComponent()) p->repaint();
+            repaint();
+        }
+    };
+    addAndMakeVisible(themeBox);
+
+    accentLabel.setText("Quick Accent:", juce::dontSendNotification);
+    accentLabel.setFont(juce::FontOptions(10.5f, juce::Font::plain));
+    accentLabel.setColour(juce::Label::textColourId, juce::Colour(0xff8892a4));
+    addAndMakeVisible(accentLabel);
+
+    struct AccentDef { const char* name; juce::Colour col; const char* tooltip; };
+    const AccentDef accents[] = {
+        { "Cyan",    juce::Colour(0xff38bdf8), "Electric Cyan accent" },
+        { "Amber",   juce::Colour(0xfff59e0b), "Solar Amber accent" },
+        { "Emerald", juce::Colour(0xff10b981), "Acid Lime / Emerald accent" },
+        { "Magenta", juce::Colour(0xffec4899), "Hot Magenta accent" },
+        { "Coral",   juce::Colour(0xffff7043), "Coral accent" },
+        { "Gold",    juce::Colour(0xfffacc15), "Gold accent" },
+        { "Ice",     juce::Colour(0xff7dd3fc), "Arctic Ice Blue accent" }
+    };
+
+    for (const auto& a : accents) {
+        auto btn = std::make_unique<SwatchButton>(a.name, a.col, a.tooltip);
+        btn->onClick = [this, col = a.col] {
+            RlyehSound::ParameterManager::getInstance().applyCustomTint(juce::Colours::transparentBlack, col);
+            if (auto* p = getParentComponent()) p->repaint();
+            repaint();
+        };
+        addAndMakeVisible(*btn);
+        accentSwatches.push_back(std::move(btn));
+    }
+
+    bgLabel.setText("Chassis Tint:", juce::dontSendNotification);
+    bgLabel.setFont(juce::FontOptions(10.5f, juce::Font::plain));
+    bgLabel.setColour(juce::Label::textColourId, juce::Colour(0xff8892a4));
+    addAndMakeVisible(bgLabel);
+
+    struct BgDef { const char* name; juce::Colour col; const char* tooltip; };
+    const BgDef bgs[] = {
+        { "Pure Black",   juce::Colour(0xff0a0d12), "Pure Black dark chassis" },
+        { "Deep Slate",   juce::Colour(0xff18202c), "Deep Cosmic Slate chassis" },
+        { "Abyssal Navy", juce::Colour(0xff0b192e), "Abyssal Navy Blue chassis" },
+        { "Concrete",     juce::Colour(0xff242424), "Matte Concrete Grey chassis" }
+    };
+
+    for (const auto& b : bgs) {
+        auto btn = std::make_unique<SwatchButton>(b.name, b.col, b.tooltip);
+        btn->onClick = [this, col = b.col] {
+            RlyehSound::ParameterManager::getInstance().applyCustomTint(col, juce::Colours::transparentBlack);
+            if (auto* p = getParentComponent()) p->repaint();
+            repaint();
+        };
+        addAndMakeVisible(*btn);
+        backgroundSwatches.push_back(std::move(btn));
+    }
+
     // Toggle
     checkOnLaunchToggle.setButtonText(RlyehSound::ParameterManager::getInstance().getGlobalString("settings_check_on_launch", "Check for updates automatically on startup"));
     checkOnLaunchToggle.setToggleState(VersionChecker::isCheckOnLaunchEnabled(), juce::dontSendNotification);
@@ -276,8 +358,8 @@ void SettingsModalComponent::updateStatusDisplay()
 
 juce::Rectangle<int> SettingsModalComponent::getCardBounds() const
 {
-    int cardW = std::min(600, getWidth() - 40);
-    int cardH = std::min(430, getHeight() - 40);
+    int cardW = std::min(620, getWidth() - 40);
+    int cardH = std::min(510, getHeight() - 30);
     int cardX = (getWidth() - cardW) / 2;
     int cardY = (getHeight() - cardH) / 2;
     return juce::Rectangle<int>(cardX, cardY, cardW, cardH);
@@ -290,21 +372,42 @@ void SettingsModalComponent::resized()
 
     int contentX = card.getX() + 24;
     int contentW = card.getWidth() - 48;
-    int currentY = card.getY() + 84;
+    int currentY = card.getY() + 86;
 
-    // Updates section
-    checkOnLaunchToggle.setBounds(contentX, currentY, contentW, 24);
+    // 1. Theme Engine Section
+    themeLabel.setBounds(contentX, currentY, 95, 24);
+    themeBox.setBounds(contentX + 100, currentY, 240, 24);
     currentY += 30;
 
-    checkNowButton.setBounds(contentX, currentY, 160, 28);
-    downloadButton.setBounds(contentX + 172, currentY, 160, 28);
-    currentY += 34;
+    accentLabel.setBounds(contentX, currentY, 95, 22);
+    int swatchX = contentX + 100;
+    int swatchW = 58;
+    int swatchSpacing = 6;
+    for (size_t i = 0; i < accentSwatches.size(); ++i) {
+        accentSwatches[i]->setBounds(swatchX + static_cast<int>(i) * (swatchW + swatchSpacing), currentY, swatchW, 22);
+    }
+    currentY += 28;
 
-    statusLabel.setBounds(contentX, currentY, contentW, 22);
-    currentY += 38;
+    bgLabel.setBounds(contentX, currentY, 95, 22);
+    int bgSwatchW = 86;
+    int bgSwatchSpacing = 8;
+    for (size_t i = 0; i < backgroundSwatches.size(); ++i) {
+        backgroundSwatches[i]->setBounds(swatchX + static_cast<int>(i) * (bgSwatchW + bgSwatchSpacing), currentY, bgSwatchW, 22);
+    }
+    currentY += 36;
 
-    // Links section at bottom
-    int linksY = card.getBottom() - 48;
+    // 2. Updates Section
+    checkOnLaunchToggle.setBounds(contentX, currentY, contentW, 24);
+    currentY += 28;
+
+    checkNowButton.setBounds(contentX, currentY, 160, 26);
+    downloadButton.setBounds(contentX + 172, currentY, 160, 26);
+    currentY += 30;
+
+    statusLabel.setBounds(contentX, currentY, contentW, 20);
+
+    // 3. Links Section at bottom
+    int linksY = card.getBottom() - 44;
     githubButton.setBounds(contentX, linksY, 170, 28);
     issuesButton.setBounds(contentX + 182, linksY, 170, 28);
 }
@@ -341,7 +444,7 @@ void SettingsModalComponent::paint(juce::Graphics& g)
 
     // Top accent strip
     auto topStrip = card.removeFromTop(4.0f);
-    g.setColour(juce::Colour(0xff00d2ff));
+    g.setColour(RlyehSound::ParameterManager::getInstance().getGlobalColor("accent_cyan", juce::Colour(0xff00d2ff)));
     g.fillRoundedRectangle(topStrip, 2.0f);
 
     // Title & Subtitle
@@ -351,31 +454,42 @@ void SettingsModalComponent::paint(juce::Graphics& g)
 
     g.setFont(juce::FontOptions(12.0f, juce::Font::plain));
     g.setColour(juce::Colour(0xff8892a4));
-    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("settings_subtitle", "Release Updates, System Diagnostics & Build Metadata"), static_cast<int>(card.getX()) + 24, static_cast<int>(card.getY()) + 34, 500, 18, juce::Justification::left, true);
+    g.drawText(RlyehSound::ParameterManager::getInstance().getGlobalString("settings_subtitle", "Studio Palettes, Release Updates & Build Metadata"), static_cast<int>(card.getX()) + 24, static_cast<int>(card.getY()) + 34, 500, 18, juce::Justification::left, true);
 
     // Header divider line
     g.setColour(juce::Colour(0xff222736));
     g.drawHorizontalLine(static_cast<int>(card.getY()) + 56, card.getX() + 16.0f, card.getRight() - 16.0f);
 
-    // Section 1 Header: UPDATES
-    int sec1Y = static_cast<int>(card.getY()) + 64;
+    // Section 1 Header: STUDIO THEMES & COLOR PALETTES
+    int sec1Y = static_cast<int>(card.getY()) + 66;
     g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
-    g.setColour(juce::Colour(0xff4a9eff));
-    g.drawText("UPDATES & RELEASES", static_cast<int>(card.getX()) + 24, sec1Y, 300, 16, juce::Justification::left, true);
+    g.setColour(RlyehSound::ParameterManager::getInstance().getGlobalColor("accent_cyan", juce::Colour(0xff4a9eff)));
+    g.drawText("STUDIO THEMES & COLOR PALETTES", static_cast<int>(card.getX()) + 24, sec1Y, 300, 16, juce::Justification::left, true);
 
-    // Middle divider line
-    int midY = static_cast<int>(card.getY()) + 192;
+    // Divider line 1
+    int div1Y = static_cast<int>(card.getY()) + 172;
     g.setColour(juce::Colour(0xff222736));
-    g.drawHorizontalLine(midY, card.getX() + 16.0f, card.getRight() - 16.0f);
+    g.drawHorizontalLine(div1Y, card.getX() + 16.0f, card.getRight() - 16.0f);
 
-    // Section 2 Header: SYSTEM & BUILD METADATA
-    int sec2Y = midY + 10;
+    // Section 2 Header: UPDATES & RELEASES
+    int sec2Y = div1Y + 8;
     g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
-    g.setColour(juce::Colour(0xff4a9eff));
-    g.drawText("BUILD & SYSTEM METADATA", static_cast<int>(card.getX()) + 24, sec2Y, 300, 16, juce::Justification::left, true);
+    g.setColour(RlyehSound::ParameterManager::getInstance().getGlobalColor("accent_cyan", juce::Colour(0xff4a9eff)));
+    g.drawText("UPDATES & RELEASES", static_cast<int>(card.getX()) + 24, sec2Y, 300, 16, juce::Justification::left, true);
+
+    // Divider line 2
+    int div2Y = div1Y + 116;
+    g.setColour(juce::Colour(0xff222736));
+    g.drawHorizontalLine(div2Y, card.getX() + 16.0f, card.getRight() - 16.0f);
+
+    // Section 3 Header: BUILD & SYSTEM METADATA
+    int sec3Y = div2Y + 8;
+    g.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+    g.setColour(RlyehSound::ParameterManager::getInstance().getGlobalColor("accent_cyan", juce::Colour(0xff4a9eff)));
+    g.drawText("BUILD & SYSTEM METADATA", static_cast<int>(card.getX()) + 24, sec3Y, 300, 16, juce::Justification::left, true);
 
     // Metadata entries
-    int metaY = sec2Y + 22;
+    int metaY = sec3Y + 20;
     int col1X = static_cast<int>(card.getX()) + 24;
     int col2X = static_cast<int>(card.getX()) + 310;
 
@@ -398,24 +512,24 @@ void SettingsModalComponent::paint(juce::Graphics& g)
 #endif
 
     drawMetaRow(col1X, metaY, "Product", productName);
-    drawMetaRow(col1X, metaY + 20, "Version", verStr);
-    drawMetaRow(col1X, metaY + 40, "Framework", "JUCE 9.0.3");
-    drawMetaRow(col1X, metaY + 60, "Language", "C++20");
+    drawMetaRow(col1X, metaY + 18, "Version", verStr);
+    drawMetaRow(col1X, metaY + 36, "Framework", "JUCE 9.0.3");
+    drawMetaRow(col1X, metaY + 54, "Language", "C++20");
 
     drawMetaRow(col2X, metaY, "Architecture", "64-bit");
-    drawMetaRow(col2X, metaY + 20, "Build Date", __DATE__);
-    drawMetaRow(col2X, metaY + 40, "License", "GPL-3.0 (FOSS)");
-    drawMetaRow(col2X, metaY + 60, "Vendor", "R'lyeh Sound");
+    drawMetaRow(col2X, metaY + 18, "Build Date", __DATE__);
+    drawMetaRow(col2X, metaY + 36, "License", "GPL-3.0 (FOSS)");
+    drawMetaRow(col2X, metaY + 54, "Vendor", "R'lyeh Sound");
 
     // Repository metadata row
     g.setFont(juce::FontOptions(11.5f, juce::Font::plain));
     g.setColour(juce::Colour(0xff75849b));
-    g.drawText("Repository:", col1X, metaY + 80, 100, 18, juce::Justification::left, true);
+    g.drawText("Repository:", col1X, metaY + 72, 100, 18, juce::Justification::left, true);
     g.setColour(juce::Colour(0xff4a9eff));
-    g.drawText("github.com/codygratner/TheKlangSuite", col1X + 104, metaY + 80, 400, 18, juce::Justification::left, true);
+    g.drawText("github.com/codygratner/TheKlangSuite", col1X + 104, metaY + 72, 400, 18, juce::Justification::left, true);
 
     // Bottom divider line
-    int botY = static_cast<int>(card.getBottom()) - 58;
+    int botY = static_cast<int>(card.getBottom()) - 54;
     g.setColour(juce::Colour(0xff222736));
     g.drawHorizontalLine(botY, card.getX() + 16.0f, card.getRight() - 16.0f);
 }

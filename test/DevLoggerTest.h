@@ -12,6 +12,7 @@ namespace DevLoggerTest {
         reporter.beginTest("Developer Logging Subsystem (TKS_LOG) & Audio-Thread Guard Suite");
 
         auto& logger = RlyehSound::DevLogger::getInstance();
+        logger.registerAudioThread(std::thread::id());
 
         // Stage 1: Formatted Output & Levels Verification
         {

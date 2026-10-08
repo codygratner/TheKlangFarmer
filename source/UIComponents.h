@@ -437,6 +437,38 @@ private:
     juce::Rectangle<int> getItemBounds(int index) const;
 };
 
+// Sleek vector 6-sided die button with circular pips and tactile press offset
+class DiceButton : public juce::Button {
+public:
+    explicit DiceButton(const juce::String& name = "DiceButton");
+    ~DiceButton() override = default;
+
+    void paintButton(juce::Graphics& g, bool shouldDrawButtonAsHighlighted, bool shouldDrawButtonAsDown) override;
+
+    void setAccentColour(juce::Colour c) { accentColour = c; repaint(); }
+    juce::Colour getAccentColour() const { return accentColour; }
+
+    void setBodyColour(juce::Colour c) { bodyColour = c; repaint(); }
+    juce::Colour getBodyColour() const { return bodyColour; }
+
+    void setOutlineColour(juce::Colour c) { outlineColour = c; repaint(); }
+    juce::Colour getOutlineColour() const { return outlineColour; }
+
+    void setPipCount(int count) { pipCount = std::clamp(count, 1, 6); repaint(); }
+    int getPipCount() const { return pipCount; }
+
+    void rollPipFace();
+    void clicked() override;
+
+private:
+    int pipCount = 5;
+    juce::Colour accentColour { 0xff00d2ff };
+    juce::Colour bodyColour { 0xff161b22 };
+    juce::Colour outlineColour { 0xff283141 };
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DiceButton)
+};
+
 // Card component representing one modular block in the rack
 class ModuleCardComponent : public juce::Component,
                             public juce::SettableTooltipClient {
@@ -477,11 +509,12 @@ public:
     std::function<void()> onCardClicked;
     std::function<void(const juce::MouseEvent&)> onCardMouseDown;
     std::function<void()> onRandomizeClicked;
-    juce::TextButton& getDiceButton() { return diceButton; }
+    DiceButton& getDiceButton() { return diceButton; }
     RotaryKnobSlider* getKnob(int idx) { return (idx >= 0 && idx < 4) ? knobs[idx] : nullptr; }
     float getD6Depth() const { return d6Depth; }
     void setD6Depth(float depth) { d6Depth = depth; }
     void rollDice();
+    void launchCardInspector();
 
 private:
     float d6Depth = 0.25f;
@@ -490,7 +523,7 @@ private:
     juce::Colour panelTintBaseColour;
     PanelStyle panelStyle = PanelStyle::StandardDark;
     MiniOscilloscopeComponent oscilloscope;
-    juce::TextButton diceButton { "d6" };
+    DiceButton diceButton { "CardDiceButton" };
 
     LedSelectorComponent* ledSelector = nullptr;
     LedSelectorComponent* secondLedSelector = nullptr;
@@ -501,6 +534,35 @@ private:
     juce::Label labels[4];
     RotaryKnobSlider* knobs[4] = {};
     int numActiveKnobs = 4;
+};
+
+// Sleek floating popover launched on right-clicking a module card
+class CardInspectorPopover : public juce::Component {
+public:
+    explicit CardInspectorPopover(ModuleCardComponent& ownerCard);
+    ~CardInspectorPopover() override = default;
+
+    void paint(juce::Graphics& g) override;
+    void resized() override;
+    void updateValues();
+
+private:
+    ModuleCardComponent& card;
+    juce::Label titleLabel;
+    juce::Label depthLabel;
+    juce::Slider depthSlider;
+    DiceButton rollDiceBtn { "InspectorDice" };
+    juce::TextButton rollButton { "ROLL JITTER" };
+    juce::TextButton resetDefaultsButton { "RESET ALL" };
+
+    struct KnobRow {
+        juce::Label nameLabel;
+        juce::Label valueLabel;
+        juce::TextButton resetBtn { "R" };
+    };
+    std::vector<std::unique_ptr<KnobRow>> knobRows;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CardInspectorPopover)
 };
 
 // Stereo peak meter / mini scope widget with double-click Panic flush

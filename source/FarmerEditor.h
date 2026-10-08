@@ -227,7 +227,7 @@ public:
     juce::TextButton& getUndoButton() { return undoButton; }
     juce::TextButton& getRedoButton() { return redoButton; }
     juce::TextButton& getAbButton() { return abButton; }
-    juce::TextButton& getGlobalDiceButton() { return globalDiceButton; }
+    DiceButton& getGlobalDiceButton() { return globalDiceButton; }
     HeaderMeterComponent& getHeaderMeter() { return headerMeter; }
     LowerModulatorStripComponent& getModStrip() { return modStrip; }
     RotaryKnobSlider& getMacroKnob(int idx) { return macroKnobs[idx]; }
@@ -243,7 +243,7 @@ private:
     juce::TextButton undoButton { juce::CharPointer_UTF8("\xe2\x86\xb6") }; // ↶
     juce::TextButton redoButton { juce::CharPointer_UTF8("\xe2\x86\xb7") }; // ↷
     juce::TextButton abButton { "A | B" };
-    juce::TextButton globalDiceButton { "d6" };
+    DiceButton globalDiceButton { "globalDiceButton" };
     HeaderMeterComponent headerMeter;
 
     // Header Performance Macro Knobs

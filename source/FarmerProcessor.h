@@ -31,12 +31,16 @@ public:
 
     TbdAudio::ModularDrumEngine& getEngine() { return engine; }
     void triggerPanic();
+    void triggerAudition(float velocity = 1.0f, int midiNote = 36);
     TbdAudio::ModulationMatrix& getModMatrix() { return modMatrix; }
     const TbdAudio::ModulationMatrix& getModMatrix() const { return modMatrix; }
 
 private:
     TbdAudio::ModularDrumEngine engine;
     std::atomic<bool> panicRequested { false };
+    std::atomic<bool> auditionTriggerRequested { false };
+    std::atomic<float> auditionVelocity { 1.0f };
+    std::atomic<int> auditionNote { 36 };
     TbdAudio::ModulationMatrix modMatrix;
 
     // Direct parameter pointers for fast, thread-safe access

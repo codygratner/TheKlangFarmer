@@ -50,6 +50,54 @@ namespace VersionCheckerTestSuite {
                 pumpMessageLoop();
                 reporter.expect(modal->isVisible(), "Clicking GearButton opens SettingsModal");
 
+                // Test theme selector & swatches
+                auto& themeBox = modal->getThemeBox();
+                reporter.expect(themeBox.getNumItems() >= 7, "SettingsModal themeBox has at least 7 curated themes");
+
+                // Select Matrix Green
+                int matrixItemId = -1;
+                for (int i = 1; i <= themeBox.getNumItems(); ++i) {
+                    if (themeBox.getItemText(i - 1).containsIgnoreCase("Matrix")) {
+                        matrixItemId = themeBox.getItemId(i - 1);
+                        break;
+                    }
+                }
+                if (matrixItemId > 0) {
+                    themeBox.setSelectedId(matrixItemId, juce::sendNotificationSync);
+                    if (themeBox.onChange) themeBox.onChange();
+                }
+                pumpMessageLoop();
+                auto activeTheme = RlyehSound::ParameterManager::getInstance().getActiveTheme();
+                reporter.expect(activeTheme == "matrix_green",
+                                "themeBox selects matrix_green theme (active: " + activeTheme + ", matrixItemId: " + juce::String(matrixItemId) + ", selectedId: " + juce::String(themeBox.getSelectedId()) + ")");
+                reporter.expect(RlyehSound::ParameterManager::getInstance().getGlobalColor("accent_cyan") == juce::Colour(0xff22c55e),
+                                "Matrix green theme applies 0xff22c55e accent (actual: " + RlyehSound::ParameterManager::getInstance().getGlobalColor("accent_cyan").toDisplayString(true) + ")");
+
+                // Test Swatches
+                const auto& accents = modal->getAccentSwatches();
+                reporter.expect(accents.size() >= 7, "SettingsModal has 7 quick accent swatches");
+                if (!accents.empty()) {
+                    if (accents[0]->onClick) accents[0]->onClick();
+                    pumpMessageLoop();
+                    reporter.expect(RlyehSound::ParameterManager::getInstance().getGlobalColor("accent_cyan") == accents[0]->getSwatchColor(),
+                                    "Clicking Cyan swatch applies Cyan accent tint");
+                }
+
+                const auto& bgs = modal->getBackgroundSwatches();
+                reporter.expect(bgs.size() >= 4, "SettingsModal has 4 chassis background swatches");
+                if (!bgs.empty()) {
+                    if (bgs[0]->onClick) bgs[0]->onClick();
+                    pumpMessageLoop();
+                    reporter.expect(RlyehSound::ParameterManager::getInstance().getGlobalColor("background_dark") == bgs[0]->getSwatchColor(),
+                                    "Clicking Pure Black swatch applies 0xff0a0d12 chassis tint");
+                }
+
+                // Restore default theme
+                RlyehSound::ParameterManager::getInstance().loadTheme("cyberpunk");
+                pumpMessageLoop();
+                reporter.expect(RlyehSound::ParameterManager::getInstance().getActiveTheme() == "cyberpunk",
+                                "Restored cyberpunk default theme");
+
                 // Test closing via escape
                 modal->keyPressed(juce::KeyPress(juce::KeyPress::escapeKey));
                 pumpMessageLoop();

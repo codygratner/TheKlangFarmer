@@ -6,13 +6,14 @@
 > 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit. — ✅ COMPLETED
 > 2. **v0.3.1 (Editor Quality & Data Schema)**: Standalone Tree UX, Limiter Callout, Two-Line Status Bar, pluginval Runner. — ✅ COMPLETED
 > 3. **v0.3.2 (Agent Infrastructure & Logging)**: Guardrails Audit, Unified Filterable Master Tree, Dedicated Text Schema, Developer Logging (TKS_LOG). — ✅ COMPLETED
-> 4. **v0.4.0 (Interface & Experience)**: Complete Clean-Slate UX Overhaul, Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.
-> 5. **v0.5.0 (Sound & Chaos)**: 26-Effects Catalog & Browser Modal, Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
-> 6. **v0.6.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
-> 7. **v0.9.0 (The Spring Cleaning Audit)**: Pencils down. Comprehensive Tech Debt Amnesty, code refactoring, and AI-Slop purge.
-> 8. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
-> 9. **v1.1.0 (The Klang Box Hardware Universe)**: The Klang Box (TKB) — dadamachines tbd-16, TKB-Daisy (Stereo), TKB-8 (Teensy Multi-Out), & Zynthian V5.
-> 10. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
+> 4. **v0.4.0 (Interface & Experience)**: Complete Clean-Slate UX Overhaul, Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, Popover Callouts, 7-Theme Engine, & Desktop Sanity Testing. — 🔨 ACTIVE
+> 5. **v0.4.5 (The Klang Planter Refresh)**: Rebuilding The Klang Planter on TKF's Neo-Slate Foundation — 4-Controls-Per-Card, Header Nav, Vector Dice Buttons, Popover Callouts, & Universal Theming Parity.
+> 6. **v0.5.0 (Sound & Chaos + The Klang Hub)**: 27-Effects Catalog & Browser Modal, Full-Tab Spreadsheet Modulation Matrix, Standalone Klang Hub (Theme Builder & Preset/Bank Manager), Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
+> 7. **v0.6.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
+> 8. **v0.9.0 (The Spring Cleaning Audit)**: Pencils down. Comprehensive Tech Debt Amnesty, code refactoring, and AI-Slop purge.
+> 9. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
+> 10. **v1.1.0 (The Klang Box Hardware Universe)**: The Klang Box (TKB) — dadamachines tbd-16, TKB-Daisy (Stereo), TKB-8 (Teensy Multi-Out), & Zynthian V5.
+> 11. **Spin-Offs**: The Klang Mill (TKM 1x6 Pedalboard Rack), The Klang Boilerplate, & The Klang R1 (TKR-1).
 
 > [!TIP]
 > **CODE QUALITY STANDARD**: The C++ codebase currently maintains an A+ standard for defensive programming, descriptive `camelCase` variable naming, and explicit algorithmic comments (e.g., documenting DSP math curves directly above the function). All future contributions must rigidly match this level of in-line documentation and readability!
@@ -27,6 +28,7 @@
 - [v0.3.2 "Agent Infrastructure & Guardrails Audit"](#-milestone-v032-agent-infrastructure--guardrails-audit) (Completed)
 - [v0.3.3 "The Hardening Gauntlet"](#-milestone-v033-the-hardening-gauntlet) (Completed)
 - [v0.4.0 "The Interface & Experience Update"](#-milestone-v040-the-interface--experience-update) (Active)
+- [v0.4.5 "The Klang Planter Refresh"](#-milestone-v045-the-klang-planter-refresh) (Planned)
 - [v0.5.0 "The Sound & Chaos Update"](#-milestone-v050-the-sound--chaos-update)
 - [v0.6.0 "The Pro Workflow Update"](#-milestone-v060-the-pro-workflow-update)
 - [v0.7.0 "The Visual Polish & UI Mastery Update"](#-milestone-v070-the-visual-polish--ui-mastery-update)
@@ -359,6 +361,49 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Zen Mode (Visual Ergonomics & Anti-Fatigue)**:
   - User preference in Settings & About modal (SettingsModal.h) toggling between [Fluid & Dynamic] and [Zen Mode (Minimal)].
   - Dims non-essential visual eye candy, freezes decorative scope wobbles, disables flashing modulation halos, and converts meters into steady, functional informational displays for fatigue-free marathon sessions.
+
+### 8. Desktop Feedback, Interaction Remediation & Theme Polish Patch — 🔨 ACTIVE
+*Detailed Plan: [`PLAN.md`](../PLAN.md)*  
+*Goal: Remediate first-round desktop testing feedback on The Klang Farmer before cutting release:*
+- **Interaction Contract Fixes**:
+  - Double-clicking a slider opens the Smart Value text editor without resetting parameter value.
+  - Alt-clicking cleanly resets parameter value to default.
+- **Audition `TRIGGER` Button**:
+  - Wired to lock-free audio thread trigger queue with verified audio output (>0.05 peak).
+- **Tactile Vector Dice Randomizer**:
+  - Replaced text "d6" buttons with custom vector 6-sided die icon (`DiceButton`) with high-contrast pips across cards and header.
+- **Floating Callout Popovers**:
+  - Replaced OS-style popup menu on right-click with themed `juce::CallOutBox` popovers on parameters and module cards.
+- **Extended 7-Theme Engine & Settings Quick-Change**:
+  - Curated 7 distinct palettes in `assets/themes/theme.json` (`cyberpunk`, `cykranosh`, `dexciyan`, `boring`, `matrix_green`, `amber_crt`, `tracker_ft2`).
+  - Added live theme selector dropdown and quick-change background/accent color swatch pills in `SettingsModal`.
+- **Text Truncation Audit**:
+  - Measured bounding box clearances across custom sliders, card titles, and status bar across all DPI display scales.
+- **Dual-Configuration Regression Testing**:
+  - 100% test passes across `dsp_tests.exe` and `gui_tests.exe` in both Debug and Release configurations.
+
+---
+
+## 🚀 Milestone: v0.4.5 "The Klang Planter Refresh"
+*Focus: Bringing The Klang Planter to 100% architectural, visual, and interaction parity with The Klang Farmer's modernized v0.4.0 Neo-Slate foundation.*
+
+### 1. Planter 4-Controls-Per-Card & Chassis Architecture
+- Re-architect `PlanterEditor` to follow the standardized 4-controls-per-card modular layout.
+- Eliminate legacy monolithic panel groupings in favor of clean, swappable synth module cards.
+- Implement header navigation tabs with integrated oscilloscope and master limiter callout.
+
+### 2. Neo-Slate Vector UI & Theming Parity
+- Apply the dark matte titanium and JetBrains Mono vector design language to Planter.
+- Connect Planter to the unified 7-palette theme engine (`ParameterManager::loadTheme`, quick-change swatches).
+- Replace all legacy controls with Arcade Meter Sliders and vector `DiceButton` randomizers.
+
+### 3. Popover Callouts & Interaction Scheme
+- Adopt the Horizontal Action-Bar popover on right-click for all Planter sliders.
+- Enforce the universal interaction contract: Double-click = Smart Text Entry, Alt-click = Default Reset, Right-click = Popover Callout.
+
+### 4. Regression & Parity Validation
+- Expand `gui_tests` to achieve 100% parameter reflection and component coverage across the refreshed Planter.
+- Verify dual-config Debug and Release passes with zero regressions.
 
 ---
 

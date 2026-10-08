@@ -71,10 +71,16 @@ namespace FarmerTestSuite {
             auto* apvtsParam = processor.apvts.getParameter("carrier1_pitch");
             reporter.expect(apvtsParam->getValue() > 0.51f, "APVTS value increased via drag");
 
-            // Double click reset
+            // Double click opens text entry (value preserved without resetting)
+            double valBeforeDbl = pitchSlider->getValue();
             EventSimulator::simulateDoubleClick(pitchSlider);
             pumpMessageLoop();
-            reporter.expect(std::abs(pitchSlider->getValue() - 0.5f) < 0.001f, "Double-click resets to default");
+            reporter.expect(std::abs(pitchSlider->getValue() - valBeforeDbl) < 0.001, "Double-click preserves value without resetting");
+
+            // Alt-click resets to default
+            EventSimulator::simulateAltClick(pitchSlider);
+            pumpMessageLoop();
+            reporter.expect(std::abs(pitchSlider->getValue() - 0.5) < 0.01, "Alt-click resets to default");
             
             // APVTS -> UI
             apvtsParam->setValueNotifyingHost(1.0f);
@@ -379,6 +385,153 @@ namespace FarmerTestSuite {
                 pumpMessageLoop();
                 reporter.expect(farmerEditor->getInspectorPopover() == nullptr,
                                 "Escape key closed Inspector Popover and cleared tracer cables");
+
+                // --- Stage 11: v0.4.0 Interaction Scheme Remediation & Audition Trigger ---
+                // 1. Double-click vs Alt-click test
+                auto* testKnob = &farmerEditor->getMacroKnob(1);
+                double initialDef = testKnob->getDefaultValue ? testKnob->getDefaultValue() : testKnob->getDoubleClickReturnValue();
+                double nonDefVal = 0.88;
+                testKnob->setValue(nonDefVal, juce::dontSendNotification);
+                reporter.expect(std::abs(testKnob->getValue() - nonDefVal) < 0.001, "Macro 2 set to test value 0.88");
+
+                juce::MouseEvent eDbl(juce::Desktop::getInstance().getMainMouseSource(),
+                                      juce::Point<float>(5.0f, 5.0f),
+                                      juce::ModifierKeys(),
+                                      0.0f, 0.0f, 0.0f, 0.0f, 0, nullptr, nullptr,
+                                      juce::Time::getCurrentTime(),
+                                      juce::Point<float>(5.0f, 5.0f),
+                                      juce::Time::getCurrentTime(),
+                                      2, false);
+                testKnob->mouseDoubleClick(eDbl);
+                pumpMessageLoop(2, 5);
+                reporter.expect(std::abs(testKnob->getValue() - nonDefVal) < 0.001,
+                                "Double-click on knob preserves value without resetting (" + juce::String(testKnob->getValue(), 2) + ")");
+
+                juce::MouseEvent eAlt(juce::Desktop::getInstance().getMainMouseSource(),
+                                      juce::Point<float>(5.0f, 5.0f),
+                                      juce::ModifierKeys::altModifier,
+                                      0.0f, 0.0f, 0.0f, 0.0f, 0, nullptr, nullptr,
+                                      juce::Time::getCurrentTime(),
+                                      juce::Point<float>(5.0f, 5.0f),
+                                      juce::Time::getCurrentTime(),
+                                      1, false);
+                testKnob->mouseDown(eAlt);
+                pumpMessageLoop(2, 5);
+                reporter.expect(std::abs(testKnob->getValue() - initialDef) < 0.01,
+                                "Alt-click on knob cleanly resets value to default (" + juce::String(testKnob->getValue(), 2) + ")");
+
+                // 2. Audition Trigger Audio Path & Non-Silent Energy
+                TheKlangFarmerAudioProcessor pAudit;
+                pAudit.prepareToPlay(44100.0, 512);
+                pAudit.triggerAudition(1.0f, 36);
+
+                juce::AudioBuffer<float> auditBuffer(2, 512);
+                auditBuffer.clear();
+                juce::MidiBuffer auditMidi;
+                pAudit.processBlock(auditBuffer, auditMidi);
+
+                float auditPeak = auditBuffer.getMagnitude(0, 512);
+                reporter.expect(auditPeak > 0.05f,
+                                "triggerAudition(1.0f, 36) rendered non-silent audio on audio thread (peak: " + juce::String(auditPeak, 4) + " > 0.05)");
+
+                pAudit.releaseResources();
+
+                // 3. Audition TRIGGER button UI wiring
+                auto allFarmerButtons = ComponentFinder::findAllByType<juce::TextButton>(farmerEditor);
+                juce::TextButton* triggerBtn = nullptr;
+                for (auto* btn : allFarmerButtons) {
+                    if (btn && btn->getButtonText().containsIgnoreCase("TRIGGER")) {
+                        triggerBtn = btn;
+                        break;
+                    }
+                }
+                reporter.expect(triggerBtn != nullptr, "Audition TRIGGER button located in top header");
+                if (triggerBtn) {
+                    TheKlangFarmerAudioProcessor pTrig;
+                    pTrig.prepareToPlay(44100.0, 512);
+                    auto eTrig = std::unique_ptr<TheKlangFarmerAudioProcessorEditor>(
+                        dynamic_cast<TheKlangFarmerAudioProcessorEditor*>(pTrig.createEditor()));
+                    if (eTrig) {
+                        eTrig->setSize(1000, 750);
+                        pumpMessageLoop(2, 5);
+                        auto trigBtns = ComponentFinder::findAllByType<juce::TextButton>(eTrig.get());
+                        juce::TextButton* tb = nullptr;
+                        for (auto* b : trigBtns) {
+                            if (b && b->getButtonText().containsIgnoreCase("TRIGGER")) {
+                                tb = b;
+                                break;
+                            }
+                        }
+                        if (tb) {
+                            EventSimulator::simulateClick(tb);
+                            pumpMessageLoop(2, 5);
+                            juce::AudioBuffer<float> trigBuf(2, 512);
+                            trigBuf.clear();
+                            juce::MidiBuffer trigMidi;
+                            pTrig.processBlock(trigBuf, trigMidi);
+                            float trigPeak = trigBuf.getMagnitude(0, 512);
+                            reporter.expect(trigPeak > 0.05f,
+                                            "Audition TRIGGER button click rendered audible drum hit (peak: " + juce::String(trigPeak, 4) + ")");
+                        }
+                        eTrig.reset();
+                        pTrig.releaseResources();
+                    }
+                }
+
+                // --- Stage 12: Phase 2 Vector 6-Sided Die & Popover Callout Layer ---
+                // 1. Vector DiceButton rendering across all pip counts
+                DiceButton testDice("testDice");
+                testDice.setSize(24, 24);
+                juce::Image diceImg(juce::Image::ARGB, 24, 24, true);
+                juce::Graphics gDice(diceImg);
+                for (int pips = 1; pips <= 6; ++pips) {
+                    testDice.setPipCount(pips);
+                    testDice.paintButton(gDice, false, false);
+                }
+                reporter.expect(testDice.getPipCount() == 6, "DiceButton painted all 6 pip face configurations without error");
+
+                EventSimulator::simulateClick(&testDice);
+                pumpMessageLoop(2, 5);
+                reporter.expect(testDice.getPipCount() >= 1 && testDice.getPipCount() <= 6,
+                                "Clicking DiceButton rolled pip face to " + juce::String(testDice.getPipCount()));
+
+                // 2. ModuleCardComponent right-click launches CardInspectorPopover in juce::CallOutBox
+                if (!cards.isEmpty()) {
+                    auto* testCard = cards[0];
+                    EventSimulator::simulateRightClick(testCard);
+                    pumpMessageLoop(2, 5);
+
+                    CardInspectorPopover* cardPopover = nullptr;
+                    for (int i = 0; i < juce::Desktop::getInstance().getNumComponents(); ++i) {
+                        if (auto* found = ComponentFinder::findByType<CardInspectorPopover>(juce::Desktop::getInstance().getComponent(i))) {
+                            cardPopover = found;
+                            break;
+                        }
+                    }
+                    reporter.expect(cardPopover != nullptr, "Right-clicking ModuleCardComponent launched CardInspectorPopover");
+
+                    if (cardPopover) {
+                        auto* callout = cardPopover->findParentComponentOfClass<juce::CallOutBox>();
+                        reporter.expect(callout != nullptr, "Found parent CallOutBox for CardInspectorPopover");
+                        if (callout) {
+                            callout->exitModalState(0);
+                            callout->setVisible(false);
+                            callout->removeFromDesktop();
+                            pumpMessageLoop(5, 5);
+                        }
+                    }
+
+                    bool popoverStillVisible = false;
+                    for (int i = 0; i < juce::Desktop::getInstance().getNumComponents(); ++i) {
+                        if (auto* found = ComponentFinder::findByType<CardInspectorPopover>(juce::Desktop::getInstance().getComponent(i))) {
+                            if (found->isVisible()) {
+                                popoverStillVisible = true;
+                                break;
+                            }
+                        }
+                    }
+                    reporter.expect(!popoverStillVisible, "CardInspectorPopover dismissed cleanly from Desktop");
+                }
             }
         }
     }

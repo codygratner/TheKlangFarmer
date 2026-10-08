@@ -147,6 +147,7 @@ void TheKlangPlanterAudioProcessor::prepareToPlay(double sampleRate, int samples
 
 void TheKlangPlanterAudioProcessor::releaseResources() {
     TKS_LOG_INFO("TheKlangPlanterAudioProcessor::releaseResources");
+    ::RlyehSound::DevLogger::getInstance().registerAudioThread(std::thread::id());
 }
 
 bool TheKlangPlanterAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const {

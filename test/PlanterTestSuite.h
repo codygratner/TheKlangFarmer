@@ -35,9 +35,14 @@ namespace PlanterTestSuite {
             auto* apvtsParam = processor.apvts.getParameter("planter_carrier_pitch");
             reporter.expect(apvtsParam->getValue() > 0.51f, "APVTS value increased via drag");
 
+            double valBeforeDbl = pitchSlider->getValue();
             EventSimulator::simulateDoubleClick(pitchSlider);
             pumpMessageLoop();
-            reporter.expect(std::abs(pitchSlider->getValue() - 0.5f) < 0.001f, "Double-click resets to default");
+            reporter.expect(std::abs(pitchSlider->getValue() - valBeforeDbl) < 0.001, "Planter: Double-click preserves value without resetting");
+
+            EventSimulator::simulateAltClick(pitchSlider);
+            pumpMessageLoop();
+            reporter.expect(std::abs(pitchSlider->getValue() - 0.5) < 0.01, "Planter: Alt-click resets to default");
         }
 
         // --- Stage 4: Audio Overload Limiter Badge & Peak Meters Response ---
