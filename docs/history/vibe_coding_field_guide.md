@@ -253,3 +253,30 @@ Reserved strictly for **CLEAR PROBLEMS TO AVOID** directly at the C++ code level
 void triggerAudition(float velocity, int noteNumber);
 ```
 When an agent or human analyzes that specific function, the warning is impossible to miss.
+
+---
+
+## 6. Fast Historical Indexing & The Obsidian Graph Bridge (Hybrid 1+3 Standard)
+*Adopted during v0.4.0 Knowledge Architecture BAR-B-Q&A.*
+
+As monolithic narrative files like `docs/history/DEV_HISTORY.md` grow beyond thousands of lines, searching for past decisions burns excessive tokens and creates navigation friction.
+
+The Klang Suite enforces a **Hybrid 1 + 3 Fast Indexing Architecture**:
+
+### 6.1 Two-Tier Navigation Hub (Universal Repo Standard)
+1. **Milestone Anchor Directory in `DEV_HISTORY.md`**:
+   - The head of `DEV_HISTORY.md` carries a clean Table of Contents mapping milestones and major feature deliverables to exact anchor tags (e.g. `#v040-themes`, `#v033-hardening-gauntlet`).
+   - Each entry contains a 1-line summary and verification stats.
+2. **Subsystem Lookup Matrix in `docs/SYSTEM_MAP.md`**:
+   - Fresh agent sessions read `docs/SYSTEM_MAP.md` first upon startup.
+   - A dedicated **Subsystem-to-History Index** provides 1-hop links from core architectural components (e.g., *Theme Engine, Audio Invariants, Parameter Schemas, Popover Callouts*) directly to the historical rationale in `DEV_HISTORY.md`, bypassing 95% of narrative token bloat.
+
+### 6.2 The Obsidian Knowledge Graph & "Lite History" Bridge
+For rich visual relationship tracking in the creator's Obsidian vault (`C:\Dev\TheKlangVault`):
+1. **`TheKlangVault/Docs/History_Index.md` ("Lite History Hub")**:
+   - Maintained during documentation sync passes (`/update-docs` and `tools/sync_obsidian_vault.ps1`).
+   - Slices key milestone breakthroughs into a lightweight, hyperlinked timeline.
+2. **Native Obsidian `[[Wikilinks]]`**:
+   - Features, subsystems, and DSP concepts are cross-linked using Obsidian bracket syntax (e.g. `[[Theming Engine]]`, `[[Audio Thread Safety]]`, `[[DiceButton]]`, `[[Callout Popovers]]`).
+   - Lights up Obsidian's **Interactive Graph View**, allowing the user to visually navigate connections between sound design ideas, technical constraints, and shipped releases on desktop and mobile.
+
