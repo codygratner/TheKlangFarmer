@@ -11,21 +11,35 @@ Conduct a rigorous, interactive design interview (`/grill-me`) for UI/UX, layout
 ---
 
 ## Operational Guardrails & Architecture
-1. **Tier 2 Flash High Universal Baseline**:
+1. **Frictionless Entry & Prominent Chat Link (MANDATORY)**:
+   - If the user invokes `/grill-me` without specifying a mode, briefly ask if they want **Grill Lab** (live visual artifact) or **Classic Grill** (text-only).
+   - If the user invokes `/grilllab`, `/vlab`, `/vrill`, etc., enter Grill Lab immediately.
+   - **Always output a prominent, clickable file URI link in the chat response on kickoff**:
+     `👉 **[Open Grill Lab Canvas](file:///<appDataDir>/brain/<conversation-id>/visual_grill_me_preview.html)**`
+     so the user can immediately open it in the side panel with one click.
+2. **Universal Scope & Dual Operating Modes**:
+   - **UI Sandbox Mode**: Used for synth controls, sliders, cards, and meters. Displays real-time Web Audio audition synth, canvas oscilloscope, audio tick clicks, and theme swatches.
+   - **Architecture & Knowledge Mode (Soft Dark Blue)**: Used for non-UI topics (documentation, schemas, ADRs, indexing, pipeline workflows). Automatically cleans up the header (hiding the audio scope and synth widgets) and defaults to **Soft Dark Blue** (Antigravity-inspired slate navy `#0b101b`, `#111827`, soft blue text `#38bdf8`, and muted slate borders `#1f293d`). Renders comparative industry-standard cards with real-world citations.
+3. **Conversational Interleaving & Live Tuning (CRITICAL)**:
+   - The interview is never a rigid, lock-step rail. The user can pause anytime in chat to ask side questions, request visual/font/theming adjustments to the sidecar, or provide extra background context.
+   - The agent responds directly to side questions and updates the canvas live, keeping the active question and decision state perfectly preserved.
+4. **The "BAR-B-Q&A" Spirit**:
+   - Also known affectionately as the **BAR-B-Q&A**! Keep the session engaging, visual, collaborative, and fun.
+5. **Tier 2 Flash High Universal Baseline**:
    - Visual interviews, UI layout brainstorming, and HTML artifact authoring strictly use **Gemini 3.8 Flash (Thinking: High)**. Zero Pro quota burn required.
-2. **Persistent Sidecar Artifact**:
+6. **Persistent Sidecar Artifact**:
    - The primary visual sidecar is written to: `<appDataDir>\brain\<conversation-id>\visual_grill_me_preview.html`.
    - Always provide `ArtifactMetadata` with `UserFacing: true` and a clear summary.
-3. **Interactive Comparative Mockups**:
-   - Each interview question must correspond to a distinct visual section or interactive toggle in the HTML artifact.
-   - Mockups must use actual interactive controls (draggable sliders, clickable buttons, real color swatches, hover states) styled with Tailwind CSS and JetBrains Mono typography.
-4. **Web Worker & State Synchronization Architecture**:
+7. **Interactive Comparative Mockups & Sidecar Composer**:
+   - Each interview question must correspond to a distinct visual section with live interactive controls styled with Tailwind CSS.
+   - Provide an in-page **Decision & Write-In Composer** allowing the user to select options, write custom notes, and copy formatted markdown answers directly to their clipboard (`Ctrl+V` in chat).
+8. **Web Worker & State Synchronization Architecture**:
    - Pair `visual_grill_me_preview.html` with a companion state token `visual_grill_me_state.json` (tracking `step`, `version`, `timestamp`).
    - Use an inline Blob Web Worker (`new Worker(URL.createObjectURL(blob))`) to monitor state and heartbeat pings off the main UI thread. Never use unthrottled `document.lastModified` loops.
-   - Provide a prominent **Manual Refresh Button** (`[ ↻ Refresh View ]`) and `Ctrl+R` / `r` shortcut in the page header.
+   - Provide a prominent **Manual Refresh Button** (`[ ↻ Refresh View ]`) and Font Zoom Scaler (`[A-] [100%] [A+]`) in the page header.
    - Include an **Auto-Sync toggle** and a non-intrusive in-page toast banner (`#update-toast`) when new questions or layout updates arrive from chat.
-5. **Interactive Modal Required**:
-   - Use `ask_question` to pose design options to the user, with option text describing the user's choice and clear recommendations prefixed with `(Recommended)`.
+9. **Modal-Free Flexibility**:
+   - During Grill Lab sessions, prefer presenting questions in chat text and letting the user interact with the Sidecar Composer, avoiding modal deadlocks and keeping the IDE completely unlocked.
 
 ---
 

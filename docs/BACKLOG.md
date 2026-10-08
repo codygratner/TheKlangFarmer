@@ -362,8 +362,8 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - User preference in Settings & About modal (SettingsModal.h) toggling between [Fluid & Dynamic] and [Zen Mode (Minimal)].
   - Dims non-essential visual eye candy, freezes decorative scope wobbles, disables flashing modulation halos, and converts meters into steady, functional informational displays for fatigue-free marathon sessions.
 
-### 8. Desktop Feedback, Interaction Remediation & Theme Polish Patch — 🔨 ACTIVE
-*Detailed Plan: [`PLAN.md`](../PLAN.md)*  
+### 8. Desktop Feedback, Interaction Remediation & Theme Polish Patch — ✅ COMPLETED
+*Detailed Plan: [`.agents/pipeline/plans/completed/2026-10-08_v040_interaction_and_ui_polish.md`](../.agents/pipeline/plans/completed/2026-10-08_v040_interaction_and_ui_polish.md)*  
 *Goal: Remediate first-round desktop testing feedback on The Klang Farmer before cutting release:*
 - **Interaction Contract Fixes**:
   - Double-clicking a slider opens the Smart Value text editor without resetting parameter value.
@@ -378,9 +378,10 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Curated 7 distinct palettes in `assets/themes/theme.json` (`cyberpunk`, `cykranosh`, `dexciyan`, `boring`, `matrix_green`, `amber_crt`, `tracker_ft2`).
   - Added live theme selector dropdown and quick-change background/accent color swatch pills in `SettingsModal`.
 - **Text Truncation Audit**:
-  - Measured bounding box clearances across custom sliders, card titles, and status bar across all DPI display scales.
-- **Dual-Configuration Regression Testing**:
-  - 100% test passes across `dsp_tests.exe` and `gui_tests.exe` in both Debug and Release configurations.
+  - Measured bounding box clearances across custom sliders, card titles, and status bar across all DPI display scales; verified 0 truncations across 3 resolutions and 4 DPI scales.
+- **Dual-Configuration Regression Testing & Deployment**:
+  - 100% test passes across `dsp_tests.exe` and `gui_tests.exe` in both Debug and Release configurations (Release: 375/375, Debug: 374/374).
+  - Deployed cleanly via `deploy.ps1` to `current_build/` and system `C:\Program Files\Common Files\VST3\`.
 
 ---
 

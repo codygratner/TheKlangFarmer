@@ -210,10 +210,15 @@ The **Grill Lab** (`/grilllab`, `/vlab`, `/vrill`) completely revolutionizes thi
    - **Tactile UI Controls**: Draggable sliders, animated popover menus, and live theme switchers let the user *feel* the interaction before any C++ is written.
    - **Built-in Web Audio & Canvas Scope**: An integrated Web Audio synth engine morphs tones as you drag UI mockups, coupled to a 60fps phosphor oscilloscope, creating a true hardware-testing vibe.
    - **1-Click Code Generation**: Exporters convert approved visual styles into drop-in JUCE `paint()` C++ blocks and APVTS JSON schema definitions.
-4. **Structured Decision Forging (`ask_question`)**: The agent asks focused, single-concept design questions via interactive chat modals while simultaneously rendering candidate options side-by-side in the Grill Lab artifact.
-5. **Zero Pro Quota Burn**: Running visual mockups, drafting CSS, and conducting the interview runs sustainably on Tier 2 (Flash High), reserving Tier 1 (Pro High) strictly for deep DSP math and thread safety audits.
+4. **Modal-Free Sidecar Decision Composer**: To prevent interactive chat modals from locking up the IDE model dropdown or chat pane during design interviews, the Grill Lab sidecar includes an integrated decision radio selector, custom write-in textarea, and a 1-click `[ 📋 Copy Complete Answer to Clipboard ]` button. The user tests the options visually, selects their choice, clicks copy, and pastes directly into the chat (`Ctrl+V`).
+5. **Conversational Interleaving & Live Tuning**: The interview state is completely decoupled from the chat loop. The user can freely pause the interview at any time to ask side questions, request font zoom or theme adjustments, or feed extra context without resetting the questionnaire.
+6. **Dual Operating Modes (UI Sandbox vs. Architecture & Knowledge)**:
+   - *UI Sandbox Mode*: Full interactive controls, tactile sliders, vector dice buttons, popovers, canvas oscilloscope, and live Web Audio synthesis engine.
+   - *Architecture & Knowledge Mode*: Automatically hides synth audio/oscilloscope headers and renders in a sleek, eye-pleasing **Soft Dark Blue** slate theme (`antigravity_blue`), delivering comprehensive **3-Lens Deep Evaluations** (🌍 Real-World, 🏛️ Industry Standard, 🏆 Best Practices) for non-UI decisions (data schemas, documentation structures, indexing models).
+7. **Zero Pro Quota Burn**: Running visual mockups, drafting CSS, and conducting the interview runs sustainably on Tier 2 (Flash High), reserving Tier 1 (Pro High) strictly for deep DSP math and thread safety audits.
 
-The result is a workflow where design mistakes are caught and resolved in seconds in the web sandbox—ensuring that by the time code reaches the C++ factory floor, it is 100% pre-validated, ergonomically tested, and ready to ship.
+The result is a workflow where design mistakes and architectural ambiguities are caught and resolved in seconds in the web sandbox—ensuring that by the time code reaches the C++ factory floor, it is 100% pre-validated, ergonomically tested, and ready to ship.
+
 
 
 
