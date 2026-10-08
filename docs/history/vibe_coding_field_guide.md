@@ -280,3 +280,28 @@ For rich visual relationship tracking in the creator's Obsidian vault (`C:\Dev\T
    - Features, subsystems, and DSP concepts are cross-linked using Obsidian bracket syntax (e.g. `[[Theming Engine]]`, `[[Audio Thread Safety]]`, `[[DiceButton]]`, `[[Callout Popovers]]`).
    - Lights up Obsidian's **Interactive Graph View**, allowing the user to visually navigate connections between sound design ideas, technical constraints, and shipped releases on desktop and mobile.
 
+---
+
+## 7. The Milestone Capstone Harvest & 1-Turn Pro Protocol
+*Adopted during v0.4.0 Knowledge Architecture BAR-B-Q&A.*
+
+Synthesizing multi-week engineering breakthroughs, discovering non-obvious conceptual connections, and building deep relationship maps across dozens of vault files requires high-order multi-file reasoning. However, routine logging and syncing is mechanical and should never waste precious Tier 1 Pro quota.
+
+To balance token sustainability with publication-grade documentation, The Klang Suite enforces the **Milestone Capstone Harvest Protocol**:
+
+### 7.1 Daily Work on Tier 2 Flash High (Sustainable Baseline)
+All daily feature coding, bug fixes, test expansions, and routine `/update-docs` executions run 100% on **Gemini 3.8 Flash (Thinking: High)**. Daily logging in `DEV_HISTORY.md` is concise and incremental.
+
+### 7.2 The Explicit 1-Turn Pro Harvest Gate (At Major Milestone Releases)
+When reaching the conclusion of a major milestone (e.g. executing `/cut-release` for `v0.4.0` or `v0.5.0`):
+1. **Explicit Reminder & Pause**: The assistant outputs a prominent Model Advisory banner instructing the user to temporarily swap their model dropdown in the IDE footer to **Gemini 3.1 Pro (Thinking: High)**.
+2. **Single-Turn Holistic Synthesis**: The agent executes exactly **ONE** high-reasoning turn to:
+   - Perform a holistic audit of the entire release diff across all completed plans.
+   - Author the rich, hyperlinked `TheKlangVault/Docs/History_Index.md` with conceptual Obsidian `[[Wikilinks]]` for the knowledge graph.
+   - Update the Field Guide with architectural breakthroughs, dead-ends, and negative architecture lessons.
+   - Polish the official `CHANGELOG.md` entry.
+3. **Instant Downgrade Prompt**: The agent immediately signals the user to swap back to **Gemini 3.8 Flash High** before the next task begins.
+
+This eliminates cognitive burden for the developer ("you remind me to swap over") while conserving 99% of Pro quota strictly for DSP math and lock-free concurrency.
+
+
