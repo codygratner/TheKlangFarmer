@@ -40,6 +40,11 @@ Audit, validate, and repair Antigravity interactive sidecar HTML canvases and El
    - High-gain synthesizer testing can burst loud test clicks into studio monitors.
    - *Invariant*: Audio haptics MUST default to 100% muted via `localStorage`, and provide Base64 PCM WAV fallback or visual ripple fallback.
 
+7. **Loopback Bridge IPC & PNA/CORS Sandboxing (Private Network Access)**:
+   - Electron/Chromium webviews fetching `http://127.0.0.1` from `file:///` send `Origin: null` and trigger Private Network Access (PNA) preflight checks.
+   - Localized status containers on inactive/hidden tabs (e.g. `#audio-toast`) remain invisible to the user, creating the false impression of an action failure or bridge stall.
+   - *Invariant*: Notification toasts MUST render in a persistent floating HUD container (`position: fixed; bottom: 24px; right: 24px; z-index: 99999`), loopback HTTP servers must return `Access-Control-Allow-Private-Network: true` on `OPTIONS`, and subagents must stage a receipt in `.agents/pipeline/communique/subagent_receipt.md` when overcoming novel platform traps.
+
 ---
 
 ## Operational Constraints & Access Policies
@@ -94,3 +99,8 @@ Based on flags or autonomous determination:
 - Mirror the file to the Antigravity Brain Artifacts directory (`brain/<conversation-id>/`) and the Research archive.
 - Output the clickable artifact link in chat:
   `👉 **[Open <Sidecar Name> Canvas](file:///<path>)**`
+
+### 4. Institutional Memory & Autopsy Receipt (The 80/20 Gate)
+- If the QA task solved a **novel, non-obvious platform trap** (e.g. Electron/Chromium webview sandboxes, audio-thread real-time allocations, IPC bridge CORS/PNA policies), the subagent or engineer MUST append a concise receipt to `.agents/pipeline/communique/subagent_receipt.md`.
+- Routine syntax fixes, linting passes, and CSS color adjustments DO NOT require receipts.
+- The staged receipt is ingested, synthesized into `TheKlangResearch/qa_autopsies/`, and indexed during the next `/update-docs --deep` pass.

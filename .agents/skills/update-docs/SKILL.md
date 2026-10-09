@@ -62,10 +62,27 @@ Enforce total synchronization between C++ implementation realities, architectura
 
 ## Tri-Project Deep Ecosystem Mode (`/update-docs --deep`)
 
-When explicitly invoked with `--deep` (or `/deep-docs-update`), this skill transforms into an **Autonomous Goal-Oriented Gauntlet** executed by an on-demand Tier 1 Pro subagent (`invoke_subagent(Model="pro")`), sweeping across all three ecosystem repositories and the central Obsidian Vault:
+When explicitly invoked with `--deep` (or `/deep-docs-update`), this skill transforms into an **Autonomous Five-Pillar Gauntlet** executed by an on-demand Tier 1 Pro subagent (`invoke_subagent(Model="pro")`), sweeping across all four ecosystem repositories and the central Obsidian Vault:
 
 1. **The Klang Suite (`c:\Dev\TheKlangSuite`)**: Synchronizes DSP specs, C++ audio invariants, architecture field guides, and the master backlog.
 2. **ToadTracker (`c:\Dev\ToadTracker`)**: Modernizes tracker core specs, dadamachines TBD-16 HAL specifications, multi-target deployment profiles, and the Mayor Toad backlog.
 3. **N'kai (`c:\Dev\nkai`)**: Maintains the Asymmetric Sidecar Framework, state machine architecture, UI extension bundle, and `schema.json` contracts.
-4. **The Klang Vault (`C:\Dev\TheKlangVault`)**: Reconciles the root staging inbox (`Inbox/`) and lore archives (`Lore/`) while mirroring project-level documentation into dedicated project sub-portals (`The Klang Suite/`, `ToadTracker/`, `N'kai/`).
-5. **Automated Link Verification**: Programmatically audits 100% of markdown hyperlinks across all four roots, asserting a 100% pass rate with zero dead anchors before completing.
+4. **The Klang Research (`C:\Dev\Research`)**: Centralized RFCs, eternal DSP mathematics, research boards, subagent soul harvests, and novel QA autopsies.
+5. **The Klang Vault (`C:\Dev\TheKlangVault`)**: Reconciles the root staging inbox (`Inbox/`) and lore archives (`Lore/`) while mirroring project-level documentation into dedicated project sub-portals (`The Klang Suite/`, `ToadTracker/`, `N'kai/`, `Research/`).
+
+### Subagent Soul Harvest & QA Autopsy Curation Pipeline
+To eliminate active coding friction while preventing the "knowledge cemetery" trap, `/update-docs --deep` acts as the master editorial curator for all subagent findings:
+1. **Ingest Staged Receipts**: Reads [`.agents/pipeline/communique/subagent_receipt.md`](file:///c:/Dev/TheKlangSuite/.agents/pipeline/communique/subagent_receipt.md) to inspect all completed subagents since the last documentation pass.
+2. **Curate High-Impact Discoveries**:
+   - **Research Sprints**: Synthesizes mathematical proofs, circuit topologies, and competitive teardowns into publication-grade markdown in `C:\Dev\Research\subagents\<YYYY-MM-DD>_<slug>_Harvest.md`.
+   - **Novel QA Autopsies**: Synthesizes non-obvious platform traps (e.g., Chromium webview sandboxes, loopback IPC, audio thread allocations, JUCE timer lifecycles) into `C:\Dev\Research\qa_autopsies\<YYYY-MM-DD>_<slug>_Autopsy.md`. Routine syntax, typo, and styling fixes are discarded to keep the signal-to-noise ratio high.
+   - **Standard 5-Point Autopsy Format**:
+     1. *Symptoms & Initial Defect*
+     2. *Root Cause & Platform Trap*
+     3. *Minimal Reproducible Proof*
+     4. *Permanent Architectural Invariant / Rule*
+     5. *Concrete Resolution & Code Snippet*
+3. **Recompile Vault Research Index**: Executes `tools/sync_obsidian_vault.ps1` to mirror all research domains and recompile `TheKlangVault/Research/Master_Research_Index.md` (100% plain Markdown, zero Dataview dependencies).
+4. **Receipt Staging Reset (Inbox Zero)**: Clears the processed entries in `.agents/pipeline/communique/subagent_receipt.md` so the receipt log stays clean for subsequent active coding sessions.
+5. **Automated Link Verification**: Programmatically audits 100% of markdown hyperlinks across all five roots, asserting a 100% pass rate with zero dead anchors before completing.
+

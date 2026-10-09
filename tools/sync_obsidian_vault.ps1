@@ -324,7 +324,7 @@ function Sync-Once {
             ""
         )
 
-        @("guides", "lore", "dsp", "hardware", "ui_ux", "subagents", "agentic") | ForEach-Object {
+        @("guides", "lore", "dsp", "hardware", "ui_ux", "subagents", "agentic", "qa_autopsies") | ForEach-Object {
             $domName = $_
             $srcDom = Join-Path $researchRepo $domName
             $dstDom = Join-Path $vaultResearch $domName
