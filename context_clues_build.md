@@ -1,7 +1,7 @@
 # Implementation Chat Context Clues
 - **Chat Role:** Implementation & Build Chat (Klang Industries)
-- **Current Objective:** v0.4.0 Interaction & UI Polish Patch (Phase 1–4 from `PLAN.md`)
-- **Plan Status:** Ingested new dispatch from New Klang City (`STATUS: IN_PROGRESS`), ready for Phase 1 execution
+- **Current Objective:** Factory Floor Idle (Awaiting v0.4.0 release cut and v0.4.1 dispatch)
+- **Plan Status:** Idle 💤 (`PLAN.md` archived, `v0.4.0` completed and verified)
 - **Current State:**
   - Branch: `0.4.0-dev` (clean working tree)
   - Active Blueprint: [`PLAN.md`](file:///c:/Dev/TheKlangSuite/PLAN.md)
@@ -14,3 +14,7 @@
     6. Dual-Configuration Gauntlet: 100% test pass in both **Debug** and **Release** builds with fresh deployment.
   - Verification Target: `dsp_tests.exe` and `gui_tests.exe` (all assertions green across Debug and Release)
   - Recommended Model Tier: Tier 2 (Gemini 3.8 Flash High)
+- **Product Vision & Taxonomy References:**
+  - Glossary & Acronyms: [`docs/GLOSSARY.md`](file:///c:/Dev/TheKlangSuite/docs/GLOSSARY.md) (`TKS`, `TKF`, `TKP`, `TKM`, `TKE`, `TKB`, `TKR`, `TKC`)
+  - Product Intent Matrix: [`docs/architecture/product_lineup.md`](file:///c:/Dev/TheKlangSuite/docs/architecture/product_lineup.md)
+

@@ -1,10 +1,12 @@
-# 🧭 The Vibe-Coder's Field Guide: Autonomous Pair-Programming, Architecture & Hard Lessons
+# 🧭 The Vibe-Coder's Field Guide: Autonomous Pair-Programming & AI Workflows
 
 > **Author:** The Klang Suite Project Journal  
 > **Audience:** Developers transitioning into C++ audio development, AI-assisted software engineers, and fellow "vibe coders".  
 > **Status:** Living Field Manual (Milestone v0.4.0)
 
 ---
+
+*Note: For C++ and DSP engineering principles, see the [Audio DSP & C++ Field Guide](audio_dsp_field_guide.md).*
 
 ## 1. Executive Summary: The "Vibe-Coding" Paradox
 
@@ -20,23 +22,7 @@ This field guide documents the raw truth of that journey: what failed, what burn
 
 ---
 
-## 2. The Hard Invariants: Why Audio Programming Rejects "Lazy Vibes"
-
-In web or backend development, a slow database query or a 50ms garbage collection pause is a minor latency blip. In real-time audio DSP, **it is a catastrophic failure**.
-
-The audio card hardware requests a new buffer of samples every $1.3\,\text{ms}$ (at 64 samples @ $48\,\text{kHz}$). If your code misses that deadline by even one microsecond, the audio stream drops out, resulting in an audible click, pop, or harsh digital glitch.
-
-Therefore, our AI pair-programming rules had to codify non-negotiable **Audio Thread Invariants**:
-1. **Zero Heap Allocations:** Never call `new`, `malloc`, `free`, or resize dynamic containers (`std::vector::push_back`, `juce::String` concatenation) on the audio path. Everything must be pre-allocated in `prepareToPlay()`.
-2. **Zero Locks:** Never acquire a `std::mutex`, `juce::CriticalSection`, or wait on thread primitives. Audio-to-UI communication must use lock-free atomics (`std::atomic<float>`) or single-reader single-writer FIFOs.
-3. **Zero Blocking I/O:** Never call filesystem operations, network sockets, or console output (`std::cout`, `DBG()`, `printf`) on the audio thread.
-4. **SIMD & FastMath:** Standard math functions (`std::pow`, `std::sin`, `std::tanh`) take 50–120 CPU cycles. In hot voice loops, you must use rational Padé or polynomial approximations (`TbdAudio::FastMath`).
-
-Teaching an LLM to respect these rules required moving beyond loose prompts and building **automated gatekeepers**.
-
----
-
-## 3. 🪦 The Strategy Graveyard: What Failed & Why We Abandoned It
+## 2. 🪦 The Strategy Graveyard: What Failed & Why We Abandoned It
 
 Every robust pattern in our repository exists because a simpler, lazier approach burned us first. Here are the hard lessons:
 
@@ -88,7 +74,7 @@ Every robust pattern in our repository exists because a simpler, lazier approach
 
 ---
 
-## 4. 🛠️ The Active Playbook: The System That Actually Works
+## 3. 🛠️ The Active Playbook: The System That Actually Works
 
 Through trial and error, we developed a cohesive operating system for AI pair-programming:
 
@@ -149,20 +135,7 @@ To eliminate Backlog Drift, we established a **3-Tier Backlog Integrity System**
 
 ---
 
-## 5. Advice for Fellow Developers (From Python/JS to C++)
-
-If you are a developer with experience in dynamic languages (Python, JavaScript, Ruby) or garbage-collected frameworks and want to build high-performance C++ software with an AI assistant:
-
-1. **Don't Let the AI Guess the Architecture:** AI agents are brilliant code-completion engines, but they will default to whatever pattern is easiest in the moment (which is usually monolithic, hardcoded C++). Enforce clean architectural patterns (like data schemas and interface boundaries) from Day 1.
-2. **Invest Heavily in Test Harnesses:** Writing a functional test harness (`gui_tests`) feels like a detour when you just want to build your app. In reality, it is the single best investment you will make. It allows you to accept large AI refactors with complete confidence.
-3. **Embrace "Living Documentation":** Keep your taxonomy codified in a glossary (`GLOSSARY.md`). If you and the AI agree that a container is a "Card" and a rotary control is a "Knob", you eliminate 90% of naming bugs and mismatched variables.
-4. **Treat Failure as Data:** When a bug slips through, don't just fix the code. Ask: *"What guardrail was missing that allowed this to happen?"* Update your `GEMINI.md` or test suite so the exact same mistake can never be made again.
-
----
-
-*“Code is ephemeral; test harnesses, data contracts, and architectural guardrails are permanent.”*
-
-### 4.7 The "Tick-Tock" Versioning Strategy & Foundation Capstones
+### 3.1 The "Tick-Tock" Versioning Strategy & Foundation Capstones
 *Implemented during the transition from v0.3.x to v0.4.x.*
 We recognized a structural risk: diving straight from one massive feature milestone (0.3.0 Data Schema) into another (0.4.0 UI Overhaul) allows technical debt, compiler warnings, and untested DSP edge-cases to silently accumulate beneath the floorboards. 
 To prevent this, we codified the **Pre-Flight Capstone Rule**. 
@@ -170,18 +143,18 @@ To prevent this, we codified the **Pre-Flight Capstone Rule**.
 - .Z Patch releases (the "Tock") are strictly for backend CI lockdowns, sanitizer (ASan/TSan) integrations, and DSP safety nets (NaN/Inf failsafes).
 Before CMakeLists.txt is ever bumped to an X.Y.0-dev branch, the AI pipeline must execute a final Z hardening patch to mathematically prove the foundation is bulletproof. You cannot build a new house on an unhardened foundation.
 
-### 4.8 CI/CD Remote Matrix Gating (The Final Defense)
+### 3.2 CI/CD Remote Matrix Gating (The Final Defense)
 *Implemented during v0.3.3 Hardening Gauntlet.*
 Because we develop exclusively on Windows, we are blind to how Clang (macOS) and GCC (Linux) compilers handle our C++ changes until we push. We strengthened the /cut-release agent skill by injecting **Phase 4.5: CI/CD Remote Matrix Verification**. The agent now queries the GitHub API (gh run list) post-push and monitors the remote build farm. If a remote OS triggers a strict -Werror failure, the agent halts the deployment and fetches the logs automatically. This guarantees cross-platform stability before a release is ever made public.
 
-### 4.9 Mid-Flight Plan Amendments & Live Factory Telemetry
+### 3.3 Mid-Flight Plan Amendments & Live Factory Telemetry
 *Implemented during v0.4.0 UI & Modulation Overhaul.*
 In a decoupled multi-agent architecture (Planner in Ivory Tower, Builder on Factory Floor), a subtle blindspot exists: if the Builder is actively working through an implementation phase, and the Planner or user refines requirements or adds polish mid-flight, a silent edit to `PLAN.md` leaves the Builder operating on stale assumptions.
 We solved this by establishing a two-way reactive state machine across the Communique Mailbox:
 1. **`STATUS: PLAN_AMENDED ⚠️`**: When New Klang City modifies requirements mid-build, it sets this status in `plan_to_build.md` alongside an explicit bulleted changelog. We upgraded the `/step-verify` skill to intercept this: when the Builder completes a phase, it reads the mailbox, detects the amendment, re-syncs `PLAN.md`, resets the mailbox to `IN_PROGRESS`, and adapts dynamically.
 2. **`STATUS: BUILDING 🔨 (Phase <N>)`**: Rather than remaining silent until final completion, the `/read-plan` and `/step-verify` skills were upgraded to publish active factory telemetry directly into `build_to_plan.md` the moment a job is ingested and at every phase transition. This gives the entire pipeline live visibility into exactly what code is being forged.
 
-### 4.10 The Universal Documentation Sync Skill & Defense-in-Depth (`/update-docs`)
+### 3.4 The Universal Documentation Sync Skill & Defense-in-Depth (`/update-docs`)
 *Implemented during v0.4.0 UI & Modulation Overhaul.*
 As a codebase expands across multiple milestones, documentation drift becomes an acute risk: design specs fall out of alignment with C++ realities, completed tasks linger unchecked in the backlog, and LLM context windows waste valuable tokens parsing sprawling 500-line Markdown documents.
 We established a strict three-tier "Defense in Depth" documentation protocol:
@@ -189,7 +162,7 @@ We established a strict three-tier "Defense in Depth" documentation protocol:
 2. **Table of Contents (ToC) Indexing**: Fast anchor links injected into the head of major documentation files (`docs/BACKLOG.md`) allowing agents to leap directly to relevant milestone headers without reading hundreds of lines of legacy context.
 3. **The `/update-docs` Skill**: An automated synchronization skill executed exclusively by New Klang City. It reconciles completed factory tasks against `BACKLOG.md`, synchronizes technical specifications in `docs/specs/`, captures institutional memory in `DEV_HISTORY.md`, and validates cross-link integrity in a single non-destructive pass.
 
-### 4.11 The Dual-Chat Synergy & The "Grill Lab" (Live Sidecar Visual Sandboxing)
+### 3.5 The Dual-Chat Synergy & The "Grill Lab" (Live Sidecar Visual Sandboxing)
 *Implemented during v0.4.0 UI & Theming Expansion.*
 
 #### 1. The Dual-Chat Division of Labor (Ivory Tower vs. Factory Floor)
@@ -221,21 +194,21 @@ The result is a workflow where design mistakes and architectural ambiguities are
 
 ---
 
-## 5. Negative Architecture & The Strategy Graveyard (The Hybrid 1+3 Standard)
+## 4. Negative Architecture & The Strategy Graveyard (The Hybrid 1+3 Standard)
 *Adopted during v0.4.0 Knowledge Architecture BAR-B-Q&A.*
 
 Documenting what a system **does not do** is just as critical as documenting its active features. Without negative architecture, teams and AI agents fall into "idea recycling"—re-proposing rejected patterns or repeating failed experiments weeks later.
 
 The Klang Suite enforces a **Hybrid 1 + 3 Negative Architecture Standard**:
 
-### 5.1 Systemic Tombstones (The Field Guide Graveyard)
-Systemic, multi-file anti-patterns are recorded here as numbered "Tombstones" to preserve institutional memory:
+### 4.1 Systemic Tombstones (The Field Guide Graveyard)
+Systemic, multi-file AI workflow anti-patterns and high-level architectural dead-ends are recorded here as numbered "Tombstones" to preserve institutional memory. (Note: Routine application bugs or isolated logic errors do not belong here; this is strictly for systemic workflow and architectural failures):
 - **🪦 Tombstone 1: Monolithic Chat Traps**: Trying to plan, build, and debug in a single 60-turn chat causes context amnesia and token thrashing. Strictly separated into Ivory Tower (New Klang City) vs. Factory Floor (Klang Industries).
 - **🪦 Tombstone 2: Hardcoded C++ Parameter Contracts**: Hardcoding min/max, default values, and tooltips in C++ creates fragile divergence. All parameter contracts reside exclusively in `assets/controls/*.json` and `assets/text/strings.json`.
 - **🪦 Tombstone 3: Native OS Popup Menus in VST3**: Standard `juce::PopupMenu` windows freeze or glitch inside modern host DAWs on Windows and macOS. Replaced permanently with themed `juce::CallOutBox` popovers.
 - **🪦 Tombstone 4: UI Thread Calls from Audio Blocks**: Calling `repaint()` or `setValue()` directly from `processBlock()` causes audio dropouts and crashes. Replaced with lock-free atomics and FIFO queues.
 
-### 5.2 Milestone Non-Goals (`PLAN.md` & `BACKLOG.md`)
+### 4.2 Milestone Non-Goals (`PLAN.md` & `BACKLOG.md`)
 Every implementation blueprint in `PLAN.md` and major milestone in `docs/BACKLOG.md` must include an explicit:
 ```markdown
 ### 🚫 Non-Goals & Rejected Alternatives
@@ -244,7 +217,7 @@ Every implementation blueprint in `PLAN.md` and major milestone in `docs/BACKLOG
 ```
 This primes the LLM builder context immediately at the start of each task, preventing scope creep and unapproved architectural deviations.
 
-### 5.3 Targeted Inline Source Annotations (`// 🚫 REJECTED PATTERN`)
+### 4.3 Targeted Inline Source Annotations (`// 🚫 REJECTED PATTERN`)
 Reserved strictly for **CLEAR PROBLEMS TO AVOID** directly at the C++ code level. Rather than cluttering every file, inline rejections are used selectively for high-risk hazards (audio thread invariants, thread synchronization traps, or compiler-specific crashes):
 ```cpp
 // 🚫 REJECTED PATTERN (v0.3.3):
@@ -256,14 +229,14 @@ When an agent or human analyzes that specific function, the warning is impossibl
 
 ---
 
-## 6. Fast Historical Indexing & The Obsidian Graph Bridge (Hybrid 1+3 Standard)
+## 5. Fast Historical Indexing & The Obsidian Graph Bridge (Hybrid 1+3 Standard)
 *Adopted during v0.4.0 Knowledge Architecture BAR-B-Q&A.*
 
 As monolithic narrative files like `docs/history/DEV_HISTORY.md` grow beyond thousands of lines, searching for past decisions burns excessive tokens and creates navigation friction.
 
 The Klang Suite enforces a **Hybrid 1 + 3 Fast Indexing Architecture**:
 
-### 6.1 Two-Tier Navigation Hub (Universal Repo Standard)
+### 5.1 Two-Tier Navigation Hub (Universal Repo Standard)
 1. **Milestone Anchor Directory in `DEV_HISTORY.md`**:
    - The head of `DEV_HISTORY.md` carries a clean Table of Contents mapping milestones and major feature deliverables to exact anchor tags (e.g. `#v040-themes`, `#v033-hardening-gauntlet`).
    - Each entry contains a 1-line summary and verification stats.
@@ -271,7 +244,7 @@ The Klang Suite enforces a **Hybrid 1 + 3 Fast Indexing Architecture**:
    - Fresh agent sessions read `docs/SYSTEM_MAP.md` first upon startup.
    - A dedicated **Subsystem-to-History Index** provides 1-hop links from core architectural components (e.g., *Theme Engine, Audio Invariants, Parameter Schemas, Popover Callouts*) directly to the historical rationale in `DEV_HISTORY.md`, bypassing 95% of narrative token bloat.
 
-### 6.2 The Obsidian Knowledge Graph & "Lite History" Bridge
+### 5.2 The Obsidian Knowledge Graph & "Lite History" Bridge
 For rich visual relationship tracking in the creator's Obsidian vault (`C:\Dev\TheKlangVault`):
 1. **`TheKlangVault/Docs/History_Index.md` ("Lite History Hub")**:
    - Maintained during documentation sync passes (`/update-docs` and `tools/sync_obsidian_vault.ps1`).
@@ -282,17 +255,17 @@ For rich visual relationship tracking in the creator's Obsidian vault (`C:\Dev\T
 
 ---
 
-## 7. The Milestone Capstone Harvest & 1-Turn Pro Protocol
+## 6. The Milestone Capstone Harvest & 1-Turn Pro Protocol
 *Adopted during v0.4.0 Knowledge Architecture BAR-B-Q&A.*
 
 Synthesizing multi-week engineering breakthroughs, discovering non-obvious conceptual connections, and building deep relationship maps across dozens of vault files requires high-order multi-file reasoning. However, routine logging and syncing is mechanical and should never waste precious Tier 1 Pro quota.
 
 To balance token sustainability with publication-grade documentation, The Klang Suite enforces the **Milestone Capstone Harvest Protocol**:
 
-### 7.1 Daily Work on Tier 2 Flash High (Sustainable Baseline)
+### 6.1 Daily Work on Tier 2 Flash High (Sustainable Baseline)
 All daily feature coding, bug fixes, test expansions, and routine `/update-docs` executions run 100% on **Gemini 3.8 Flash (Thinking: High)**. Daily logging in `DEV_HISTORY.md` is concise and incremental.
 
-### 7.2 The Explicit 1-Turn Pro Harvest Gate (At Major Milestone Releases)
+### 6.2 The Explicit 1-Turn Pro Harvest Gate (At Major Milestone Releases)
 When reaching the conclusion of a major milestone (e.g. executing `/cut-release` for `v0.4.0` or `v0.5.0`):
 1. **Explicit Reminder & Pause**: The assistant outputs a prominent Model Advisory banner instructing the user to temporarily swap their model dropdown in the IDE footer to **Gemini 3.1 Pro (Thinking: High)**.
 2. **Single-Turn Holistic Synthesis**: The agent executes exactly **ONE** high-reasoning turn to:
@@ -303,5 +276,212 @@ When reaching the conclusion of a major milestone (e.g. executing `/cut-release`
 3. **Instant Downgrade Prompt**: The agent immediately signals the user to swap back to **Gemini 3.8 Flash High** before the next task begins.
 
 This eliminates cognitive burden for the developer ("you remind me to swap over") while conserving 99% of Pro quota strictly for DSP math and lock-free concurrency.
+
+---
+
+## 7. The "FOSS-Forever" & Provenance Guardrail: Ethical AI Open-Source Engineering
+
+### The Trap: Unchecked Code Ingestion & License Bleeding
+One of the most pernicious failure modes of AI coding assistants is **"license blindness."** LLMs trained on millions of public and private repositories will happily synthesize code that mimics non-commercial (CC-BY-NC), proprietary NDA-encumbered SDKs, or uncredited snippets from other developers without hesitation.
+
+In a commercial closed-source environment, this creates severe copyright liability. But in an open-source project dedicated to **GNU General Public License v3.0 (GPLv3)**, it threatens the very copyleft integrity of the ecosystem.
+
+### The Solution: The 4-Pillar FOSS Guardrail
+To make our open-source lineage airtight, we codified strict rules into `GEMINI.md`:
+
+```text
+┌────────────────────────────────────────────────────────┐
+│             THE FOSS-FOREVER GUARDRAIL                 │
+├────────────────────────────────────────────────────────┤
+│ 1. Zero Incompatible Code (Strict GPLv3 Reciprocity)   │
+│ 2. Universal Inline Provenance Docblocks               │
+│ 3. "Public Domain Does Not Mean Anonymous"             │
+│ 4. Zero Trademark Encroachment in UI & Copy            │
+└────────────────────────────────────────────────────────┘
+```
+
+1. **Zero Incompatible Code**: We strictly reject any external library or algorithm carrying non-commercial clauses, advertising restrictions (4-clause BSD), or proprietary commercial wrappers. Code entering *The Klang Suite* must be under compatible permissive licenses (MIT, BSD-2/3, Apache 2.0) or native GPLv3.
+2. **Universal Inline Provenance Docblocks**: Whenever an algorithm (e.g. from ChowDSP, Mutable Instruments, or EarLevel) is vectorized or adapted, it MUST include an inline C++ docblock above the class/function stating the author, upstream URL, original license, and specific adaptations made.
+3. **"Public Domain Does Not Mean Anonymous"**: Many classic DSP algorithms (e.g. on MusicDSP or academic DSP whitepapers) are published without copyright or as Public Domain / CC0. While legally free to use without license restrictions, an ethical open-source project *always* gives credit to the human mathematicians and DSP engineers who derived them (e.g. Nigel Redmon, Paul Kellett, Vadim Zavalishin).
+4. **Zero Trademark Encroachment**: Open-source pioneers (such as Émilie Gillet of Mutable Instruments) graciously share their DSP code under MIT / CC-BY-SA, but explicitly request that community members do not clone their brand or trademarked product names (e.g. *Clouds*, *Rings*, *Plaits*). We honor this by inventing fresh, evocative, and agrarian thematic names (such as **THE MIST** for our granular particle cloud, or **THE THRESHER** for polynomial waveshaping) while placing full attribution in our documentation and in-app About dialog.
+
+---
+
+## 8. The Universal Sidecar Architecture, The "Ready Handshake" & The Asymmetric Split
+
+> **Reference:** [2026 Agentic Architecture Audit & Research](research/2026-10-08_Agentic_Architecture_Deep_Research.md) provides a comprehensive post-mortem and audit.
+
+
+### The Trap: Ephemeral Brain Hash Paths & Context Redundancy
+Interactive HTML visual sidecars (such as `visual-grill-me`, interactive research boards, and visual labs) initially wrote output artifacts to deep internal directories like `.gemini/antigravity/brain/<hash>/filename.html`. This created two major pain points:
+1. **Broken URLs across sessions**: Once a chat compacted or restarted, hash-based URLs became dead or confusing to navigate.
+2. **Context Bloat & Cognitive Whiplash**: The agent would generate a rich visual mockup in the side pane, then proceed to re-dump massive comparative tables and paragraphs into the chat window, forcing the user to read everything twice and eating up the main conversation context.
+
+### The Solution: Predictable Paths, Handshakes & The Asymmetric Split
+To streamline interactive sidecars, we instituted three fundamental patterns:
+
+1. **Predictable Local Gitignored Paths**:
+   All interactive sidecars write to a stable repository directory:
+   `c:\Dev\TheKlangSuite\.agents\sidecar/<tool_name>.html` (ignored via `.gitignore`).
+   This allows bookmarking and reliable hot-reloading across any chat session.
+
+2. **The Universal Sidecar Template (`.agents/sidecar/template.html`)**:
+   Standardized layout featuring Antigravity Dark Blue theme, sticky top header, persistent font size scaler (`A-` / `100%` / `A+` saved to `localStorage`), refresh button, Web Worker state sync, and a Decision/Write-In composer.
+
+3. **The "Sidecar Ready Handshake"**:
+   When launching a sidecar skill, the agent outputs the clickable local link and pauses, waiting for the user to confirm the side pane is open ("ready", "open", or direct input) before presenting complex decision blocks.
+
+4. **The Asymmetric Sidecar Split**:
+   Once the sidecar is confirmed open, the chat interface pivots strictly to **ultra-terse, conversational exchanges (1–3 sentences)**. All verbose pros, deep technical diagrams, trade-off matrices, and visual mockups live entirely within the sidecar HTML canvas.
+
+---
+
+## 9. The Dual-Engine Research Protocol: Sprint Pro vs. Marathon Flash (`/goal`)
+
+### The Trap: Pro Quota Burn on Mechanical Information Retrieval
+A common failure mode in AI pair-programming is using expensive, high-reasoning models (Tier 1 Gemini 3.1 Pro) for broad, iterative information crawls—such as sweeping 20 forum threads for UX feedback, cataloging preset taxonomies, or reading API documentation. This burns critical daily Pro quota on tasks that require stamina rather than deep mathematical reasoning.
+
+Conversely, using lightweight models for complex non-linear DSP differential equations or multi-file lock-free concurrency often results in hallucinations or subtle numerical bugs.
+
+### The Solution: The Dual-Engine Split
+In `.agents/skills/deep-research/SKILL.md`, we codified two distinct research engines:
+
+```text
+┌────────────────────────────────────────────────────────┐
+│            DUAL-ENGINE RESEARCH ARCHITECTURE           │
+├────────────────────────────────────────────────────────┤
+│ 1. Sprint Pro (`Model="pro"` / `--sprint`)              │
+│    - Scope: Differential equations, filter proofs,     │
+│             concurrency, multi-file architecture.      │
+│    - Profile: 1–3 short, surgical, high-density turns. │
+│ 2. Marathon Flash (`Model="flash"` / `--marathon` /    │
+│                    `/goal`)                            │
+│    - Scope: UX benchmarking, forum community surveys,  │
+│             preset browser schemas, layout sweeps.     │
+│    - Profile: Long, autonomous, multi-turn crawls at   │
+│               near-zero quota burn.                    │
+└────────────────────────────────────────────────────────┘
+```
+
+By decoupling **Targeted Reasoning Sprints** from **Autonomous Exploration Marathons**, the engineering harness achieves infinite research endurance while preserving critical Pro tokens strictly for code that touches the real-time audio thread.
+
+---
+
+## 10. The Resumable Triage Lifecycle: The "Pause & Package" Protocol
+
+### The Trap: Mid-Triage Fatigue & Context Evaporation
+A major research or architectural session frequently generates 7 to 15 complex decision forks. Reviewing each item thoughtfully takes time. When a developer gets tired, needs to sleep, or hits context density, a traditional chat-based triage session collapses:
+- Uncommitted verdicts stay trapped in volatile chat transcripts.
+- If the chat is refreshed (`/clear` or `/refresh-context`), the next agent wakes up with amnesia about which items were already triaged vs pending.
+- The developer is demoralized having to re-read or re-triage the same topics.
+
+### The Solution: Deterministic State Snapshots (`.agents/sidecar/packages/`)
+In `.agents/skills/post-mortem/SKILL.md` (Phases 2.8 & 2.9), we codified the **Pause & Package / Resume** lifecycle:
+
+```text
+┌────────────────────────────────────────────────────────┐
+│            RESUMABLE TRIAGE STATE MACHINE              │
+├────────────────────────────────────────────────────────┤
+│ Active Triage ──> User says "halt/pause" ──> Snapshot  │
+│                                                │       │
+│                                                ▼       │
+│ `.agents/sidecar/packages/<date>_<topic>_triage_package.json`
+│ (Scores, verdicts, pending hero items, artifact paths) │
+│                                                │       │
+│                                                ▼       │
+│ Fresh Session ──> User: "/resume-post-mortem" ────────┘
+│ (Zero amnesia: instant restore to exact pending item!) │
+└────────────────────────────────────────────────────────┘
+```
+
+1. **Self-Contained JSON State**: Every item's verdict (`APPROVE`, `TABLE`, `KILL`), user notes, recommended action, and context target are serialized into `.agents/sidecar/packages/` and mirrored to the Obsidian Vault.
+2. **Deterministic Resumption**: The `/resume-post-mortem` command reads the latest package, outputs the clickable artifact URI, and resumes triage on the exact pending item without repeating already-settled decisions.
+
+
+
+
+
+
+
+---
+
+## 11. The Tri-Project Multi-Root Architecture & Asymmetric Sidecar Ecosystem (N'kai, TT, TKS)
+
+### The Trap: Monolithic Multi-Domain Repository Bloat
+As an audio software ecosystem matures, developers often make the mistake of shoving embedded firmware, desktop plugins, web tooling, and developer extensions into a single gargantuan repository. This creates severe architectural rot:
+- **Massive Git Trees**: Cloning the repo requires pulling hundreds of megabytes of unrelated C++, Node modules, and test assets.
+- **Polluted CI/CD Pipelines**: Modifying an HTML sidecar template triggers expensive native C++ audio compiler runs and audio thread safety scans.
+- **License Bleeding**: Pure MIT web tooling becomes awkwardly entangled with copyleft GPLv3 audio engines.
+
+### The Solution: The Tri-Project Multi-Root Pantheon
+We solved this by establishing a decoupled **Tri-Project Architecture** managed seamlessly within Google Antigravity as a multi-root workspace, backed by a single central Obsidian Vault:
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                        THE MULTI-ROOT WORKSPACE                        │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│  ┌──────────────────────┐  ┌──────────────────────┐  ┌──────────────┐  │
+│  │ THE KLANG SUITE (TKS)│  │   TOADTRACKER (TT)   │  │ N'KAI (NKAI) │  │
+│  │ Desktop VST3/AU DSP  │  │ Embedded 16-Step HAL │  │Sidecar Canvas│  │
+│  │ C++20 / JUCE 9.0.3   │  │ C++20 / ESP32-P4/SDL │  │Vanilla Web/JS│  │
+│  │ License: GPLv3       │  │ License: GPLv3       │  │ License: MIT │  │
+│  └──────────┬───────────┘  └──────────┬───────────┘  └──────┬───────┘  │
+│             │                         │                     │          │
+└─────────────┼─────────────────────────┼─────────────────────┼──────────┘
+              ▼                         ▼                     ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                   CENTRAL OBSIDIAN KNOWLEDGE GRAPH                     │
+│                       `C:\Dev\TheKlangVault\`                          │
+│                                                                        │
+│  - `Inbox/` & `Lore/` (Root capture & cross-project worldbuilding)     │
+│  - `The Klang Suite/` (Mirrored DSP specs, field guides, backlog)      │
+│  - `ToadTracker/`     (Mirrored HAL specs, Mayor Toad laws, backlog)   │
+│  - `N'kai/`           (Mirrored architecture, schemas, API reference)  │
+│  - `Research/`        (Mirrored centralized research lake & index)     │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+1. **Independent Lifecycle & Decoupled Toolchains**:
+   - `The Klang Suite` focuses purely on desktop DAW synthesis, dynamic vector faceplates, and real-time audio thread invariants.
+   - `ToadTracker` focuses on bare-metal hardware execution (dadamachines TBD-16 tri-core, Steam Deck, Raspberry Pi ALSA) under Mayor Toad's 6 laws.
+   - `N'kai` is an independent, public, MIT-licensed developer framework for Antigravity and webview-enabled AI tools.
+   - `The Klang Research` is the centralized knowledge base and exploratory canvas lake for cross-project research.
+2. **The Asymmetric Sidecar Bridge**:
+   - N'kai provides the live interactive canvas for both TKS (testing 45° signal trace animations, vertical fader feel, filter resonance bite) and ToadTracker (simulating 128×64 OLED layouts and hexadecimal parameter locks).
+3. **The Obsidian Graph as the Single Source of Truth**:
+   - Rather than duplicating notes across repositories, all high-level documentation, historical soul harvests, and creative lore converge in `C:\Dev\TheKlangVault\`.
+   - Native `[[Wikilinks]]` weave bidirectional relationships between DSP algorithms, embedded hardware constraints, and visual UI layouts.
+
+---
+
+## 12. The Contrarian Subagent Pattern, The Four-Pillar Ecosystem, and Deep-Linked Hash Routing
+
+### 12.1 The Contrarian Subagent ("Devil's Advocate Engine")
+- **The Groupthink Failure Mode**: Autonomous agent swarms tasked with exploration often succumb to an echo chamber of ungrounded optimism. When asked to evaluate new frameworks or architectures, subagents frequently praise features without analyzing hidden operational hazards, dependency bloat, compilation pitfalls, or long-term maintenance friction.
+- **The Tri-Engine Subagent Pattern (`2 Explore + 1 Contrarian`)**:
+  - Whenever exploring architectural branching points, New Klang City deploys two exploratory subagents (`explore`, Flash High) alongside one dedicated adversarial subagent (`contrarian`, Flash High).
+  - The Contrarian's explicit mandate is to find hidden failure modes, edge-case traps, dependency rot, and historical precedents of failure across the 4 Lenses.
+  - **The 80/20 Middle Ground**: By pitting constructive ideation directly against adversarial critique, the parent agent extracts the pragmatic 80% benefit with only 20% of the complexity, filtering out fragile over-engineering before a single line of production code is written.
+
+### 12.2 The Four-Pillar Ecosystem & The Hybrid 80/20 Research Pattern
+- **The Four Pillars**:
+  1. `The Klang Suite` (`c:\Dev\TheKlangSuite`): Polyphonic DSP synthesis, JUCE 9.0.3 VST3/Standalone instruments, zero-allocation audio path.
+  2. `ToadTracker` (`c:\Dev\ToadTracker`): 16-step embedded hardware tracker, dadamachines TBD-16 HAL, bare-metal C++20 engine.
+  3. `N'kai` (`c:\Dev\nkai`): Asymmetric Sidecar Framework & Interactive Triage Lab, dual-mode standalone HTML + Antigravity UI extension plugin.
+  4. `The Klang Research` (`c:\Dev\Research` / `TheKlangResearch`): Centralized research repository, exploratory canvases, DSP proofs, hardware benchmarks, and agent soul harvests.
+- **The Hybrid 80/20 Research Architecture**:
+  - **Active Specs Stay Co-Located (The 20%)**: High-level engineering specifications (`docs/specs/*.md`) and core architectural guidelines (`GEMINI.md`, `docs/BACKLOG.md`) MUST remain co-located within their parent codebases. This preserves atomic git commits, PR review fidelity, and `git bisect` integrity.
+  - **Exploratory Research Stays Centralized (The 80%)**: Deep multi-page research documents, subagent transcripts, 300KB+ HTML sidecar canvases, and academic algorithm surveys are archived into `TheKlangResearch`. This prevents codebase bloat, preserves agent context windows during factory builds, and allows cross-project research to be shared freely.
+
+### 12.3 Deep-Linked Hash Routing from Agent Chat Footers
+- **The Context Grounding Challenge**: During intense coding or planning sessions, developers need immediate, one-click access to the active backlog milestone without hunting through directories or opening external browser windows.
+- **The Hash-Routed Roadmap Sidecar**:
+  - Chat responses feature clickable SemVer status badges formatted as:
+    `[ 🏷️ [TKS: v0.4.0-dev](file:///<artifactDir>/roadmap_sidecar.html#tks-v0.4.0) | [TT: v0.1.0](file:///<artifactDir>/roadmap_sidecar.html#tt-v0.1.0) | [NK: v0.1.0](file:///<artifactDir>/roadmap_sidecar.html#nk-v0.1.0) | [TKR: v0.1.0](https://github.com/codygratner/TheKlangResearch) ]`
+  - Clicking any badge instantly opens the N'kai Roadmap Sidecar in the Antigravity side panel.
+  - The sidecar's client-side hash router listens to `window.location.hash` and `hashchange` events, automatically activates the corresponding project tab, and executes a smooth scroll with an amber focus pulse directly to the target milestone card.
+- **Zero-Dependency Compilation**:
+  - The roadmap is compiled deterministically from markdown backlogs across all repos using `tools/sync_roadmap_sidecar.py` in ~40ms, guaranteeing zero drift, zero manual HTML synchronization, and 100% offline portability.
 
 

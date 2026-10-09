@@ -8,8 +8,10 @@ This directory serves as the **Master Map of Content (MOC)**. It is mirrored dir
 
 ## 🗺️ Master Roadmaps & Living Standards
 
+- **[Documentation Catalog](DOCS_CATALOG.json)**: Master index and navigation manifest for all documentation, specs, research archives, and sidecars.
 - **[Master Product Backlog & Roadmap](BACKLOG.md)**: Prioritized milestones, feature lists, and upcoming releases.
 - **[Architectural Taxonomy (Glossary)](GLOSSARY.md)**: Canonical terminology (*Chassis*, *Cards*, *Modules*, *Sliders*, *Knobs*).
+- **[Third-Party Licenses & Attribution](THIRD_PARTY_LICENSES.md)**: FOSS licensing, provenance, and GPLv3 compliance ledger.
 - **[Project Root README](../README.md)**: Public project showcase, screenshots, and build instructions.
 - **[Changelog](../CHANGELOG.md)**: SemVer release notes and version history.
 
@@ -61,10 +63,19 @@ Comprehensive design blueprints for upcoming milestones and sound design capabil
 
 Institutional memory and milestone summaries:
 
-- **[The Vibe-Coder's Field Guide & Strategy Graveyard](history/vibe_coding_field_guide.md)**: Hard-won lessons, abandoned strategies, and the production playbook for pair-programming C++ audio plugins with AI.
+- **[The Vibe-Coder's Field Guide](history/vibe_coding_field_guide.md)**: Autonomous pair-programming workflows, agent pipelines, and the Strategy Graveyard.
+- **[The Audio DSP & C++ Field Guide](history/audio_dsp_field_guide.md)**: C++ audio engineering, DSP thread invariants, and advice for transitioning developers.
+- **[Deep Research Soul Harvest](history/research/2026-10-08_Subagent_Deep_Research_Harvest.md)**: Permanent archive of DSP equations, architectures, and proofs from Subagent research.
 - **[Development Journal (DEV_HISTORY.md)](history/DEV_HISTORY.md)**: Living chronological record of architecture decisions and milestones.
 - **[Historical Backlog Archive](history/BACKLOG_ARCHIVE.md)**: Pre-v0.3.0 tasks and legacy prototype notes.
 - **[v0.3.0 Release History](history/archives/DEV_HISTORY_v0.3.0.md)**: Complete record of the v0.3.0 Architecture Update.
+
+---
+
+## 🎨 Sidecar Infrastructure (`.agents/sidecar/`)
+
+- **[Sidecar Template](../.agents/sidecar/template.html)**: Standardized interactive HTML sidecar shell (dark theme, font zoom, state sync).
+- **[Active Grill Lab Sidecar](../.agents/sidecar/visual_grill_me.html)**: Visual design and architectural interview canvas.
 
 ---
 

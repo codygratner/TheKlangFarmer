@@ -1,6 +1,16 @@
 # The Klang Suite: Developer History & Institutional Memory
 
+## ?? Milestone Anchor Directory
+- [**v0.4.0 (Interface & Experience)**](#session-2026-10-08-0829-9241988e-1227-466e-a0a5-446d61a69d77) — Neo-Slate UX, Grill Lab, Modulation Matrix. (375/375 GUI Tests, 100% DSP)
+- [**v0.3.3 (The Hardening Gauntlet)**](#session-2026-10-07-2045-8fe6b97b-f027-4cc9-8cc2-d5f67ccfb0c9) — CI Lockdown, Monitor Saver, Chaos Fuzzing. (305/305 GUI Tests, 100% DSP)
+- [**v0.3.2 (Agent Infrastructure)**](#session-2026-10-07-1444-8fe6b97b-f027-4cc9-8cc2-d5f67ccfb0c9) — TKS_LOG, Unified Tree, Strings Schema. (294/294 GUI Tests, 100% DSP)
+- [**v0.3.1 (Editor Quality & Data Schema)**](#session-2026-10-07-0554-9241988e-1227-466e-a0a5-446d61a69d77) — Schema Separation, Tree UX, Callouts. (257/257 GUI Tests, 100% DSP)
+- [**v0.3.0 (Architecture)**](#session-2026-10-06-1304-8fe6b97b-f027-4cc9-8cc2-d5f67ccfb0c9) — Headless GUI Tests, .pkg Installer. (160 Parity Matches)
+
 ## Section A: Executive Institutional Memory & Lessons Learned
+
+> **Note:** On 2026-10-08, the Agentic Architecture Audit and Deep Docs pass was completed. See [2026-10-08_Agentic_Architecture_Deep_Research.md](research/2026-10-08_Agentic_Architecture_Deep_Research.md) for details.
+
 
 ### Audio Thread & DSP Rules
 - **Zero Allocations:** Never call 
@@ -68,7 +78,7 @@ ew, malloc, ree, or resize dynamic containers (std::vector::push_back, juce::Ar
   - Enforced strict schema separation: visual styling and palettes moved to `assets/themes/theme.json` and `callouts.json`, leaving `assets/controls/` strictly for DSP parameter contracts.
   - Sourced Master Limiter popover parameters from `assets/themes/callouts.json` and dynamically mounted `[Callout] Master Limiter` under The Klang Planter in the tree with popover preview rendering, keeping `assets/layouts/tkp_layout.json` strictly to the physical 8-card 4x2 grid.
   - Implemented pre-indexed bidirectional Where-Used & Associations panel in <2ms with double-click tree navigation.
-  - Enabled top-level callout parameter property population in `formEditor` (matching Cards 1–8).
+  - Enabled top-level callout parameter property population in `formEditor` (matching Cards 1â€“8).
   - Codified the Strict Release Authority Gate in `GEMINI.md`, restricting `/cut-release` and release tagging strictly to New Klang City (Ivory Tower).
   - Codified Strict Clipboard & External Link Ingestion Guardrail in `GEMINI.md`.
   - Passed dual Debug and Release regression gauntlets (257/257 `gui_tests` and 100% `dsp_tests`).
@@ -143,8 +153,95 @@ ew, malloc, ree, or resize dynamic containers (std::vector::push_back, juce::Ar
   - Implemented gloomy cyberpunk Neo-Slate theme with bundled JetBrains Mono typography fallback hierarchy (`TkfTypography::getFont`).
   - Integrated `juce::UndoManager` into `KlangCoreProcessor` with hotkeys (`Ctrl+Z`, `Ctrl+Y`, `Ctrl+Shift+Z`) and A/B state memory buffers.
   - Added 4 persistent top-header Performance Macros (`macro_1..4`), `SmartValueParser` (`C2+37c`, `1/4d`, `-6dB`, `55Hz`), and 30Hz animated Lower Modulator Strip.
-  - Engineered glowing Bézier `ModulationTracerOverlay` with 4-color Eurorack docking sockets and `ModulationInspectorPopover`.
+  - Engineered glowing BÃ©zier `ModulationTracerOverlay` with 4-color Eurorack docking sockets and `ModulationInspectorPopover`.
   - Created `TextTruncationAuditSuite` in `test/HardeningSuites.h` auditing 972 visible text elements across 3 window sizes and 4 DPI scales (0 truncations detected).
   - Passed 100% of DSP tests (`dsp_tests.exe`), 352/352 GUI assertions (`gui_tests.exe`), and Chaos Monkey stress suite (`gui_tests.exe --chaos`, 6487 events in 3000ms).
   - Deployed `.vst3` and Standalone binaries via `deploy.ps1`, committed to `0.4.0-dev` (`34215b7`), and pushed to GitHub remote.
+
+
+### Session: 2026-10-08 08:29 (9241988e-1227-466e-a0a5-446d61a69d77)
+- **Chat Role:** Strategic Planning & Architecture (New Klang City / Pro High)
+- **Primary Objectives:** Execute Milestone Capstone Harvest for v0.4.0. Codify the "Grill Lab" sidecar architecture, Hybrid 1+3 Negative Architecture (Field Guide Graveyard), and Fast Indexing (Obsidian Graph Bridge) into the Field Guide. Clarify Graveyard scope to exclude routine application bugs.
+- **Files Modified/Created:** `docs/history/vibe_coding_field_guide.md`, `docs/BACKLOG.md`, `docs/history/DEV_HISTORY.md`, `C:\Dev\TheKlangVault\Docs\History_Index.md`
+- **Key Decisions:**
+  - Codified the Dual-Chat Synergy & The Grill Lab (Live Sidecar Visual Sandboxing) in the Field Guide, allowing instant <200ms HTML+CSS visual mockup evaluations without C++ rebuilds.
+  - Implemented the Hybrid 1+3 Negative Architecture Standard, capturing systemic AI workflow anti-patterns in the "Tombstones" section and utilizing inline source code annotations for high-risk hazards.
+  - Enforced Fast Historical Indexing using a Two-Tier Hub and an Obsidian `[[Wikilinks]]` bridge for visual graph navigation.
+  - Formally marked v0.4.0 (Interface & Experience) as Completed in the BACKLOG and synthesized the milestone capstone.
+
+
+### Session: 2026-10-08 08:49 (9241988e-1227-466e-a0a5-446d61a69d77)
+- **Chat Role:** Strategic Planning & Architecture (New Klang City / Pro High)
+- **Primary Objectives:** Deep industry UX research (Vital, Pigments, Phase Plant, Serum, Falcon, Soundtoys, Noise Engineering) in preparation for v0.5.0/v0.6.0 Grill Lab.
+- **Files Modified/Created:** `docs/BACKLOG.md`, `ui_ux_research_board.html` (Artifact)
+- **Key Decisions:**
+  - Integrated Vault notes (multi-mode unified Mega-Modules, FX Picker pre-selections, Alpha Juno oscs, Spectral/ER-1 cross-mod) into the v0.5.0 milestone in `BACKLOG.md`.
+  - Adopted Noise Engineering's "Macro-Parameter" philosophy: 4-control surface knobs dynamically remap to complex underlying DSP algorithms based on an overarching mode switch.
+  - Formalized UI Anti-Patterns in the Graveyard: No UVI Falcon spreadsheet trees, no invisible state dependencies, and no tiny unclickable hitboxes.
+
+### Session: 2026-10-08 09:05 (9241988e-1227-466e-a0a5-446d61a69d77)
+- **Chat Role:** Strategic Planning & Architecture (New Klang City / Pro High)
+- **Primary Objectives:** Advanced UX Mockups for upcoming milestones (D6 Randomization, WAV Export, Sample Players) & Hardware TBD-16 / ToadTracker DSP mapping.
+- **Key Decisions:**
+  - **D6 Randomization:** Hierarchical implementation (Global Preset -> Page Level -> Module/Card Level). Vector dice visual embedded in card headers.
+  - **Sample/Export UX:** 4-control unified card with an embedded waveform visualizer and draggable WAV render icons.
+  - **Hardware Synergy (TKB/ToadTracker):** Discovered that the TBD-16's OLED + 4-encoder layout is a mathematical 1:1 match for our software 4-control Cards. Tactile grid buttons serve as instant card jumps. DSP blocks will use `FastMath.h` to comply with the 400 MHz ESP32-P4 architecture limit.
+  - **UI Stubs Added:** The Klang Cultivator (CV Mod Rack), The Klang Mill (1x6 Pedalboard), and TKB OLED mockups added to the Research Board artifact.
+
+### Session: 2026-10-08 09:10 (9241988e-1227-466e-a0a5-446d61a69d77)
+- **Chat Role:** Strategic Planning & Architecture (New Klang City / Pro High)
+- **Primary Objectives:** DSP Architecture & UI Deep-Dive for v0.5.0/v0.6.0.
+- **Archived Artifact:** [2026-10-08_UI_UX_DSP_Research.html](research/2026-10-08_UI_UX_DSP_Research.html)
+- **Key Decisions:**
+  - **Mod Matrix UX:** Target-based injection (Opt+Click a knob to flip the 4-control card into Mod Depth for LFOs/Envelopes).
+  - **Theming Engine:** JSON palettes, strict ban on real-time `DropShadowEffect` for animated controls. Glassmorphism via cached `juce::Image` blending.
+  - **Direct-to-Sample Pipeline:** Background `juce::Thread` runs an isolated offline DSP graph, outputs to temp `.wav`, and passes to `juce::DragAndDropContainer` for seamless DAW timeline injection.
+  - **Advanced Filters:** Zero-Delay Feedback (ZDF/TPT) topologies with `FastMath::pade_tanh()` injected into the feedback loop for analog non-linearity.
+  - **Alpha Juno Engine:** Implement via a high-res band-limited phasor (PolyBLEP), subtracting a phase-shifted copy to generate the classic "Saw-PWM", with a cheap divide-by-2 counter for the sub-oscillator.
+  - **Wavetable Anti-Aliasing:** Enforce MIP-mapped wavetables (filtering high harmonics at upper octaves) to prevent Nyquist aliasing. Embedded hardware will require downsampling to fit PSRAM.
+  - **West-Coast DSP Additions:** Buchla-style wavefolding (`sin(x * drive)`) and Karplus-Strong physical modeling (noise burst into tuned short delay line) added to the roadmap due to their extremely high CPU efficiency on the ESP32-P4.
+  - **Blue Sky - Neural DSP:** Investigated `RTNeural` LSTM inference for embedded analog saturation. Likely constrained to a mono Master Bus to protect polyphonic CPU.
+  - **Blue Sky - Generative Math:** Outlined a "Klang-Brain" Euclidean Sequencer (Steps, Hits, Offset, Chaos) that maps perfectly to the 16 tactile hardware buttons.
+  - **Blue Sky - Physical Modeling:** Designed a Modal Resonator module (Structure, Brightness, Damping, Position) to synthesize struck glass/metal inside the 4-control limit.
+  - **Blue Sky - Spatial Audio:** Binaural HRTF FX module for true 3D spatialization on headphones.
+  - **Voice Architecture Pivot (Mono with Tails):** Abandoning strict 16-voice chordal polyphony to save massive CPU on the ESP32-P4. Enforcing a monophonic legato core where the hidden polyphonic engine is only used to allow release envelopes (tails) to overlap without choking.
+  - **Pre/Post-Amp Division:** Pre-Amp FX (Oscillators, Filters, Wavefolders) run polyphonically per-voice for clarity. Post-Amp FX (Master Drive, RTNeural, Spatial Audio) run as a single monolithic block after the summing node for intermodulation and massive CPU savings.
+  - **The Unconsidered UI - Elektron Parameter Locks:** Adopting Overbridge workflows for the TBD-16. Holding a grid button maps the 4 encoders to that specific sequencer step.
+  - **The Unconsidered UI - Valhalla Minimalism:** Rejecting 3D knobs in favor of massive, flat typography readouts that temporarily overlay the graphic when turned.
+  - **The Unconsidered UI - Output Macros:** Adding a dedicated Performance Page with 4 massive macro controls (TENSION, WASH, CHAOS, DRIVE).
+  - **The Unconsidered UI - FabFilter Visuals:** Placing spectrum analyzers and waveform visualizers *behind* the static knobs to maximize screen real estate on the OLED.
+  - **Advanced UX (A11y & Morphing):** Added shape-based modulation rings (dots vs bars) for colorblind accessibility. Outlined A/B/C/D Snapshot Morphing via X/Y pads to break the linear undo trap.
+  - **DSP - Polyphase Oversampling:** Drive modules will use CPU-cheap Half-Band FIR/IIR upsampling to prevent high-frequency non-linear aliasing foldback.
+  - **DSP - Phase Distortion:** Adopted Casio CZ-style phase warping as a CPU-cheap alternative to heavy Yamaha DX7-style FM synthesis.
+  - **Blue Sky - Granular Clouds:** Outlined a granular particle engine (Position, Density, Size, Spray). Will require the new "Mono-with-Tails" architecture to afford the micro-voice CPU cost.
+  - **Blue Sky - Cellular Automata:** Conway's Game of Life generating MIDI notes directly on the TBD-16 OLED.
+  - **TBD-16 Hardware Spec:** Confirmed tri-core architecture (ESP32-P4 for audio, RP2350B for UI/MIDI, ESP32-C6 for connectivity).
+  - **TKS Headless Extraction:** TKS core DSP will be extracted into a pure `C++20` static library (no JUCE dependencies) to compile on the ESP32-P4 bare-metal IDF.
+  - **ToadTracker Synergy:** Hardware Parameter Locks from the TBD-16 will reflect instantly in the desktop ToadTracker grid pattern.
+  - **TBD-16 WiFi Sync:** The ESP32-C6 will listen for UDP broadcasts from the desktop VST to instantly load JSON patches without USB cables.
+  - **DSP - Analog Envelopes:** Moving from linear ADSRs to true RC capacitor charge/discharge curves (exponential 1-pole recursive filters) for massive low-end punch.
+  - **DSP - Microtonality:** Adding ODDSound MTS-ESP support to break free of Western 12-TET tuning.
+  - **UX - The Patch Browser:** Splice-style SQLite tagging system with hover-to-play `.ogg` previewing before the heavy DSP JSON even loads.
+  - **Artifact Update:** Added a new 4th macro-switch [ TBD-16 ECOSYSTEM ] to the artifact and created dedicated research subfolders in `C:\Dev\Research\`.
+
+### Session: 2026-10-08 13:15 (9241988e-1227-466e-a0a5-446d61a69d77)
+- **Chat Role:** Strategic Planning & Governance (New Klang City / Flash 3.8 High)
+- **Primary Objectives:** Codify FOSS-Forever licensing, Granular Cloud naming, and architect Universal Sidecar System.
+- **Key Decisions & Deliverables:**
+  - **The Mist Granular Cloud:** Formally locked in **`THE MIST`** (FX #29 / `TheMistGranularBlock`) across `docs/BACKLOG.md` (v0.5.0), honoring Stephen King's 2007 novella/film while avoiding third-party trademarks (*Clouds*).
+  - **Strict FOSS-Forever Guardrail:** Established 4-pillar open-source compliance in `GEMINI.md` and created [`docs/THIRD_PARTY_LICENSES.md`](file:///c:/Dev/TheKlangSuite/docs/THIRD_PARTY_LICENSES.md) to guarantee GPLv3 copyleft reciprocity, attribution of public domain math, and inline SPDX docblocks.
+  - **Universal Sidecar Template:** Authored [`.agents/sidecar/template.html`](file:///c:/Dev/TheKlangSuite/.agents/sidecar/template.html) (v1.1.0) with persistent font zoom scaler (`A-` / `100%` / `A+` via `localStorage`), sticky header, refresh button, Web Worker state sync, and decision composer.
+  - **Sidecar Ready Handshake & Asymmetric Split:** Codified handshake gate and rule requiring ultra-terse chat turns (1–3 sentences) while rich visuals and verbose prose live in the sidecar canvas.
+  - **Visual Grill Lab Decisions:** Approved Option A for Flash High Orchestrator + Pro Subagents, and Option A for Universal Sidecar Template + Link-Only Pre-Flight Index.
+
+### Session: 2026-10-08 16:15 (9241988e-1227-466e-a0a5-446d61a69d77)
+- **Chat Role:** Strategic Planning & Ecosystem Architecture (New Klang City / Flash 3.8 High)
+- **Primary Objectives:** Harvest Layouts & Ergonomics research, establish standalone Sidecar framework, integrate ToadTracker into multi-root workspace, package triage for resumption, and establish canonical gitignored lore repository.
+- **Key Decisions & Deliverables:**
+  - **Layouts & Ergonomics Research Harvest:** Harvested findings from 5 subagents into [`docs/history/research/2026-10-08_Layouts_and_Ergonomics_Deep_Research_Harvest.md`](file:///c:/Dev/TheKlangSuite/docs/history/research/2026-10-08_Layouts_and_Ergonomics_Deep_Research_Harvest.md) exploring breaking the 4-control rule on desktop, monolithic sculpted faceplates, 45° signal traces, Teenage Engineering game-feel vector glyphs, and Roland TR-8S vertical rhythm faders.
+  - **Standalone Antigravity Sidecar Framework:** Initialized independent MIT repository [`c:\Dev\antigravity-sidecar\`](file:///c:/Dev/antigravity-sidecar) containing the zero-dependency standalone template, CSS/JS core, JSON schema, and Antigravity UI Extension bundle.
+  - **ToadTracker Multi-Root Workspace & Genesis Harvest:** Integrated [`c:\Dev\ToadTracker`](file:///c:/Dev/ToadTracker) into the AGY workspace and harvested the entire 1,678-step setup chat into `ToadTracker_Genesis_and_Architecture_Harvest.md`.
+  - **Post-Mortem Packaging & Skill Upgrades:** Created machine-readable triage resumption package [`2026-10-08_layouts_and_ergonomics_triage_package.json`](file:///c:/Dev/TheKlangSuite/.agents/sidecar/packages/2026-10-08_layouts_and_ergonomics_triage_package.json) and upgraded `.agents/skills/post-mortem/` and `.agents/skills/deep-research/` with `/pause-post-mortem` and `/resume-post-mortem` workflows.
+  - **Creative Lore & Mayor Toad's Mayoral Coup:** Established the local gitignored lore staging directory `docs/lore/` (anchored by `!docs/lore/README.md`) and recorded [`docs/lore/2026-10-08_the_mayoral_coup_of_mayor_toad.md`](file:///c:/Dev/TheKlangSuite/docs/lore/2026-10-08_the_mayoral_coup_of_mayor_toad.md), documenting how Tsathoggua took City Hall via a 20 MHz SPI DMA data bus and a 55 Hz resonant low-end pulse. Mirrored to `TheKlangVault/Lore/` and registered in `docs/DOCS_CATALOG.json`.
+
 

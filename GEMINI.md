@@ -28,8 +28,12 @@
   - **1-Level Downgrade (Tier 1 ➔ 2, Tier 2 ➔ 3)**: Display banner, schedule a 5-minute grace timer (`schedule(DurationSeconds=300)`), and pause in chat. If timer expires without reply, auto-proceed on existing tier.
   - **2-Level Downgrade (Tier 1 ➔ 3)**: Display banner and **hard-pause indefinitely** without timer to protect critical Pro quota.
   - **Matched Tier Auto-Proceed**: If active model matches or exceeds the recommended tier, output subtle badge `✓ Model Verified: <Model> (<Thinking>) matches Tier <N>` and proceed immediately.
-  - **Builder Pause Gate**: Klang Industries MUST NEVER use `ask_question` modals at execution start (modals freeze IDE model dropdowns). Output the Model Advisory banner in chat text and pause.
-  - **Subagent Policy**: Always use `Model="flash"` for read-only research subagents (`invoke_subagent`), and `Model="pro"` only for heavy multi-file reasoning.
+  - **The "Flash Orchestrator + Pro Subagent" Engine**: The main chat session stays permanently on Tier 2 Flash 3.8 High (sustainable daily driver). For heavy DSP differential equations, non-linear saturation proofs, or complex multi-file architectural synthesis, the agent autonomously delegates to on-demand Pro subagents (`invoke_subagent(Model="pro")`), slashing Pro quota burn by ~90% and keeping the main chat transcript lean. Manually switching the IDE footer dropdown to Pro High is strictly an escalation fallback if a factory build fails 2 strikes or for milestone capstone synthesis.
+  - **Subagent Policy & Naming Convention (`research` vs `explore` vs `contrarian`)**:
+    - **`research` (`Model="pro"`)**: Targeted Tier 1 Sprint mode reserved strictly for high-reasoning tasks (DSP differential equations, non-linear saturation proofs, lock-free concurrency proofs, and complex multi-file architectural synthesis).
+    - **`explore` (`Model="flash"`)**: Autonomous Tier 2 Marathon mode for broad, goal-oriented sweeps (UI/UX layout explorations, community sentiment analysis across Reddit/KVR/Gearspace, preset browser taxonomy, and broad competitive benchmarking).
+    - **`contrarian` (`Model="flash"`)**: The Devil's Advocate adversarial mode paired with exploratory sprints to stress-test proposals, expose edge-case failure modes, and derive the pragmatic 80/20 middle ground.
+    - **Session Footer Reminder**: Chat responses during active research/exploration sessions must include the subagent reminder badge in the footer: `[ 🔬 Subagents: research (Pro) / explore (Flash) / contrarian (Advocate) ]`.
 
 ## Target Toolchain & Standards
 - **C++ Standard**: C++20 (`CMAKE_CXX_STANDARD 20`).
@@ -104,8 +108,45 @@
 
 ## Interactive Decision Modals & Wrap-Up
 - **Interactive Modal Required for Design Menus**: When presenting design options (at the end of `/grill-me`, `/plan`, or architectural branching forks), NEVER output raw numbered text lists forcing the user to type "3". ALWAYS invoke `ask_question`.
-- **CRITICAL EXCEPTION**: Under NO circumstances use `ask_question` at the builder execution start gate (`/read-plan`, `/execute-task`). Modals freeze the IDE model dropdown. Pause in chat text.
+- **CRITICAL EXCEPTIONS (NEVER USE `ask_question`)**:
+  1. **Post-Mortem & Triage Lab (`/postmortem`, `/triage`)**: Under NO circumstances use `ask_question` during post-mortem triage. All option cards, trade-off breakdowns, and triage choices MUST live inside the Sidecar HTML Canvas (with a copy-to-chat Decision Composer). The user reviews the sidecar and simply types back in natural chat text.
+  2. **Builder Execution Start Gate (`/read-plan`, `/execute-task`)**: Modals freeze the IDE model dropdown. Pause in chat text.
 - **Wrap-Up Housekeeping**: Document interview conclusions in Backlog or Plan.
+
+## Strict "4-Lens Pros & Cons" Evaluation Standard
+- Whenever the user asks for "pros and cons", tradeoffs, or evaluations, agents MUST systematically analyze the topic across the **4 Lenses**:
+  1. 🌍 **Real-World / Daily Ergonomics**: Practical day-to-day developer friction, speed, cognitive load, and maintenance realities.
+  2. 🎛️ **Audio Software Industry**: How top synth/plugin developers (Vital, Kilohearts, FabFilter, Elektron, Bitwig, Reaper) solve it.
+  3. 🏛️ **Wider Software Industry / SOTA**: How modern systems, AI agent frameworks, and web architectures (Anthropic, OpenAI, GitHub, Linux) solve it.
+  4. 🏆 **Best Practices & Sustainability**: Clean code, zero technical debt, token economics, avoiding premature optimization.
+
+## Multi-Repo SemVer Footer Tracking & Deep-Linked Roadmap
+- Chat responses during active research/planning sessions must include the SemVer status badge alongside the subagent badge:
+  `[ 🏷️ [TKS: v0.4.0-dev](file:///<artifactDir>/roadmap_sidecar.html#tks-v0.4.0) | [TT: v0.1.0](file:///<artifactDir>/roadmap_sidecar.html#tt-v0.1.0) | [NK: v0.1.0](file:///<artifactDir>/roadmap_sidecar.html#nk-v0.1.0) | [TKR: v0.1.0](https://github.com/codygratner/TheKlangResearch) ] [ 🔬 Subagents: research (Pro) / explore (Flash) / contrarian (Advocate) ]`
+
+## The Centralized Research Hub (`TheKlangResearch`) & Hybrid 80/20 Standard
+- **The Four Pillars**:
+  1. `TheKlangSuite` (`c:\Dev\TheKlangSuite`): Desktop audio plugin suite (VST3/AU).
+  2. `ToadTracker` (`c:\Dev\ToadTracker`): Embedded hardware tracker & groovebox engine.
+  3. `nkai` (`c:\Dev\nkai`): Asymmetric sidecar framework & interactive triage lab.
+  4. `TheKlangResearch` (`c:\Dev\Research` $\leftrightarrow$ `github.com/codygratner/TheKlangResearch`): Centralized RFCs, eternal DSP mathematics, cross-cutting microcontroller teardowns (TBD-16 ESP32-P4), interactive HTML research boards, and subagent soul harvests.
+- **The Hybrid 80/20 Invariant**:
+  - Active implementation specs (`docs/specs/*.md`) and APVTS contracts stay co-located in the code repository to preserve atomic Git commits, PR review fidelity, and `git bisect` history.
+  - Large 300KB+ HTML research boards, subagent transcript harvests, and cross-project hardware specs live in `TheKlangResearch` to prevent repository bloat and token-burning agent scans.
+  - `tools/sync_obsidian_vault.ps1` compiles `TheKlangVault/Research/Master_Research_Index.md` on every sync pass. Zero Dataview plugin dependency; 100% portable plain Markdown.
+
+## Strict Sidecar Architecture & Ready Handshake Gate
+- **Dual-Storage Sidecar Architecture**: All interactive HTML sidecar tools (`visual-grill-me`, research boards, interactive canvas labs) MUST write to BOTH:
+  1. The Antigravity Artifact directory: `<appDataDir>\brain\<conversation-id>\<tool_name>.html` (for live side-panel webview rendering).
+  2. The gitignored repository directory: `c:\Dev\TheKlangSuite\.agents\sidecar/<tool_name>.html` (for local persistence).
+- **The "Sidecar Ready Handshake" (MANDATORY ARTIFACT URI)**: Whenever an agent initiates a workflow paired with an interactive sidecar:
+  1. **Mandatory Artifact Link**: The agent MUST output the prominent, clickable file URI pointing to the **Artifact Directory** in chat:
+     `👉 **[Open <Tool Name> Canvas](file:///<appDataDir>/brain/<conversation-id>/<name>.html)**`
+     *(CRITICAL: Antigravity treats links inside the workspace repository `c:\Dev\TheKlangSuite\...` as source code and opens them in the text editor. Links pointing to the Artifact Directory are intercepted by the IDE and rendered in the rich, interactive side-panel Webview. Never output workspace repo paths as the primary chat link).*
+  2. The agent MUST pause and prompt the user to open the file in their side panel.
+  3. The agent must wait for the user to confirm ("ready", "open", or direct input) BEFORE presenting complex question blocks or options, guaranteeing the visual experience is active.
+- **The Asymmetric Sidecar Split (Terse Chat, Rich Sidecar)**: Once the sidecar is confirmed active, chat responses MUST be ultra-terse, snappy, and conversational (1–3 sentences or quick prompts). All verbose prose, comparative tradeoff tables, architectural diagrams, and option mockups belong exclusively inside the sidecar HTML canvas. This eliminates redundant reading and preserves chat context.
+- **The Universal Reusable Sidecar Template (`.agents/sidecar/template.html`)**: All sidecar-enabled tools (`visual-grill-me`, `deep-research`, future interactive labs) MUST instantiate from the standardized repository template. Features include the Antigravity Dark Blue theme, sticky header, persistent font size scaler (`A-` / `100%` / `A+` persisted in `localStorage`), refresh button, Web Worker state sync, and decision composer. Template updates automatically propagate across all sidecar workflows.
 
 ## Strict Scratch Script Hygiene
 - **Instant Cleanup**: When temporary scripts (`update_*.py`, `temp_*.py`) are created for refactors or tests, ALWAYS delete them immediately in the terminal command chain (e.g., `python script.py ; rm script.py`). Never leave temporary scripts in the tree.
@@ -122,6 +163,7 @@
   - Fresh builder sessions (< 12 turns): Instant engage on `proceed`.
   - Mature builder sessions (> 15 turns): Output subtle 1-line notice: `💡 Factory Context Notice: ~N turns accumulated. Reply 'proceed' to build, or 'harvest & proceed' for a clean slate.`
   - Power-User Flag (`harvest & proceed`): Harvests session into `docs/DEV_HISTORY.md`, updates `context_clues_build.md`, and prompts refresh.
+- **"Step 0: Pre-Flight Context Clues" & Link-Only Indexing**: Both `context_clues_plan.md` and `context_clues_build.md` maintain a lightweight (< 150 token) Quick-Reference Index with clickable `file://` links to `docs/GLOSSARY.md`, `docs/architecture/product_lineup.md`, sibling specs, and active `docs/BACKLOG.md` milestones. Fresh agents waking up from `/clear` or context refresh MUST execute a deterministic "Step 0" check on turn 1 to index the active vision and glossary without dumping static document contents into the prompt.
 
 ## Strict Chat Role Enforcement (Planner vs. Builder)
 - **Role Identification**: Determine role by checking the user's initial prompt or reading `context_clues_plan.md` vs `context_clues_build.md`.
@@ -167,11 +209,38 @@
   5. **JUCE 9.0.3 Timer Hygiene**: 100% of `juce::Timer` subclasses call `stopTimer()` as first line of destructor.
   6. **Pro High Documentation Polish & Wiki Sync (Phase 2.5)**: Review and update `CHANGELOG.md`, `docs/history/DEV_HISTORY.md`, cross-link integrity, and mirror to `TheKlangVault/Docs/` in Tier 1 Pro High before tagging.
 
-## Strict Clipboard & External Link Ingestion Guardrail
+## Strict Web Access & Clipboard Guardrails
 - **Zero Arbitrary Clipboard Sniffing**: Agents must NEVER inspect or read the host system clipboard (`Get-Clipboard`). Blueprints, tasks, and code must originate exclusively from local workspace files or direct chat input.
-- **Never Fetch External URLs**: Agents must NEVER automatically fetch or scrape external web URLs via `read_url_content` or `curl` during planning, building, or task ingestion without explicit user confirmation.
+- **The Web Access State Machine**: To prevent prompt-fatigue while preserving privacy, agents must adhere to a strict Web Access state machine for `search_web`, `read_url_content`, and `curl`:
+  1. **RESTRICTED (Default)**: Web access is strictly prohibited. The agent must pause and ask for explicit permission before any external query.
+  2. **QUERY_ONLY**: User replies "ok" / "yes". Access is granted for the immediate action, then instantly reverts to RESTRICTED.
+  3. **SKILL_SESSION**: User replies "ok for this session" / "for this skill". Access is granted for the duration of the active skill (e.g., `/deep-research`). It reverts to RESTRICTED upon skill completion or archival.
+  4. **GLOBAL_TEMPORARY**: User replies "ok globally". Access is granted indefinitely for the duration of the current context window. Reverts to RESTRICTED upon `/clear`.
+- **Mandatory Web Security Footer**: If the state machine is elevated to `SKILL_SESSION` or `GLOBAL_TEMPORARY`, the agent MUST append a highly visible security badge to the bottom of EVERY chat response so the user does not forget the agent is live on the internet.
+  > `[ 🌐 Web Access: ACTIVE (<Scope>) | 🧠 Model: <Tier> ]`
 - **Local-Only Plan Priority**: All plans, tasks, and communique documents MUST come exclusively from local workspace files (e.g. `PLAN.md`, `.agents/pipeline/communique/plan_to_build.md`) or direct text provided by user.
 - **Privacy & Context Boundary**: The host system clipboard may contain private, out-of-band user data from other applications (notes, meeting links, passwords, tokens). Respect context boundaries at all times.
+
+## Strict FOSS Attribution & External Code Hygiene Guardrail ("FOSS Forever")
+- **Copyleft Reciprocity First (GPLv3)**: *The Klang Suite* is licensed under the GNU General Public License v3.0 (GPLv3). Under NO circumstances may proprietary, non-commercial (e.g., CC-BY-NC), or GPL-incompatible code (e.g., 4-clause BSD with advertising clause, commercial NDA SDKs) be copied, adapted, or introduced into the repository.
+- **Permissive Open-Source & Public Domain Only**: External algorithms, DSP blocks, and utilities may ONLY be ingested from compatible open-source licenses (GPLv3, LGPLv3, MIT, BSD-2/3-Clause, Apache 2.0, ISC, zlib, Boost) or verifiable Public Domain works (CC0, Unlicense, academic algorithm descriptions).
+- **Mandatory Inline Provenance Docblocks**: Every adapted DSP function, mathematical formula, or external utility in C++ source files MUST be preceded by a standardized provenance docblock:
+  ```cpp
+  /**
+   * @brief [Algorithm Name / Functionality Description]
+   * Adapted from: [Author / Project Name]
+   * Source:        [Upstream URL / Paper / Repository]
+   * Original License: [MIT / BSD-3-Clause / Apache 2.0 / Public Domain]
+   * Modifications: [e.g. Vectorized with FastMath, adapted to 4-control interface]
+   */
+  ```
+- **Universal Public Domain & POSS Attribution**: Even when code or mathematical formulations originate from the Public Domain (e.g., MusicDSP source archives, academic whitepapers, Nigel Redmon / EarLevel biquad formulas, or Paul Kellett filters), explicit author attribution and source URLs MUST be documented. "Public Domain" does not mean anonymous.
+- **Universal SPDX License Headers**: 100% of `.h`, `.cpp`, and `.cmake` files must begin with the standard SPDX tag:
+  `// SPDX-License-Identifier: GPL-3.0-or-later`
+  `// Copyright (C) 2026 Cody Gratner & The Klang Suite Contributors`
+- **Central Ledger Synchronization**: All ingested or adapted external code MUST be recorded in `docs/THIRD_PARTY_LICENSES.md` and surfaced in the in-app Settings/About credits viewer (Milestone v0.6.0).
+- **Strict Zero-Trademark Policy**: When adapting DSP architectures inspired by iconic hardware or software (e.g. Mutable Instruments, Dave Smith Instruments, Roland, Noise Engineering), NEVER use third-party trademark names in UI parameter names, FX selectors, preset titles, or documentation. Use original agrarian or evocative descriptive terminology (e.g., `THE MIST`, `MODAL RESONATOR`).
+
 
 
 

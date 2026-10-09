@@ -57,6 +57,7 @@ To prevent naming collisions across C++ header guards, logging macros (`TKS_LOG`
   - Dedicated Transient Shaper with independent pitch/noise envelope decay curves.
   - Dynamic 8-slot multi-instance DSP effect rack with serial/parallel routing.
   - Full chromatic MIDI tracking, microtonal tuning, and polyphonic voice allocation.
+  - **The Klang-Brain Modulation Engine**: 4-mode algorithmic modulation generator (Fugue counterpoint, Matriceal polymeter, Metropolix/M8 accumulators, Turing LFSR) operating in Continuous DAW sync and DSI Pro 2 Triggered Key-Advance modes.
 
 ---
 
@@ -112,6 +113,7 @@ To prevent naming collisions across C++ header guards, logging macros (`TKS_LOG`
   - **Octave-Invariant White Key Triggering**: White keys in any octave map to Voices 1–7 (`C` through `B`), keeping pitches fixed to front-panel knobs for foolproof live finger drumming.
   - **Ring Modulator**: Audio-rate cross-modulation between Voice 1 and Voice 2 for metallic industrial clangs.
   - **DAW Multi-Out Bus Architecture**: 8 stereo output pairs (Master Mix + 7 individual voice stems) with auto-mute routing when routed to aux channels.
+  - **The Klang-Brain Rhythm Engine**: Integrated 4-mode generative sequencer (Fugue, Matriceal, Metropolix/M8, Turing LFSR) generating procedural rhythms with Continuous DAW sync and DSI Pro 2 Triggered Key-Advance modes.
 
 ---
 

@@ -6,10 +6,10 @@
 > 1. **v0.3.0 (Architecture)**: GUI Test Harness, The Klang Editor (TKE) & Snapshots, macOS .pkg Pipeline, GitHub Version Checker, Cruft Purge, & Parity Audit. — ✅ COMPLETED
 > 2. **v0.3.1 (Editor Quality & Data Schema)**: Standalone Tree UX, Limiter Callout, Two-Line Status Bar, pluginval Runner. — ✅ COMPLETED
 > 3. **v0.3.2 (Agent Infrastructure & Logging)**: Guardrails Audit, Unified Filterable Master Tree, Dedicated Text Schema, Developer Logging (TKS_LOG). — ✅ COMPLETED
-> 4. **v0.4.0 (Interface & Experience)**: Complete Clean-Slate UX Overhaul, Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, Popover Callouts, 7-Theme Engine, & Desktop Sanity Testing. — 🔨 ACTIVE
-> 5. **v0.4.5 (The Klang Planter Refresh)**: Rebuilding The Klang Planter on TKF's Neo-Slate Foundation — 4-Controls-Per-Card, Header Nav, Vector Dice Buttons, Popover Callouts, & Universal Theming Parity.
-> 6. **v0.5.0 (Sound & Chaos + The Klang Hub)**: 27-Effects Catalog & Browser Modal, Full-Tab Spreadsheet Modulation Matrix, Standalone Klang Hub (Theme Builder & Preset/Bank Manager), Dual Sample Players, Parameter Randomization, Gated Bass & Glide, Undo/Redo & A/B, Velocity & MIDI Learn, & Panic Switch.
-> 7. **v0.6.0 (Pro Workflow)**: JSON Preset Browser & Sound Design Library, WAV Render / SF2 Export, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour ("Right-Click is the Way"), & Linux Headless CI.
+> 4. **v0.4.0 (Interface & Experience)**: Complete Clean-Slate UX Overhaul, Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, Popover Callouts, 7-Theme Engine, & Desktop Sanity Testing. — 🔨 ACTIVE (Pre-Release Sanity & Research)
+> 5. **v0.4.5 (The Klang Planter Refresh)**: Rebuilding The Klang Planter on TKF's Neo-Slate Foundation — 4-Controls-Per-Card, Header Nav, Vector Dice Buttons, Popover Callouts, & Universal Theming Parity. — ⏳ PLANNED
+> 6. **v0.5.0 (Sound & Chaos + The Klang Hub)**: Unified "Mega" FX Modules (Drive w/ Tanh/Wavefolder/Faturator, Thickener w/ Chorus/Ensemble), FX Picker pre-selections, Alpha Juno oscillators, Mixer Cross-mod (ER-1 Mk2/Spectral), Preset Morphing, Spreadhseet Mod Matrix, Klang Hub, Dual Sample Players.
+> 7. **v0.6.0 (Pro Workflow)**: Direct Render-to-Sample (Auto-load to Player/Wavetable), JSON Preset Browser, 2x/4x Oversampling, 4 TBD-16 Macros, Zero-Server GitHub Crash Reporting, One-Time Quick Tour, & Linux Headless CI.
 > 8. **v0.9.0 (The Spring Cleaning Audit)**: Pencils down. Comprehensive Tech Debt Amnesty, code refactoring, and AI-Slop purge.
 > 9. **v1.0.0 (General Availability)**: Multi-Platform Installers, Comprehensive User Manual, & Launch Demo Reel.
 > 10. **v1.1.0 (The Klang Box Hardware Universe)**: The Klang Box (TKB) — dadamachines tbd-16, TKB-Daisy (Stereo), TKB-8 (Teensy Multi-Out), & Zynthian V5.
@@ -27,7 +27,7 @@
 - [v0.3.1 "Editor Quality & Data Schema"](#-milestone-v031-editor-quality--data-schema) (Completed)
 - [v0.3.2 "Agent Infrastructure & Guardrails Audit"](#-milestone-v032-agent-infrastructure--guardrails-audit) (Completed)
 - [v0.3.3 "The Hardening Gauntlet"](#-milestone-v033-the-hardening-gauntlet) (Completed)
-- [v0.4.0 "The Interface & Experience Update"](#-milestone-v040-the-interface--experience-update) (Active)
+- [v0.4.0 "The Interface & Experience Update"](#-milestone-v040-the-interface--experience-update) (Completed)
 - [v0.4.5 "The Klang Planter Refresh"](#-milestone-v045-the-klang-planter-refresh) (Planned)
 - [v0.5.0 "The Sound & Chaos Update"](#-milestone-v050-the-sound--chaos-update)
 - [v0.6.0 "The Pro Workflow Update"](#-milestone-v060-the-pro-workflow-update)
@@ -385,6 +385,46 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 
 ---
 
+## 🚀 Milestone: v0.4.1 "The Complete Control Surface & UI Shells"
+> **Design Blueprint & Sidecar:** [`.agents/sidecar/ui_ux_deep_research.html`](../.agents/sidecar/ui_ux_deep_research.html)  
+> **Staged Factory Plan:** [`.agents/pipeline/plans/drafts/2026-10-08_v041_ui_shells.md`](../.agents/pipeline/plans/drafts/2026-10-08_v041_ui_shells.md)  
+*Focus: Implement the complete suite-wide front-end UI framework, control shells, navigation containers, and interaction contracts on The Klang Farmer. This delivers all UI/UX surface paradigms as functional, test-covered UI shells prior to the v0.4.5 Planter refresh and v0.5.0 DSP expansion.*
+
+### 1. Persistent Lower Modulator Dock Strip (`ModulatorDock`)
+*Goal: Provide instant, one-click visual feedback and drag-and-drop modulation assignment across all active pages without menu diving.*
+- **16-Tile Unified Dock:** 4 LFOs, 4 Envelopes, 4 Macro Knobs, and 4 Random/Chaos sources housed in a persistent, collapsible lower chassis strip.
+- **Micro-Visualizers & Caching:** Static tile backgrounds cached via `setBufferedToImage(true)`, with animated waveforms rendered at 30 Hz via lightweight dirty-rect updates.
+- **Drag-and-Drop Drag Pill:** Dragging a modulation tile's drag pill reveals an interactive glowing target halo around compatible sliders.
+- **Z-Order Bézier Overlay Layer:** Transparent overlay (`ModulationOverlayLayer`) that draws dynamic Bézier splines connecting modulation sources to targets with dirty-rect invalidation (`repaint(unionBounds)`).
+
+### 2. Alt+Click Flip Cards (`FlipCardContainer`)
+*Goal: Solve the 4-control surface limit for deep parameter modulation without cluttering the primary sound-design workspace.*
+- **Tactile Card Flip State Machine:** Holding `Alt` and clicking any parameter slider smoothly flips the containing 4-control card into its `ModulationInjectorView`.
+- **4-Fader Depth Injector:** The 4 encoders/sliders dynamically re-map to bipolar modulation depth controls for the 4 most prominent sources (e.g. LFO1, LFO2, ENV1, MACRO1).
+- **Zero-Allocation APVTS Binding:** Inactive view is hidden (`setVisible(false)`) while preserving APVTS slider attachments, avoiding tear-down allocations.
+- **Accessibility & Contrast:** Colorblind-friendly shape-coded indicators (solid for envelopes, dotted for LFOs, dashed for randomizers).
+
+### 3. 3-Column Slide-Over Preset Browser (`PresetBrowserOverlay`)
+*Goal: Overhaul preset management from antiquated OS dropdowns to a modern, tag-based sound discovery engine.*
+- **Column 1 (Taxonomy & Tag Filters):** Factory vs. User banks, sonic categories (Bass, Kick, Snare, Drone, Glitch), mood tags, and author filters.
+- **Column 2 (Preset List & Live Audition):** Search-filtered list with instant Spacebar / Play icon (`▶`) audition triggering the lock-free audio thread trigger queue.
+- **Column 3 (Preset Details & Playable Macros):** Author notes, creation date, star rating, and 4 interactive macro knobs allowing immediate performance auditioning before loading.
+- **Smooth Drawer Animation:** Slide-over panel docking from the right edge with backdrop blur/dimming over the inactive rack.
+
+### 4. Fullscreen Modulation Matrix Table (`ModMatrixModal`)
+*Goal: Provide power users with an exhaustive, spreadsheet-style routing table for complex multi-source modulation inspection.*
+- **Dense High-Contrast Table:** Scrollable JUCE `TableListBox` showing Source, Target, Bipolar Depth slider, Smoothing/Curve, and Mute/Solo toggles.
+- **Target Filtering:** Search filter to isolate all modulators routed to a specific block (e.g., `filter_*`).
+- **One-Click Unlink:** Tactile clear/bypass buttons per routing row for rapid cleanup during mixing.
+
+### 5. Macro & Performance "Play View" Page
+*Goal: Stage and live-performance mode optimized for high-visibility tactile control and macro morphing.*
+- **Giant 4-Macro Stage Interface:** 4 massive rotary macro controls with large, high-legibility JetBrains Mono value readouts.
+- **Integrated Live Oscilloscope & Reactive Ring:** Audio-reactive glow around macros reflecting active modulation energy.
+- **Single-Click Switcher:** Accessible directly from top header page tabs (`[PLAY]`).
+
+---
+
 ## 🚀 Milestone: v0.4.5 "The Klang Planter Refresh"
 *Focus: Bringing The Klang Planter to 100% architectural, visual, and interaction parity with The Klang Farmer's modernized v0.4.0 Neo-Slate foundation.*
 
@@ -409,15 +449,46 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Sound & Chaos Update"
+> **Tracking & Research:** [Alpha Juno & Wavefolder Spec](specs/fx_catalog_expansion.md) | [2026 Agentic Architecture Deep Research](history/research/2026-10-08_Agentic_Architecture_Deep_Research.md)
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
 
-### 0.6. Transparent Quota Telemetry & Language Server Probe (`/quota` Skill)
+### 1. DSP Modulation Engine & Real-Time Matrix Routing
+*Goal: Wire the real-time DSP modulation summing engine to the v0.4.1 Flip Card shells and Mod Matrix table.*
+- **Lock-Free Modulation Accumulators:** Audio-thread per-block modulation accumulation for 4 LFOs, 4 Envelopes, 4 Macros, and 4 Random sources into target parameters with zero allocations.
+- **Dynamic Re-Mapping:** Encoders control real-time DSP modulation depth indices for LFO1, LFO2, ENV1, and ENV2.
+- **Real-Time Shape-Based Ring Animation:** Animate target knob rings with active modulation energy at 30 Hz via lock-free atomics.
+
+### 2. Transparent Quota Telemetry & Language Server Probe (`/quota` Skill)
 *Goal: Provide instant, transparent visibility into Antigravity model quotas (5-hour rolling bucket, weekly tier allowances) without diving deep into IDE settings menus.*
 - **Investigation & Probing**:
   - Probe the local running `language_server.exe` gRPC/HTTP bridge (`localhost:61440/61441`) and Google Cloud Code endpoint to determine if quota/bucket metrics are accessible via a lightweight local socket call.
   - Evaluate creating a custom slash command skill (`/quota`) or status bar widget that displays active tier allowances on demand in <50ms without network roundtrips.
 - **Guardrails**:
   - Strictly on-demand execution (never polled automatically during every model evaluation to prevent latency, token bloat, and rate-limiting).
+
+### 0.6. Rigorous GPLv3 Codebase Audit & Copyleft Hygiene Gauntlet ("FOSS Forever")
+*Charter & Standard: [`docs/THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md)*  
+*Research & Provenance: [`docs/history/research/2026-10-08_Subagent_Deep_Research_Harvest.md`](history/research/2026-10-08_Subagent_Deep_Research_Harvest.md)*  
+*Goal: Conduct an exhaustive codebase-wide licensing and provenance audit to guarantee strict GNU General Public License v3.0 (GPLv3) compliance, clean copyleft reciprocity, and respectful attribution to all upstream open-source authors.*
+- **Universal SPDX License Headers**:
+  - Audit 100% of `.h`, `.cpp`, and `.cmake` files across `source/`, `test/`, and build scripts.
+  - Enforce standard header tag: `// SPDX-License-Identifier: GPL-3.0-or-later` and `// Copyright (C) 2026 Cody Gratner & The Klang Suite Contributors`.
+- **Third-Party DSP Provenance & Inline Adaptation Docblocks**:
+  - Perform a deep code audit across `ModularBlocks.h`, `FastMath.h`, and DSP modules to identify all algorithms adapted or inspired by external open-source work (Mutable Instruments, ChowDSP, EarLevel, DAFX, MusicDSP).
+  - Annotate each adapted block with a standardized provenance docblock documenting:
+    1. Original author and project name.
+    2. Upstream repository URL / publication reference.
+    3. Original permissive license (MIT, BSD-3-Clause, Apache 2.0, Public Domain).
+    4. Exact modifications made for The Klang Suite (vectorization, ZDF conversion, 4-knob parameter adaptation).
+- **Copyleft Compatibility & Incompatible License Sweep**:
+  - Verify that every third-party component ingested into the repository is 100% compatible with GPLv3 copyleft terms.
+  - Mathematically verify zero inclusion of non-commercial restrictions (e.g., CC-BY-NC), advertising clauses, or proprietary NDA SDKs.
+- **JUCE 9 GPLv3 Compliance Verification**:
+  - Verify `CMakeLists.txt` build configurations strictly adhere to the JUCE 9.0.3 GPLv3 open-source requirements.
+- **Automated Licensing Linter (`gui_tests` or pre-commit)**:
+  - Add an automated regression assertion to `gui_tests` (or a pre-flight CI script) that scans all files in `source/` and hard-fails the build if any C++ file lacks an SPDX tag or provenance block.
+- **Attribution Ledger Parity**:
+  - Cross-verify that 100% of external algorithms documented in code are cataloged in [`docs/THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) and surfaced in the upcoming v0.6.0 in-app About credits modal.
 
 ### 0.7. Tier 1 SIMD Voice Summation & Branchless FM Phase Accumulators
 *Goal: Optimize real-time FM operator phase modulation and polyphonic voice summation using JUCE 9 SIMD wrappers and branchless bitwise math.*
@@ -486,9 +557,9 @@ Add a fully JSON-driven contextual randomization system:
     - **Algorithm 28: The Klang Mill Container**: Embeds an entire 6-slot Klang Mill pedalboard inside an FX slot with 4 front-panel macros and floating window editing ('Mill-ception').
 - **Phase 1: Universal Dual-Mode Mix Helper & Core Enums**:
   - Implement shared `computeDualModeMix(float normParam, float& dryGain, float& wetGain)` in `source/DSPBlock.h` (-100% wet crossfade $\to$ 0% pure dry $\to$ +100% parallel additive blend).
-  - Update `createFXBlock()` factory and `BlockType` enum with: TransientShaper (14), CustomWaveshaper (15), ChannelMixer (16), StereoEnhancer (17), HaasDelay (18), GatedReverb (19), JunoChorus (20), WaveguideResonator (21), SubGenerator (22), TapeWarmth (23), DynamicFilter (24), PitchTransposer (25), and StutterGate (26).
+  - Update `createFXBlock()` factory and `BlockType` enum with: TransientShaper (14), CustomWaveshaper (15), ChannelMixer (16), StereoEnhancer (17), SpatialAudio (18 - Haas Delay & Binaural HRTF), GatedReverb (19), JunoChorus (20), WaveguideResonator (21), SubGenerator (22), TapeWarmth (23), DynamicFilter (24), PitchTransposer (25), StutterGate (26), Baler (27), and TheMist (29 - Granular Particle Cloud & Freeze) - see [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) and [`2026-10-08_Subagent_Deep_Research_Harvest.md`](history/research/2026-10-08_Subagent_Deep_Research_Harvest.md).
 - **Phase 2: DSP Implementations (`source/ModularBlocks.h`)**:
-  - TransientShaperBlock (14), CustomWaveshaperBlock (15), ChannelMixerBlock (16), StereoEnhancerBlock (17), HaasDelayBlock (18), GatedReverbBlock (19), JunoChorusBlock (20), WaveguideResonatorBlock (21), SubGeneratorBlock (22), TapeWarmthBlock (23), DynamicFilterBlock (24), PitchTransposerBlock (25), and StutterGateBlock (26).
+  - TransientShaperBlock (14), CustomWaveshaperBlock (15), ChannelMixerBlock (16), StereoEnhancerBlock (17), SpatialAudioBlock (18: Unified Mega-Module containing Haas micro-delay widening and Binaural HRTF 3D psychoacoustic positioning; both listed individually in the FX picker with auto-selection), GatedReverbBlock (19), JunoChorusBlock (20), WaveguideResonatorBlock (21), SubGeneratorBlock (22), TapeWarmthBlock (23), DynamicFilterBlock (24), PitchTransposerBlock (25), StutterGateBlock (26), BalerCompressorBlock (27), and TheMistGranularBlock (29: Real-time circular buffer particle cloud with Scrub, Density, Grain Size, and Spray jitter controls; Tier 3 Master/Send effect; inspired by Stephen King's eerie particulate atmosphere - see [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) and [`2026-10-08_Subagent_Deep_Research_Harvest.md`](history/research/2026-10-08_Subagent_Deep_Research_Harvest.md)).
 - **Phase 3: Standardize Existing FX Mix Knobs**:
   - Migrate Chorus, Comb, Flanger, Phaser, Tempo Delay, and Drive to use `computeDualModeMix`.
 - **Phase 4: Categorized FX Selection Modal (Kilohearts-Style Browser)**:
@@ -498,6 +569,21 @@ Add a fully JSON-driven contextual randomization system:
 - **Phase Smear (Disperser) Enhancements (Algorithm 9)**:
   - *True Zero-DSP Bypass*: Ensure Amount set to 0 strictly bypasses all allpass stages (`if (apfStages == 0) return;`).
   - *Order Switch Replacement*: Retire the subtle 2nd vs 4th order toggle in favor of a post-dispersion **Bipolar Drive** knob (`-100%` hard diode clip $\leftrightarrow$ `0%` clean $\leftrightarrow$ `+100%` warm saturating $\tanh$ drive) with automated gain compensation, turning Phase Smear into a lethal bass and transient sculpting tool.
+
+### 2.5. FX Routing Taxonomy & Micro-Benchmark Gauntlet: Voice, Pre-FX Mono, & Master-Only Tiering
+*Goal: Benchmark all 27 DSP effects to scientifically establish optimal signal routing across per-voice cards, monophonic pre-amp stages, and stereo master summing buses.*
+- **Automated DSP Micro-Benchmarking Suite (`dsp_benchmarks`)**:
+  - Measures cycle counts, memory access patterns, and nanos-per-sample across every algorithm in both 1-channel mono and 2-channel stereo.
+  - Profiles cache locality on desktop (x86_64 / ARM64 AVX/Neon) and assesses feasibility on embedded targets (ESP32-P4 RISC-V SIMD).
+- **3-Tier Routing & Placement Taxonomy**:
+  1. **Tier 1: Universal / Polyphonic (Everywhere)**:
+     - Ultra-low CPU, zero phase bloat, safe for per-voice execution (SVF Filter, Tanh Drive, Bitcrusher, Ladder Filter, Classic Chorus, Flanger, Phaser).
+  2. **Tier 2: Pre-FX / Pre-Amp (Strict Mono Mode)**:
+     - Designed for raw wave shaping and transient sculpting before stereo spatialization and voice summing: Pre-APF Phase Smear, Asymmetric Wavefolder, Tuned Comb Filter / Karplus-Strong, Transient Dirac Click, Ring Modulator.
+  3. **Tier 3: Master Bus / Send-Only (Master-Only)**:
+     - High CPU footprint, dense buffer allocations, stereo phase smearing, or dynamic bus mastering: Baler 3-Band Compressor, Granular Particle Cloud Scrambler, SOFA/KEMAR Convolution HRTF, Gated Reverb Tank, and Master Brickwall Limiter.
+- **Context-Aware FX Picker Indicators**:
+  - In the 5-column FX browser modal, subtle tags (`[MONO]`, `[POLY]`, `[MASTER]`) guide sound designers toward acoustically optimal and CPU-friendly choices without artificially locking out creative experimentation.
 
 ### 3. Modular 3-Slot Transient Engine (Noise, Sample Players & Impulse Clicks) with Sub-Mixer
   *Goal: Transform the static noise page into a fully modular 3-slot transient layering powerhouse with dedicated sub-mixing before the Pre-Amp Console.*
@@ -563,6 +649,21 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
   - **4 Front-Panel Controls**: [Rise] (Attack time 0.5ms - 10s), [Fall] (Decay/Release time 1ms - 20s), [Curve] (Logarithmic <-> Linear <-> Exponential continuous curve morph), and [Cycle] (Looping LFO / VCO toggle).
   - **End-of-Fall (EOF) / End-of-Rise (EOR) Trigger Pulses**: When the envelope finishes its fall phase, it emits a discrete single-sample trigger pulse that can fire Voice 1, Voice 2, or re-trigger another Slope for cascading generative rhythms, polyrhythmic bursts, and ratchets.
   - **Slew Limiter Mode**: Popover setting allowing the slope to act as a portamento/lag processor smoothing incoming discrete modulations.
+
+### 7.6. The Klang-Brain Algorithmic Modulation Generator (Continuous & DSI Pro 2 Triggered Advance)
+*Spec Reference: [`docs/specs/spinoffs/the_klang_r1.md`](specs/spinoffs/the_klang_r1.md)*  
+*Goal: Provide TKF with deep generative, polymetric, and alternative modulation curves beyond standard LFOs.*
+- **5 Algorithmic Modes**:
+  1. *Fugue Counterpoint*: 4 playheads reading 1 pattern at varied clock dividers & directions.
+  2. *Matriceal Polymeter*: Decoupled parameter loop lengths (Triggers, Velocity, Octave, Gate).
+  3. *Stage Pulses & Accumulators*: Metropolix-style variable pulse repeats + M8 sub-tick micro-tables.
+  4. *Turing Machine (LFSR)*: Shift-register generative loops with controlled bit-flip mutation probability.
+  5. *Axon Neural Network*: Audio Damage-style leaky integrate-and-fire interconnected biological neurons with excitatory/inhibitory synaptic feedback loops.
+- **Advance Modes (Continuous vs. DSI Pro 2 Triggered Key-Advance)**:
+  - *Continuous Mode*: Advances locked to the DAW host transport and tempo clock.
+  - *Triggered / Key-Advance Mode*: Sequencer lanes hold stationary until an incoming MIDI Note-On or gate trigger is received, advancing by exactly 1 step per keypress (Dave Smith Instruments Pro 2 gated polymetric sequencer).
+  - *Polymetric Modulation*: Each keypress steps independent parameter lanes of different lengths, allowing filter cutoffs, FM ratios, and wavefolding to morph continuously with live keyboard playing.
+
 ### 8. Sound Design Safety: Undo / Redo & A/B State Comparison — ⚡ PULLED FORWARD INTO v0.4.0 — ✅ COMPLETED
 *Archived Plan: [`.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md`](../.agents/pipeline/plans/completed/2026-10-08_v040_modulation_matrix_and_regression.md)*  
 *Goal: Provide full sound design safety and non-destructive experimentation, essential when rolling the d6 Randomizer.*
@@ -608,6 +709,7 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
 ---
 
 ## 🚀 Milestone: v0.6.0 "The Pro Workflow Update"
+> **Tracking & Research:** [TBD-16 Decoupling Spec](specs/spinoffs/the_klang_mill.md) | [2026 Agentic Architecture Deep Research](history/research/2026-10-08_Agentic_Architecture_Deep_Research.md)
 *Focus: Professional DAW Integration, File Management, Preset Library, and Export.*
 
 ### 1. JSON Preset Browser, Tagging & State Migration
@@ -703,6 +805,22 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
     5. Double-click any parameter to reset to factory default.
 - **100% JSON-Driven Copy**:
   - All headings, icons, descriptions, and button labels parsed from `assets/controls/global_ui.json` under `"quick_tour"`.
+
+### 10. Comprehensive FOSS & POSS Attribution, License Ledger & About Modal Expansion
+*Goal: Provide rigorous, ethical, and transparent attribution to open-source DSP pioneers, papers, and libraries powering The Klang Suite.*
+- **Third-Party FOSS/POSS Ledger (`docs/THIRD_PARTY_LICENSES.md`)**:
+  - Detailed directory indexing all upstream inspirations, open-source algorithms, mathematical papers, and authors:
+    - **Émilie Gillet (Mutable Instruments)**: Algorithmic inspiration for granular texture processing (Clouds/Beads), modal resonators (Rings), and macro-oscillators (Plaits/Braids) under MIT / CC-BY-SA, strictly honoring trademark naming protections.
+    - **Jatin Chowdhury (ChowDSP)**: Non-linear diode saturation, Wave Digital Filters (WDF), and FastMath foundations.
+    - **Will Pirkle & Vadim Zavalishin**: Zero-Delay Feedback (ZDF) and Virtual Analog filter topologies.
+    - **Paul Kellett & Nigel Redmon (EarLevel Engineering)**: Biquad and polyphase half-band decimation algorithms.
+    - **Sean Costello (Valhalla DSP)**: Feedback delay networks and diffuse reverberation structures.
+    - **Tom Whitwell (Music Thing Modular)**: Turing Machine 16-bit LFSR generative shift register topology.
+    - **dadamachines**: Open-source CTAG TBD-16 groovebox hardware architecture.
+  - Documents license types (MIT, BSD-3, Apache-2.0, GPL-3.0, CC-BY-SA), copyright notices, and upstream repository hyperlinks.
+- **Settings & About Modal UI Expansion (`SettingsModalComponent`)**:
+  - Add a dedicated clickable `[ Credits & Open-Source Licenses ]` button inside the About dialog.
+  - Displays a clean, scrollable in-app attribution viewer with clickable hyperlinks to author websites and repositories.
 
 ---
 
@@ -842,7 +960,7 @@ Port the battle-tested, data-driven architecture from *The Klang Farmer* over to
 - **Testing Parity**: Migrate the headless `ReflectionGuardrailSuite.h` and automated GUI smoke testing harness to validate ToadTracker's JUCE layer.
 
 ### 4. The Klang R1 (TKR-1) — 7-Voice Rhythm Synthesizer (Electribe ER-1 Tribute)
-*Detailed Plan: [`docs/the_klang_r1_plan.md`](the_klang_r1_plan.md)*  
+*Detailed Plan: [`docs/specs/spinoffs/the_klang_r1.md`](specs/spinoffs/the_klang_r1.md)*  
 *Goal: Provide a stripped-down, tactile, zero-tab 7-voice drum synthesizer inspired by the iconic Korg Electribe ER-1 with white-key octave-invariant triggering and DAW multi-out routing.*
 - **7-Voice Hybrid Architecture**:
   - **Voices 1–4 (Pure Synth)**: Kicks, sub-bass, snares, toms, and resonant FM zaps.
@@ -857,6 +975,19 @@ Port the battle-tested, data-driven architecture from *The Klang Farmer* over to
 - **All-in-One Console UI (Zero Tabs)**:
   - 7 vertical mixer-style voice strips with `Pitch`, `Decay`, `Mod Type`, `Mod Speed`, `Mod Depth`, `Pan`, `Level`, and `[DELAY SEND]`.
   - Master section featuring classic ER-1 **Low Boost** sub-punch knob, host-synced **Tempo Delay**, and **Ring Mod** cross-modulation (`Voice 1 × Voice 2`).
+- **"Klang-Brain" Generative Sequencing Engine**:
+  - Incorporates 5 selectable alternative generative modes adapted into our 4-Control Mega Module paradigm:
+    1. *Fugue Counterpoint*: 4 playheads reading 1 pattern at varied clock dividers & directions.
+    2. *Matriceal Polymeter*: Decoupled parameter loop lengths (Triggers, Velocity, Octave, Gate).
+    3. *Stage Pulses & Accumulators*: Metropolix-style variable pulse repeats + M8 sub-tick micro-tables.
+    4. *Turing Machine (LFSR)*: Shift-register generative loops with controlled bit-flip mutation probability.
+    5. *Axon Neural Network*: Audio Damage-style 7-neuron leaky integrate-and-fire network mapped 1:1 to TKR-1's 7 voices, generating organic, biologically interdependent polyrhythmic grooves.
+  - **Dual Playback Modes (DSI Pro 2 Heritage)**:
+    - *Continuous Mode*: Advances automatically with the DAW host playhead and tempo clock.
+    - *Triggered / Key-Advance Mode*: Sequencer lanes hold stationary until an incoming MIDI note or gate trigger is received, advancing by 1 step per keypress (emulating the classic Dave Smith Instruments Pro 2 gated polymetric sequencer).
+  - Dual utility: acts as internal drum trigger generator for TKR-1 and continuous/stepped modulation source for TKF!
+  - **Tabled Algorithmic Engines (Deep Research Lab Scheduled)**: Conway's Game of Life (Cellular Automata), Wolfram Rule 30/110, Markov chains, and L-systems are formally tabled for a dedicated Deep Research Lab session upon active kickoff of the TKR-1 milestone.
+  - Confirmed via `ui_ux_research_board.html` Post-Mortem.
 
 ---
 
@@ -874,6 +1005,7 @@ Port the battle-tested, data-driven architecture from *The Klang Farmer* over to
 All completed tasks, architectural decisions, and release summaries are archived in:
 👉 **[`docs/BACKLOG_ARCHIVE.md`](BACKLOG_ARCHIVE.md)**  
 *(Individual phase execution plans are preserved in `docs/completed_plans/`)*
+
 
 
 

@@ -305,6 +305,31 @@ function Sync-Once {
 
     Set-Content -Path (Join-Path $VaultTelemetry "Active_Errors.md") -Value $errorsLines -Encoding UTF8
 
+    # 6.5 SYNC RESEARCH & COMPILE MASTER INDEX & ROADMAP
+    $roadmapScript = Join-Path $PSScriptRoot "sync_roadmap_sidecar.py"
+    if (Test-Path $roadmapScript) {
+        python $roadmapScript 2>$null | Out-Null
+    }
+
+    $researchRepo = "C:\Dev\Research"
+    $vaultResearch = Join-Path $VaultPath "Research"
+    if (Test-Path $researchRepo) {
+        if (-not (Test-Path $vaultResearch)) { New-Item -ItemType Directory -Path $vaultResearch -Force | Out-Null }
+        @("dsp", "hardware", "ui_ux", "subagents", "agentic") | ForEach-Object {
+            $srcDom = Join-Path $researchRepo $_
+            $dstDom = Join-Path $vaultResearch $_
+            if (Test-Path $srcDom) {
+                if (-not (Test-Path $dstDom)) { New-Item -ItemType Directory -Path $dstDom -Force | Out-Null }
+                Get-ChildItem -Path $srcDom -File | ForEach-Object {
+                    $dFile = Join-Path $dstDom $_.Name
+                    if ((-not (Test-Path $dFile)) -or ($_.LastWriteTimeUtc -gt (Get-Item $dFile).LastWriteTimeUtc)) {
+                        Copy-Item -Path $_.FullName -Destination $dFile -Force
+                    }
+                }
+            }
+        }
+    }
+
     # 7. WRITE HEARTBEAT: _sync_heartbeat.md
     $sw.Stop()
     $durationMs = [math]::Round($sw.Elapsed.TotalMilliseconds, 1)

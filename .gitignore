@@ -19,6 +19,7 @@ current_build/
 
 # Python Scratch Scripts & Temp Logs
 *.py
+!tools/*.py
 *.txt
 !CMakeLists.txt
 *.diff
@@ -35,9 +36,18 @@ _sync_*.tmp
 docs/inbox/*
 !docs/inbox/README.md
 
+# Creative Lore & Worldbuilding (Gitignored)
+docs/lore/*
+!docs/lore/README.md
+
+
 # Private notes
 .vault_hint
 
 # SQA Test Snapshots & Artifacts
 test_screenshots/
 test_artifacts/
+
+# Local Agent Sidecar & Preview Canvas (Fixed Local Path)
+.agents/sidecar/
+

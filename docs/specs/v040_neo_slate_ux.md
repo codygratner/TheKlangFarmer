@@ -1,6 +1,7 @@
 # Master Plan: Milestone v0.4.0 "The Interface & Experience Update"
 
 > **Milestone:** v0.4.0  
+> **Tracking:** [Backlog](../BACKLOG.md)
 > **Theme:** Complete Clean-Slate UX Overhaul & Modern Neo-Slate Vector UI  
 > **Ethos:** *"UX IS KING"* (Zero Prototype Debt, Pure Workflow Elegance)  
 > **Status:** QUEUED (Scheduled immediately following v0.3.2 release)  

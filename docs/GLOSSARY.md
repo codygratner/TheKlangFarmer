@@ -40,6 +40,7 @@
 | **Engine** | Master Processor | The master audio container managing voice allocation, MIDI event parsing, and audio bus routing. | `TheKlangFarmerAudioProcessor`, `TheKlangPlanterAudioProcessor`. |
 | **Voice** | Audio Instance | A single independent sound execution instance that renders one drum hit (tracks active phase, envelope state, filter memory). | Individual polyphonic / monophonic voice renderers in DSP code. |
 | **DSP Block** | Algorithm | The C++ class implementing a specific mathematical audio routine. | `juce::dsp::LadderFilter`, `TbdAudio::FastMath`, `SvfFilter`. |
+| **Klang-Brain** | Generative Engine | 4-mode algorithmic sequencer & modulation generator (Fugue Counterpoint, Matriceal Polymeter, Stage Accumulators, Turing LFSR) with Continuous and DSI Pro 2 Triggered Key-Advance modes. | Deployed as rhythm trigger engine in TKR-1 and multi-lane stepped/continuous modulation source in TKF. |
 
 ---
 
@@ -77,3 +78,5 @@ To prevent identity collisions across codebases, logging tags (`TKS_LOG`), asset
 
 > [!WARNING]
 > **Acronym Collision Guardrail**: No new plugin or spin-off product may adopt an acronym that collides with registered letters (`S`, `F`, `P`, `M`, `E`, `B`, `R`, `C`). `TKS` is strictly forbidden for individual plugins.
+> 
+> **The Klang Box (`TKB`) vs. The Klang-Brain**: `TKB` is officially reserved for **The Klang Box** embedded hardware platform. The generative algorithmic modulation and sequencing engine is designated **The Klang-Brain** (internal engine code `TKG` - *The Klang Generator / Genome* if an acronym is required), preserving `TKB` for hardware.

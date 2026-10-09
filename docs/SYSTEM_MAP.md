@@ -3,26 +3,49 @@
 This is the central directory for all high-level documentation, rules, and history in the project. 
 
 ### 1. 📜 Core Directives & Guardrails
-- [GEMINI.md](../../GEMINI.md) — The ultimate source of truth for all agentic workflows, rules, coding standards, and architectural constraints. **Always read this first**.
+- [GEMINI.md](../GEMINI.md) — The ultimate source of truth for all agentic workflows, rules, coding standards, and architectural constraints. **Always read this first**.
+- [DOCS_CATALOG.json](DOCS_CATALOG.json) — Master index and navigation manifest for all documentation, specs, research archives, and sidecars.
 - [GLOSSARY.md](GLOSSARY.md) — The taxonomy of UI components (Cards, Modules, Sliders, Knobs) and project-specific terms.
+- [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) — FOSS attribution ledger and GNU GPLv3 copyleft reciprocity contracts.
 
 ### 2. 📝 Planning & Backlog
-- [PLAN.md](../../PLAN.md) — The active architectural blueprint. Used by the factory floor to execute tasks.
+- [PLAN.md](../PLAN.md) — The active architectural blueprint. Used by the factory floor to execute tasks.
 - [BACKLOG.md](BACKLOG.md) — The prioritized list of all future features, milestones, and bug fixes.
-- [Draft Plans](../../.agents/pipeline/plans/drafts/) — Where new features are blueprinted before dispatch.
+- [Draft Plans](../.agents/pipeline/plans/drafts/) — Where new features are blueprinted before dispatch.
 
 ### 3. 🧠 History & Lore
 - [DEV_HISTORY.md](history/DEV_HISTORY.md) — The institutional memory. Contains the distilled takeaways from previous agentic coding sessions.
-- [VIBE_CODING_FIELD_GUIDE.md](history/vibe_coding_field_guide.md) — Operational lessons learned, pipeline protocols, and multi-agent infrastructure documentation.
+- [VIBE_CODING_FIELD_GUIDE.md](history/vibe_coding_field_guide.md) — Autonomous Pair-Programming, pipeline protocols, and multi-agent AI workflow lore.
+- [AUDIO_DSP_FIELD_GUIDE.md](history/audio_dsp_field_guide.md) — C++ Audio Engineering, DSP invariants, and advice for transitioning developers.
 
-### 4. 🚀 Pipeline & Communiqué
-- [plan_to_build.md](../../.agents/pipeline/communique/plan_to_build.md) — Dispatch signals from New Klang City (Planner) to Klang Industries (Builder).
-- [build_to_plan.md](../../.agents/pipeline/communique/build_to_plan.md) — Factory execution telemetry and completion signals.
+### 4. 🔬 Deep Research & Soul Harvest Archive
+- [The Klang Research Hub](https://github.com/codygratner/TheKlangResearch) — Centralized cross-project research repository (`C:\Dev\Research`).
+- [Deep Research Directory](history/research/) — Research hub pointer and local soul harvests.
+  - [Subagent Deep Research Soul Harvest](history/research/2026-10-08_Subagent_Deep_Research_Harvest.md) — Permanent archive of equations, schematics, and proofs from 6 Pro subagents.
+  - [Agentic Architecture Deep Research](history/research/2026-10-08_Agentic_Architecture_Deep_Research.md) — 2026 Agentic Architecture Audit and Analysis.
+  - [Layouts and Ergonomics Harvest](history/research/2026-10-08_Layouts_and_Ergonomics_Deep_Research_Harvest.md) — Soul harvest of 5 subagents exploring monolithic faceplates, rhythm faders, and TE glyphs.
 
-### 5. 🔬 Design Specs
+### 5. 🚀 Pipeline & Communiqué
+- [plan_to_build.md](../.agents/pipeline/communique/plan_to_build.md) — Dispatch signals from New Klang City (Planner) to Klang Industries (Builder).
+- [build_to_plan.md](../.agents/pipeline/communique/build_to_plan.md) — Factory execution telemetry and completion signals.
+
+### 6. 🎨 Sidecar Infrastructure
+- [Sidecar Template](../.agents/sidecar/template.html) — Standardized interactive HTML sidecar shell (dark theme, font zoom, state sync).
+- [Active Grill Lab Sidecar](../.agents/sidecar/visual_grill_me.html) — Visual design and architectural interview canvas.
+- [Multi-Repo Roadmap Sidecar](../.agents/sidecar/roadmap_sidecar.html) — Interactive backlog and milestone navigator with deep-linked hash routing.
+
+### 7. 🔬 Design Specs
 - [Specs Directory](specs/) — Complete folder of deep-dive technical design documents.
   - [v0.4.0 Neo-Slate UX & Modulation Layout](specs/v040_neo_slate_ux.md) — 3-tier layout, lower strip, and tracer cables.
   - [FX Catalog Expansion & The Thresher](specs/fx_catalog_expansion.md) — 13 new effects, transfer-function waveshaping, and parallel routing.
   - [Voice Articulation & Gated Bass](specs/gated_bass_glide.md) — Noise Engineering gate-hold, glide, and envelope overrides.
   - [SQA Hardening & Automation](specs/sqa_automation_hardening.md) — Test harnesses, timeouts, and fuzz testing.
   - [WAV / SF2 Multi-Sample Export](specs/wav_sf2_export.md) — Direct DAW drag-and-drop audio export.
+
+## 🏛️ The Four-Pillar Ecosystem
+
+The Klang ecosystem consists of four interconnected repositories:
+- **The Klang Suite** (`c:\Dev\TheKlangSuite`): Polyphonic synthesizers and VST3 plugins.
+- **ToadTracker** (`c:\Dev\ToadTracker`): 16-step embedded hardware groovebox.
+- **N'kai** (`c:\Dev\nkai`): Asymmetric sidecar framework & interactive triage lab ([github.com/codygratner/nkai](https://github.com/codygratner/nkai)).
+- **The Klang Research** (`c:\Dev\Research`): Centralized research repository, exploratory canvases, and soul harvests ([github.com/codygratner/TheKlangResearch](https://github.com/codygratner/TheKlangResearch)).

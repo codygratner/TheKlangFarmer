@@ -109,3 +109,67 @@ The synthesizer features 7 concurrent monophonic rhythm voices divided into two 
   - `assets/controls/r1_voices.json` for APVTS definitions.
   - Universal theme system and vector LookAndFeel.
   - Automated `gui_tests` and `dsp_tests` reflection suites.
+
+---
+
+## 7. The "Klang-Brain" Generative Engine (TKR-1 & TKF Integration)
+
+The **Klang-Brain** is an algorithmic sequencing and modulation engine shared across the ecosystem. In **The Klang R1 (TKR-1)**, it drives procedural rhythm and drum triggers across the 7 voices. In **The Klang Farmer (TKF)**, it functions as a multi-lane stepped and continuous modulation generator.
+
+### 5 Algorithmic Operating Modes
+1. **Fugue Machine (Multi-Playhead Counterpoint)**:
+   - 4 independent playheads reading a single pattern buffer simultaneously.
+   - Each playhead possesses its own clock divider ($1/4$, $1/8$, $1/16$, $1/32$), playback direction (`Forward`, `Reverse`, `Ping-Pong`), and octave/velocity scaling.
+2. **Matriceal Polymeter (Decoupled Parameter Lanes)**:
+   - Inspired by the Oxi One Matriceal mode and iPad modular sequencers (Rozeta/CYKLE).
+   - Independent loop lengths for discrete parameter lanes:
+     - Lane 1: **Triggers / Gates** (e.g. 5 steps)
+     - Lane 2: **Velocity / Accent** (e.g. 7 steps)
+     - Lane 3: **Pitch / Octave Offset** (e.g. 3 steps)
+     - Lane 4: **Modulation CC / Morph** (e.g. 11 steps)
+   - Generates ever-shifting, non-repeating polyrhythmic grooves that stay musically coherent.
+3. **Stage Pulses & Accumulators (Metropolix & M8 Tables)**:
+   - Intellijel Metropolix-style stage sequencing: each stage defines a pitch, gate type, and a pulse count ($1-8$) before advancing to the next stage.
+   - Dual Accumulators: Increment or decrement fixed interval values on each loop cycle or stage trigger.
+   - Dirtywave M8 sub-tick micro-tables: Execute micro-chops, retriggers, and probability hops per step.
+4. **Turing Machine (LFSR Generative Mutation)**:
+   - Classic Music Thing Modular 16-bit Linear Feedback Shift Register (LFSR) topology (as seen in the Moog Labyrinth / Buchla 266).
+   - A single **Mutation / Chaos** control:
+     - At $0\%$ (`Lock`): The pattern loops in an exact, repeating 8/16-step cycle.
+     - At $1-99\%$: Bit flips occur probabilistically, generating organic melodic and rhythmic drift that gradually morphs.
+     - At $100\%$ (`Random`): Pure Brownian pseudorandom sequence.
+5. **Axon Neural Network (Leaky Integrate-and-Fire Biological Neurons)**:
+   - Inspired by Audio Damage's *Axon* (1, 2 & 3) neural network drum sequencer.
+   - A 7-neuron interconnected biological network mapped **1:1 to TKR-1's 7 voices** (or a 4-to-8 node modulation lattice in TKF).
+   - Each neuron acts as a leaky accumulator with an excitation threshold, decay rate, and synaptic connections to other neurons.
+   - When an incoming clock pulse or neighboring neuron's output charges a neuron past its threshold, it fires an action potential:
+     - Instantly triggers that drum voice (e.g. Kick).
+     - Propagates positive (excitatory) or negative (inhibitory) energy down its synaptic axons to other voices (e.g. firing Voice 1 excites Voice 5/Hat or inhibits Voice 2/Snare).
+   - Generates organic, biologically interdependent polyrhythmic grooves that breathe and self-evolve without rigid step programming.
+
+### Playback & Advance Modes: Continuous vs. DSI Pro 2 Triggered Key-Advance
+The engine features a dedicated **Advance Mode** switch:
+1. **Continuous Mode (DAW Playhead Sync)**:
+   - Free-running sequence locked to host DAW tempo, transport playhead, and MIDI clock.
+   - Automatically pauses/resumes with DAW playback.
+2. **Triggered / Key-Advance Mode (Dave Smith Instruments Pro 2 Gated Style)**:
+   - The sequencer lanes **do not run on an internal timer or free clock**.
+   - Instead, the lanes remain stationary until an incoming **MIDI Note-On** event or gate trigger is received.
+   - Each incoming trigger advances the active step counters across all lanes by exactly $+1$.
+   - **Polymetric Magic**: Because each lane has an independent step length (e.g., 5 steps of trigger probability, 7 steps of velocity, 3 steps of pitch offset), sequentially tapping or playing keys steps through an evolving mathematical lattice of parameter states!
+   - In **TKF**, this turns the keyboard into a gated polymetric modulation advance, altering FM ratio, filter cutoff, and distortion drive with every successive note played.
+   - In **TKR-1**, this allows external sequencers or keyboard players to step the rhythm engine interactively per note.
+
+---
+
+### Tabled Algorithmic Engines & Future Deep Research Lab
+The following esoteric generative paradigms are officially **Tabled for Future R&D**:
+- **Conway's Game of Life (Cellular Automata)**: 2D living pixel grid triggering gates on perimeter collision or cell death.
+- **Wolfram Elementary Automata**: 1D deterministic cellular automata (Rule 30 chaotic pseudorandom sequences, Rule 110 universal computation).
+- **Markov Chain Matrix**: Probabilistic state-transition matrix determining next-step musical decisions based on preceding history.
+- **L-Systems (Lindenmayer Systems)**: Recursive fractal grammar re-writing producing self-similar branching rhythms and melodies.
+
+> [!NOTE]  
+> **Dedicated Deep Research Lab Scheduled**: A comprehensive Deep Research Lab session will be conducted when initiating the active TKR-1 development milestone to benchmark, prototype, and architect these advanced generative systems.
+
+

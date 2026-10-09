@@ -11,12 +11,18 @@ Conduct a rigorous, interactive design interview (`/grill-me`) for UI/UX, layout
 ---
 
 ## Operational Guardrails & Architecture
-1. **Frictionless Entry & Prominent Chat Link (MANDATORY)**:
+1. **Frictionless Entry, Permanent Local Link & The "Ready Handshake" (MANDATORY)**:
    - If the user invokes `/grill-me` without specifying a mode, briefly ask if they want **Grill Lab** (live visual artifact) or **Classic Grill** (text-only).
    - If the user invokes `/grilllab`, `/vlab`, `/vrill`, etc., enter Grill Lab immediately.
-   - **Always output a prominent, clickable file URI link in the chat response on kickoff**:
-     `👉 **[Open Grill Lab Canvas](file:///<appDataDir>/brain/<conversation-id>/visual_grill_me_preview.html)**`
-     so the user can immediately open it in the side panel with one click.
+   - **Dual-Storage Sidecar Storage**: The sidecar canvas MUST always be written to BOTH:
+     1. `<appDataDir>\brain\<conversation-id>\visual_grill_me.html` (artifact directory for live side-panel rendering).
+     2. `c:\Dev\TheKlangSuite\.agents\sidecar\visual_grill_me.html` (gitignored repo directory for persistence).
+   - **Prominent Kickoff Link (MANDATORY ARTIFACT URI)**: Always output a prominent, clickable file URI link pointing to the **Artifact Directory** at the very top of the kickoff turn:
+     `👉 **[Open Grill Lab Canvas](file:///<appDataDir>/brain/<conversation-id>/visual_grill_me.html)**`
+     *(Antigravity opens workspace links in the code editor, but renders artifact links in the interactive side-panel Webview).*
+   - **The "Sidecar Ready Handshake"**: Before blasting the user with full design questions and comparative mockups, output the artifact link and pause with a clear prompt:
+     *"Please open the Grill Lab Canvas link above in your side panel, then reply 'ready' to begin!"*
+     Once the user confirms the canvas is open and visible, proceed directly into Question 1.
 2. **Universal Scope & Dual Operating Modes**:
    - **UI Sandbox Mode**: Used for synth controls, sliders, cards, and meters. Displays real-time Web Audio audition synth, canvas oscilloscope, audio tick clicks, and theme swatches.
    - **Architecture & Knowledge Mode (Antigravity Dark Blue)**: Used for non-UI topics (documentation, schemas, ADRs, indexing, pipeline workflows). Strictly eliminates neon glows and fluorescent accents. Matches the native Antigravity IDE dark blue-tinged slate theme (Body: `#0e121a`, Cards: `#151b26`, Recessed: `#10141e`, Borders: 1px `#222c3d`, Accents: clean IDE blue `#3b82f6` and soft slate `#8b9cb5`). Uses clean Inter typography for prose and monospace for code. Automatically hides audio scope and synth widgets to maximize reading comfort.
@@ -27,19 +33,22 @@ Conduct a rigorous, interactive design interview (`/grill-me`) for UI/UX, layout
    - Also known affectionately as the **BAR-B-Q&A**! Keep the session engaging, visual, collaborative, and fun.
 5. **Tier 2 Flash High Universal Baseline**:
    - Visual interviews, UI layout brainstorming, and HTML artifact authoring strictly use **Gemini 3.8 Flash (Thinking: High)**. Zero Pro quota burn required.
-6. **Persistent Sidecar Artifact**:
-   - The primary visual sidecar is written to: `<appDataDir>\brain\<conversation-id>\visual_grill_me_preview.html`.
-   - Always provide `ArtifactMetadata` with `UserFacing: true` and a clear summary.
+6. **Persistent Sidecar Storage**:
+   - The primary visual sidecar is written to: `c:\Dev\TheKlangSuite\.agents\sidecar\visual_grill_me.html`.
+   - A mirror copy is simultaneously synced to the conversation artifact directory for archival.
 7. **Interactive Comparative Mockups & Sidecar Composer**:
    - Each interview question must correspond to a distinct visual section with live interactive controls styled with Tailwind CSS.
    - Provide an in-page **Decision & Write-In Composer** allowing the user to select options, write custom notes, and copy formatted markdown answers directly to their clipboard (`Ctrl+V` in chat).
 8. **Web Worker & State Synchronization Architecture**:
-   - Pair `visual_grill_me_preview.html` with a companion state token `visual_grill_me_state.json` (tracking `step`, `version`, `timestamp`).
+   - Pair `visual_grill_me.html` with a companion state token `.agents/sidecar/visual_grill_me_state.json` (tracking `step`, `version`, `timestamp`).
    - Use an inline Blob Web Worker (`new Worker(URL.createObjectURL(blob))`) to monitor state and heartbeat pings off the main UI thread. Never use unthrottled `document.lastModified` loops.
    - Provide a prominent **Manual Refresh Button** (`[ ↻ Refresh View ]`) and Font Zoom Scaler (`[A-] [100%] [A+]`) in the page header.
    - Include an **Auto-Sync toggle** and a non-intrusive in-page toast banner (`#update-toast`) when new questions or layout updates arrive from chat.
 9. **Modal-Free Flexibility**:
    - During Grill Lab sessions, prefer presenting questions in chat text and letting the user interact with the Sidecar Composer, avoiding modal deadlocks and keeping the IDE completely unlocked.
+10. **The Asymmetric Sidecar Split (Terse Chat, Rich Sidecar)**:
+    - Once the sidecar is active, chat responses MUST remain ultra-terse (1–3 sentences or quick prompts).
+    - All verbose explanations, comparative tradeoff tables, architectural diagrams, and option mockups live inside the sidecar HTML canvas. This eliminates duplicate reading and preserves chat context.
 
 ---
 
@@ -61,6 +70,9 @@ Conduct a rigorous, interactive design interview (`/grill-me`) for UI/UX, layout
 2. Document the decision in the working notes or implementation plan (`PLAN.md`).
 3. Move to the next component question until the interface is fully designed.
 
-### Step 4: Final Blueprint Synthesis
+### Step 4: Final Blueprint Synthesis & Archival
 1. Conclude the interview by synthesizing the approved design decisions into exact drop-in C++ component structures, APVTS parameter layouts, or JSON schemas.
-2. Transition to Klang Industries for building.
+2. **Artifact Archival:** If the Grill Lab resulted in critical UI mockups or design specs, copy `visual_grill_me_preview.html` to `docs/history/research/<YYYY-MM-DD>_<feature>_mockup.html` and mirror it to the Obsidian Vault (`C:\Dev\TheKlangVault\Research\`).
+3. **Vault Mirroring:** Create a Markdown summary in `C:\Dev\TheKlangVault\Research\<YYYY-MM-DD>_<feature>_mockup.md` with an Obsidian external link (`[Open Mockup Board](file:///...)`) to the HTML file.
+4. **Cross-Linking:** Ensure `docs/history/DEV_HISTORY.md` and the Obsidian `C:\Dev\TheKlangVault\Docs\History_Index.md` link to the new mockup archive using native Obsidian `[[Wikilinks]]`.
+5. Transition to Klang Industries for building.
