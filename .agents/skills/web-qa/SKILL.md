@@ -1,6 +1,6 @@
 ---
 name: web-qa
-description: Audits, lints, and verifies Antigravity interactive sidecars and webviews (.html), detecting HTML tag imbalance, JavaScript syntax errors (e.g. invalid Unicode escapes in template strings), click-trapping overlay pointer-events, Chromium file:// cache issues, strict-mode event errors, and Web Audio API autoplay sandbox compliance. Triggers on `/webqa`, `/web-qa`, `/sidecarqa`, `/sidecar-qa`, "audit sidecar", "web qa", "check sidecar", or "fix navigation".
+description: Audits, lints, and verifies Antigravity interactive sidecars and webviews (.html), detecting HTML tag imbalance, JavaScript syntax errors (e.g. invalid Unicode escapes in template strings), click-trapping overlay pointer-events, Chromium file:// cache issues, strict-mode event errors, and Web Audio API autoplay sandbox compliance. Triggers on `/qa`, `qa`, `/webqa`, `/web-qa`, `/sidecarqa`, `/sidecar-qa`, "audit sidecar", "web qa", "check sidecar", or "fix navigation". When triggered with "qa" during web/sidecar work, invokes web-qa; during audio C++ DSP work, delegates to build-validate and audiothread-guard.
 ---
 
 # Web & Sidecar Quality Assurance (Web-QA)
