@@ -47,10 +47,10 @@ Select the subagent model engine based on the research domain to maximize reason
 1. **Document Anti-Patterns:** During research, actively look for bad UX/DSP patterns in competitor products or legacy code.
 2. **Graveyard Section:** Dedicate a specific section of the HTML artifact to "Negative Architecture." Explicitly state *why* a competitor's feature (e.g., "UVI Falcon Spreadsheet Trees") is rejected.
 
-## Phase 4: Triage & Post-Mortem
-Before archiving the artifact, always ask the user if they want to trigger the `/post-mortem` skill to formally triage the findings. 
-- **The Handoff:** The `/postmortem` skill will conduct the interactive interview to separate the concepts into `docs/BACKLOG.md` approvals, tabled ideas, and Strategy Graveyard rejections.
-- **Pause & Resume Support:** If the user needs to step away or halt triage before completing all items, trigger the "Pause & Package" workflow (`/pause-post-mortem` or Phase 2.8 of `/post-mortem`) to snapshot the board and pending items into `.agents/sidecar/packages/<date>_<topic>_triage_package.json`. The post-mortem can be resumed at any time via `/resume-post-mortem`.
+## Phase 4: In-Flight Triage & Executive Ledger Ingestion
+1. **Continuous In-Flight Triage**: Every generated research board MUST include live `[ ✅ APPROVE ]`, `[ ⏳ TABLE ]`, `[ 💀 KILL ]` action chips directly on each concept card, coupled with a live scorecard and Decision Composer.
+2. **The Executive Synthesis Handoff**: Once the user has marked their verdicts on the board, triggering `/post-mortem` executes the 1-click **Executive Ledger Ingestion**: ingesting all approved items directly into `docs/BACKLOG.md`, logging killed items into the Strategy Graveyard, and generating the executive summary report in one swift pass.
+3. **Pause & Resume Support**: If the user steps away before concluding all items, snapshot packages in `.agents/sidecar/packages/` record current scorecard states, allowing instant 1-click resumption via `/resume-post-mortem`.
 
 ## Phase 5: Capstone Harvest, Soul Reaping & Centralized Research Archival
 Deep research burns through Pro quota and context tokens rapidly. Once triage is complete:
