@@ -33,7 +33,11 @@ Select the subagent model engine based on the research domain to maximize reason
    - **Best For:** Adversarial analysis, finding hidden architectural traps, spotting edge-case link rot, dependency bloat, and challenging optimistic assumptions.
    - **Operational Profile:** Always paired with exploratory sprints. Explicitly tasked with finding the "Why We Shouldn't Do This", exposing failure modes, and formulating the pragmatic 80/20 middle ground to prevent AI echo chambers.
 
-### Delegation Workflow:
+### Delegation Workflow & Access Policies:
+- **Pre-Authorized Web Access Invariant (Default)**: By default, all subagents (`research`, `explore`, `contrarian`) are strictly pre-authorized to use `search_web` and `read_url_content` to sweep competitor architectures, forums, and technical literature.
+- **The `--no-web` Air-Gapped Override**: If the user invokes `/deep-research --no-web` or requests offline research, all web access tools are strictly prohibited. Subagents MUST be explicitly instructed: *"Negative Constraint: Web tools disabled. Conduct research strictly using local workspace files, `TheKlangVault/`, and `TheKlangResearch/`."*
+- **Step 0 Subagent Context Bootstrapping**: Every spawned subagent charter MUST include a pointer to [`context_clues_subagent.md`](file:///c:/Dev/TheKlangSuite/context_clues_subagent.md) so subagents immediately index project taxonomy (`docs/GLOSSARY.md`), the master docs catalog (`docs/DOCS_CATALOG.json`), and system architecture without prompt bloat.
+
 1. **Spawn Subagent:** Invoke `invoke_subagent` using either `Model="pro"` (Sprint), `Model="flash"` (Marathon), or pair with a Devil's Advocate Flash explorer.
 2. **Clear Boundaries:** Provide a tightly scoped mission charter with explicit negative constraints (e.g., "Research UI layouts and preset browsers; do NOT write code and do NOT research DSP math").
 3. **Yield & Await:** Let the subagents autonomously explore and report back their structured payloads via `send_message`.

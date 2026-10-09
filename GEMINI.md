@@ -33,6 +33,7 @@
     - **`research` (`Model="pro"`)**: Targeted Tier 1 Sprint mode reserved strictly for high-reasoning tasks (DSP differential equations, non-linear saturation proofs, lock-free concurrency proofs, and complex multi-file architectural synthesis).
     - **`explore` (`Model="flash"`)**: Autonomous Tier 2 Marathon mode for broad, goal-oriented sweeps (UI/UX layout explorations, community sentiment analysis across Reddit/KVR/Gearspace, preset browser taxonomy, and broad competitive benchmarking).
     - **`contrarian` (`Model="flash"`)**: The Devil's Advocate adversarial mode paired with exploratory sprints to stress-test proposals, expose edge-case failure modes, and derive the pragmatic 80/20 middle ground.
+    - **Subagent Pre-Authorized Web Access & The `--no-web` Override**: By default, research, explore, and web-qa subagents are pre-authorized to use web access tools (`search_web`, `read_url_content`) to query upstream browser standards, developer forums, and competitor architectures without interactive prompts. Appending `--no-web` or `--offline` strictly enforces an air-gapped run restricted to local workspace docs and `TheKlangResearch`.
     - **Session Footer Reminder**: Chat responses during active research/exploration sessions must include the subagent reminder badge in the footer: `[ 🔬 Subagents: research (Pro) / explore (Flash) / contrarian (Advocate) ]`.
 
 ## Target Toolchain & Standards
@@ -164,7 +165,7 @@
   - Fresh builder sessions (< 12 turns): Instant engage on `proceed`.
   - Mature builder sessions (> 15 turns): Output subtle 1-line notice: `💡 Factory Context Notice: ~N turns accumulated. Reply 'proceed' to build, or 'harvest & proceed' for a clean slate.`
   - Power-User Flag (`harvest & proceed`): Harvests session into `docs/DEV_HISTORY.md`, updates `context_clues_build.md`, and prompts refresh.
-- **"Step 0: Pre-Flight Context Clues" & Link-Only Indexing**: Both `context_clues_plan.md` and `context_clues_build.md` maintain a lightweight (< 150 token) Quick-Reference Index with clickable `file://` links to `docs/GLOSSARY.md`, `docs/architecture/product_lineup.md`, sibling specs, and active `docs/BACKLOG.md` milestones. Fresh agents waking up from `/clear` or context refresh MUST execute a deterministic "Step 0" check on turn 1 to index the active vision and glossary without dumping static document contents into the prompt.
+- **"Step 0: Pre-Flight Context Clues" & Link-Only Indexing**: `context_clues_plan.md`, `context_clues_build.md`, and `context_clues_subagent.md` maintain lightweight (< 150 token) Quick-Reference Indexes with clickable `file://` links to `docs/GLOSSARY.md`, `docs/DOCS_CATALOG.json`, `docs/architecture/product_lineup.md`, sibling specs, and active `docs/BACKLOG.md` milestones. Fresh agents and spawned subagents waking up from `/clear`, context refresh, or `invoke_subagent` MUST execute a deterministic "Step 0" check on turn 1 to index the active vision and glossary without dumping static document contents into the prompt.
 
 ## Strict Chat Role Enforcement (Planner vs. Builder)
 - **Role Identification**: Determine role by checking the user's initial prompt or reading `context_clues_plan.md` vs `context_clues_build.md`.

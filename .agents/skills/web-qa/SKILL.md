@@ -48,6 +48,7 @@ Audit, validate, and repair Antigravity interactive sidecar HTML canvases and El
 - **Model Tiers & Invocation Flags**:
   - `/web-qa --flash`: Forces a fast, lightweight Tier 2 Flash subagent (`Model="flash"`). Optimal for HTML/CSS layouts, DOM balance, quick script regexes, and low quota burn.
   - `/web-qa --pro`: Forces a deep-reasoning Tier 1 Pro subagent (`Model="pro"`). Reserved for obscure Electron webview sandboxing, complex state machine debugging, or procedural Base64 PCM audio synthesis.
+  - `/web-qa --no-web`: Air-gapped offline mode. Restricts QA strictly to the local deterministic static linter (`audit_sidecar.py --fix`) and forbids subagents from invoking web search tools.
   - `/web-qa` (Default / No Flag - **Autonomous Escalation Ladder**):
     1. *Stage 1 (50ms)*: Run static linter `audit_sidecar.py --fix`.
     2. *Stage 2*: If runtime/visual issues persist, dispatch a Tier 2 Flash subagent with web access.

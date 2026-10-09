@@ -36,6 +36,21 @@
           "path": "docs/README.md",
           "title": "Documentation Directory Guide",
           "purpose": "Overview of the docs directory layout and contribution protocols."
+        },
+        {
+          "path": "context_clues_plan.md",
+          "title": "Planning Context Clues (New Klang City)",
+          "purpose": "Step 0 pre-flight index for architectural planning, active milestones, and roadmap context."
+        },
+        {
+          "path": "context_clues_build.md",
+          "title": "Build Context Clues (Klang Industries)",
+          "purpose": "Step 0 pre-flight index for factory implementation, active directives, and test targets."
+        },
+        {
+          "path": "context_clues_subagent.md",
+          "title": "Subagent Context Clues & Quick-Reference Index",
+          "purpose": "Step 0 pre-flight index for spawned subagents (research, explore, contrarian) to bootstrap taxonomy and invariants."
         }
       ]
     },
@@ -184,7 +199,8 @@
         "cut-release",
         "refresh-context",
         "clean-plan",
-        "clear"
+        "clear",
+        "web-qa"
       ]
     },
     "interactive_sidecars": {
@@ -195,7 +211,8 @@
         ".agents/sidecar/visual_grill_me.html",
         ".agents/sidecar/roadmap_sidecar.html",
         ".agents/sidecar/ui_ux_research_board.html",
-        ".agents/sidecar/ecosystem_ideas_research_board.html"
+        ".agents/sidecar/ecosystem_ideas_research_board.html",
+        ".agents/sidecar/nkai_deep_research.html"
       ],
       "rendering_rule": "To render visually in Antigravity's interactive panel, copy/write to brain artifact path with ArtifactMetadata."
     },
