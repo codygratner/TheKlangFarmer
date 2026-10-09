@@ -50,4 +50,5 @@ test_artifacts/
 
 # Local Agent Sidecar & Preview Canvas (Fixed Local Path)
 .agents/sidecar/
+.agents/pipeline/inbox/
 
