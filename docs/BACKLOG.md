@@ -1001,6 +1001,16 @@ Port the battle-tested, data-driven architecture from *The Klang Farmer* over to
 
 ---
 
+### 6. N'kai Sidecar Harness: Web Audio Haptics & WebView Audio Pipeline (Backlog)
+*Goal: Resolve Chromium/Electron webview audio driver restrictions to enable physical hardware clicks and approval chimes in the N'kai sidecar.*
+- **Context**: In Google Antigravity / Electron side-panel WebViews, `AudioContext` and HTML5 audio playback can be completely suspended or routed to inaccessible audio devices depending on host sandbox policies and Windows audio driver exclusivity (ASIO/WASAPI).
+- **Deliverables**:
+  - Investigate Antigravity Webview audio permissions and IPC audio dispatch (e.g. firing system audio alerts via Node.js or `window.sidecar` rather than browser audio).
+  - Provide complete fallback and default-silent state with toggleable sound effects.
+  - Sourced from N'kai Deep Research harvest ([`TheKlangResearch`](https://github.com/codygratner/TheKlangResearch/blob/main/subagents/2026-10-09_Nkai_Dynamic_Loaders_and_Blue_Sky_Harvest.md)).
+
+---
+
 ## 📁 Completed & Archived Milestones
 All completed tasks, architectural decisions, and release summaries are archived in:
 👉 **[`docs/BACKLOG_ARCHIVE.md`](history/BACKLOG_ARCHIVE.md)**  
