@@ -51,3 +51,18 @@ STATUS: COMPLETE
 
 ## 6. Next Recommended Action for Orchestrator
 - [x] Ready to update sidecar canvas itinerary and load **Flight 1: Canonical State & Factory Handoff (6.16 + 6.7)** into the Active Workshop.
+
+---
+
+## 7. QA Subagent Execution Receipt (Bridge & Webview Toast)
+- **STATUS**: `COMPLETE`
+- **ROLE EXECUTED**: `Pro QA Bridge & Webview Engineer`
+- **CONVERSATION ID**: `44dc9b8c-4c7b-4f1e-bbf1-8db8d5e6dd9f`
+- **COMPLETED AT**: `2026-10-09T17:58:00Z`
+- **TARGET FILES**: `nkai_deep_research.html`, `tools/nkai_bridge.py`
+- **NOVEL PLATFORM TRAPS IDENTIFIED**:
+  1. *Buried Toast*: `#audio-toast` was located inside inactive tab `#tab-loaders`, rendering status invisible in `#tab-workshop`.
+  2. *Desynchronized DOM*: `#workshop-card-mount` had static HTML pre-populated with `t15` while header was `t16`.
+  3. *Loopback IPC*: `Origin: null` from `file:///` webview requires PNA headers (`Access-Control-Allow-Private-Network: true`).
+- **RESOLUTION**: Implemented persistent floating HUD (`#nkai-floating-toast`), unified `onSuccessUI` callback, verified via headless Edge CDP execution (HTTP 200).
+- **CURATED AUTOPSY**: [`C:\Dev\Research\qa_autopsies\2026-10-09_Nkai_Webview_Bridge_and_Toast_Autopsy.md`](file:///C:/Dev/Research/qa_autopsies/2026-10-09_Nkai_Webview_Bridge_and_Toast_Autopsy.md)

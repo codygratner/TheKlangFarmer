@@ -70,9 +70,11 @@ When explicitly invoked with `--deep` (or `/deep-docs-update`), this skill trans
 4. **The Klang Research (`C:\Dev\Research`)**: Centralized RFCs, eternal DSP mathematics, research boards, subagent soul harvests, and novel QA autopsies.
 5. **The Klang Vault (`C:\Dev\TheKlangVault`)**: Reconciles the root staging inbox (`Inbox/`) and lore archives (`Lore/`) while mirroring project-level documentation into dedicated project sub-portals (`The Klang Suite/`, `ToadTracker/`, `N'kai/`, `Research/`).
 
-### Subagent Soul Harvest & QA Autopsy Curation Pipeline
+### Subagent Soul Harvest & QA Autopsy Curation Pipeline (Stage → Distill → Discard)
 To eliminate active coding friction while preventing the "knowledge cemetery" trap, `/update-docs --deep` acts as the master editorial curator for all subagent findings:
-1. **Ingest Staged Receipts**: Reads [`.agents/pipeline/communique/subagent_receipt.md`](file:///c:/Dev/TheKlangSuite/.agents/pipeline/communique/subagent_receipt.md) to inspect all completed subagents since the last documentation pass.
+1. **Ingest Staged Receipts & Raw Souls**:
+   - Inspects [`.agents/pipeline/communique/subagent_receipt.md`](file:///c:/Dev/TheKlangSuite/.agents/pipeline/communique/subagent_receipt.md) for execution summaries.
+   - Sweeps raw subagent payloads from the staging drop-box (`.agents/pipeline/staging/souls/*.md`).
 2. **Curate High-Impact Discoveries**:
    - **Research Sprints**: Synthesizes mathematical proofs, circuit topologies, and competitive teardowns into publication-grade markdown in `C:\Dev\Research\subagents\<YYYY-MM-DD>_<slug>_Harvest.md`.
    - **Novel QA Autopsies**: Synthesizes non-obvious platform traps (e.g., Chromium webview sandboxes, loopback IPC, audio thread allocations, JUCE timer lifecycles) into `C:\Dev\Research\qa_autopsies\<YYYY-MM-DD>_<slug>_Autopsy.md`. Routine syntax, typo, and styling fixes are discarded to keep the signal-to-noise ratio high.
@@ -83,6 +85,8 @@ To eliminate active coding friction while preventing the "knowledge cemetery" tr
      4. *Permanent Architectural Invariant / Rule*
      5. *Concrete Resolution & Code Snippet*
 3. **Recompile Vault Research Index**: Executes `tools/sync_obsidian_vault.ps1` to mirror all research domains and recompile `TheKlangVault/Research/Master_Research_Index.md` (100% plain Markdown, zero Dataview dependencies).
-4. **Receipt Staging Reset (Inbox Zero)**: Clears the processed entries in `.agents/pipeline/communique/subagent_receipt.md` so the receipt log stays clean for subsequent active coding sessions.
+4. **Ruthless Discard & Staging Reset (Inbox Zero)**:
+   - Permanently deletes processed raw files in `.agents/pipeline/staging/souls/` to prevent digital hoarding, storage bloat, and context contamination during future agent scans.
+   - Clears the processed entries in `.agents/pipeline/communique/subagent_receipt.md`.
 5. **Automated Link Verification**: Programmatically audits 100% of markdown hyperlinks across all five roots, asserting a 100% pass rate with zero dead anchors before completing.
 
