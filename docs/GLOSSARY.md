@@ -92,6 +92,8 @@ To prevent identity collisions across codebases, logging tags (`TKS_LOG`), asset
 | **`Thesis`** | Dialectic Component | The foundational proposal, design hypothesis, or architectural direction. | Presented as Option A/B/C in RFCs, PLANs, or Active Workshop cards. |
 | **`Devil's Advocate [Antithesis]`** | Dialectic Component | The adversarial counter-argument tasked with exposing unstated assumptions, fatal edge cases, token bloat, and cognitive debt. | Rendered by the `contrarian` subagent or formatted under the heading `Devil's Advocate [Antithesis]` in chat and sidecar reviews. |
 | **`The 80/20 Resolution [Synthesis]`** | Dialectic Component | The pragmatic, battle-tested middle ground reconciling the Thesis with the Antithesis. | The mandatory conclusion of all PCDA reviews, preventing endless philosophical debate and driving decisive factory execution. |
+| **`Re-sequence / Rejigger`** | Workflow Action | Topologically auditing, consolidating, and re-ordering roadmap and triage topics based on prerequisite dependencies. | Triggered via `/audit-reorder`, `/rejigger`, `/re-sequence`, or the `[ 🔄 Re-sequence Flights ]` header button in N'kai sidecars. |
+| **`2-Pass Convergence Gate`** | Execution Protocol | Multi-agent iterative reflection pattern enforcing a strict 2-pass cap (Pass 1: Flash PCDA exploration $\rightarrow$ Pass 2: Pro topological synthesis). | Prevents AI echo chambers, infinite review looping, and quota exhaustion while ensuring 100% prerequisite alignment before factory execution. |
 
 > [!TIP]
 > **PCDA Conversational Format**: When the user requests a "PCDA" on any topic, agents format the response systematically:
