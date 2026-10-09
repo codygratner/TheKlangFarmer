@@ -1011,6 +1011,13 @@ Port the battle-tested, data-driven architecture from *The Klang Farmer* over to
 
 ---
 
+### 7. Obsidian Vault Inbox & Addons Triage (Next N'kai Session)
+*Goal: Process raw notes accumulated in `TheKlangVault/Inbox/` (including Obsidian Addons evaluations and mobile scratchpad dumps) in a dedicated N'kai research board with 1 section per note.*
+- **Scope**: Evaluate suggested community addons (Dataview, Omnisearch, Excalidraw, Canvas), vault sync ergonomics, and mobile tag hygiene.
+- **Workflow**: Automated generation of an interactive N'kai triage board directly from inbox markdown files (defaulting to sidecar board unless `--chat` flag is explicitly requested).
+
+---
+
 ## 📁 Completed & Archived Milestones
 All completed tasks, architectural decisions, and release summaries are archived in:
 👉 **[`docs/BACKLOG_ARCHIVE.md`](history/BACKLOG_ARCHIVE.md)**  
