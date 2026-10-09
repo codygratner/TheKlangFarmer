@@ -50,6 +50,11 @@ If during triage the user approves a card and orders "implement this now", "buil
    - **2-Strike Factory Escalation**: If the Flash subagent fails 2 compilation/test attempts, pause and escalate to Pro.
 4. **State Re-Synchronization**: Upon subagent return, re-read modified lines to prevent state drift, update the sidecar status to `IMPLEMENTED` or `APPROVED`, and resume triage without context loss.
 
+## Phase 2.7: On-Demand PCDA & Dialectic Trade-off Sweeps
+If the user requests trade-offs, asks for "pros and cons", or prompts "give me the PCDA" on a contentious card during triage:
+1. Structure the analysis according to the dialectic triad: **Pros [Thesis]**, **Cons [Thesis Friction]**, **Devil's Advocate [Antithesis]**, and conclude with **The 80/20 Resolution [Synthesis]**.
+2. Avoid open-ended hesitation; drive towards a decisive recommendation so the user can immediately select `[ ✅ APPROVE ]`, `[ ⏳ TABLE ]`, or `[ 💀 KILL ]`.
+
 ## Phase 2.8: The "Pause & Package" Workflow (Halting for Later)
 If the user needs to stop the triage session, step away, or halt the post-mortem for a later time:
 1. **Never Leave State in Limbo:** Do not simply acknowledge the pause in chat. You MUST snapshot the complete triage state into a machine-readable package.

@@ -32,6 +32,7 @@ Select the subagent model engine based on the research domain to maximize reason
 3. **`contrarian` Mode (The Devil's Advocate / `Model="flash"` / Tier 2)**:
    - **Best For:** Adversarial analysis, finding hidden architectural traps, spotting edge-case link rot, dependency bloat, and challenging optimistic assumptions.
    - **Operational Profile:** Always paired with exploratory sprints. Explicitly tasked with finding the "Why We Shouldn't Do This", exposing failure modes, and formulating the pragmatic 80/20 middle ground to prevent AI echo chambers.
+   - **PCDA & Dialectic Standard**: Subagent structures adversarial critiques under the formal heading **`Devil's Advocate [Antithesis]`** and concludes with **`The 80/20 Resolution [Synthesis]`** to systematically resolve tensions.
 
 ### Delegation Workflow & Access Policies:
 - **Pre-Authorized Web Access Invariant (Default)**: By default, all subagents (`research`, `explore`, `contrarian`) are strictly pre-authorized to use `search_web` and `read_url_content` to sweep competitor architectures, forums, and technical literature.

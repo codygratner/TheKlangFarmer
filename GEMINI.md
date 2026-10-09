@@ -114,14 +114,20 @@
   2. **Builder Execution Start Gate (`/read-plan`, `/execute-task`)**: Modals freeze the IDE model dropdown. Pause in chat text.
 - **Wrap-Up Housekeeping**: Document interview conclusions in Backlog or Plan.
 
-## Strict "4-Lens Pros & Cons" Evaluation Standard (On-Demand SOTA)
-- **On-Demand Progressive Disclosure**: Routine chat responses default to ultra-terse, punchy summaries (1–3 sentences). Full multi-lens tradeoff tables are generated **strictly on-demand** when the user explicitly requests "pros and cons" or triggers an action chip (`[ ⚖️ Request Pros & Cons ]`) from the sidecar.
-- **The 4 Lenses Framework**: When triggered, agents analyze systematically across:
+## Strict "4-Lens Pros & Cons" & PCDA Dialectic Evaluation Standard (On-Demand SOTA)
+- **On-Demand Progressive Disclosure**: Routine chat responses default to ultra-terse, punchy summaries (1–3 sentences). Full multi-lens tradeoff tables are generated **strictly on-demand** when the user explicitly requests "pros and cons", "PCDA", or triggers an action chip (`[ ⚖️ Request Pros & Cons ]`) from the sidecar.
+- **PCDA & Hegelian Dialectic Protocol**: When the user requests a "PCDA" (Pros, Cons, Devil's Advocate) or asks for trade-offs, agents respond using the structured dialectic triad:
+  1. **Pros [Thesis]**: Affirmative benefits, user value, and immediate engineering velocity.
+  2. **Cons [Thesis Friction]**: Direct implementation costs, surface friction, and known tradeoffs.
+  3. **Devil's Advocate [Antithesis]**: Structural failure modes, hidden maintenance debts, worst-case production traps, and token bloat.
+  4. **The 80/20 Resolution [Synthesis]**: The battle-tested pragmatic architecture extracting 80% of the value with 20% of the complexity.
+- **Acronym Disambiguation**: Use **PCDA** rather than PCA to prevent collision with **Principal Component Analysis** (DSP/ML dimensionality reduction) and **Printed Circuit Assembly** (embedded hardware BOMs).
+- **The 4 Lenses Framework**: When triggered for full architectural reviews, agents analyze systematically across:
   1. 🌍 **Real-World / Daily Ergonomics**: Practical day-to-day developer friction, speed, cognitive load, and maintenance realities.
   2. 🎛️ **Audio Software Industry**: How top synth/plugin developers (Vital, Kilohearts, FabFilter, Elektron, Bitwig, Reaper) solve it. *(May be omitted during pure N'kai / web tooling sessions to preserve token allowance).*
   3. 🏛️ **Wider Software Industry / SOTA**: How modern systems, AI agent frameworks, and web architectures (Anthropic, OpenAI, GitHub, Linux) solve it.
   4. 🏆 **Best Practices & Sustainability**: Clean code, zero technical debt, token economics, avoiding premature optimization.
-- **On-Demand Deep Dive Research Prompter**: When the user requests external validation or clicks `[ 🔬 Research Pros & Cons Online ]`, the agent leverages pre-authorized web access to sweep developer forums, bug trackers, and upstream documentation, returning concrete industry citations.
+- **On-Demand Deep Dive Research Prompter**: When the user requests external validation or clicks `[ 🔬 Research Pros & Cons Online ]`, the agent leverages pre-authorized web access to sweep developer forums, bug tracks, and upstream documentation, returning concrete industry citations.
 
 ## Multi-Repo SemVer Footer Tracking & Deep-Linked Roadmap
 - Chat responses during active research/planning sessions must include the SemVer status badge and the subagent badge on separate lines to avoid awkward word-wrapping:
