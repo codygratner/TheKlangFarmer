@@ -16,6 +16,7 @@ Execute the automated factory engineering pipeline on demand for the active blue
 - **Strict Audio-Thread Rules:** Never bypass real-time safety checks when modifying DSP code.
 - **Single Source of Truth:** Tasks and backlog items must originate exclusively from local workspace files (`PLAN.md` or `docs/BACKLOG.md`). Zero clipboard sniffing.
 - **Phase Boundaries:** Complete and verify one phase at a time unless `--all` is explicitly passed.
+- **Subagent Factory Delegation (`--subagent` or Research Trigger):** When invoked during an active research/triage session (or when `--subagent` is passed), `execute-task` delegates the pipeline (`Code Edits -> audiothread-guard -> build-validate -> step-verify`) to a dedicated `Factory Implementation Subagent` (`invoke_subagent(Model="flash")`) to protect main context. Escalates to `Model="pro"` on 2 strikes.
 
 ---
 

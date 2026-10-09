@@ -14,6 +14,11 @@
     6. Dual-Configuration Gauntlet: 100% test pass in both **Debug** and **Release** builds with fresh deployment.
   - Verification Target: `dsp_tests.exe` and `gui_tests.exe` (all assertions green across Debug and Release)
   - Recommended Model Tier: Tier 2 (Gemini 3.8 Flash High)
+- **Subagent Implementation Delegation Protocol (The 20-Line / 1-File Rule):**
+  - When in a research or triage session and implementation is requested:
+    - *< 20 lines, single file*: Execute directly in-chat (Tier 2 Flash active).
+    - *> 20 lines, multi-file, or running builds/tests*: Delegate to Flash subagent (`invoke_subagent(Model="flash")`) to protect main context.
+    - *2-Strike Escalation*: If Flash fails 2 compilation/test attempts, pause and escalate to Pro (`Model="pro"`).
 - **Product Vision & Taxonomy References:**
   - Glossary & Acronyms: [`docs/GLOSSARY.md`](file:///c:/Dev/TheKlangSuite/docs/GLOSSARY.md) (`TKS`, `TKF`, `TKP`, `TKM`, `TKE`, `TKB`, `TKR`, `TKC`)
   - Product Intent Matrix: [`docs/architecture/product_lineup.md`](file:///c:/Dev/TheKlangSuite/docs/architecture/product_lineup.md)

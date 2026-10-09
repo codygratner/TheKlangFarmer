@@ -52,6 +52,18 @@ Select the subagent model engine based on the research domain to maximize reason
 2. **The Executive Synthesis Handoff**: Once the user has marked their verdicts on the board, triggering `/post-mortem` executes the 1-click **Executive Ledger Ingestion**: ingesting all approved items directly into `docs/BACKLOG.md`, logging killed items into the Strategy Graveyard, and generating the executive summary report in one swift pass.
 3. **Pause & Resume Support**: If the user steps away before concluding all items, snapshot packages in `.agents/sidecar/packages/` record current scorecard states, allowing instant 1-click resumption via `/resume-post-mortem`.
 
+## Phase 4.5: Spontaneous Implementation During Research (The 20-Line Rule)
+When the user directs "implement this now", "build this feature", or requests spontaneous code execution during an active research session:
+1. **Context Protection Invariant**: DO NOT perform large code edits or run lengthy terminal builds directly in the main research chat—this pollutes the high-level context window and causes rapid token bloat.
+2. **The 20-Line / 1-File Rule of Thumb**:
+   - *Micro-Tweaks (< 20 lines, 1 file, CSS color, text copy)*: Execute directly in the main agent (Tier 2 Flash active, instant turnaround).
+   - *Substantial Implementation (> 20 lines, multi-file changes, or running test/build commands)*: Delegate to a dedicated **Factory Implementation Subagent** (`invoke_subagent(Model="flash")`).
+3. **Model Selection & Escalation**:
+   - Default to `Model="flash"` (Tier 2).
+   - If the user explicitly asks for `--pro` or if the task requires deep differential equations / non-linear saturation, spawn `Model="pro"`.
+   - **2-Strike Factory Escalation**: If the Flash subagent fails 2 compilation/test attempts or reports a mathematical wall, it pauses and the orchestrator escalates to a Pro subagent.
+4. **State Re-Synchronization**: Upon subagent completion, the main agent receives the concise receipt, re-reads modified lines to prevent state drift, updates the research sidecar, and reports back in 1–3 punchy sentences.
+
 ## Phase 5: Capstone Harvest, Soul Reaping & Centralized Research Archival
 Deep research burns through Pro quota and context tokens rapidly. Once triage is complete:
 1. **Subagent Soul Harvest:** Extract the full raw findings, mathematical derivations, circuit schematics, and code snippets from all subagent transcripts/`send_message` payloads and compile them into `C:\Dev\Research\research\subagents\<YYYY-MM-DD>_Subagent_Deep_Research_Harvest.md`.

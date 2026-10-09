@@ -38,6 +38,18 @@ If during the triage interview the user proposes a spontaneous new idea or asks 
 3. **INJECT & RESUME:** Once the deep research subagents return, inject their findings into the Active Workshop of the HTML board, present it to the user, and resume the triage interview loop.
 This ensures all spontaneous ideas are vetted with the exact same extreme rigor as the original batch.
 
+## Phase 2.6: Spontaneous Implementation During Triage (Subagent Delegation)
+If during triage the user approves a card and orders "implement this now", "build this feature now", or asks for immediate code changes:
+1. **Context Protection Invariant**: Shield the triage session from token pollution. Never perform lengthy file edits, build runs, or compiler troubleshooting directly in the main triage thread.
+2. **The 20-Line / 1-File Rule of Thumb**:
+   - *Micro-Tweaks (< 20 lines, 1 file, CSS/copy adjustments)*: Execute directly in main chat (Tier 2 Flash active).
+   - *Substantial Implementation (> 20 lines, multi-file, or running build/test commands)*: Delegate to a dedicated **Factory Implementation Subagent** (`invoke_subagent(Model="flash")`).
+3. **Model Selection & Escalation**:
+   - Default to `Model="flash"` (Tier 2).
+   - If user explicitly orders `--pro` or for heavy DSP/concurrency, spawn `Model="pro"`.
+   - **2-Strike Factory Escalation**: If the Flash subagent fails 2 compilation/test attempts, pause and escalate to Pro.
+4. **State Re-Synchronization**: Upon subagent return, re-read modified lines to prevent state drift, update the sidecar status to `IMPLEMENTED` or `APPROVED`, and resume triage without context loss.
+
 ## Phase 2.8: The "Pause & Package" Workflow (Halting for Later)
 If the user needs to stop the triage session, step away, or halt the post-mortem for a later time:
 1. **Never Leave State in Limbo:** Do not simply acknowledge the pause in chat. You MUST snapshot the complete triage state into a machine-readable package.

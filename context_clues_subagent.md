@@ -33,3 +33,16 @@
 - **Real-Time Audio Thread (CRITICAL)**: Zero allocations (`new`/`malloc`/`vector::push_back`), zero locks (`std::mutex`), zero I/O (`DBG`/`printf`) in `processBlock`. SIMD `FastMath` over CRT.
 - **Data-Driven Separation**: DSP parameters in `assets/controls/*.json`, structural layout in `assets/layouts/*.json`, styling in `assets/themes/*.json`, copy in `assets/text/*.json`.
 - **Web Access Invariant**: Subagents are pre-authorized for `search_web` and `read_url_content` by default. If charter specifies `--no-web` or "offline", research is strictly restricted to local files and documentation.
+
+---
+
+## 🛠️ Subagent Implementation Delegation Protocol (The 20-Line / 1-File Rule)
+- **Role**: `Factory Implementation Subagent` (`Model="flash"` default / Tier 2)
+- **Scope**: When the user requests implementation during an active research or triage session, tasks are delegated to subagents to shield the main chat context from file diffs and compiler noise.
+- **Triage Threshold**:
+  - *< 20 lines, 1 file*: Execute directly in main chat (instant, zero startup overhead).
+  - *> 20 lines, multi-file, or running builds/tests*: Delegate to Flash subagent (`invoke_subagent(Model="flash")`).
+  - *Deep DSP / Lock-Free Math*: Delegate to Pro subagent (`invoke_subagent(Model="pro")`).
+- **2-Strike Escalation**: If a Flash implementation subagent fails 2 compilation/test attempts or gets stuck, it hard-pauses and escalates to a Pro subagent.
+- **Completion Receipt**: Subagents return only a concise diff summary, verification status, and git state to the parent agent.
+
