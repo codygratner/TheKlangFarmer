@@ -23,6 +23,7 @@
 - **Official Architectural Glossary**: [`docs/GLOSSARY.md`](file:///c:/Dev/TheKlangSuite/docs/GLOSSARY.md)
   - *Taxonomy*: *Cards* (UI containers), *Modules* (DSP units), *Sliders* (meter bars), *Knobs* (rotary controls).
   - *Acronyms*: `TKS` (Suite), `TKF` (Farmer), `TKP` (Planter), `TKM` (Mill), `TKR` (R1), `TKB` (Hardware Box), `TKG` (Klang-Brain).
+  - *Review Frameworks*: `PCDA` (**P**ros, **C**ons, **D**evil's **A**dvocate), Hegelian Dialectic (**Thesis** $\rightarrow$ **Devil's Advocate [Antithesis]** $\rightarrow$ **The 80/20 Resolution [Synthesis]**).
 - **Master Documentation Catalog**: [`docs/DOCS_CATALOG.json`](file:///c:/Dev/TheKlangSuite/docs/DOCS_CATALOG.json) (100% indexed spec inventory).
 - **System Architecture Map**: [`docs/SYSTEM_MAP.md`](file:///c:/Dev/TheKlangSuite/docs/SYSTEM_MAP.md)
 - **Product Intent Matrix**: [`docs/architecture/product_lineup.md`](file:///c:/Dev/TheKlangSuite/docs/architecture/product_lineup.md) ("Stay in Your Lane" drift guardrail).

@@ -80,3 +80,22 @@ To prevent identity collisions across codebases, logging tags (`TKS_LOG`), asset
 > **Acronym Collision Guardrail**: No new plugin or spin-off product may adopt an acronym that collides with registered letters (`S`, `F`, `P`, `M`, `E`, `B`, `R`, `C`). `TKS` is strictly forbidden for individual plugins.
 > 
 > **The Klang Box (`TKB`) vs. The Klang-Brain**: `TKB` is officially reserved for **The Klang Box** embedded hardware platform. The generative algorithmic modulation and sequencing engine is designated **The Klang-Brain** (internal engine code `TKG` - *The Klang Generator / Genome* if an acronym is required), preserving `TKB` for hardware.
+
+---
+
+## 6. Decision & Engineering Review Frameworks
+
+| Framework / Term | Category | Definition & Classical Foundation | The Klang Suite Implementation & Protocol |
+| :--- | :--- | :--- | :--- |
+| **`PCDA`** | Review Protocol | **Pros, Cons, Devil's Advocate**. A 3-dimensional evaluation framework designed to counter confirmation bias by pairing positive/negative tradeoffs with active contrarian stress-testing. | Invoked when the user or agent requests a rapid decision breakdown (`"give me the PCDA on this"`). Structured with an explicit Devil's Advocate / Antithesis breakdown. *Deliberately designated PCDA rather than PCA to prevent collision with Principal Component Analysis (DSP/ML) and Printed Circuit Assembly (hardware).* |
+| **`Dialectic`** *(Hegelian Dialectic)* | Decision Model | The classical philosophical method of investigating truth through the opposition of contradictory assertions: **Thesis $\rightarrow$ Antithesis $\rightarrow$ Synthesis**. | Applied systematically during architectural forks, RFCs, and triage sprints: <br>1. **Thesis** = The core proposal / Option (Pros & intended benefits). <br>2. **Antithesis** = The Devil's Advocate (Cons, failure modes, real-world precedent, maintenance debt). <br>3. **Synthesis** = The Pragmatic 80/20 Middle Ground (extracting 80% of the value with 20% of the complexity). |
+| **`Thesis`** | Dialectic Component | The foundational proposal, design hypothesis, or architectural direction. | Presented as Option A/B/C in RFCs, PLANs, or Active Workshop cards. |
+| **`Devil's Advocate [Antithesis]`** | Dialectic Component | The adversarial counter-argument tasked with exposing unstated assumptions, fatal edge cases, token bloat, and cognitive debt. | Rendered by the `contrarian` subagent or formatted under the heading `Devil's Advocate [Antithesis]` in chat and sidecar reviews. |
+| **`The 80/20 Resolution [Synthesis]`** | Dialectic Component | The pragmatic, battle-tested middle ground reconciling the Thesis with the Antithesis. | The mandatory conclusion of all PCDA reviews, preventing endless philosophical debate and driving decisive factory execution. |
+
+> [!TIP]
+> **PCDA Conversational Format**: When the user requests a "PCDA" on any topic, agents format the response systematically:
+> 1. **Pros [Thesis]**: What works, immediate velocity, and user value.
+> 2. **Cons [Thesis Friction]**: Known drawbacks, implementation effort, and direct costs.
+> 3. **Devil's Advocate [Antithesis]**: Structural failure modes, hidden maintenance debts, and historical production disasters.
+> 4. **The 80/20 Resolution [Synthesis]**: The recommended pragmatic architecture extracting maximum value with minimum complexity.
