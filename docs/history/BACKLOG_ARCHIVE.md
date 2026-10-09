@@ -61,7 +61,7 @@ This document serves as the permanent historical record of completed engineering
 ### 1. The Klang Planter UI Color Routing & "Vel Min Level" Label Polish
 - **Linear Issue:** [THE-7](https://linear.app/the-klang-farmer/issue/THE-7/the-klang-planter-ui-color-routing-and-vel-min-level-label-polish)  
 - **Commits:** `fa088df`, `b441b3e`  
-- **Plan Archive:** [`docs/completed_plans/2026-10-04_THE-7_planter-ui-color-routing-and-label-polish.md`](completed_plans/2026-10-04_THE-7_planter-ui-color-routing-and-label-polish.md)
+- **Plan Archive:** [`2026-10-04_THE-7_planter-ui-color-routing-and-label-polish.md`](../../.agents/pipeline/plans/completed/2026-10-04_THE-7_planter-ui-color-routing-and-label-polish.md)
 - **Summary & Technical Design**:
   - **Carrier Card — Mod Depth Slider (Cyan)**:
     - Updated `carrierDepthSlider` accent to Modulator Cyan (`colCyan`), visually communicating that this slider attenuates modulation incoming from the Modulator.
@@ -85,7 +85,7 @@ This document serves as the permanent historical record of completed engineering
 ### 2. Fix FX Catalog Alphabetical Ordering (Phase Smear Slot 4 Fix)
 - **Linear Issue:** [THE-6](https://linear.app/the-klang-farmer/issue/THE-6/fix-fx-catalog-alphabetical-ordering-phase-smear-slot-4-fix)  
 - **Commits:** `3f16f87`, `b441b3e`  
-- **Plan Archive:** [`docs/completed_plans/2026-10-04_THE-6_fix-fx-catalog-alphabetical-ordering.md`](completed_plans/2026-10-04_THE-6_fix-fx-catalog-alphabetical-ordering.md)
+- **Plan Archive:** [`2026-10-04_THE-6_fix-fx-catalog-alphabetical-ordering.md`](../../.agents/pipeline/plans/completed/2026-10-04_THE-6_fix-fx-catalog-alphabetical-ordering.md)
 - **Summary & Technical Design**:
   - Re-ordered the FX catalog so **Phase Smear** (formerly PhaseSmear) sits in its proper alphabetical position:
     - Slot 0: `None`

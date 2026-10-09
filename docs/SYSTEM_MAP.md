@@ -20,10 +20,10 @@ This is the central directory for all high-level documentation, rules, and histo
 
 ### 4. 🔬 Deep Research & Soul Harvest Archive
 - [The Klang Research Hub](https://github.com/codygratner/TheKlangResearch) — Centralized cross-project research repository (`C:\Dev\Research`).
-- [Deep Research Directory](history/research/) — Research hub pointer and local soul harvests.
-  - [Subagent Deep Research Soul Harvest](history/research/2026-10-08_Subagent_Deep_Research_Harvest.md) — Permanent archive of equations, schematics, and proofs from 6 Pro subagents.
-  - [Agentic Architecture Deep Research](history/research/2026-10-08_Agentic_Architecture_Deep_Research.md) — 2026 Agentic Architecture Audit and Analysis.
-  - [Layouts and Ergonomics Harvest](history/research/2026-10-08_Layouts_and_Ergonomics_Deep_Research_Harvest.md) — Soul harvest of 5 subagents exploring monolithic faceplates, rhythm faders, and TE glyphs.
+- [Deep Research Pointer](history/research/README.md) — Local directory pointer to the research repository.
+  - [Subagent Deep Research Soul Harvest](https://github.com/codygratner/TheKlangResearch/blob/main/subagents/2026-10-08_Subagent_Deep_Research_Harvest.md) — Equations, schematics, and proofs from 6 Pro subagents.
+  - [Agentic Architecture Deep Research](https://github.com/codygratner/TheKlangResearch/blob/main/agentic/2026-10-08_Agentic_Architecture_Deep_Research.md) — 2026 Agentic Architecture Audit and Analysis.
+  - [Layouts and Ergonomics Harvest](https://github.com/codygratner/TheKlangResearch/blob/main/subagents/2026-10-08_Layouts_and_Ergonomics_Deep_Research_Harvest.md) — Monolithic faceplates, rhythm faders, and TE vector glyphs.
 
 ### 5. 🚀 Pipeline & Communiqué
 - [plan_to_build.md](../.agents/pipeline/communique/plan_to_build.md) — Dispatch signals from New Klang City (Planner) to Klang Industries (Builder).

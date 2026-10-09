@@ -9,7 +9,7 @@
 
 ## Section A: Executive Institutional Memory & Lessons Learned
 
-> **Note:** On 2026-10-08, the Agentic Architecture Audit and Deep Docs pass was completed. See [2026-10-08_Agentic_Architecture_Deep_Research.md](research/2026-10-08_Agentic_Architecture_Deep_Research.md) for details.
+> **Note:** On 2026-10-08, the Agentic Architecture Audit and Deep Docs pass was completed. See [2026-10-08_Agentic_Architecture_Deep_Research.md](https://github.com/codygratner/TheKlangResearch/blob/main/agentic/2026-10-08_Agentic_Architecture_Deep_Research.md) for details.
 
 
 ### Audio Thread & DSP Rules
@@ -191,7 +191,7 @@ ew, malloc, ree, or resize dynamic containers (std::vector::push_back, juce::Ar
 ### Session: 2026-10-08 09:10 (9241988e-1227-466e-a0a5-446d61a69d77)
 - **Chat Role:** Strategic Planning & Architecture (New Klang City / Pro High)
 - **Primary Objectives:** DSP Architecture & UI Deep-Dive for v0.5.0/v0.6.0.
-- **Archived Artifact:** [2026-10-08_UI_UX_DSP_Research.html](research/2026-10-08_UI_UX_DSP_Research.html)
+- **Archived Artifact:** [2026-10-08_UI_UX_DSP_Research.html](https://github.com/codygratner/TheKlangResearch/blob/main/ui_ux/2026-10-08_UI_UX_DSP_Research.html)
 - **Key Decisions:**
   - **Mod Matrix UX:** Target-based injection (Opt+Click a knob to flip the 4-control card into Mod Depth for LFOs/Envelopes).
   - **Theming Engine:** JSON palettes, strict ban on real-time `DropShadowEffect` for animated controls. Glassmorphism via cached `juce::Image` blending.
@@ -238,7 +238,7 @@ ew, malloc, ree, or resize dynamic containers (std::vector::push_back, juce::Ar
 - **Chat Role:** Strategic Planning & Ecosystem Architecture (New Klang City / Flash 3.8 High)
 - **Primary Objectives:** Harvest Layouts & Ergonomics research, establish standalone Sidecar framework, integrate ToadTracker into multi-root workspace, package triage for resumption, and establish canonical gitignored lore repository.
 - **Key Decisions & Deliverables:**
-  - **Layouts & Ergonomics Research Harvest:** Harvested findings from 5 subagents into [`docs/history/research/2026-10-08_Layouts_and_Ergonomics_Deep_Research_Harvest.md`](file:///c:/Dev/TheKlangSuite/docs/history/research/2026-10-08_Layouts_and_Ergonomics_Deep_Research_Harvest.md) exploring breaking the 4-control rule on desktop, monolithic sculpted faceplates, 45° signal traces, Teenage Engineering game-feel vector glyphs, and Roland TR-8S vertical rhythm faders.
+  - **Layouts & Ergonomics Research Harvest:** Harvested findings from 5 subagents into [`Layouts and Ergonomics Deep Research Harvest`](https://github.com/codygratner/TheKlangResearch/blob/main/subagents/2026-10-08_Layouts_and_Ergonomics_Deep_Research_Harvest.md) exploring breaking the 4-control rule on desktop, monolithic sculpted faceplates, 45° signal traces, Teenage Engineering game-feel vector glyphs, and Roland TR-8S vertical rhythm faders.
   - **Standalone Antigravity Sidecar Framework:** Initialized independent MIT repository [`c:\Dev\antigravity-sidecar\`](file:///c:/Dev/antigravity-sidecar) containing the zero-dependency standalone template, CSS/JS core, JSON schema, and Antigravity UI Extension bundle.
   - **ToadTracker Multi-Root Workspace & Genesis Harvest:** Integrated [`c:\Dev\ToadTracker`](file:///c:/Dev/ToadTracker) into the AGY workspace and harvested the entire 1,678-step setup chat into `ToadTracker_Genesis_and_Architecture_Harvest.md`.
   - **Post-Mortem Packaging & Skill Upgrades:** Created machine-readable triage resumption package [`2026-10-08_layouts_and_ergonomics_triage_package.json`](file:///c:/Dev/TheKlangSuite/.agents/sidecar/packages/2026-10-08_layouts_and_ergonomics_triage_package.json) and upgraded `.agents/skills/post-mortem/` and `.agents/skills/deep-research/` with `/pause-post-mortem` and `/resume-post-mortem` workflows.

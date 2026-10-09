@@ -45,7 +45,7 @@ Comprehensive design blueprints for upcoming milestones and sound design capabil
 
 ### Milestone v0.6.0: Pro Workflow
 - **[JSON Preset Management System](specs/preset_system.md)**: Dual-column tag browser and automated patch migration.
-- **[Dual Transient Sample Players](specs/sample_players.md)**: Percussive sample playback and choke groups on the transient page.
+- **[Dual Transient Sample Players](BACKLOG.md#item-62-dual-transient-sample-players-transient-page)**: Percussive sample playback and choke groups on the transient page.
 - **[WAV & SoundFont (SF2) Drag-and-Drop Export](specs/wav_sf2_export.md)**: One-click export for hardware grooveboxes and external samplers.
 - **[Advanced Typography Engine](specs/typography_engine.md)**: Embedded binary typography and CSS-style font profiles.
 - **[Zero-Server GitHub Crash Reporting](specs/crash_reporting.md)**: Privacy-preserving crash dump export.
@@ -65,7 +65,7 @@ Institutional memory and milestone summaries:
 
 - **[The Vibe-Coder's Field Guide](history/vibe_coding_field_guide.md)**: Autonomous pair-programming workflows, agent pipelines, and the Strategy Graveyard.
 - **[The Audio DSP & C++ Field Guide](history/audio_dsp_field_guide.md)**: C++ audio engineering, DSP thread invariants, and advice for transitioning developers.
-- **[Deep Research Soul Harvest](history/research/2026-10-08_Subagent_Deep_Research_Harvest.md)**: Permanent archive of DSP equations, architectures, and proofs from Subagent research.
+- **[Deep Research Soul Harvest](https://github.com/codygratner/TheKlangResearch/blob/main/subagents/2026-10-08_Subagent_Deep_Research_Harvest.md)**: Permanent archive of DSP equations, architectures, and proofs from Subagent research.
 - **[Development Journal (DEV_HISTORY.md)](history/DEV_HISTORY.md)**: Living chronological record of architecture decisions and milestones.
 - **[Historical Backlog Archive](history/BACKLOG_ARCHIVE.md)**: Pre-v0.3.0 tasks and legacy prototype notes.
 - **[v0.3.0 Release History](history/archives/DEV_HISTORY_v0.3.0.md)**: Complete record of the v0.3.0 Architecture Update.

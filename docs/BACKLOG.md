@@ -40,22 +40,22 @@
 *Focus: Tooling, Data-Driven Architecture, and 1:1 Legacy Parity.*
 
 ### 1. Automated GUI Test Harness (Guardrail) — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-06_Universal_Automated_GUI_Test_Harness.md`](completed_plans/2026-10-06_Universal_Automated_GUI_Test_Harness.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_Universal_Automated_GUI_Test_Harness.md`](../.agents/pipeline/plans/completed/2026-10-06_Universal_Automated_GUI_Test_Harness.md)*
 Comprehensive, single-binary C++ functional GUI testing harness (`gui_tests`) testing The Klang Farmer, The Klang Planter, and The Klang Editor with synthetic mouse event simulation, APVTS parameter sync, page navigation, offscreen smoke paint checks, and dynamic reflection audit.
 
 ### 2. Standalone JSON Data & Theme Editor (TheKlangEditor) — Phase 2: Controls, Typography & Snapshots — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-05_TheKlangEditor.md`](completed_plans/2026-10-05_TheKlangEditor.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-05_TheKlangEditor.md`](../.agents/pipeline/plans/completed/2026-10-05_TheKlangEditor.md)*
 Dedicated JUCE GUI editor with card preview, controls inspector, JSON snapshot export/import/factory restore, and automated commit tracking.
 
 ### 3. Automated C++ Linting & Formatting (`clang-format`) — ✅ COMPLETED
 `.clang-format` configured and active, enforcing 4-space indentation and clean C++ formatting.
 
 ### 4. Comprehensive Codebase Cruft Purge — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-06_Cruft_Purge_Execution_Plan.md`](completed_plans/2026-10-06_Cruft_Purge_Execution_Plan.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_Cruft_Purge_Execution_Plan.md`](../.agents/pipeline/plans/completed/2026-10-06_Cruft_Purge_Execution_Plan.md)*
 Purged legacy standalone FX blocks, orphaned APVTS parameters, and bypassed routing in commit `4001296`, cleanly migrating all effects to the dynamic 8-slot multi-instance architecture.
 
 ### 5. Automated v0.2.0 Parity Audit — ✅ COMPLETED
-*Detailed Plan: [`docs/v020_parity_audit_plan.md`](v020_parity_audit_plan.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_v020_parity_audit_plan.md`](../.agents/pipeline/plans/completed/2026-10-06_v020_parity_audit_plan.md)*
 *Audit Report:* [`docs/parity_audit/tkf_parity_audit.html`](parity_audit/tkf_parity_audit.html) | [`docs/parity_audit/tkf_parity_audit.pdf`](parity_audit/tkf_parity_audit.pdf)
 Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters against current v0.3.0 JSON controls across The Klang Farmer and The Klang Planter. All calibrated legacy defaults, string formatters, and colors verified with 0 discrepancies (160 exact matches, 44 intentional multi-instance FX slot migrations, and 30 safe additions). Slide-deck printable PDF report generated.
 
@@ -81,7 +81,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - Curated repository topics applied: `vst3`, `juce-framework`, `drum-machine`, `fm-synthesis`, `vibe-coding`, `agentic-coding`, `audio-plugin`, `synthesizer`, `dsp`, `c-plus-plus`.
 
 ### 9. Post-v0.3.0 Tagged Release, Knowledge Distillation & Chat Archival
-*Detailed Plan: [`docs/post_v030_release_and_archive_plan.md`](post_v030_release_and_archive_plan.md)*  
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_post_v030_release_and_archive_plan.md`](../.agents/pipeline/plans/completed/2026-10-06_post_v030_release_and_archive_plan.md)*  
 *Goal: Consolidate institutional memory across all 14+ chat sessions into a permanent Git-versioned Markdown knowledge base, tag and publish the v0.3.0 release, and safely close all active chats with zero lost knowledge.*
 - **Automated Transcript Harvester**:
   - Python harvester script scans all `transcript.jsonl` files in `~/.gemini/antigravity/brain/*/` across all project chat sessions.
@@ -100,7 +100,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Update repository About description: `"FM drum synthesizers, multi-effects, and sound design tools (VST3/AU). Pair-programmed and vibe-coded with Google Gemini."`
   - Update local remote origin: `git remote set-url origin https://github.com/codygratner/TheKlangSuite.git`.
 - **Post-Release Housekeeping & Chat Purge**:
-  - Archive all completed v0.3.0 plan files into `docs/completed_plans/`.
+  - Archive all completed v0.3.0 plan files into `docs/../.agents/pipeline/plans/completed/`.
   - Update `CHANGELOG.md` with final v0.3.0 diff.
   - Safe signal to close/kill all accumulated chat sessions in the Antigravity UI for a clean, lightning-fast v0.4.0 kickoff.
 
@@ -111,21 +111,21 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 *Focus: Expanding the Editor's GUI tests, Tree View UX, and upgrading the JSON data schema for rigorous parameter definitions.*
 
 ### 1. Editor GUI Test Suite Expansion & Tree View UX — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-06_editor_tree_ux.md`](completed_plans/2026-10-06_editor_tree_ux.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_editor_tree_ux.md`](../.agents/pipeline/plans/completed/2026-10-06_editor_tree_ux.md)*
 *Goal: Expand `gui_tests` to fully validate `The Klang Editor` through headless component testing, and improve the Tree View's user experience.*
 - **Headless Validation**: Added `juce::UnitTest` module simulating 100% parameter tree node selection with property manager synchronization.
 - **Global Tree Controls**: Added mini-toolbar with `Expand All` and `Collapse All` icon buttons.
 - **Contextual Tree Controls**: Added right-click context menu to tree items with `Collapse Others`, `Expand All`, and `Collapse All`.
 
 ### 2. Extract Hardcoded C++ Parameter Metadata into JSON (Parity Preservation) — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-06_parameter_metadata_extraction.md`](completed_plans/2026-10-06_parameter_metadata_extraction.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_parameter_metadata_extraction.md`](../.agents/pipeline/plans/completed/2026-10-06_parameter_metadata_extraction.md)*
 *Goal: Pull all hardcoded parameter descriptions and bipolar flags out of `FarmerEditor.cpp` and populate them into `assets/controls/*.json` to match `PlanterEditor`'s modern `ControlDef` binding pattern, while maintaining 100% exact parity.*
 - **Extract Legacy Boilerplate**: Migrated ~120 lines from `getFarmerParamDescription()` into JSON asset schemas.
 - **Modernize `bindSlider`**: Refactored `FarmerEditor::bindSlider` to read `def->description`, `def->isBipolar`, `def->doubleClickValue`, and `def->snapPoints` from `ControlDef`.
 - **Zero Parity Breakage**: 84/84 tests passing with zero regressions.
 
 ### 3. Intensive GUI Test Suite for Plugins & Standalone (Farmer & Planter) — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-06_intensive_gui_tests.md`](completed_plans/2026-10-06_intensive_gui_tests.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_intensive_gui_tests.md`](../.agents/pipeline/plans/completed/2026-10-06_intensive_gui_tests.md)*
 *Goal: Model intensive GUI testing after The Klang Editor's test harness, expanding `gui_tests` to comprehensively validate component trees, page navigation, modal popups, and offscreen rendering for both The Klang Farmer and The Klang Planter.*
 - **Headless Component & Parameter Sweep**: Programmatically verified 100% of cards, sliders, and selectors bind correctly to APVTS parameters and display non-empty tooltips (fixed 3 missing tooltips on Planter limiter).
 - **Page Navigation & Paint Smoke Test**: Cycled through all page views across 800x600, 1000x750, and 4K dimensions with offscreen paint passes (`paintEntireComponent()`). Zero crashes, zero division-by-zero.
@@ -133,7 +133,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Verification Metric**: 117 / 117 `gui_tests` passed successfully with 100% assertion pass rate.
 
 ### 4. Planter Header Interactions: VU Meter Panic & Limiter CalloutBox — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-06_planter_header_and_status_bar.md`](completed_plans/2026-10-06_planter_header_and_status_bar.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_planter_header_and_status_bar.md`](../.agents/pipeline/plans/completed/2026-10-06_planter_header_and_status_bar.md)*
 *Goal: Transform The Klang Planter's header visualizer into an interactive control center with dedicated mouse targets for master panic and instant limiter adjustment.*
 - **Limiter Right-Click CalloutBox**:
   - Right-clicking the center `LIMIT` badge launches a floating mini-card `juce::CalloutBox`.
@@ -146,7 +146,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Non-destructive: Binds directly to existing APVTS parameters without altering presets, audio DSP math, or Card 6.
 
 ### 5. Interactive Two-Line Status Bar (Values, Mouse Shortcuts & Tooltip Feed) — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-06_planter_header_and_status_bar.md`](completed_plans/2026-10-06_planter_header_and_status_bar.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_planter_header_and_status_bar.md`](../.agents/pipeline/plans/completed/2026-10-06_planter_header_and_status_bar.md)*
 *Goal: Implement a Kilohearts/Ableton style 36px bottom status bar across The Klang Farmer and The Klang Planter, providing permanent value readouts, mouse shortcut badges, and a full-width tooltip feed.*
 - **Line 1 (Top Bar - Permanent)**:
   - Left: Control Name and formatted Parameter Value in bold (e.g., `Carrier 1: Pitch  +12.0 st [440 Hz]`).
@@ -157,13 +157,13 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Verification Metric**: 164 / 164 `gui_tests` passed successfully with 100% assertion pass rate across all limiter controls and status bar hover callbacks.
 
 ### 6. Restore Two-Line Status Bar Visibility & Universal Hover Feed — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-06_two_line_status_bar_visibility_and_universal_hover.md`](completed_plans/2026-10-06_two_line_status_bar_visibility_and_universal_hover.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_two_line_status_bar_visibility_and_universal_hover.md`](../.agents/pipeline/plans/completed/2026-10-06_two_line_status_bar_visibility_and_universal_hover.md)*
 *Goal: Diagnose why the interactive two-line bottom status bar was low-contrast or appearing missing in The Klang Planter / The Klang Farmer standalone and plugin windows, and restore it to full visibility and responsiveness.*
 - **Visual Elevation**: Elevated chassis background (`0xff121622`) with a crisp 1.5px top demarcation border (`0xff2a3449`), green status LED (`● READY`), subtle version badge (`The Klang Suite v0.3.1`), and high-contrast Line 2 text luminance.
 - **Universal Header Hover Feeds**: Connected hover callbacks on `initButton`, `triggerButton`, `tooltipsButton`, `settingsButton`, `guideButton`, and `headerViz` so the entire interface feeds live parameter details into the status bar.
 - **Z-Order Assurance**: Enforced `statusBar.toFront(false)` in `resized()` across all editors.
 ### 7. Automated VST3 Parameter Validation Suite & Headless `pluginval` Runner — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-06_vst3_parameter_validation_and_pluginval.md`](completed_plans/2026-10-06_vst3_parameter_validation_and_pluginval.md)*
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_vst3_parameter_validation_and_pluginval.md`](../.agents/pipeline/plans/completed/2026-10-06_vst3_parameter_validation_and_pluginval.md)*
 *Goal: Systematically validate 100% of registered VST3 parameters across The Klang Farmer and The Klang Planter through an in-engine 6-pillar reflection suite, backed by a portable headless pluginval runner.*
 - **In-Engine 6-Pillar Parameter Suite (`test/PluginIntensiveTestSuite.h`)**:
   1. **Dynamic Reflection & Identity**: Recursively sweeps 100% of `processor.getParameters()` for both plugins without hardcoded lists, verifying non-empty IDs and names.
@@ -177,7 +177,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Verification Metric**: 207 / 207 `gui_tests` passed successfully with 100% assertion pass rate.
 
 ### 8. Planter Header Visualizer Optimization & Latency Remediation — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-06_optimize_planter_gui_rendering.md`](completed_plans/2026-10-06_optimize_planter_gui_rendering.md)*  
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-06_optimize_planter_gui_rendering.md`](../.agents/pipeline/plans/completed/2026-10-06_optimize_planter_gui_rendering.md)*  
 *Goal: Eliminate UI thread input latency and sluggishness in The Klang Planter by optimizing visualizer repaint cascades and message thread overhead.*
 - **Opaque Visualizer (`setOpaque(true)`)**: Prevents JUCE from invalidating and repainting the entire parent window background during real-time oscilloscope animations.
 - **30 Hz Timer Frequency Alignment**: Aligned `PlanterEditor` timer rate with `FarmerEditor` (30 Hz down from 60 Hz), cutting message thread repaint events in half.
@@ -225,7 +225,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
   - Mandated dual-mailbox closure in `task-finish` (updating both `build_to_plan.md` and `plan_to_build.md`).
 
 ### 2. Unified Filterable Master Tree & Dedicated Text/Localization Schema — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-07_unified_tree_text_schema.md`](completed_plans/2026-10-07_unified_tree_text_schema.md)*  
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-07_unified_tree_text_schema.md`](../.agents/pipeline/plans/completed/2026-10-07_unified_tree_text_schema.md)*  
 *Goal: Redesign The Klang Editor's navigation tree into a unified master tree with multi-state layer filters, extract text/tooltips into a dedicated data schema, and standardize DSP block file naming.*
 - **Unified Master Tree with Layer Filters**:
   - Replaced the dual tabs (`CONTROLS` and `LAYOUTS`) with a single unified `masterTree`.
@@ -241,7 +241,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Verification Metric**: 275 / 275 `gui_tests` passed successfully with 100% assertion pass rate across all 11 test suites; 100% `dsp_tests` passed. Binaries deployed to `current_build/` and system VST3 directories.
 
 ### 3. Developer Logging Subsystem (`TKS_LOG`) & Diagnostics Engine — ✅ COMPLETED
-*Detailed Plan: [`docs/completed_plans/2026-10-07_dev_logger_subsystem.md`](completed_plans/2026-10-07_dev_logger_subsystem.md)*  
+*Detailed Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-07_dev_logger_subsystem.md`](../.agents/pipeline/plans/completed/2026-10-07_dev_logger_subsystem.md)*  
 *Goal: Provide structured, leveled developer logging for UI lifecycles, asset loading, and DAW diagnostics in debug builds, strictly guarded against real-time audio thread abuse and stripped completely in release builds.*
 - **Dual-Mode Output**:
   - Debug builds pipe timestamped entries to system debugger (`OutputDebugString` / `DBG`) and write to a rotating `%LOCALAPPDATA%/TheKlangSuite/dev.log`.
@@ -275,8 +275,8 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 *Focus: Complete Clean-Slate UX Overhaul, Modern Neo-Slate Vector UI (Kilohearts/Vital/Pigments aesthetic), 4-Controls-Per-Card Architecture, Header Nav & Stereo Scope, & Breaking Prototype Parity.*
 
 ### 1. Obsidian Knowledge Base & Asymmetric Sync Bridge — ✅ COMPLETED
-*Detailed Guide: [`docs/OBSIDIAN_INTEGRATION.md`](OBSIDIAN_INTEGRATION.md)*  
-*Archived Plan: [`docs/completed_plans/2026-10-07_obsidian_vault_asymmetric_sync_bridge.md`](completed_plans/2026-10-07_obsidian_vault_asymmetric_sync_bridge.md)*  
+*Detailed Guide: [`docs/OBSIDIAN_INTEGRATION.md`](architecture/obsidian_sync_bridge.md)*  
+*Archived Plan: [`docs/../.agents/pipeline/plans/completed/2026-10-07_obsidian_vault_asymmetric_sync_bridge.md`](../.agents/pipeline/plans/completed/2026-10-07_obsidian_vault_asymmetric_sync_bridge.md)*  
 *Goal: Create a decoupled, conflict-free Obsidian knowledge base (`C:\Dev\TheKlangVault`) backed by an automated PowerShell sync bridge (`tools/sync_obsidian_vault.ps1`), enabling mobile note capture via Obsidian Sync without Git merge collisions, offline docs reading, and live build/error telemetry.*
 - **Decoupled Vault & Partitioned Ownership**:
   - `Inbox/` (Vault $\to$ Repo): Frictionless mobile idea capture automatically mirrored to `TheKlangSuite/docs/inbox/`.
@@ -290,7 +290,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 
 ### 2. SQA Automation Hardening: Timeout Guardrails, Failure Snapshots & Metric Profiling — ✅ COMPLETED
 *Origin: SQA Advisory Consultation (Tom) — Local Vault Inbox*  
-*Context Briefing: [`docs/briefings/sqa_meeting_briefing.md`](briefings/sqa_meeting_briefing.md)*  
+*Context Briefing: [`docs/briefings/sqa_meeting_briefing.md`](specs/sqa_automation_hardening.md)*  
 *Archived Plan: [`.agents/pipeline/plans/completed/2026-10-07_sqa_automation_hardening.md`](../.agents/pipeline/plans/completed/2026-10-07_sqa_automation_hardening.md)*  
 *Goal: Harden the automated testing infrastructure across `gui_tests` and `dsp_tests` based on senior SQA recommendations: enforce global (5m) and local (30s) timeout guardrails, capture automated offscreen UI failure screenshots to `test_screenshots/`, pull failure summaries to the top of test reports, and log granular step duration metrics.*
 - **Dual Timeout Architecture**:
@@ -342,13 +342,13 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 - **Verification Metric**: 100% theme parity verified across Cykranosh, Cyberpunk Neon, Dracula, and Monokai Pro.
 
 ### 6. Interactive Parameter & Curve Audit Tool in The Klang Editor — ✅ COMPLETED
-*Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
+*Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](specs/v040_neo_slate_ux.md)*  
 *Goal: Integrate an interactive curve calibration workspace in The Klang Editor to systematically tune the tactile response, snap points, logarithmic slider slopes, and ergonomic double-click defaults of the new curated 4-control parameter set.*
 - Live interactive slider evaluation, tactile response tuning, and real-time visualization of parameter skew factor curves.
 - Test and calibrate discrete musical snap points live within the editor before persisting to `assets/controls/*.json`.
 
 ### 7. Switchable Studio Theme Engine (`Cykranosh`, `Nord`, `Dracula`, `Cyberpunk`) — ✅ COMPLETED
-*Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](v040_ux_overhaul_plan.md)*  
+*Detailed Plan: [`docs/v040_ux_overhaul_plan.md`](specs/v040_neo_slate_ux.md)*  
 *Goal: Provide distinctive, switchable visual flavors for different studio environments, featuring the creator's signature Cykranosh theme as the flagship look.*
 - **Curated Multi-Palette Schema (`assets/themes/theme.json`)**:
   - `cykranosh` (Default / Creator's Signature): Deep slate navy (`#161B22` / `#1A202C`), muted deep blue cards, eerie ghostly teal (`#4EBEB1`), arctic ice blue, and starlight silver indicators (engineered for zero eye fatigue during marathon sessions).
@@ -449,7 +449,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 ---
 
 ## 🚀 Milestone: v0.5.0 "The Sound & Chaos Update"
-> **Tracking & Research:** [Alpha Juno & Wavefolder Spec](specs/fx_catalog_expansion.md) | [2026 Agentic Architecture Deep Research](history/research/2026-10-08_Agentic_Architecture_Deep_Research.md)
+> **Tracking & Research:** [Alpha Juno & Wavefolder Spec](specs/fx_catalog_expansion.md) | [2026 Agentic Architecture Deep Research](https://github.com/codygratner/TheKlangResearch/blob/main/agentic/2026-10-08_Agentic_Architecture_Deep_Research.md)
 *Focus: Sonic Expansion, Workflow Disruption, and Modulation.*
 
 ### 1. DSP Modulation Engine & Real-Time Matrix Routing
@@ -468,7 +468,7 @@ Comprehensive automated audit cross-referencing all 204 legacy v0.2.0 parameters
 
 ### 0.6. Rigorous GPLv3 Codebase Audit & Copyleft Hygiene Gauntlet ("FOSS Forever")
 *Charter & Standard: [`docs/THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md)*  
-*Research & Provenance: [`docs/history/research/2026-10-08_Subagent_Deep_Research_Harvest.md`](history/research/2026-10-08_Subagent_Deep_Research_Harvest.md)*  
+*Research & Provenance: [`docs/https://github.com/codygratner/TheKlangResearch/blob/main/subagents/2026-10-08_Subagent_Deep_Research_Harvest.md`](https://github.com/codygratner/TheKlangResearch/blob/main/subagents/2026-10-08_Subagent_Deep_Research_Harvest.md)*  
 *Goal: Conduct an exhaustive codebase-wide licensing and provenance audit to guarantee strict GNU General Public License v3.0 (GPLv3) compliance, clean copyleft reciprocity, and respectful attribution to all upstream open-source authors.*
 - **Universal SPDX License Headers**:
   - Audit 100% of `.h`, `.cpp`, and `.cmake` files across `source/`, `test/`, and build scripts.
@@ -551,15 +551,15 @@ Add a fully JSON-driven contextual randomization system:
 - **Verification Metric**: Contextual d6 buttons wired on 100% of card headers, pushing reversible undo actions into `juce::UndoManager`.
 
 ### 2. New Effects Processors Catalog Expansion (Effects 14–27), Universal Mix, & 5-Column Browser Modal
-*Detailed Plan: [`docs/new_effects_plan.md`](new_effects_plan.md)*  
+*Detailed Plan: [`docs/new_effects_plan.md`](specs/fx_catalog_expansion.md)*  
   Expand the FX catalog from 13 to 27 algorithms (including Algorithm 15: The Thresher transfer-function waveshaper and Algorithm 27: The Baler 3-band upward/downward compressor) and bundle the Kilohearts-style 5-column categorized modal browser:
     - **Zero-Trademark Acoustic Descriptions**: Never use third-party trademark names (e.g. Geiger, OTT, Snap Heap) in user-facing UI labels, pickers, or tooltips. Use pure functional acoustic terminology: THRESHER (Polynomial & Transfer Function Waveshaper), BALER (3-Band Upward/Downward Dynamics), IRRIGATOR (1-to-8 Modulation Manifold), KLANG MILL (Nested Multi-FX Sub-Rack).
     - **Algorithm 28: The Klang Mill Container**: Embeds an entire 6-slot Klang Mill pedalboard inside an FX slot with 4 front-panel macros and floating window editing ('Mill-ception').
 - **Phase 1: Universal Dual-Mode Mix Helper & Core Enums**:
   - Implement shared `computeDualModeMix(float normParam, float& dryGain, float& wetGain)` in `source/DSPBlock.h` (-100% wet crossfade $\to$ 0% pure dry $\to$ +100% parallel additive blend).
-  - Update `createFXBlock()` factory and `BlockType` enum with: TransientShaper (14), CustomWaveshaper (15), ChannelMixer (16), StereoEnhancer (17), SpatialAudio (18 - Haas Delay & Binaural HRTF), GatedReverb (19), JunoChorus (20), WaveguideResonator (21), SubGenerator (22), TapeWarmth (23), DynamicFilter (24), PitchTransposer (25), StutterGate (26), Baler (27), and TheMist (29 - Granular Particle Cloud & Freeze) - see [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) and [`2026-10-08_Subagent_Deep_Research_Harvest.md`](history/research/2026-10-08_Subagent_Deep_Research_Harvest.md).
+  - Update `createFXBlock()` factory and `BlockType` enum with: TransientShaper (14), CustomWaveshaper (15), ChannelMixer (16), StereoEnhancer (17), SpatialAudio (18 - Haas Delay & Binaural HRTF), GatedReverb (19), JunoChorus (20), WaveguideResonator (21), SubGenerator (22), TapeWarmth (23), DynamicFilter (24), PitchTransposer (25), StutterGate (26), Baler (27), and TheMist (29 - Granular Particle Cloud & Freeze) - see [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) and [`2026-10-08_Subagent_Deep_Research_Harvest.md`](https://github.com/codygratner/TheKlangResearch/blob/main/subagents/2026-10-08_Subagent_Deep_Research_Harvest.md).
 - **Phase 2: DSP Implementations (`source/ModularBlocks.h`)**:
-  - TransientShaperBlock (14), CustomWaveshaperBlock (15), ChannelMixerBlock (16), StereoEnhancerBlock (17), SpatialAudioBlock (18: Unified Mega-Module containing Haas micro-delay widening and Binaural HRTF 3D psychoacoustic positioning; both listed individually in the FX picker with auto-selection), GatedReverbBlock (19), JunoChorusBlock (20), WaveguideResonatorBlock (21), SubGeneratorBlock (22), TapeWarmthBlock (23), DynamicFilterBlock (24), PitchTransposerBlock (25), StutterGateBlock (26), BalerCompressorBlock (27), and TheMistGranularBlock (29: Real-time circular buffer particle cloud with Scrub, Density, Grain Size, and Spray jitter controls; Tier 3 Master/Send effect; inspired by Stephen King's eerie particulate atmosphere - see [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) and [`2026-10-08_Subagent_Deep_Research_Harvest.md`](history/research/2026-10-08_Subagent_Deep_Research_Harvest.md)).
+  - TransientShaperBlock (14), CustomWaveshaperBlock (15), ChannelMixerBlock (16), StereoEnhancerBlock (17), SpatialAudioBlock (18: Unified Mega-Module containing Haas micro-delay widening and Binaural HRTF 3D psychoacoustic positioning; both listed individually in the FX picker with auto-selection), GatedReverbBlock (19), JunoChorusBlock (20), WaveguideResonatorBlock (21), SubGeneratorBlock (22), TapeWarmthBlock (23), DynamicFilterBlock (24), PitchTransposerBlock (25), StutterGateBlock (26), BalerCompressorBlock (27), and TheMistGranularBlock (29: Real-time circular buffer particle cloud with Scrub, Density, Grain Size, and Spray jitter controls; Tier 3 Master/Send effect; inspired by Stephen King's eerie particulate atmosphere - see [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) and [`2026-10-08_Subagent_Deep_Research_Harvest.md`](https://github.com/codygratner/TheKlangResearch/blob/main/subagents/2026-10-08_Subagent_Deep_Research_Harvest.md)).
 - **Phase 3: Standardize Existing FX Mix Knobs**:
   - Migrate Chorus, Comb, Flanger, Phaser, Tempo Delay, and Drive to use `computeDualModeMix`.
 - **Phase 4: Categorized FX Selection Modal (Kilohearts-Style Browser)**:
@@ -601,7 +601,7 @@ Add a fully JSON-driven contextual randomization system:
   - **Serum/Vital Standard**: Support drag-and-drop loading of standard 2048-sample single-cycle or 256-frame .wav wavetables directly onto the card.
   - **Bandlimited Anti-Aliasing**: High-performance mip-mapped wavetable tables in memory to eliminate aliasing at high octaves.
 ### 4. Advanced Typography Engine (JUCE 9)
-*Detailed Plan: [`docs/typography_engine_plan.md`](typography_engine_plan.md)*
+*Detailed Plan: [`docs/typography_engine_plan.md`](specs/typography_engine.md)*
 Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's advanced text rendering pipeline.
 - **Embedded Binary Assets**: `.ttf`/`.otf` files are baked into `BinaryData` for 100% cross-platform consistency.
 - **CSS-Style JSON Classes**: Define global text profiles (e.g., `HeaderStyle`, `TooltipStyle`) in the layout JSON, exposing Font Family, Size, Weight, Tracking (letter-spacing), and Justification.
@@ -617,7 +617,7 @@ Implement a JSON-driven, CSS-class style typography system utilizing JUCE 9's ad
 - Clicking the button instantly restores the selector parameter to its JSON-defined default value.
 
 ### 7. Voice & Articulation Engine: Gated Staccato Bass, Note-Off Release & Portamento Glide
-*Detailed Plan: [`docs/gated_bass_note_off_plan.md`](gated_bass_note_off_plan.md)*  
+*Detailed Plan: [`docs/gated_bass_note_off_plan.md`](specs/gated_bass_glide.md)*  
 Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine capable of tight, punchy, articulate staccato basslines, sustained drones, and fluid portamento slides:
 - **Header Front-Panel Badge (`VOICE / ARTICULATION`)**:
   - `ONE-SHOT` (Default): Traditional drum-machine behavior; ignores MIDI Note-Offs so envelopes decay naturally.
@@ -709,11 +709,11 @@ Transform the dual-FM drum synthesizer into a dual-threat drum and bass machine 
 ---
 
 ## 🚀 Milestone: v0.6.0 "The Pro Workflow Update"
-> **Tracking & Research:** [TBD-16 Decoupling Spec](specs/spinoffs/the_klang_mill.md) | [2026 Agentic Architecture Deep Research](history/research/2026-10-08_Agentic_Architecture_Deep_Research.md)
+> **Tracking & Research:** [TBD-16 Decoupling Spec](specs/spinoffs/the_klang_mill.md) | [2026 Agentic Architecture Deep Research](https://github.com/codygratner/TheKlangResearch/blob/main/agentic/2026-10-08_Agentic_Architecture_Deep_Research.md)
 *Focus: Professional DAW Integration, File Management, Preset Library, and Export.*
 
 ### 1. JSON Preset Browser, Tagging & State Migration
-*Detailed Plan: [`docs/preset_system_plan.md`](preset_system_plan.md)*  
+*Detailed Plan: [`docs/preset_system_plan.md`](specs/preset_system.md)*  
 Implement a professional, tag-based preset management system utilizing JSON files for storage.
 - **Phase 1: JSON Schema & StateMigrator (`source/PresetManager.h`, `source/StateMigrator.h`)**:
   - Background scanner to instantly build a database from metadata headers without loading full state.
@@ -738,7 +738,7 @@ Implement a professional, tag-based preset management system utilizing JSON file
 - **Import Bank**: Drag-and-drop `.tkfbank` file onto the preset browser to automatically install, categorize, and rebuild the tag cache.
 
 ### 4. WAV Render, Multi-Sample & SF2 Export Dialog + Instant DAW Drag 'n' Drop (Features #16 & #17)
-*Detailed Plan: [`docs/wav_render_sf2_export_dragndrop_plan.md`](wav_render_sf2_export_dragndrop_plan.md)*  
+*Detailed Plan: [`docs/wav_render_sf2_export_dragndrop_plan.md`](specs/wav_sf2_export.md)*  
 Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generation, and zero-friction DAW integration:
 - **Phase 1: Offline Render Pipeline & SF2 Builder**:
   - Zero-dependency RIFF sfbk v2.01 binary builder with L/R linked sample headers.
@@ -756,7 +756,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
 - Add an Ubuntu `aarch64` / `x86_64` container to GitHub Actions building headless Linux CLAP/VST3 binaries on every commit.
 
 ### 6. Dual-Tier 2x / 4x Oversampling Engine (Anti-Aliasing)
-*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
+*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](specs/pre_v1_sound_and_workflow_expansion.md)*  
 *Goal: Eliminate FM modulation sideband foldback and non-linear saturation aliasing in both realtime and offline render paths.*
 - **Dual-Tier Quality Strategy**:
   - **Realtime / Live**: Selectable `[Off (1x) | 2x | 4x]`. Minimum-phase IIR filters guarantee zero monitoring latency for live finger-drumming and tracking.
@@ -766,7 +766,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
   - Zero allocation audio-thread invariant strictly preserved by pre-allocating oversamplers in `prepareToPlay()`.
 
 ### 7. 4 Performance Macro Knobs (TBD-16 Hardware Aligned) — ⚡ PULLED FORWARD INTO v0.4.0
-*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](pre_v1_sound_and_workflow_expansion_plan.md)*  
+*Detailed Plan: [`docs/pre_v1_sound_and_workflow_expansion_plan.md`](specs/pre_v1_sound_and_workflow_expansion.md)*  
 *Goal: Instant front-panel performance tweaking mapped 1:1 to Page 1 of the dadamachines TBD-16 hardware.*
 - **Global Front-Panel Access**:
   - 4 persistent macro knobs accessible from the plugin header across all pages.
@@ -777,7 +777,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
   - Macro assignments and positions serialized directly into JSON preset files (`PresetManager.h`).
 
 ### 8. Zero-Server GitHub Crash Reporting Engine
-*Detailed Plan: [`docs/github_crash_reporting_plan.md`](github_crash_reporting_plan.md)*  
+*Detailed Plan: [`docs/github_crash_reporting_plan.md`](specs/crash_reporting.md)*  
 *Goal: Capture real-world crash logs and stack traces from beta testers directly into GitHub Issues with zero server infrastructure, zero hosting costs, and zero secret token leaks.*
 - **Pre-Filled GitHub Issue URL Generator**:
   - When an unexpected termination is detected, prompts: *"The Klang Farmer encountered an unexpected shutdown. Submit report to GitHub?"*
@@ -790,7 +790,7 @@ Comprehensive offline audio bounce, multi-sample SoundFont 2 (.sf2) bank generat
   - Automatically scrubs local usernames from paths (e.g. `C:\Users\<redacted>\...` &rarr; `<UserPath>`) to protect privacy.
 
 ### 9. One-Time Quick Tour & Gesture Revelation ("Right-Click is the Way")
-*Detailed Plan: [`docs/one_time_quick_tour_plan.md`](one_time_quick_tour_plan.md)*  
+*Detailed Plan: [`docs/one_time_quick_tour_plan.md`](specs/one_time_quick_tour.md)*  
 *Goal: Provide a sleek, non-intrusive first-launch onboarding card that introduces users to the tactile power of right-click quick snaps, randomizer menus, voice articulation callouts, and double-click resets.*
 - **Unobtrusive Single-Screen Overlay**:
   - Automatically pops up on first launch only; persistent state stored in `%APPDATA%/TheKlangFarmer/settings.json`.
@@ -909,14 +909,14 @@ Deploy the pure C++ DSP engine onto the open-source **dadamachines tbd-16** plat
 - **CTAG Audio Callback Adapter**: Zero-overhead wrapper (`Tbd16AudioDriver.cpp`) feeding `TheKlangFarmer` or `TheKlangPlanter` core DSP directly into the CTAG DMA buffer stream.
 
 ### 2. The Klang Box: Daisy Edition (TKB-Daisy) — Stereo Desktop & Eurorack Hardware
-*Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](embedded_dsp_and_hardware_port_plan.md)*
+*Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](specs/tbd16_klang_seed_effects.md)*
 A self-contained, portable stereo FM drum synthesizer and Eurorack module built on the **Electro-Smith Daisy Seed**:
 - **Processor & Memory**: STM32H750 ARM Cortex-M7 @ 480 MHz with **64 MB high-speed SDRAM** for immense reverb/delay buffers.
 - **Onboard Codec**: Integrated AK4556 24-bit 96 kHz stereo audio DAC/ADC.
 - **Hardware Build Complexity**: Low/Moderate. Simple breakout PCB housing Daisy Seed, 4 rotary encoders, 128x64 OLED screen, MIDI TRS/DIN, and 1/4" stereo outputs. Perfect for rapid hardware prototyping!
 
 ### 3. The Klang Box: Studio Edition (TKB-8) — Teensy 4.1 8-Voice Multi-Output Drum Machine
-*Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](embedded_dsp_and_hardware_port_plan.md)*
+*Detailed Plan: [`docs/embedded_dsp_and_hardware_port_plan.md`](specs/tbd16_klang_seed_effects.md)*
 A flagship studio drum machine built on **PJRC Teensy 4.1** featuring discrete individual analog voice routing:
 - **Processor**: NXP i.MX RT1062 ARM Cortex-M7 @ 600 MHz running 8 mono drum voices (~14.7% CPU load).
 - **Multi-Channel DAC**: Cirrus Logic **CS42448 8-Channel 24-bit 192 kHz Codec** driven via TDM.
@@ -924,7 +924,7 @@ A flagship studio drum machine built on **PJRC Teensy 4.1** featuring discrete i
 - **Hardware Build Complexity**: Advanced. Custom PCB housing Teensy 4.1, CS42448 daughterboard, 10 switched phone jacks, 4 encoders, and OLED screen.
 
 ### 4. Zynthian V5 / V4 Standalone Hardware Port (TENTATIVE)
-*Detailed Plan: [`docs/zynthian_port_plan.md`](zynthian_port_plan.md)*
+*Detailed Plan: [`docs/zynthian_port_plan.md`](specs/spinoffs/zynthian_port.md)*
 Deploy headless Linux LV2 / CLAP plugins onto the open-source Zynthian hardware ecosystem:
 - **Compute**: Raspberry Pi 5 (Quad-core ARM Cortex-A76 @ 2.4 GHz) running 64-bit ZynthianOS.
 - **Zero GUI Overhead**: Pure headless real-time DSP without X11/OpenGL overhead.
@@ -935,7 +935,7 @@ Deploy headless Linux LV2 / CLAP plugins onto the open-source Zynthian hardware 
 ## 🚀 Spin-Off Products & Explorations
 
 ### 1. The Klang Mill (Standalone VST) — Industrial 1x6 Multi-FX Pedalboard Rack
-*Detailed Plan: [`docs/the_klang_mill_plan.md`](the_klang_mill_plan.md)*
+*Detailed Plan: [`docs/the_klang_mill_plan.md`](specs/spinoffs/the_klang_mill.md)*
 Create a standalone multi-effects VST3 plugin styled after vintage studio rackmounts and boutique pedalboards (e.g., Soundtoys Effect Rack):
 - **1x6 Horizontal Chassis**: Input/Slop $\to$ 4 Serial Multi-FX Pedal Slots (26 algorithms) $\to$ Master Limiter & Output.
 - **Immediate & Tactile**: Zero routing matrices or drag-and-drop clutter; dedicated stomp bypasses per slot.
@@ -943,7 +943,7 @@ Create a standalone multi-effects VST3 plugin styled after vintage studio rackmo
 - **Codebase Integration**: Built as a sibling build target (`TheKlangMill_VST3`) inheriting directly from `KlangCoreProcessor` and `KlangCoreEditor`.
 
 ### 2. The Klang Boilerplate — Modern C++20 / JUCE 9 FOSS Plugin Starter Template
-*Detailed Plan: [`docs/plugin_starter_template_repo_plan.md`](plugin_starter_template_repo_plan.md)*  
+*Detailed Plan: [`docs/plugin_starter_template_repo_plan.md`](specs/plugin_starter_template.md)*  
 Extract a clean, standalone GitHub Template Repository incorporating all lessons learned from *The Klang Farmer* to accelerate new audio plugin development:
 - **Zero-Allocation DSP Core**: Strict audio-thread invariants, vectorized `TbdAudio::FastMath`, and lock-free SPSC FIFO queues.
 - **Data-Driven JSON Architecture**: APVTS parameter registration, quick-snap intervals, and declarative card/page layouts authored 100% in JSON (`assets/controls/`, `assets/layouts/`).
@@ -952,7 +952,7 @@ Extract a clean, standalone GitHub Template Repository incorporating all lessons
 - **Developer Onboarding CLI (`init_plugin.py`)**: One-command wizard to rename targets, bundle IDs, C++ namespaces, and parameter prefixes in seconds.
 
 ### 3. ToadTracker Core Migration & Architectural Port
-*Detailed Plan: [`docs/toadtracker_migration_plan.md`](toadtracker_migration_plan.md)*  
+*Detailed Plan: [`docs/toadtracker_migration_plan.md`](specs/spinoffs/toadtracker_migration.md)*  
 *Priority: Super Low (Post-1.0)*
 Port the battle-tested, data-driven architecture from *The Klang Farmer* over to the `ToadTracker` codebase to unify DSP and UI workflows:
 - **JSON APVTS & UI Builder**: Drop `ParameterManager` and the JSON control schema into ToadTracker's JUCE HAL to instantly generate UI and parameters without hardcoding.
@@ -1003,8 +1003,8 @@ Port the battle-tested, data-driven architecture from *The Klang Farmer* over to
 
 ## 📁 Completed & Archived Milestones
 All completed tasks, architectural decisions, and release summaries are archived in:
-👉 **[`docs/BACKLOG_ARCHIVE.md`](BACKLOG_ARCHIVE.md)**  
-*(Individual phase execution plans are preserved in `docs/completed_plans/`)*
+👉 **[`docs/BACKLOG_ARCHIVE.md`](history/BACKLOG_ARCHIVE.md)**  
+*(Individual phase execution plans are preserved in `docs/../.agents/pipeline/plans/completed/`)*
 
 
 

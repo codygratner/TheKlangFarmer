@@ -209,7 +209,7 @@ function Sync-Once {
         $staleMatches = Select-String -Path $backlogPath -Pattern '\[`?PLAN\.md`?\]\([^)]*PLAN\.md\)'
         if ($staleMatches) {
             foreach ($match in $staleMatches) {
-                Write-Host "⚠️ [BACKLOG LINTER WARNING] Line $($match.LineNumber): Stale PLAN.md reference detected! Please update to archived plan in .agents/pipeline/plans/completed/" -ForegroundColor Yellow
+                Write-Host "[BACKLOG LINTER WARNING] Line $($match.LineNumber): Stale PLAN.md reference detected! Please update to archived plan in .agents/pipeline/plans/completed/" -ForegroundColor Yellow
             }
         }
     }
@@ -315,19 +315,56 @@ function Sync-Once {
     $vaultResearch = Join-Path $VaultPath "Research"
     if (Test-Path $researchRepo) {
         if (-not (Test-Path $vaultResearch)) { New-Item -ItemType Directory -Path $vaultResearch -Force | Out-Null }
-        @("dsp", "hardware", "ui_ux", "subagents", "agentic") | ForEach-Object {
-            $srcDom = Join-Path $researchRepo $_
-            $dstDom = Join-Path $vaultResearch $_
+        
+        $indexLines = @(
+            "# [INDEX] Master Research & Architecture Index",
+            "> Statically compiled from [TheKlangResearch](https://github.com/codygratner/TheKlangResearch). Zero Dataview lag, 100% portable Markdown.",
+            "",
+            "## Domain Catalogs",
+            ""
+        )
+
+        @("guides", "lore", "dsp", "hardware", "ui_ux", "subagents", "agentic") | ForEach-Object {
+            $domName = $_
+            $srcDom = Join-Path $researchRepo $domName
+            $dstDom = Join-Path $vaultResearch $domName
             if (Test-Path $srcDom) {
                 if (-not (Test-Path $dstDom)) { New-Item -ItemType Directory -Path $dstDom -Force | Out-Null }
-                Get-ChildItem -Path $srcDom -File | ForEach-Object {
-                    $dFile = Join-Path $dstDom $_.Name
-                    if ((-not (Test-Path $dFile)) -or ($_.LastWriteTimeUtc -gt (Get-Item $dFile).LastWriteTimeUtc)) {
-                        Copy-Item -Path $_.FullName -Destination $dFile -Force
+                
+                $domFiles = Get-ChildItem -Path $srcDom -File | Where-Object { $_.Name -notmatch "^\." }
+                if ($domFiles.Count -gt 0) {
+                    $indexLines += ("### [CATALOG] {0}" -f $domName.ToUpper())
+                    $domFiles | ForEach-Object {
+                        $dFile = Join-Path $dstDom $_.Name
+                        if ((-not (Test-Path $dFile)) -or ($_.LastWriteTimeUtc -gt (Get-Item $dFile).LastWriteTimeUtc)) {
+                            Copy-Item -Path $_.FullName -Destination $dFile -Force
+                        }
+                        $indexLines += ("- [[{0}/{1}|{1}]]" -f $domName, $_.Name)
                     }
+                    $indexLines += ""
                 }
             }
         }
+
+        # Mirror lore to root Vault Lore/ as well
+        $loreSrc = Join-Path $researchRepo "lore"
+        $vaultRootLore = Join-Path $VaultPath "Lore"
+        if ((Test-Path $loreSrc) -and (Test-Path $vaultRootLore)) {
+            Get-ChildItem -Path $loreSrc -File | ForEach-Object {
+                $dstLore = Join-Path $vaultRootLore $_.Name
+                if ((-not (Test-Path $dstLore)) -or ($_.LastWriteTimeUtc -gt (Get-Item $dstLore).LastWriteTimeUtc)) {
+                    Copy-Item -Path $_.FullName -Destination $dstLore -Force
+                }
+            }
+        }
+
+        # Remove stale empty hardware directories in Vault
+        @("CTAG-TBD", "TBD-16-DSP", "TBD-16-UI") | ForEach-Object {
+            $staleDir = Join-Path (Join-Path $vaultResearch "hardware") $_
+            if (Test-Path $staleDir) { Remove-Item -Path $staleDir -Recurse -Force -ErrorAction SilentlyContinue }
+        }
+
+        Set-Content -Path (Join-Path $vaultResearch "Master_Research_Index.md") -Value $indexLines -Encoding UTF8
     }
 
     # 7. WRITE HEARTBEAT: _sync_heartbeat.md
