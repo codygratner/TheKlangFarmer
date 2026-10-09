@@ -34,6 +34,7 @@
 - [v0.7.0 "The Visual Polish & UI Mastery Update"](#-milestone-v070-the-visual-polish--ui-mastery-update)
 - [v1.0.0 "The General Availability Launch"](#-milestone-v100-the-general-availability-launch)
 - [v1.1.0 "The Klang Box Hardware Universe (Post-1.0)"](#-milestone-v110-the-klang-box-hardware-universe-post-10)
+- [N'kai (NKAI) Asymmetric Sidecar Framework](#-nkai-nkai-asymmetric-sidecar-framework)
 - [Spin-Off Products & Explorations](#-spin-off-products--explorations)
 
 ---
@@ -932,7 +933,24 @@ Deploy headless Linux LV2 / CLAP plugins onto the open-source Zynthian hardware 
 
 ---
 
-## 🚀 Spin-Off Products & Explorations
+## 🌌 N'kai (NKAI) Asymmetric Sidecar Framework
+*Focus: Asymmetric Sidecar Framework, Visual Grill Lab, and Triage Workspace.*
+
+### 1. The 9-Flight Consolidated Itinerary
+*Status: 🔨 ACTIVE (Phase 1)*
+Consolidated 19 fragmented system sanity audit topics into 9 cohesive flights across 4 phases:
+- **Phase 1: Foundations (State & IPC)** $ightarrow$ F1 (Canonical State: 6.16+6.7) & F2 (Execution Bridge: 6.17+6.18)
+- **Phase 2: Orchestration (Skills & Portability)** $ightarrow$ F3 (Skill Taxonomy: 6.4+6.14) & F4 (Harness Portability: 6.13)
+- **Phase 3: Topology & Ergonomics (UI/UX)** $ightarrow$ F5 (Header & Tab Density: 6.9+6.10) & F6 (Triage Views: 6.8+6.11)
+- **Phase 4: Meta & Governance** $ightarrow$ F7 (PCDA Governance: 6.1+6.2+6.15), F8 (Token Ledger: 6.19+6.3), & F9 (Distribution: 6.12+6.6)
+
+### 2. Flight 1: Canonical State & Factory Handoff — ✅ COMPLETED
+*Approval:* 6.16 Backend Persistence & State Management - Option C (Approved).
+- Truth lives in an embedded SQLite database or hybrid state model, finalized as the bedrock architecture before UI surfaces or socket streaming.
+
+---
+
+## 🔮 Spin-Off Products & Explorations
 
 ### 1. The Klang Mill (Standalone VST) — Industrial 1x6 Multi-FX Pedalboard Rack
 *Detailed Plan: [`docs/the_klang_mill_plan.md`](specs/spinoffs/the_klang_mill.md)*

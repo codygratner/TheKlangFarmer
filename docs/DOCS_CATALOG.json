@@ -128,6 +128,11 @@
       "pointer": "docs/history/research/README.md",
       "items": [
         {
+          "path": "https://github.com/codygratner/TheKlangResearch/tree/main/qa_autopsies",
+          "title": "QA Autopsies Domain",
+          "purpose": "Post-mortem analysis of critical bugs and platform traps (e.g. N'kai Webview IPC & Buried Toast)."
+        },
+        {
           "path": "https://github.com/codygratner/TheKlangResearch/blob/main/subagents/2026-10-08_Subagent_Deep_Research_Harvest.md",
           "title": "Subagent Deep DSP & Architecture Soul Harvest",
           "purpose": "Permanent transcript harvest of all 6 Pro subagents (aliasing, filters, comb/APF, decoupling, sequencers)."
